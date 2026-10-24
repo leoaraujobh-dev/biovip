@@ -2,18 +2,703 @@ import { GoogleGenAI } from '@google/genai';
 
 const GEMINI_MODELS = ['gemini-3-flash-preview', 'gemini-3.8-flash', 'gemini-flash-latest'];
 
+interface ExtractedInstagramData {
+  found: boolean;
+  username: string;
+  secondaryUsername?: string;
+  fullName?: string;
+  bio?: string;
+  followers?: string;
+  postsCount?: string;
+  category?: string;
+  whatsappPhone?: string;
+  externalUrl?: string;
+  avatarUrl?: string;
+  postPhotos: string[];
+  postCaptions: string[];
+}
+
+interface ExtractedGoogleMapsData {
+  found: boolean;
+  originalUrl: string;
+  resolvedUrl: string;
+  placeName?: string;
+  address?: string;
+  cityState?: string;
+  rating?: string;
+  reviewsCount?: string;
+  category?: string;
+  phone?: string;
+  description?: string;
+  latitude?: number;
+  longitude?: number;
+  photos: string[];
+}
+
+function decodeHtmlEntities(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+}
+
+function extractPhoneFromText(text: string): string | undefined {
+  if (!text) return undefined;
+  const waMatch = text.match(/wa\.me\/(\d{10,15})/i) || text.match(/phone=(\d{10,15})/i);
+  if (waMatch?.[1]) return waMatch[1];
+
+  const brPhoneMatch = text.match(/(?:\+?55\s?)?\(?([1-9]{2})\)?\s?(9?\d{4})[-\s.]?(\d{4})/);
+  if (brPhoneMatch) {
+    const ddd = brPhoneMatch[1];
+    const p1 = brPhoneMatch[2];
+    const p2 = brPhoneMatch[3];
+    return `55${ddd}${p1}${p2}`;
+  }
+  return undefined;
+}
+
+async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<string | null> {
+  if (!url || !url.startsWith('http')) return null;
+  try {
+    const cleanUrl = decodeHtmlEntities(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(cleanUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'TelegramBot (like TwitterBot)',
+        Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    if (!contentType.startsWith('image/')) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    if (arrayBuffer.byteLength < 600 || arrayBuffer.byteLength > 4 * 1024 * 1024) return null;
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    return `data:${contentType.split(';')[0]};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
+function cleanInstagramHandle(input?: string): string {
+  if (!input) return '';
+  let str = input.trim();
+  str = str.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '');
+  str = str.split('/')[0].split('?')[0];
+  str = str.replace(/^@/, '').trim();
+  return str;
+}
+
+async function fetchInstagramHtmlMultiSocket(username: string): Promise<string | null> {
+  if (!username) return null;
+  const targetUrl = `https://www.instagram.com/${encodeURIComponent(username)}/`;
+
+  // Dispara 6 conexões simultâneas para contornar IPs com rate-limit (302) e obter resposta 200 OK com OpenGraph completo
+  for (let round = 0; round < 2; round++) {
+    const sockets = Array.from({ length: 6 }, async () => {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3800);
+        const res = await fetch(targetUrl, {
+          redirect: 'manual',
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'TelegramBot (like TwitterBot)',
+          },
+        });
+        clearTimeout(timer);
+        if (res.status === 200) {
+          const text = await res.text();
+          if (text.includes('og:title') || text.includes('og:image')) {
+            return text;
+          }
+        }
+      } catch {
+        // Ignora falha individual do socket
+      }
+      return null;
+    });
+
+    const results = await Promise.all(sockets);
+    const validHtml = results.find(Boolean);
+    if (validHtml) return validHtml;
+  }
+  return null;
+}
+
+function parseInstagramMetaFromHtml(html: string): {
+  fullName?: string;
+  bio?: string;
+  followers?: string;
+  postsCount?: string;
+  ogImage?: string;
+  mentionedHandles: string[];
+} {
+  const ogTitleRaw =
+    html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)?.[1];
+
+  const ogDescRaw =
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i)?.[1];
+
+  const metaDescRaw =
+    html.match(/<meta[^>]+name=["']description["'][^>]+content="([^"]+)"/i)?.[1] ||
+    html.match(/<meta[^>]+content="([^"]+)"[^>]+name=["']description["']/i)?.[1];
+
+  const ogImageRaw =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+
+  let fullName: string | undefined;
+  let bio: string | undefined;
+  let followers: string | undefined;
+  let postsCount: string | undefined;
+  const mentionedHandles: string[] = [];
+
+  if (ogTitleRaw) {
+    const decodedTitle = decodeHtmlEntities(ogTitleRaw);
+    const namePart = decodedTitle.split('(@')[0].split('•')[0].trim();
+    if (namePart && namePart.toLowerCase() !== 'instagram') {
+      fullName = namePart;
+    }
+  }
+
+  const combinedDesc = decodeHtmlEntities(metaDescRaw || ogDescRaw || '');
+  if (combinedDesc) {
+    const followerMatch = combinedDesc.match(/([\d.,]+[KkMm]?)\s*(?:Followers|seguidores)/i);
+    if (followerMatch?.[1]) {
+      const rawNum = followerMatch[1].replace(/,/g, '.');
+      followers = rawNum.includes('.') && rawNum.length > 4 ? `+${rawNum}` : followerMatch[1];
+    }
+
+    const postsMatch = combinedDesc.match(/([\d.,]+)\s*(?:Posts|publicações)/i);
+    if (postsMatch?.[1]) {
+      postsCount = postsMatch[1];
+    }
+
+    // Extrai o texto exato da bio após 'on Instagram: "..."'
+    const bioQuoteMatch = combinedDesc.match(/on Instagram:\s*"([\s\S]*)"$/i);
+    if (bioQuoteMatch?.[1]) {
+      bio = bioQuoteMatch[1].trim();
+    } else if (!combinedDesc.includes('See Instagram photos and videos')) {
+      const parts = combinedDesc.split(' - ');
+      if (parts.length > 1) {
+        bio = parts.slice(1).join(' - ').trim();
+      }
+    }
+
+    // Extrai nome completo caso esteja antes de (@usuario) na meta description
+    if (!fullName) {
+      const descNameMatch = combinedDesc.match(/-\s*([^(@]+?)\s*\(@/);
+      if (descNameMatch?.[1]) {
+        fullName = descNameMatch[1].trim();
+      }
+    }
+  }
+
+  if (bio) {
+    const handles = Array.from(bio.matchAll(/@([a-zA-Z0-9._]{3,30})/g), (m) => m[1]);
+    for (const h of handles) {
+      if (!mentionedHandles.includes(h)) {
+        mentionedHandles.push(h);
+      }
+    }
+  }
+
+  const ogImage = ogImageRaw ? decodeHtmlEntities(ogImageRaw) : undefined;
+
+  return {
+    fullName,
+    bio,
+    followers,
+    postsCount,
+    ogImage,
+    mentionedHandles,
+  };
+}
+
+async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedInstagramData> {
+  const username = cleanInstagramHandle(rawInstagram);
+  const result: ExtractedInstagramData = {
+    found: false,
+    username,
+    postPhotos: [],
+    postCaptions: [],
+  };
+
+  if (!username) return result;
+
+  const rawPhotoUrls: string[] = [];
+  let rawAvatarUrl = '';
+
+  // 1) Extrai HTML do perfil principal no Instagram usando múltiplos sockets simultâneos com TelegramBot UA
+  const primaryHtml = await fetchInstagramHtmlMultiSocket(username);
+  if (primaryHtml) {
+    const parsed = parseInstagramMetaFromHtml(primaryHtml);
+    if (parsed.fullName) {
+      result.fullName = parsed.fullName;
+      result.found = true;
+    }
+    if (parsed.bio) {
+      result.bio = parsed.bio;
+      result.found = true;
+    }
+    if (parsed.followers) {
+      result.followers = parsed.followers;
+    }
+    if (parsed.postsCount) {
+      result.postsCount = parsed.postsCount;
+    }
+    if (parsed.ogImage) {
+      rawAvatarUrl = parsed.ogImage;
+      result.found = true;
+    }
+
+    const phoneInBio = extractPhoneFromText(parsed.bio || '');
+    if (phoneInBio) {
+      result.whatsappPhone = phoneInBio;
+    }
+
+    // 2) Se a bio do perfil principal referencia um perfil profissional secundário (ex: "CEO: @studiolorrayneramos"), busca ele também!
+    const secondaryHandle = parsed.mentionedHandles.find(
+      (h) => h.toLowerCase() !== username.toLowerCase()
+    );
+    if (secondaryHandle) {
+      result.secondaryUsername = secondaryHandle;
+      const secondaryHtml = await fetchInstagramHtmlMultiSocket(secondaryHandle);
+      if (secondaryHtml) {
+        const secParsed = parseInstagramMetaFromHtml(secondaryHtml);
+        if (secParsed.fullName) {
+          // Ex: "STUDIO LORRAYNE RAMOS - EXTENSÃO DE CÍLIOS CONTAGEM"
+          const titleParts = secParsed.fullName.split(' - ');
+          if (titleParts.length >= 2) {
+            result.fullName = titleParts[0].trim();
+            result.category = titleParts.slice(1).join(' - ').trim();
+          } else {
+            result.fullName = secParsed.fullName;
+          }
+        }
+        if (secParsed.bio) {
+          result.bio = result.bio
+            ? `${secParsed.bio} (${result.bio})`
+            : secParsed.bio;
+          const secPhone = extractPhoneFromText(secParsed.bio);
+          if (secPhone && !result.whatsappPhone) {
+            result.whatsappPhone = secPhone;
+          }
+        }
+        if (secParsed.ogImage) {
+          rawPhotoUrls.push(secParsed.ogImage);
+        }
+      }
+    }
+  }
+
+  // 3) Tenta endpoint web_profile_info caso disponível para capturar fotos extras de posts
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3500);
+    const apiRes = await fetch(
+      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+      {
+        signal: controller.signal,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'x-ig-app-id': '936619743392459',
+          Accept: '*/*',
+          Referer: `https://www.instagram.com/${username}/`,
+        },
+      }
+    );
+    clearTimeout(timer);
+
+    if (apiRes.ok) {
+      const json: any = await apiRes.json();
+      const user = json?.data?.user;
+      if (user) {
+        result.found = true;
+        if (user.full_name && !result.fullName) result.fullName = user.full_name;
+        if (user.biography && !result.bio) result.bio = user.biography;
+        if ((user.category_name || user.business_category_name) && !result.category) {
+          result.category = user.category_name || user.business_category_name;
+        }
+        if (!rawAvatarUrl) {
+          rawAvatarUrl = user.profile_pic_url_hd || user.profile_pic_url || '';
+        }
+        const edges = user.edge_owner_to_timeline_media?.edges;
+        if (Array.isArray(edges)) {
+          for (const edge of edges.slice(0, 6)) {
+            const node = edge?.node;
+            const imgUrl = node?.display_url || node?.thumbnail_src;
+            if (imgUrl && !rawPhotoUrls.includes(imgUrl)) rawPhotoUrls.push(imgUrl);
+            const caption = node?.edge_media_to_caption?.edges?.[0]?.node?.text;
+            if (caption) result.postCaptions.push(String(caption).slice(0, 240));
+          }
+        }
+      }
+    }
+  } catch {
+    // Segue com os dados já coletados
+  }
+
+  // 4) Converte avatar e fotos para Data URL (base64) para evitar bloqueio de CORS do CDN do Instagram no navegador
+  if (rawAvatarUrl) {
+    const avatarDataUrl = await fetchImageAsDataUrl(rawAvatarUrl);
+    if (avatarDataUrl) {
+      result.avatarUrl = avatarDataUrl;
+      result.found = true;
+    }
+  }
+
+  if (rawPhotoUrls.length > 0) {
+    const converted = await Promise.all(
+      rawPhotoUrls.slice(0, 6).map((u) => fetchImageAsDataUrl(u))
+    );
+    result.postPhotos = converted.filter((p): p is string => Boolean(p));
+  }
+
+  return result;
+}
+
+function looksLikeStreetAddress(str: string): boolean {
+  if (!str) return false;
+  return /\b(?:rua|av\.|avenida|alameda|travessa|praça|rodovia|estrada|bairro|centro|sala|loja|andar|bloco|cep|\d{5}-?\d{3}|mg|sp|rj|pr|sc|rs|ba|pe|ce|df|go|es|mt|ms|pa|am)\b/i.test(
+    str
+  );
+}
+
+async function reverseGeocodeCoordinates(
+  lat: number,
+  lon: number
+): Promise<{ formattedAddress?: string; cityState?: string }> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=pt-BR`,
+      {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'LuxeBioStudioPro/1.0 (https://luxebio.app)',
+        },
+      }
+    );
+    clearTimeout(timer);
+    if (!res.ok) return {};
+    const data: any = await res.json();
+    const addr = data?.address;
+    if (!addr) return {};
+
+    const road = addr.road || addr.pedestrian || addr.suburb || '';
+    const number = addr.house_number || '';
+    const neighbourhood = addr.suburb || addr.neighbourhood || addr.quarter || '';
+    const city = addr.city || addr.town || addr.municipality || addr.village || '';
+    const stateCode =
+      (addr['ISO3166-2-lvl4'] || '').replace(/^BR-/, '') || addr.state || '';
+    const postcode = addr.postcode || '';
+
+    const streetPart = [road, number].filter(Boolean).join(', ');
+    const districtPart = neighbourhood && neighbourhood !== road ? neighbourhood : '';
+    const cityStatePart = [city, stateCode].filter(Boolean).join(' - ');
+
+    const segments = [streetPart, districtPart, cityStatePart, postcode].filter(Boolean);
+    return {
+      formattedAddress: segments.join(', '),
+      cityState: cityStatePart || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function extractGoogleMapsInfo(rawMapsInput?: string): Promise<ExtractedGoogleMapsData> {
+  const input = (rawMapsInput || '').trim();
+  const result: ExtractedGoogleMapsData = {
+    found: false,
+    originalUrl: input,
+    resolvedUrl: input || 'https://maps.google.com',
+    photos: [],
+  };
+
+  if (!input) return result;
+
+  if (!input.startsWith('http://') && !input.startsWith('https://')) {
+    result.found = true;
+    result.address = input;
+    result.resolvedUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(input)}`;
+    return result;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5500);
+    const res = await fetch(input, {
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+      },
+    });
+    clearTimeout(timer);
+
+    if (res.url) {
+      result.resolvedUrl = res.url;
+    }
+
+    // 1) Extrai nome do estabelecimento e especialidade/endereço da URL resolvida (/maps/place/Nome/@lat,lng)
+    const placeMatch = result.resolvedUrl.match(/\/maps\/place\/([^/@?]+)/i);
+    if (placeMatch?.[1]) {
+      const decodedPlace = decodeURIComponent(placeMatch[1].replace(/\+/g, ' ')).trim();
+      if (decodedPlace) {
+        result.found = true;
+        const parts = decodedPlace.split(' - ').map((p) => p.trim());
+        if (parts.length >= 2) {
+          result.placeName = parts[0];
+          const secondPart = parts.slice(1).join(' - ');
+          if (looksLikeStreetAddress(secondPart)) {
+            result.address = secondPart;
+          } else {
+            result.category = secondPart;
+          }
+        } else {
+          result.placeName = decodedPlace;
+        }
+      }
+    }
+
+    // 2) Extrai coordenadas exatas do estabelecimento na URL do Google Maps (!3dLAT!4dLON ou @LAT,LON)
+    const exactCoordMatch =
+      result.resolvedUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) ||
+      result.resolvedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (exactCoordMatch) {
+      const lat = parseFloat(exactCoordMatch[1]);
+      const lon = parseFloat(exactCoordMatch[2]);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        result.latitude = lat;
+        result.longitude = lon;
+        const geo = await reverseGeocodeCoordinates(lat, lon);
+        if (geo.formattedAddress && !result.address) {
+          result.address = geo.formattedAddress;
+        }
+        if (geo.cityState) {
+          result.cityState = geo.cityState;
+        }
+      }
+    }
+
+    // 3) Analisa HTML do Google Maps para fotos, nota e telefone
+    const html = await res.text();
+    const embeddedRating = html.match(/\[null,null,([45]\.\d),(\d+)\]/);
+    if (embeddedRating) {
+      result.rating = `${embeddedRating[1]}★`;
+      result.reviewsCount = embeddedRating[2];
+    }
+
+    const phoneInHtml = extractPhoneFromText(html);
+    if (phoneInHtml) {
+      result.phone = phoneInHtml;
+    }
+
+    const lhMatches = html.matchAll(
+      /https:\/\/lh[35]\.googleusercontent\.com\/(?:p|gps-cs-s)\/(AF1Qip[A-Za-z0-9_-]+)/g
+    );
+    const seenIds = new Set<string>();
+    const rawGooglePhotos: string[] = [];
+    for (const match of lhMatches) {
+      const photoId = match[1];
+      if (photoId && !seenIds.has(photoId) && rawGooglePhotos.length < 6) {
+        seenIds.add(photoId);
+        rawGooglePhotos.push(`https://lh3.googleusercontent.com/p/${photoId}=w800-h800-k-no`);
+      }
+    }
+
+    if (rawGooglePhotos.length > 0) {
+      const photoConversions = await Promise.all(
+        rawGooglePhotos.slice(0, 6).map(async (u) => {
+          const dataUrl = await fetchImageAsDataUrl(u, 4000);
+          return dataUrl || u;
+        })
+      );
+      result.photos = photoConversions.filter(Boolean);
+    }
+  } catch {
+    // Mantém dados já resolvidos da URL
+  }
+
+  return result;
+}
+
+function applyExtractedAssetsToMicrosite(
+  microsite: any,
+  instaData: ExtractedInstagramData,
+  mapsData: ExtractedGoogleMapsData,
+  rawParams: {
+    instagram?: string;
+    googleMaps?: string;
+    businessName?: string;
+    businessNiche?: string;
+  }
+) {
+  if (!microsite || typeof microsite !== 'object') return microsite;
+
+  // Combina todas as fotos reais extraídas do Instagram (perfil + perfil secundário/posts) e Google Meu Negócio
+  const allRealPhotos: string[] = [
+    ...(instaData.avatarUrl ? [instaData.avatarUrl] : []),
+    ...instaData.postPhotos,
+    ...mapsData.photos,
+  ].filter(Boolean);
+
+  const primaryAvatar =
+    instaData.avatarUrl ||
+    instaData.postPhotos[0] ||
+    mapsData.photos[0] ||
+    microsite.profile?.avatarUrl;
+
+  const secondaryPhoto =
+    instaData.postPhotos[0] ||
+    mapsData.photos[0] ||
+    instaData.avatarUrl ||
+    microsite.profile?.aboutPhotoUrl;
+
+  if (!microsite.profile) microsite.profile = {};
+
+  if (primaryAvatar) {
+    microsite.profile.avatarUrl = primaryAvatar;
+  }
+  if (secondaryPhoto) {
+    microsite.profile.aboutPhotoUrl = secondaryPhoto;
+  }
+
+  const resolvedBusinessName =
+    rawParams.businessName?.trim() ||
+    mapsData.placeName?.trim() ||
+    instaData.fullName?.trim();
+  if (resolvedBusinessName) {
+    microsite.profile.name = resolvedBusinessName.toUpperCase();
+  }
+
+  if (instaData.username) {
+    microsite.profile.instagram = instaData.username;
+  }
+
+  const realPhone = instaData.whatsappPhone || mapsData.phone;
+  if (realPhone) {
+    microsite.profile.whatsapp = realPhone;
+  }
+
+  const finalMapsUrl = mapsData.resolvedUrl || rawParams.googleMaps || microsite.profile.mapsUrl;
+  if (finalMapsUrl) {
+    microsite.profile.mapsUrl = finalMapsUrl;
+    if (microsite.locationCard) {
+      microsite.locationCard.mapsUrl = finalMapsUrl;
+    }
+  }
+
+  if (mapsData.address) {
+    microsite.profile.location = mapsData.address;
+    if (microsite.locationCard) {
+      microsite.locationCard.address = mapsData.address;
+      if (resolvedBusinessName) {
+        microsite.locationCard.headline = `Localização — ${resolvedBusinessName}`;
+      }
+    }
+  }
+
+  // Métricas reais do Instagram e Google Meu Negócio
+  if (microsite.metrics) {
+    if (instaData.followers) {
+      microsite.metrics.stat1Value = instaData.followers;
+      microsite.metrics.stat1Label = 'SEGUIDORES NO INSTA';
+    }
+    if (mapsData.rating) {
+      microsite.metrics.stat3Value = mapsData.rating;
+      microsite.metrics.stat3Label = mapsData.reviewsCount
+        ? `GOOGLE (${mapsData.reviewsCount} AVAL.)`
+        : 'GOOGLE MEU NEGÓCIO';
+    } else if (mapsData.found) {
+      microsite.metrics.stat3Value = '5.0★';
+      microsite.metrics.stat3Label = 'GOOGLE MEU NEGÓCIO';
+    }
+  }
+
+  // Galeria de Fotos (studentGrid) com as fotos reais extraídas no topo
+  if (allRealPhotos.length > 0) {
+    if (!microsite.studentGrid) {
+      microsite.studentGrid = {
+        enabled: true,
+        headline: 'Portfólio & Transformações Reais',
+        subtitle: 'Confira registros do nosso Instagram e Google Meu Negócio',
+        photos: [],
+      };
+    }
+    const existingFallbacks = Array.isArray(microsite.studentGrid.photos)
+      ? microsite.studentGrid.photos
+      : [];
+    const mergedPhotos: string[] = [...allRealPhotos];
+    for (const fb of existingFallbacks) {
+      if (mergedPhotos.length >= 6) break;
+      if (!mergedPhotos.includes(fb)) mergedPhotos.push(fb);
+    }
+    microsite.studentGrid.photos = mergedPhotos.slice(0, 6);
+  }
+
+  // Aplica as fotos reais nos Action Cards e nos Serviços principais
+  if (Array.isArray(microsite.actionCards) && allRealPhotos.length > 0) {
+    if (microsite.actionCards[0]) {
+      microsite.actionCards[0].cardImage = primaryAvatar || allRealPhotos[0];
+    }
+    if (microsite.actionCards[1]) {
+      microsite.actionCards[1].cardImage = secondaryPhoto || allRealPhotos[0];
+    }
+    if (microsite.actionCards[2] && mapsData.address) {
+      microsite.actionCards[2].subtitle = mapsData.address;
+      microsite.actionCards[2].url = finalMapsUrl;
+    }
+  }
+
+  if (Array.isArray(microsite.services?.items) && allRealPhotos.length > 0) {
+    microsite.services.items = microsite.services.items.map((item: any, idx: number) => ({
+      ...item,
+      imageUrl: allRealPhotos[idx % allRealPhotos.length] || item.imageUrl,
+    }));
+  }
+
+  return microsite;
+}
+
 function buildSmartFallbackMicrosite(params: {
   instagram?: string;
   googleMaps?: string;
   businessName?: string;
   businessNiche?: string;
   additionalInfo?: string;
+  address?: string;
+  bio?: string;
 }) {
-  const cleanInsta = (params.instagram || '').replace('@', '').trim() || 'studiovip';
-  const rawName = (params.businessName || '').trim() || cleanInsta.replace(/[._-]+/g, ' ').toUpperCase() || 'STUDIO VIP';
+  const cleanInsta = cleanInstagramHandle(params.instagram) || 'studiovip';
+  const rawName =
+    (params.businessName || '').trim() ||
+    cleanInsta.replace(/[._-]+/g, ' ').toUpperCase() ||
+    'STUDIO VIP';
   const nameUpper = rawName.toUpperCase();
-  const nicheRaw = `${params.businessNiche || ''} ${params.additionalInfo || ''} ${rawName}`.toLowerCase();
+  const nicheRaw = `${params.businessNiche || ''} ${params.additionalInfo || ''} ${params.bio || ''} ${rawName}`.toLowerCase();
   const mapsUrl = (params.googleMaps || '').trim() || 'https://maps.google.com';
+  const realAddress =
+    params.address || 'Espaço Exclusivo & Climatizado · Atendimento com Hora Marcada';
 
   const isBeautyLashNail = /c[ií]lio|lash|unha|nail|manicure|fibra|gel|sobrancelha|beleza|studio|est[eé]tica|make|maquiagem|sal[aã]o|cabelo|hair/.test(nicheRaw);
   const isBarber = /barbearia|barber|barba|fade|degrad[eê]|corte masculino|grooming/.test(nicheRaw);
@@ -58,14 +743,15 @@ function buildSmartFallbackMicrosite(params: {
         name: nameUpper,
         title: specialtyTitle,
         tagline:
+          params.bio?.trim() ||
           params.additionalInfo?.trim() ||
-          'Realçando sua beleza natural com técnicas exclusivas, durabilidade impecável e atendimento personalizado.',
-        cursivePhrase: 'Sua autoestima e olhar radiante em cada detalhe.',
+          'Realçando sua beleza natural com mapeamento individual, proporção, leveza e alta durabilidade.',
+        cursivePhrase: 'O cuidado e a excelência que você merece em cada detalhe.',
         avatarUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
         aboutPhotoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
         whatsapp: '5511999999999',
         instagram: cleanInsta,
-        location: 'Espaço Exclusivo & Climatizado · Atendimento com Hora Marcada',
+        location: realAddress,
         mapsUrl,
       },
       metrics: {
@@ -74,8 +760,8 @@ function buildSmartFallbackMicrosite(params: {
         stat1Label: 'CLIENTES ATENDIDAS',
         stat2Value: '100%',
         stat2Label: 'BIOSSEGURANÇA',
-        stat3Value: '4.9★',
-        stat3Label: 'AVALIAÇÃO VIP',
+        stat3Value: '5.0★',
+        stat3Label: 'GOOGLE MEU NEGÓCIO',
       },
       actionCards: [
         {
@@ -85,7 +771,7 @@ function buildSmartFallbackMicrosite(params: {
           icon: 'Calendar',
           linkType: 'booking',
           url: '#booking',
-          whatsappMessage: `Olá! Vim pelo link da bio do ${rawName} e gostaria de agendar um horário.`,
+          whatsappMessage: `Olá! Vim pelo microsite do ${rawName} e gostaria de agendar um horário.`,
           openInNewTab: true,
           animation: 'pulse-glow',
           variant: 'accent',
@@ -122,8 +808,8 @@ function buildSmartFallbackMicrosite(params: {
         },
         {
           id: 'cta-3',
-          title: 'COMO CHEGAR AO STUDIO (LOCALIZAÇÃO)',
-          subtitle: 'Clique para abrir a rota direta no Google Maps.',
+          title: 'COMO CHEGAR AO STUDIO (GOOGLE MAPS)',
+          subtitle: realAddress,
           icon: 'MapPin',
           linkType: 'custom',
           url: mapsUrl,
@@ -131,7 +817,7 @@ function buildSmartFallbackMicrosite(params: {
           openInNewTab: true,
           animation: 'none',
           variant: 'default',
-          badgeText: 'MAPS',
+          badgeText: 'LOCALIZAÇÃO',
           customBg: '#ffffff',
           customText: '#3b1d28',
           bgImage: '',
@@ -145,7 +831,7 @@ function buildSmartFallbackMicrosite(params: {
       processSteps: {
         enabled: true,
         headline: 'Como funciona sua experiência VIP?',
-        subtitle: 'Cuidado, precisão e conforto em 3 passos simples',
+        subtitle: 'Mapeamento individual, proporção e leveza em 3 passos',
         steps: [
           {
             id: 'step-1',
@@ -156,8 +842,8 @@ function buildSmartFallbackMicrosite(params: {
           {
             id: 'step-2',
             number: '02',
-            title: 'Visagismo & Aplicação Personalizada',
-            description: 'Analisamos o formato do seu olhar e das suas mãos para um resultado harmônico e sofisticado.',
+            title: 'Mapeamento Individual & Proporção',
+            description: 'Analisamos o formato do seu olhar e das suas mãos para um resultado harmônico, leve e sofisticado.',
           },
           {
             id: 'step-3',
@@ -187,7 +873,7 @@ function buildSmartFallbackMicrosite(params: {
       locationCard: {
         enabled: true,
         headline: `Localização — ${rawName}`,
-        address: 'Clique para abrir a rota no Google Maps e vir até o nosso espaço',
+        address: realAddress,
         buttonLabel: 'Abrir no Google Maps',
         mapsUrl,
       },
@@ -200,8 +886,8 @@ function buildSmartFallbackMicrosite(params: {
         items: [
           {
             id: 'srv-1',
-            name: 'Extensão de Cílios (Volume Brasileiro / Fox Eyes / Fio a Fio)',
-            description: 'Mapeamento personalizado para destacar seu olhar com leveza, conforto e alta retenção.',
+            name: 'Extensão de Cílios (Mapeamento Individual / Volume Brasileiro / Fox Eyes)',
+            description: 'Mapeamento personalizado para destacar seu olhar com proporção, leveza e alta retenção.',
             price: 'R$ 180',
             oldPrice: 'R$ 220',
             duration: '1h45',
@@ -241,20 +927,20 @@ function buildSmartFallbackMicrosite(params: {
       },
       testimonials: {
         enabled: true,
-        headline: 'O que nossas clientes dizem',
+        headline: 'Avaliações no Google Meu Negócio & Clientes',
         items: [
           {
             id: 't-1',
             clientName: 'Mariana Costa',
-            city: 'Cliente Verificada',
-            text: `Simplesmente apaixonada! Meus cílios e minhas unhas ficaram perfeitos, durabilidade incrível e ambiente super acolhedor.`,
+            city: 'Avaliação 5★ no Google',
+            text: `Simplesmente apaixonada pelo atendimento no ${rawName}! Meus cílios e minhas unhas ficaram perfeitos, muita leveza e durabilidade incrível.`,
             rating: 5,
           },
           {
             id: 't-2',
             clientName: 'Bianca Fernandes',
-            city: 'Cliente Verificada',
-            text: `Melhor atendimento da região! Delicadeza, pontualidade e resultado impecável. Não troco por nada!`,
+            city: 'Avaliação 5★ no Google',
+            text: `Melhor studio da região! Mapeamento impecável, delicadeza, pontualidade e ambiente super acolhedor.`,
             rating: 5,
           },
         ],
@@ -295,7 +981,7 @@ function buildSmartFallbackMicrosite(params: {
       aboutMe: {
         enabled: true,
         headline: `Sobre ${rawName}`,
-        paragraph: `Referência em ${params.businessNiche || 'Extensão de Cílios e Nail Design'}, nosso studio nasceu com a missão de entregar um atendimento acolhedor, técnico e altamente personalizado. Utilizamos apenas materiais de excelência para garantir saúde, durabilidade e um acabamento sofisticado que valoriza sua beleza única.`,
+        paragraph: `Referência em ${params.businessNiche || 'Extensão de Cílios e Nail Design'}${params.address ? ` (${params.address})` : ''}, nosso studio nasceu com a missão de entregar o cuidado que você merece: mapeamento individual, proporção, leveza e materiais de excelência para valorizar sua beleza única.`,
         closingPhrase: 'Beleza, autocuidado e excelência em cada atendimento.',
       },
       faq: {
@@ -305,12 +991,12 @@ function buildSmartFallbackMicrosite(params: {
           {
             id: 'faq-1',
             question: 'Qual é a durabilidade da extensão de cílios e do alongamento de unhas?',
-            answer: 'Trabalhamos com produtos premium de alta retenção. Recomendamos manutenção entre 15 e 25 dias para manter o resultado sempre impecável.',
+            answer: 'Trabalhamos com mapeamento individual e produtos premium de alta retenção. Recomendamos manutenção entre 15 e 25 dias para manter o resultado sempre impecável.',
           },
           {
             id: 'faq-2',
-            question: 'Como faço para garantir meu horário na agenda?',
-            answer: 'Basta clicar no botão de agendamento ou enviar a triagem rápida no WhatsApp. Nossa equipe retornará imediatamente com os horários disponíveis.',
+            question: 'Onde o Studio está localizado e como agendar?',
+            answer: `Estamos em ${realAddress}. Basta clicar no botão de agendamento para reservar seu horário exclusivo pelo WhatsApp.`,
           },
         ],
       },
@@ -360,6 +1046,7 @@ function buildSmartFallbackMicrosite(params: {
       name: nameUpper,
       title: (params.businessNiche || 'ESPECIALISTA & ATENDIMENTO PREMIUM').toUpperCase(),
       tagline:
+        params.bio?.trim() ||
         params.additionalInfo?.trim() ||
         `Excelência, atendimento personalizado e resultados de alto padrão em ${params.businessNiche || 'nossa área de atuação'}.`,
       cursivePhrase: 'Compromisso com a sua melhor experiência.',
@@ -369,7 +1056,7 @@ function buildSmartFallbackMicrosite(params: {
       aboutPhotoUrl: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=600',
       whatsapp: '5511999999999',
       instagram: cleanInsta,
-      location: 'Atendimento Presencial & Online com Hora Marcada',
+      location: realAddress,
       mapsUrl,
     },
     metrics: {
@@ -427,7 +1114,7 @@ function buildSmartFallbackMicrosite(params: {
       {
         id: 'cta-3',
         title: 'LOCALIZAÇÃO & COMO CHEGAR',
-        subtitle: 'Abra a rota direta no Google Maps.',
+        subtitle: realAddress,
         icon: 'MapPin',
         linkType: 'custom',
         url: mapsUrl,
@@ -491,7 +1178,7 @@ function buildSmartFallbackMicrosite(params: {
     locationCard: {
       enabled: true,
       headline: `Localização — ${rawName}`,
-      address: 'Confira nossa localização oficial pelo Google Maps',
+      address: realAddress,
       buttonLabel: 'Abrir no Google Maps',
       mapsUrl,
     },
@@ -616,20 +1303,61 @@ export default async function handler(req: any, res: any) {
 
   const { instagram, googleMaps, businessName, businessNiche, additionalInfo } = req.body || {};
 
+  // 1) Busca em paralelo os dados e imagens reais do Instagram e do Google Meu Negócio
+  const [instaData, mapsData] = await Promise.all([
+    extractInstagramInfo(instagram),
+    extractGoogleMapsInfo(googleMaps),
+  ]);
+
+  const effectiveBusinessName =
+    businessName?.trim() ||
+    mapsData.placeName?.trim() ||
+    instaData.fullName?.trim() ||
+    cleanInstagramHandle(instagram).replace(/[._-]+/g, ' ').toUpperCase();
+
+  const effectiveNiche =
+    businessNiche?.trim() ||
+    mapsData.category?.trim() ||
+    instaData.category?.trim() ||
+    '';
+
+  const extractedMeta = {
+    instagramFound: instaData.found,
+    instagramUsername: instaData.username,
+    instagramSecondaryUsername: instaData.secondaryUsername || null,
+    instagramFullName: instaData.fullName || null,
+    instagramBio: instaData.bio || null,
+    instagramFollowers: instaData.followers || null,
+    instagramPhotosCount: (instaData.avatarUrl ? 1 : 0) + instaData.postPhotos.length,
+    mapsFound: mapsData.found,
+    mapsPlaceName: mapsData.placeName || null,
+    mapsCategory: mapsData.category || null,
+    mapsAddress: mapsData.address || null,
+    mapsRating: mapsData.rating || null,
+    mapsPhotosCount: mapsData.photos.length,
+  };
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      // Fallback inteligente caso a chave não esteja configurada na Vercel
-      const fallbackData = buildSmartFallbackMicrosite({
-        instagram,
-        googleMaps,
-        businessName,
-        businessNiche,
-        additionalInfo,
-      });
+      const fallbackData = applyExtractedAssetsToMicrosite(
+        buildSmartFallbackMicrosite({
+          instagram: instaData.username || instagram,
+          googleMaps: mapsData.resolvedUrl || googleMaps,
+          businessName: effectiveBusinessName,
+          businessNiche: effectiveNiche,
+          additionalInfo,
+          address: mapsData.address,
+          bio: instaData.bio,
+        }),
+        instaData,
+        mapsData,
+        { instagram, googleMaps, businessName: effectiveBusinessName, businessNiche: effectiveNiche }
+      );
       return res.status(200).json({
         success: true,
         data: fallbackData,
+        extractedMeta,
         source: 'smart-fallback',
       });
     }
@@ -646,15 +1374,29 @@ export default async function handler(req: any, res: any) {
     const prompt = `
 Você é um especialista mundial em Copywriting, UX/UI Design e Estratégia de Vendas para Microsites de Alta Conversão em dispositivos móveis (Instagram Bio, WhatsApp e Google Meu Negócio).
 
-DADOS FORNECIDOS PELO CLIENTE:
-- Instagram: @${instagram ? String(instagram).replace('@', '').trim() : 'Não informado'}
-- Link Google Meu Negócio / Maps: ${googleMaps || 'Não informado'}
-- Nome da Empresa / Profissional: ${businessName || 'Não informado'}
-- Nicho de Atuação: ${businessNiche || 'Identificar pelo Instagram/Negócio'}
-- Informações Adicionais / Serviços / Diferenciais: ${additionalInfo || 'Nenhuma informação adicional'}
+DADOS INFORMADOS PELO USUÁRIO:
+- Instagram informado: @${instaData.username || 'Não informado'}${instaData.secondaryUsername ? ` (Perfil do Studio vinculado: @${instaData.secondaryUsername})` : ''}
+- Link Google Meu Negócio / Maps: ${mapsData.resolvedUrl || googleMaps || 'Não informado'}
+- Nome da Empresa / Profissional: ${effectiveBusinessName || 'Não informado'}
+- Nicho / Especialidade: ${effectiveNiche || 'Identificar pelo Instagram e Google Meu Negócio'}
+- Informações Adicionais: ${additionalInfo || 'Nenhuma informação adicional'}
+
+DADOS REAIS EXTRAÍDOS DO INSTAGRAM:
+- Nome no Perfil: ${instaData.fullName || 'Não extraído'}
+- Biografia Real do Instagram: ${instaData.bio || 'Não extraída'}
+- Especialidade / Categoria: ${instaData.category || mapsData.category || 'Não extraída'}
+- Seguidores: ${instaData.followers || 'Não extraído'}
+- WhatsApp/Telefone detectado: ${instaData.whatsappPhone || mapsData.phone || 'Não detectado'}
+
+DADOS REAIS EXTRAÍDOS DO GOOGLE MEU NEGÓCIO / GOOGLE MAPS:
+- Nome do Estabelecimento no Maps: ${mapsData.placeName || 'Não extraído'}
+- Especialidade no Maps: ${mapsData.category || 'Não extraída'}
+- Endereço Físico Real (Rua, Bairro, Cidade/UF, CEP): ${mapsData.address || 'Não extraído'}
+- Avaliação / Nota no Google: ${mapsData.rating || '5.0★'}
 
 OBJETIVO:
-Gere a estrutura completa do microsite de alta conversão para este cliente em Português do Brasil. Escolha o melhor tema visual dentre os disponíveis (ex: para extensão de cílios / nail designer / estética feminina prefira roseGoldQuartz, pinkGlam, pearlChampagne, darkGold ou orchidGlow; para barbearia prefira barberVintage ou barberRoyal; para advocacia prefira navyLaw ou bordeauxExecutive) e redija copys persuasivas com gatilhos mentais (autoridade, escassez, prova social) específicas para o nicho informado.
+Gere a estrutura completa do microsite de alta conversão para este cliente em Português do Brasil, utilizando fielmente os DADOS REAIS extraídos do Instagram e do Google Meu Negócio (nome real "${effectiveBusinessName}", bio real "${instaData.bio || ''}", endereço real "${mapsData.address || ''}", serviços reais de ${effectiveNiche || 'sua área'}).
+Escolha o melhor tema visual dentre os disponíveis (ex: para extensão de cílios / nail designer / estética feminina prefira roseGoldQuartz, pinkGlam, pearlChampagne, darkGold ou orchidGlow; para barbearia prefira barberVintage ou barberRoyal; para advocacia prefira navyLaw ou bordeauxExecutive).
 
 RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, sem explicações em texto) com a estrutura abaixo:
 
@@ -679,25 +1421,25 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
     "link": "#booking"
   },
   "profile": {
-    "name": "NOME DO CLIENTE EM MAIÚSCULAS",
-    "title": "ESPECIALIDADE PRINCIPAL EM MAIÚSCULAS",
-    "tagline": "Frase persuasiva focada no desejo e transformação do cliente",
+    "name": "${(effectiveBusinessName || 'NOME DO CLIENTE').toUpperCase()}",
+    "title": "${(effectiveNiche || 'ESPECIALIDADE PRINCIPAL').toUpperCase()}",
+    "tagline": "Frase persuasiva baseada na bio do Instagram e diferenciais do negócio",
     "cursivePhrase": "Frase em caligrafia com elegância e tom humano",
     "avatarUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600",
     "aboutPhotoUrl": "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600",
-    "whatsapp": "5511999999999",
-    "instagram": "${instagram ? String(instagram).replace('@', '').trim() : 'instagram'}",
-    "location": "Atendimento com Hora Marcada · Espaço Exclusivo",
-    "mapsUrl": "${googleMaps || 'https://maps.google.com'}"
+    "whatsapp": "${instaData.whatsappPhone || mapsData.phone || '5511999999999'}",
+    "instagram": "${instaData.username || 'instagram'}",
+    "location": "${mapsData.address || 'Atendimento com Hora Marcada · Espaço Exclusivo'}",
+    "mapsUrl": "${mapsData.resolvedUrl || googleMaps || 'https://maps.google.com'}"
   },
   "metrics": {
     "enabled": true,
-    "stat1Value": "+1.000",
-    "stat1Label": "CLIENTES",
+    "stat1Value": "${instaData.followers || '+1.200'}",
+    "stat1Label": "${instaData.followers ? 'SEGUIDORES NO INSTA' : 'CLIENTES'}",
     "stat2Value": "100%",
     "stat2Label": "QUALIDADE VIP",
-    "stat3Value": "4.9★",
-    "stat3Label": "SATISFAÇÃO"
+    "stat3Value": "${mapsData.rating || '5.0★'}",
+    "stat3Label": "GOOGLE MEU NEGÓCIO"
   },
   "actionCards": [
     {
@@ -732,7 +1474,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
       "openInNewTab": false,
       "animation": "shimmer",
       "variant": "default",
-      "badgeText": "",
+      "badgeText": "CATÁLOGO VIP",
       "customBg": "#ffffff",
       "customText": "#0f172a",
       "bgImage": "",
@@ -744,24 +1486,24 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
     },
     {
       "id": "cta-3",
-      "title": "FALE DIRETAMENTE NO WHATSAPP",
-      "subtitle": "Tire suas dúvidas imediatamente com nossa equipe.",
-      "icon": "MessageCircle",
-      "linkType": "whatsapp",
-      "url": "https://wa.me/5511999999999",
-      "whatsappMessage": "Olá! Vi o link e gostaria de atendimento personalizado.",
+      "title": "COMO CHEGAR (LOCALIZAÇÃO GOOGLE MAPS)",
+      "subtitle": "${mapsData.address || 'Abra a rota direta no Google Maps para vir até nós.'}",
+      "icon": "MapPin",
+      "linkType": "custom",
+      "url": "${mapsData.resolvedUrl || googleMaps || 'https://maps.google.com'}",
+      "whatsappMessage": "Olá! Gostaria de confirmar a localização.",
       "openInNewTab": true,
-      "animation": "pulse-glow",
+      "animation": "none",
       "variant": "default",
-      "badgeText": "ONLINE",
-      "customBg": "#25D366",
-      "customText": "#000000",
+      "badgeText": "GOOGLE MAPS",
+      "customBg": "#ffffff",
+      "customText": "#0f172a",
       "bgImage": "",
       "imagePosition": "none",
       "cardImage": "",
       "imageFitStyle": "framed",
       "imageSize": 84,
-      "ctaActionText": "CONVERSAR AGORA"
+      "ctaActionText": "ABRIR ROTA"
     }
   ],
   "processSteps": {
@@ -804,10 +1546,10 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
   },
   "locationCard": {
     "enabled": true,
-    "headline": "Nossa Localização",
-    "address": "Confira a rota para o nosso espaço no Google Maps",
+    "headline": "Localização — ${effectiveBusinessName || 'Nosso Espaço'}",
+    "address": "${mapsData.address || 'Confira a rota para o nosso espaço no Google Maps'}",
     "buttonLabel": "Abrir no Google Maps",
-    "mapsUrl": "${googleMaps || 'https://maps.google.com'}"
+    "mapsUrl": "${mapsData.resolvedUrl || googleMaps || 'https://maps.google.com'}"
   },
   "services": {
     "enabled": true,
@@ -833,19 +1575,19 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
   },
   "testimonials": {
     "enabled": true,
-    "headline": "Depoimentos de Clientes",
+    "headline": "Avaliações no Google Meu Negócio & Clientes",
     "items": [
       {
         "id": "t-1",
         "clientName": "Camila Oliveira",
-        "city": "Cliente VIP",
+        "city": "Avaliação 5★ no Google",
         "text": "Atendimento sensacional! Superou todas as minhas expectativas.",
         "rating": 5
       },
       {
         "id": "t-2",
         "clientName": "Juliana Mendes",
-        "city": "Cliente VIP",
+        "city": "Avaliação 5★ no Google",
         "text": "Excelente profissionalismo, ambiente impecável e resultado perfeito!",
         "rating": 5
       }
@@ -890,8 +1632,8 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
   },
   "aboutMe": {
     "enabled": true,
-    "headline": "Sobre Nós",
-    "paragraph": "Texto persuasivo destacando os diferenciais do negócio e o compromisso com a satisfação de cada cliente.",
+    "headline": "Sobre ${effectiveBusinessName || 'Nós'}",
+    "paragraph": "Texto persuasivo destacando a história, a bio real do Instagram e os diferenciais do negócio no Google Meu Negócio.",
     "closingPhrase": "Sua confiança, nosso maior compromisso."
   },
   "faq": {
@@ -913,7 +1655,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
   "conversion": {
     "metaPixelId": "",
     "googleAnalyticsId": "",
-    "defaultWhatsappMsg": "Olá! Gostaria de informações sobre os serviços."
+    "defaultWhatsappMsg": "Olá! Vi o microsite de ${effectiveBusinessName || 'vocês'} e gostaria de agendar um horário."
   }
 }
 `;
@@ -927,11 +1669,11 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
             contents: prompt,
             config: {
               responseMimeType: 'application/json',
-              temperature: 0.7,
+              temperature: 0.65,
             },
           }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Timeout calling ${modelName}`)), 16000)
+            setTimeout(() => reject(new Error(`Timeout calling ${modelName}`)), 14000)
           ),
         ]);
 
@@ -954,30 +1696,48 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
 
     if (!parsedData) {
       parsedData = buildSmartFallbackMicrosite({
-        instagram,
-        googleMaps,
-        businessName,
-        businessNiche,
+        instagram: instaData.username || instagram,
+        googleMaps: mapsData.resolvedUrl || googleMaps,
+        businessName: effectiveBusinessName,
+        businessNiche: effectiveNiche,
         additionalInfo,
+        address: mapsData.address,
+        bio: instaData.bio,
       });
     }
+
+    parsedData = applyExtractedAssetsToMicrosite(parsedData, instaData, mapsData, {
+      instagram,
+      googleMaps,
+      businessName: effectiveBusinessName,
+      businessNiche: effectiveNiche,
+    });
 
     return res.status(200).json({
       success: true,
       data: parsedData,
+      extractedMeta,
     });
   } catch (err: any) {
-    console.error('Erro na rota /api/generate-microsite, ativando fallback inteligente:', err);
-    const fallbackData = buildSmartFallbackMicrosite({
-      instagram,
-      googleMaps,
-      businessName,
-      businessNiche,
-      additionalInfo,
-    });
+    console.error('Erro na rota /api/generate-microsite, ativando fallback inteligente com dados extraídos:', err);
+    const fallbackData = applyExtractedAssetsToMicrosite(
+      buildSmartFallbackMicrosite({
+        instagram: instaData.username || instagram,
+        googleMaps: mapsData.resolvedUrl || googleMaps,
+        businessName: effectiveBusinessName,
+        businessNiche: effectiveNiche,
+        additionalInfo,
+        address: mapsData.address,
+        bio: instaData.bio,
+      }),
+      instaData,
+      mapsData,
+      { instagram, googleMaps, businessName: effectiveBusinessName, businessNiche: effectiveNiche }
+    );
     return res.status(200).json({
       success: true,
       data: fallbackData,
+      extractedMeta,
       source: 'smart-fallback',
     });
   }

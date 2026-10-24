@@ -1456,6 +1456,7 @@ export default function App() {
   // AI Generator Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiStepIndex, setAiStepIndex] = useState(0);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiForm, setAiForm] = useState({
     instagram: '',
@@ -1728,7 +1729,7 @@ export default function App() {
     };
   };
 
-  const applyGeneratedMicrositeData = (generated: any) => {
+  const applyGeneratedMicrositeData = (generated: any, extractedMeta?: any) => {
     const safeTheme = generated?.theme && THEMES[generated.theme] ? generated.theme : 'roseGoldQuartz';
     const targetThemeObj = THEMES[safeTheme] || THEMES.roseGoldQuartz;
 
@@ -1777,7 +1778,12 @@ export default function App() {
           }))
         : INITIAL_DATA.services.items;
 
-    const cleanInsta = (aiForm.instagram || '').replace('@', '').trim();
+    const cleanInsta = (aiForm.instagram || '')
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+      .split('/')[0]
+      .split('?')[0]
+      .replace('@', '')
+      .trim();
     const cleanMaps = (aiForm.googleMaps || '').trim();
 
     setData((prev) => ({
@@ -1799,8 +1805,8 @@ export default function App() {
         name:
           generated?.profile?.name ||
           (aiForm.businessName ? aiForm.businessName.toUpperCase() : prev.profile.name),
-        instagram: cleanInsta || generated?.profile?.instagram || prev.profile.instagram,
-        mapsUrl: cleanMaps || generated?.profile?.mapsUrl || prev.profile.mapsUrl,
+        instagram: generated?.profile?.instagram || cleanInsta || prev.profile.instagram,
+        mapsUrl: generated?.profile?.mapsUrl || cleanMaps || prev.profile.mapsUrl,
       },
       metrics: {
         ...INITIAL_DATA.metrics,
@@ -1826,7 +1832,7 @@ export default function App() {
       locationCard: {
         ...INITIAL_DATA.locationCard,
         ...(generated?.locationCard || {}),
-        mapsUrl: cleanMaps || generated?.locationCard?.mapsUrl || INITIAL_DATA.locationCard.mapsUrl,
+        mapsUrl: generated?.locationCard?.mapsUrl || cleanMaps || INITIAL_DATA.locationCard.mapsUrl,
       },
       services: {
         ...INITIAL_DATA.services,
@@ -1881,19 +1887,45 @@ export default function App() {
     setAiModalOpen(false);
     setActiveTab('styling');
     triggerSimulatorSkeleton(480);
-    showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
+
+    const totalRealPhotos =
+      (extractedMeta?.instagramPhotosCount || 0) + (extractedMeta?.mapsPhotosCount || 0);
+    const sourcesFound: string[] = [];
+    if (extractedMeta?.instagramFound) sourcesFound.push('Instagram');
+    if (extractedMeta?.mapsFound) sourcesFound.push('Google Meu Negócio');
+
+    if (sourcesFound.length > 0) {
+      showToast(
+        `✨ Microsite criado com dados reais do ${sourcesFound.join(' + ')}${
+          totalRealPhotos > 0 ? ` (${totalRealPhotos} foto(s) importada(s))` : ''
+        }!`
+      );
+    } else {
+      showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
+    }
   };
 
   const handleAiGenerateMicrosite = async () => {
     setAiError(null);
-    if (!aiForm.instagram.trim() && !aiForm.businessName.trim() && !aiForm.businessNiche.trim() && !aiForm.additionalInfo.trim()) {
-      const msg = 'Informe ao menos o Instagram, o Nome do Negócio ou o Nicho de atuação para gerar o microsite.';
+    if (
+      !aiForm.instagram.trim() &&
+      !aiForm.googleMaps.trim() &&
+      !aiForm.businessName.trim() &&
+      !aiForm.businessNiche.trim() &&
+      !aiForm.additionalInfo.trim()
+    ) {
+      const msg =
+        'Informe ao menos o Instagram, o Link do Google Meu Negócio, o Nome do Negócio ou o Nicho para gerar o microsite.';
       setAiError(msg);
       showToast(`⚠️ ${msg}`);
       return;
     }
 
     setAiGenerating(true);
+    setAiStepIndex(0);
+    const stepTimer1 = setTimeout(() => setAiStepIndex(1), 2200);
+    const stepTimer2 = setTimeout(() => setAiStepIndex(2), 4800);
+
     try {
       const res = await fetch('/api/generate-microsite', {
         method: 'POST',
@@ -1905,7 +1937,7 @@ export default function App() {
       if (contentType.includes('application/json')) {
         const json = await res.json();
         if (res.ok && json?.success && json?.data) {
-          applyGeneratedMicrositeData(json.data);
+          applyGeneratedMicrositeData(json.data, json.extractedMeta);
           return;
         }
       }
@@ -1920,6 +1952,8 @@ export default function App() {
       const fallbackGenerated = buildClientSmartMicrosite();
       applyGeneratedMicrositeData(fallbackGenerated);
     } finally {
+      clearTimeout(stepTimer1);
+      clearTimeout(stepTimer2);
       setAiGenerating(false);
     }
   };
@@ -11196,22 +11230,47 @@ COMO PUBLICAR NO SERVIDOR:
             </div>
 
             {aiGenerating ? (
-              <div className="py-10 text-center space-y-4">
+              <div className="py-8 text-center space-y-4">
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                   <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin" />
                   <Sparkles className="w-7 h-7 text-amber-400 animate-pulse" />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <h4 className="font-bold text-sm text-neutral-100 animate-pulse">
-                    A IA está construindo seu microsite completo...
+                    {aiStepIndex === 0
+                      ? '1/3 · Buscando foto de perfil, bio e posts no Instagram...'
+                      : aiStepIndex === 1
+                      ? '2/3 · Extraindo endereço, avaliações e fotos do Google Meu Negócio...'
+                      : '3/3 · Criando microsite personalizado com IA e aplicando imagens...'}
                   </h4>
                   <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                    Analisando perfil, selecionando paleta de cores e estilo visual, gerando copys persuasivas e configurando o funil anti-curiosos.
+                    A IA está coletando os dados reais e as imagens públicas do perfil informado para montar o cabeçalho, portfólio, localização e catálogo.
                   </p>
+                  <div className="max-w-xs mx-auto pt-2 space-y-1.5 text-left">
+                    <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 0 ? 'bg-pink-500/10 border-pink-500/30 text-pink-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
+                      <Instagram className="w-3.5 h-3.5 shrink-0" />
+                      <span>Extração do Instagram (@{(aiForm.instagram || 'perfil').replace('@', '')})</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 1 ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
+                      <span>Extração do Google Meu Negócio / Maps</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 2 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>Geração de Copy, Paleta VIP e Galeria de Fotos</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-3.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 text-[11px] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    A IA busca automaticamente a <strong>foto de perfil, fotos de posts, bio, endereço e nota</strong> do Instagram e do Google Meu Negócio informados.
+                  </span>
+                </div>
+
                 {aiError && (
                   <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
