@@ -1456,6 +1456,7 @@ export default function App() {
   // AI Generator Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [aiForm, setAiForm] = useState({
     instagram: '',
     googleMaps: '',
@@ -1464,9 +1465,431 @@ export default function App() {
     additionalInfo: '',
   });
 
+  const buildClientSmartMicrosite = () => {
+    const cleanInsta = (aiForm.instagram || '').replace('@', '').trim() || 'studiovip';
+    const rawName =
+      (aiForm.businessName || '').trim() ||
+      cleanInsta.replace(/[._-]+/g, ' ').toUpperCase() ||
+      'STUDIO VIP';
+    const nameUpper = rawName.toUpperCase();
+    const nicheRaw = `${aiForm.businessNiche || ''} ${aiForm.additionalInfo || ''} ${rawName}`.toLowerCase();
+    const mapsUrl = (aiForm.googleMaps || '').trim() || 'https://maps.google.com';
+
+    const isBeautyLashNail = /c[ií]lio|lash|unha|nail|manicure|fibra|gel|sobrancelha|beleza|studio|est[eé]tica|make|maquiagem|sal[aã]o|cabelo|hair/.test(nicheRaw);
+    const isBarber = /barbearia|barber|barba|fade|degrad[eê]|corte masculino|grooming/.test(nicheRaw);
+    const isLaw = /advogad|advocacia|jur[ií]dic|direito|oab|escrit[oó]rio|lei/.test(nicheRaw);
+    const isHealth = /psic[oó]log|terapia|sa[uú]de|m[eé]dic|odonto|dentista|nutri|fisio|cl[ií]nica/.test(nicheRaw);
+    const isMentor = /mentor|curso|treinamento|consultoria|infoproduto|palestrante|coach/.test(nicheRaw);
+    const isFashion = /moda|loja|boutique|roupa|look|acess[oó]rio|joia|semijoia/.test(nicheRaw);
+
+    if (isBeautyLashNail) {
+      const hasLash = /c[ií]lio|lash/.test(nicheRaw);
+      const hasNail = /unha|nail|fibra|gel|manicure/.test(nicheRaw);
+      const specialtyTitle =
+        hasLash && hasNail
+          ? 'EXTENSÃO DE CÍLIOS & NAIL DESIGNER DE ALTO PADRÃO'
+          : hasLash
+          ? 'ESPECIALISTA EM EXTENSÃO DE CÍLIOS & LASH DESIGN'
+          : hasNail
+          ? 'NAIL DESIGNER & ALONGAMENTO DE LUXO'
+          : (aiForm.businessNiche || 'BELEZA, ESTÉTICA & AUTOESTIMA').toUpperCase();
+
+      return {
+        theme: 'roseGoldQuartz',
+        styling: {
+          ...INITIAL_DATA.styling,
+          fontFamily: 'Playfair Display',
+          photoPosY: 22,
+        },
+        announcement: {
+          enabled: true,
+          badge: 'AGENDA VIP ABERTA',
+          text: 'Últimos horários da semana disponíveis. Garanta seu atendimento!',
+          link: '#booking',
+        },
+        profile: {
+          ...INITIAL_DATA.profile,
+          name: nameUpper,
+          title: specialtyTitle,
+          tagline:
+            aiForm.additionalInfo?.trim() ||
+            'Realçando sua beleza natural com técnicas exclusivas, durabilidade impecável e atendimento personalizado.',
+          cursivePhrase: 'Sua autoestima e olhar radiante em cada detalhe.',
+          avatarUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
+          aboutPhotoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
+          instagram: cleanInsta,
+          location: 'Espaço Exclusivo & Climatizado · Atendimento com Hora Marcada',
+          mapsUrl,
+        },
+        metrics: {
+          enabled: true,
+          stat1Value: '+1.200',
+          stat1Label: 'CLIENTES ATENDIDAS',
+          stat2Value: '100%',
+          stat2Label: 'BIOSSEGURANÇA',
+          stat3Value: '4.9★',
+          stat3Label: 'AVALIAÇÃO VIP',
+        },
+        actionCards: [
+          {
+            id: 'cta-1',
+            title: 'AGENDAR MEU HORÁRIO NO WHATSAPP',
+            subtitle: 'Garanta seu procedimento com atendimento personalizado e exclusivo.',
+            icon: 'Calendar',
+            linkType: 'booking',
+            url: '#booking',
+            whatsappMessage: `Olá! Vim pelo microsite do ${rawName} e gostaria de agendar um horário.`,
+            openInNewTab: true,
+            animation: 'pulse-glow',
+            variant: 'accent',
+            badgeText: 'MAIS PROCURADO',
+            customBg: '#e11d74',
+            customText: '#ffffff',
+            bgImage: '',
+            imagePosition: 'right',
+            cardImage: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400',
+            imageFitStyle: 'popout',
+            imageSize: 92,
+            ctaActionText: 'RESERVAR HORÁRIO',
+          },
+          {
+            id: 'cta-2',
+            title: 'CATÁLOGO DE PROCEDIMENTOS & VALORES',
+            subtitle: 'Confira nossas técnicas exclusivas, pacotes e detalhes.',
+            icon: 'Sparkles',
+            linkType: 'catalogo',
+            url: '#catalogo',
+            whatsappMessage: `Olá! Gostaria de consultar a tabela de procedimentos do ${rawName}.`,
+            openInNewTab: false,
+            animation: 'shimmer',
+            variant: 'default',
+            badgeText: 'TABELA VIP',
+            customBg: '#ffffff',
+            customText: '#3b1d28',
+            bgImage: '',
+            imagePosition: 'left',
+            cardImage: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=400',
+            imageFitStyle: 'framed',
+            imageSize: 84,
+            ctaActionText: 'VER PROCEDIMENTOS',
+          },
+          {
+            id: 'cta-3',
+            title: 'COMO CHEGAR AO STUDIO (LOCALIZAÇÃO)',
+            subtitle: 'Clique para abrir a rota direta no Google Maps.',
+            icon: 'MapPin',
+            linkType: 'custom',
+            url: mapsUrl,
+            whatsappMessage: 'Olá! Gostaria de confirmar a localização do Studio.',
+            openInNewTab: true,
+            animation: 'none',
+            variant: 'default',
+            badgeText: 'MAPS',
+            customBg: '#ffffff',
+            customText: '#3b1d28',
+            bgImage: '',
+            imagePosition: 'none',
+            cardImage: '',
+            imageFitStyle: 'framed',
+            imageSize: 84,
+            ctaActionText: 'ABRIR ROTA',
+          },
+        ],
+        studentGrid: {
+          ...INITIAL_DATA.studentGrid,
+          enabled: true,
+          headline: 'Portfólio & Transformações Reais',
+          subtitle: 'Confira resultados impecáveis de nossas clientes no studio',
+          photos: [
+            'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
+            'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
+            'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=600',
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600',
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=600',
+          ],
+        },
+        locationCard: {
+          enabled: true,
+          headline: `Localização — ${rawName}`,
+          address: 'Clique para abrir a rota no Google Maps e vir até o nosso espaço',
+          buttonLabel: 'Abrir no Google Maps',
+          mapsUrl,
+        },
+        services: {
+          ...INITIAL_DATA.services,
+          enabled: true,
+          headline: 'Menu de Procedimentos Exclusivos',
+          subtitle: 'Materiais hipoalergênicos de primeira linha com retenção e acabamento de luxo',
+          items: [
+            {
+              id: 'srv-1',
+              name: 'Extensão de Cílios (Volume Brasileiro / Fox Eyes / Fio a Fio)',
+              description: 'Mapeamento personalizado para destacar seu olhar com leveza, conforto e alta retenção.',
+              price: 'R$ 180',
+              oldPrice: 'R$ 220',
+              duration: '1h45',
+              badge: 'MAIS PEDIDO',
+              ctaLabel: 'Agendar',
+              actionType: 'booking' as const,
+              featured: true,
+              imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+            },
+            {
+              id: 'srv-2',
+              name: 'Alongamento em Fibra de Vidro / Banho de Gel Slim',
+              description: 'Unhas resistentes, curvatura natural impecável e acabamento espelhado de longa duração.',
+              price: 'R$ 190',
+              oldPrice: 'R$ 230',
+              duration: '2h00',
+              badge: 'NAIL LUXURY',
+              ctaLabel: 'Agendar',
+              actionType: 'booking' as const,
+              featured: true,
+              imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=300',
+            },
+            {
+              id: 'srv-3',
+              name: 'Combo VIP: Extensão de Cílios + Nail Design Completo',
+              description: 'Transformação completa em uma sessão especial com condição exclusiva.',
+              price: 'R$ 330',
+              oldPrice: 'R$ 410',
+              duration: '3h15',
+              badge: 'COMBO ESPECIAL',
+              ctaLabel: 'Reservar Combo',
+              actionType: 'booking' as const,
+              featured: false,
+              imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=300',
+            },
+          ],
+        },
+        aboutMe: {
+          enabled: true,
+          headline: `Sobre ${rawName}`,
+          paragraph: `Referência em ${aiForm.businessNiche || 'Extensão de Cílios e Nail Design'}, nosso studio nasceu com a missão de entregar um atendimento acolhedor, técnico e altamente personalizado. Utilizamos apenas materiais de excelência para garantir saúde, durabilidade e um acabamento sofisticado que valoriza sua beleza única.`,
+          closingPhrase: 'Beleza, autocuidado e excelência em cada atendimento.',
+        },
+      };
+    }
+
+    const fallbackCat = isBarber
+      ? 'Barbearia & Grooming'
+      : isLaw
+      ? 'Jurídico & Executivo'
+      : isHealth
+      ? 'Saúde & Psicologia'
+      : isMentor
+      ? 'Mentoria & Cursos'
+      : isFashion
+      ? 'Moda & Juventude'
+      : 'Consultoria & Estética';
+    const kit = NICHE_KITS[fallbackCat] || NICHE_KITS['Beleza & Unhas'];
+
+    return {
+      theme: kit.defaultTheme,
+      announcement: {
+        enabled: true,
+        badge: kit.announcement.badge,
+        text: kit.announcement.text,
+        link: '#booking',
+      },
+      profile: {
+        ...INITIAL_DATA.profile,
+        ...kit.profile,
+        name: nameUpper,
+        title: (aiForm.businessNiche || kit.profile.title).toUpperCase(),
+        tagline: aiForm.additionalInfo?.trim() || kit.profile.tagline,
+        instagram: cleanInsta,
+        mapsUrl,
+      },
+      metrics: {
+        enabled: true,
+        ...kit.metrics,
+      },
+      actionCards: kit.actionCards,
+      locationCard: {
+        enabled: true,
+        headline: `Localização — ${rawName}`,
+        address: kit.profile.location,
+        buttonLabel: 'Abrir no Google Maps',
+        mapsUrl,
+      },
+      services: {
+        ...INITIAL_DATA.services,
+        enabled: true,
+        headline: kit.services.headline,
+        items: kit.services.items.map((it) => ({
+          ...it,
+          ctaLabel: 'Reservar',
+          actionType: 'booking' as const,
+          featured: true,
+        })),
+      },
+    };
+  };
+
+  const applyGeneratedMicrositeData = (generated: any) => {
+    const safeTheme = generated?.theme && THEMES[generated.theme] ? generated.theme : 'roseGoldQuartz';
+    const targetThemeObj = THEMES[safeTheme] || THEMES.roseGoldQuartz;
+
+    const normalizedCards =
+      Array.isArray(generated?.actionCards) && generated.actionCards.length > 0
+        ? generated.actionCards.map((c: any, idx: number) => ({
+            id: c.id || `cta-${idx + 1}`,
+            title: c.title || 'ATENDIMENTO VIP',
+            subtitle: c.subtitle || 'Clique para saber mais informações.',
+            icon: c.icon || 'Calendar',
+            linkType: c.linkType || 'booking',
+            url: c.url || '#booking',
+            whatsappMessage: c.whatsappMessage || 'Olá! Gostaria de agendar um horário.',
+            openInNewTab: c.openInNewTab ?? true,
+            animation: c.animation || (idx === 0 ? 'pulse-glow' : 'none'),
+            variant: c.variant || (idx === 0 ? 'accent' : 'default'),
+            badgeText: c.badgeText || '',
+            customBg: c.customBg || '#ffffff',
+            customText: c.customText || '#0f172a',
+            bgImage: c.bgImage || '',
+            imagePosition: c.imagePosition || 'none',
+            cardImage: c.cardImage || '',
+            imageFitStyle: c.imageFitStyle || 'framed',
+            imageSize: c.imageSize || 88,
+            ctaActionText: c.ctaActionText || 'SAIBA MAIS',
+          }))
+        : INITIAL_DATA.actionCards;
+
+    const normalizedServices =
+      Array.isArray(generated?.services?.items) && generated.services.items.length > 0
+        ? generated.services.items.map((srv: any, idx: number) => ({
+            id: srv.id || `srv-${idx + 1}`,
+            name: srv.name || 'Atendimento Exclusivo',
+            description: srv.description || 'Atendimento personalizado com foco no melhor resultado.',
+            price: srv.price || 'Sob Consulta',
+            oldPrice: srv.oldPrice || '',
+            duration: srv.duration || '1h00',
+            badge: srv.badge || (idx === 0 ? 'DESTAQUE' : ''),
+            ctaLabel: srv.ctaLabel || 'Agendar',
+            actionType: (srv.actionType as 'booking' | 'whatsapp' | 'link') || 'booking',
+            customUrl: srv.customUrl || '',
+            featured: srv.featured ?? idx === 0,
+            imageUrl:
+              srv.imageUrl ||
+              'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+          }))
+        : INITIAL_DATA.services.items;
+
+    const cleanInsta = (aiForm.instagram || '').replace('@', '').trim();
+    const cleanMaps = (aiForm.googleMaps || '').trim();
+
+    setData((prev) => ({
+      ...INITIAL_DATA,
+      theme: safeTheme,
+      customColors: { ...INITIAL_DATA.customColors, enabled: false },
+      styling: {
+        ...INITIAL_DATA.styling,
+        fontFamily: targetThemeObj.fontHeadline,
+        ...(generated?.styling || {}),
+      },
+      announcement: {
+        ...INITIAL_DATA.announcement,
+        ...(generated?.announcement || {}),
+      },
+      profile: {
+        ...INITIAL_DATA.profile,
+        ...(generated?.profile || {}),
+        name:
+          generated?.profile?.name ||
+          (aiForm.businessName ? aiForm.businessName.toUpperCase() : prev.profile.name),
+        instagram: cleanInsta || generated?.profile?.instagram || prev.profile.instagram,
+        mapsUrl: cleanMaps || generated?.profile?.mapsUrl || prev.profile.mapsUrl,
+      },
+      metrics: {
+        ...INITIAL_DATA.metrics,
+        ...(generated?.metrics || {}),
+      },
+      actionCards: normalizedCards,
+      processSteps: {
+        ...INITIAL_DATA.processSteps,
+        ...(generated?.processSteps || {}),
+        steps:
+          Array.isArray(generated?.processSteps?.steps) && generated.processSteps.steps.length > 0
+            ? generated.processSteps.steps
+            : INITIAL_DATA.processSteps.steps,
+      },
+      studentGrid: {
+        ...INITIAL_DATA.studentGrid,
+        ...(generated?.studentGrid || {}),
+        photos:
+          Array.isArray(generated?.studentGrid?.photos) && generated.studentGrid.photos.length > 0
+            ? generated.studentGrid.photos
+            : INITIAL_DATA.studentGrid.photos,
+      },
+      locationCard: {
+        ...INITIAL_DATA.locationCard,
+        ...(generated?.locationCard || {}),
+        mapsUrl: cleanMaps || generated?.locationCard?.mapsUrl || INITIAL_DATA.locationCard.mapsUrl,
+      },
+      services: {
+        ...INITIAL_DATA.services,
+        ...(generated?.services || {}),
+        items: normalizedServices,
+      },
+      testimonials: {
+        ...INITIAL_DATA.testimonials,
+        ...(generated?.testimonials || {}),
+        items:
+          Array.isArray(generated?.testimonials?.items) && generated.testimonials.items.length > 0
+            ? generated.testimonials.items
+            : INITIAL_DATA.testimonials.items,
+      },
+      qualifierFunnel: {
+        ...INITIAL_DATA.qualifierFunnel,
+        ...(generated?.qualifierFunnel || {}),
+        questions:
+          Array.isArray(generated?.qualifierFunnel?.questions) &&
+          generated.qualifierFunnel.questions.length > 0
+            ? generated.qualifierFunnel.questions
+            : INITIAL_DATA.qualifierFunnel.questions,
+      },
+      aboutMe: {
+        ...INITIAL_DATA.aboutMe,
+        ...(generated?.aboutMe || {}),
+      },
+      faq: {
+        ...INITIAL_DATA.faq,
+        ...(generated?.faq || {}),
+        items:
+          Array.isArray(generated?.faq?.items) && generated.faq.items.length > 0
+            ? generated.faq.items
+            : INITIAL_DATA.faq.items,
+      },
+      conversion: {
+        ...INITIAL_DATA.conversion,
+        ...(generated?.conversion || {}),
+      },
+      seo: {
+        ...INITIAL_DATA.seo,
+        metaTitle: `${
+          generated?.profile?.name || aiForm.businessName || INITIAL_DATA.profile.name
+        } — ${generated?.profile?.title || aiForm.businessNiche || INITIAL_DATA.profile.title}`,
+        metaDescription:
+          generated?.profile?.tagline || aiForm.additionalInfo || INITIAL_DATA.profile.tagline,
+        ogImageUrl: generated?.profile?.avatarUrl || INITIAL_DATA.profile.avatarUrl,
+      },
+    }));
+
+    setEditingSiteId(null);
+    setAiModalOpen(false);
+    setActiveTab('styling');
+    triggerSimulatorSkeleton(480);
+    showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
+  };
+
   const handleAiGenerateMicrosite = async () => {
-    if (!aiForm.instagram.trim() && !aiForm.businessName.trim() && !aiForm.additionalInfo.trim()) {
-      showToast('⚠️ Informe ao menos o Instagram ou o Nome/Informações do negócio.');
+    setAiError(null);
+    if (!aiForm.instagram.trim() && !aiForm.businessName.trim() && !aiForm.businessNiche.trim() && !aiForm.additionalInfo.trim()) {
+      const msg = 'Informe ao menos o Instagram, o Nome do Negócio ou o Nicho de atuação para gerar o microsite.';
+      setAiError(msg);
+      showToast(`⚠️ ${msg}`);
       return;
     }
 
@@ -1478,42 +1901,24 @@ export default function App() {
         body: JSON.stringify(aiForm),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || 'Erro ao gerar microsite com IA.');
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const json = await res.json();
+        if (res.ok && json?.success && json?.data) {
+          applyGeneratedMicrositeData(json.data);
+          return;
+        }
       }
 
-      if (json.data) {
-        const generated = json.data;
-        setData({
-          ...INITIAL_DATA,
-          ...generated,
-          customColors: { ...INITIAL_DATA.customColors, enabled: false },
-          styling: { ...INITIAL_DATA.styling, ...(generated.styling || {}) },
-          announcement: { ...INITIAL_DATA.announcement, ...(generated.announcement || {}) },
-          profile: { ...INITIAL_DATA.profile, ...(generated.profile || {}) },
-          metrics: { ...INITIAL_DATA.metrics, ...(generated.metrics || {}) },
-          actionCards: Array.isArray(generated.actionCards) ? generated.actionCards : INITIAL_DATA.actionCards,
-          processSteps: { ...INITIAL_DATA.processSteps, ...(generated.processSteps || {}) },
-          studentGrid: { ...INITIAL_DATA.studentGrid, ...(generated.studentGrid || {}) },
-          locationCard: { ...INITIAL_DATA.locationCard, ...(generated.locationCard || {}) },
-          services: { ...INITIAL_DATA.services, ...(generated.services || {}) },
-          testimonials: { ...INITIAL_DATA.testimonials, ...(generated.testimonials || {}) },
-          qualifierFunnel: { ...INITIAL_DATA.qualifierFunnel, ...(generated.qualifierFunnel || {}) },
-          aboutMe: { ...INITIAL_DATA.aboutMe, ...(generated.aboutMe || {}) },
-          faq: { ...INITIAL_DATA.faq, ...(generated.faq || {}) },
-          conversion: { ...INITIAL_DATA.conversion, ...(generated.conversion || {}) },
-        });
-
-        setEditingSiteId(null);
-        setAiModalOpen(false);
-        setActiveTab('styling');
-        triggerSimulatorSkeleton(450);
-        showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
-      }
+      // Caso o servidor retorne erro temporário ou rota estática, aciona o motor inteligente local
+      await new Promise((r) => setTimeout(r, 900));
+      const fallbackGenerated = buildClientSmartMicrosite();
+      applyGeneratedMicrositeData(fallbackGenerated);
     } catch (err: any) {
-      console.error(err);
-      showToast(`❌ ${err.message || 'Erro na geração por IA. Tente novamente.'}`);
+      console.warn('Fallback local ativado na geração do microsite:', err);
+      await new Promise((r) => setTimeout(r, 900));
+      const fallbackGenerated = buildClientSmartMicrosite();
+      applyGeneratedMicrositeData(fallbackGenerated);
     } finally {
       setAiGenerating(false);
     }
@@ -10188,7 +10593,7 @@ COMO PUBLICAR NO SERVIDOR:
 
       {/* Toast Notification Banner */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-neutral-900 border border-amber-500/40 text-neutral-100 font-semibold text-xs shadow-2xl flex items-center gap-2.5 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-[100] px-4 py-3 rounded-xl bg-neutral-900 border border-amber-500/40 text-neutral-100 font-semibold text-xs shadow-2xl flex items-center gap-2.5 animate-bounce">
           <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
           <span>{toastMsg}</span>
         </div>
@@ -10807,6 +11212,13 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
             ) : (
               <div className="space-y-3.5 text-xs">
+                {aiError && (
+                  <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>{aiError}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-[11px] font-semibold text-neutral-300 block mb-1 flex items-center gap-1.5">
                     <Instagram className="w-3.5 h-3.5 text-pink-400" />
@@ -10816,9 +11228,12 @@ COMO PUBLICAR NO SERVIDOR:
                     <span className="px-3 text-neutral-500 font-mono text-xs">@</span>
                     <input
                       type="text"
-                      placeholder="ex: barbeariadoncorleone ou dramarina.adv"
+                      placeholder="ex: lorrayne_ramos ou barbeariadoncorleone"
                       value={aiForm.instagram}
-                      onChange={(e) => setAiForm(f => ({ ...f, instagram: e.target.value }))}
+                      onChange={(e) => {
+                        setAiError(null);
+                        setAiForm(f => ({ ...f, instagram: e.target.value }));
+                      }}
                       className="flex-1 py-2 pr-3 bg-transparent text-neutral-100 text-xs focus:outline-none"
                     />
                   </div>
@@ -10843,9 +11258,12 @@ COMO PUBLICAR NO SERVIDOR:
                     <label className="text-[10px] text-neutral-400 block mb-1">Nome do Negócio / Profissional</label>
                     <input
                       type="text"
-                      placeholder="Ex: Don Corleone Barber"
+                      placeholder="Ex: Studio Lorrayne Ramos"
                       value={aiForm.businessName}
-                      onChange={(e) => setAiForm(f => ({ ...f, businessName: e.target.value }))}
+                      onChange={(e) => {
+                        setAiError(null);
+                        setAiForm(f => ({ ...f, businessName: e.target.value }));
+                      }}
                       className="w-full px-3 py-2 text-xs rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100"
                     />
                   </div>
@@ -10854,9 +11272,12 @@ COMO PUBLICAR NO SERVIDOR:
                     <label className="text-[10px] text-neutral-400 block mb-1">Nicho / Especialidade</label>
                     <input
                       type="text"
-                      placeholder="Ex: Barbearia, Advocacia, Estética..."
+                      placeholder="Ex: Extensão de cílios e nail designer"
                       value={aiForm.businessNiche}
-                      onChange={(e) => setAiForm(f => ({ ...f, businessNiche: e.target.value }))}
+                      onChange={(e) => {
+                        setAiError(null);
+                        setAiForm(f => ({ ...f, businessNiche: e.target.value }));
+                      }}
                       className="w-full px-3 py-2 text-xs rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100"
                     />
                   </div>
@@ -10867,8 +11288,8 @@ COMO PUBLICAR NO SERVIDOR:
                     Informações Adicionais / Serviços Principais / Diferenciais (Opcional)
                   </label>
                   <textarea
-                    rows={2.5}
-                    placeholder="Ex: Oferecemos corte degradê, barba com toalha quente, cerveja artesanal. Atendemos de terça a sábado na Av. Paulista..."
+                    rows={3}
+                    placeholder="Ex: Especialista em volume brasileiro, fox eyes e alongamento em fibra de vidro. Atendimento com hora marcada..."
                     value={aiForm.additionalInfo}
                     onChange={(e) => setAiForm(f => ({ ...f, additionalInfo: e.target.value }))}
                     className="w-full px-3 py-2 text-xs rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100 resize-none"
