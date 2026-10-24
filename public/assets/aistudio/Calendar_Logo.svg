@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Calendar Body -->
+  <rect x="80" y="140" width="352" height="308" rx="32" fill="none" stroke="currentColor" stroke-width="32"/>
+  <path d="M80 220 h352" stroke="currentColor" stroke-width="28"/>
+  <!-- Pins -->
+  <line x1="170" y1="90" x2="170" y2="160" stroke="currentColor" stroke-width="32" stroke-linecap="round"/>
+  <line x1="342" y1="90" x2="342" y2="160" stroke="currentColor" stroke-width="32" stroke-linecap="round"/>
+  <!-- Grid dots -->
+  <rect x="140" y="270" width="40" height="40" rx="8" fill="currentColor"/>
+  <rect x="236" y="270" width="40" height="40" rx="8" fill="currentColor"/>
+  <rect x="332" y="270" width="40" height="40" rx="8" fill="currentColor"/>
+  <rect x="140" y="350" width="40" height="40" rx="8" fill="currentColor"/>
+  <rect x="236" y="350" width="40" height="40" rx="8" fill="currentColor"/>
+  <rect x="332" y="350" width="40" height="40" rx="8" fill="currentColor"/>
+  <!-- Clock Overlay Badge -->
+  <circle cx="160" cy="160" r="90" fill="#0f172a" stroke="currentColor" stroke-width="28"/>
+  <polyline points="160 110 160 160 200 185" fill="none" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

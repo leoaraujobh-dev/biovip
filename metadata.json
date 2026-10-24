@@ -1,0 +1,6 @@
+{
+  "name": "LuxeBio Studio Multi-Nicho Pro",
+  "description": "Construtor SaaS de páginas de bio e alta conversão com simulador iPhone em tempo real, funil anti-curiosos, múltiplos nichos e exportação HTML.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

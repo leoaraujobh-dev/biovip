@@ -1,0 +1,5 @@
+server.ts
+node_modules
+dist
+.env
+.aistudio
