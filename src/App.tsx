@@ -9506,7 +9506,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais avulsas quando precisar: R$ 14,90 cada</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Localização com rota em 1 toque no Google Maps e Waze</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Hospedagem ultrarrápida e Certificado SSL oficial inclusos</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Desativação automática por atraso a partir do 7º dia</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
                   </ul>
                 </div>
                 <a
@@ -9550,7 +9550,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo + Catálogo visual com fotos e preços</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Galeria inteligente adaptativa (fotos em retrato e paisagem sem cortes)</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Rastreamento Meta Pixel + QR Code de balcão em alta definição</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Desativação automática por atraso a partir do 7º dia</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
                   </ul>
                 </div>
                 <a
@@ -9592,7 +9592,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Zero custo de alteração extra — solicite quantas vezes precisar</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte completo para Domínio Próprio (.com.br)</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário direto no WhatsApp</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Desativação automática por atraso a partir do 7º dia</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
                   </ul>
                 </div>
                 <a
@@ -9628,9 +9628,9 @@ COMO PUBLICAR NO SERVIDOR:
                 <span className="text-[11px] text-neutral-400 block">Alterações mensais ilimitadas</span>
               </div>
               <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-                <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">Alteração Extra & Atraso</span>
+                <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">ALTERAÇÃO EXTRA & SUPORTE</span>
                 <span className="font-bold text-emerald-300 text-sm block mt-0.5">R$ 14,90 /avulsa</span>
-                <span className="text-[11px] text-neutral-400 block">Desativação automática a partir do 7º dia de atraso</span>
+                <span className="text-[11px] text-neutral-400 block">Sem multas ou fidelidade: você no controle total</span>
               </div>
             </div>
           </div>
