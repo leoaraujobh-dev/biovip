@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "PublicModel": {
+      "title": "PublicModel",
+      "description": "Public microsite showcase model displayed on the Landing Page carousel",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique identifier of the microsite model"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the administrator who published the model"
+        },
+        "clientName": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Display name of the business or professional"
+        },
+        "nicheCategory": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Niche category label"
+        },
+        "subdomain": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Subdomain slug for the microsite"
+        },
+        "customDomain": {
+          "type": "string",
+          "maxLength": 180,
+          "description": "Custom domain if configured"
+        },
+        "isLandingModel": {
+          "type": "boolean",
+          "description": "Whether this microsite is active in the Landing Page carousel"
+        },
+        "sitePayload": {
+          "type": "string",
+          "maxLength": 500000,
+          "description": "Serialized microsite visual configuration for live rendering"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last update"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "clientName",
+        "nicheCategory",
+        "subdomain",
+        "customDomain",
+        "isLandingModel",
+        "sitePayload",
+        "updatedAt"
+      ]
+    },
+    "AdminSite": {
+      "title": "AdminSite",
+      "description": "Private administrator microsite record in the management dashboard",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique identifier of the saved site"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the administrator"
+        },
+        "clientName": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Client or model name"
+        },
+        "nicheCategory": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Niche category"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "overdue", "disabled"],
+          "maxLength": 32,
+          "description": "Billing status of the client microsite"
+        },
+        "isLandingModel": {
+          "type": "boolean",
+          "description": "Whether this microsite is marked as a model on the Landing Page carousel"
+        },
+        "recordPayload": {
+          "type": "string",
+          "maxLength": 600000,
+          "description": "Full saved microsite record payload"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last update"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "clientName",
+        "nicheCategory",
+        "status",
+        "isLandingModel",
+        "recordPayload",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/public_models/{siteId}": {
+      "schema": { "$ref": "#/entities/PublicModel" },
+      "description": "Publicly readable showcase models for the Landing Page carousel, writable only by the administrator"
+    },
+    "/admin_sites/{siteId}": {
+      "schema": { "$ref": "#/entities/AdminSite" },
+      "description": "Administrator-only microsite management records"
+    }
+  }
+}

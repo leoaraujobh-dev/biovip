@@ -1,0 +1,144 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'leoaraujobh@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 3. Validation Blueprints
+    function isValidPublicModel(data) {
+      return data.keys().hasAll([
+        'id',
+        'ownerId',
+        'clientName',
+        'nicheCategory',
+        'subdomain',
+        'customDomain',
+        'isLandingModel',
+        'sitePayload',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'ownerId',
+        'clientName',
+        'nicheCategory',
+        'subdomain',
+        'customDomain',
+        'isLandingModel',
+        'sitePayload',
+        'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.ownerId) &&
+      data.ownerId == request.auth.uid &&
+      data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 160 &&
+      data.nicheCategory is string && data.nicheCategory.size() >= 1 && data.nicheCategory.size() <= 120 &&
+      data.subdomain is string && data.subdomain.size() >= 1 && data.subdomain.size() <= 120 &&
+      data.customDomain is string && data.customDomain.size() <= 180 &&
+      data.isLandingModel is bool &&
+      data.sitePayload is string && data.sitePayload.size() >= 2 && data.sitePayload.size() <= 500000 &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidAdminSite(data) {
+      return data.keys().hasAll([
+        'id',
+        'ownerId',
+        'clientName',
+        'nicheCategory',
+        'status',
+        'isLandingModel',
+        'recordPayload',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'ownerId',
+        'clientName',
+        'nicheCategory',
+        'status',
+        'isLandingModel',
+        'recordPayload',
+        'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.ownerId) &&
+      data.ownerId == request.auth.uid &&
+      data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 160 &&
+      data.nicheCategory is string && data.nicheCategory.size() >= 1 && data.nicheCategory.size() <= 120 &&
+      data.status is string && data.status.size() <= 32 && data.status in ['active', 'overdue', 'disabled'] &&
+      data.isLandingModel is bool &&
+      data.recordPayload is string && data.recordPayload.size() >= 2 && data.recordPayload.size() <= 600000 &&
+      data.updatedAt == request.time;
+    }
+
+    // 4. Admins Lookup Collection
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && isValidId(adminUid) && request.auth.uid == adminUid;
+      allow list, create, update, delete: if false;
+    }
+
+    // 5. Public Showcase Models Collection (Landing Page Carousel)
+    match /public_models/{siteId} {
+      allow get: if isValidId(siteId) && (existing().isLandingModel == true || isAdmin());
+      allow list: if existing().isLandingModel == true || isAdmin();
+      allow create: if isSignedIn() && isValidId(siteId) && isValidPublicModel(incoming()) && incoming().id == siteId && isAdmin();
+      allow update: if isSignedIn() && isValidId(siteId) && isValidPublicModel(incoming()) && incoming().id == existing().id && incoming().ownerId == existing().ownerId && isAdmin() && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'clientName',
+          'nicheCategory',
+          'subdomain',
+          'customDomain',
+          'isLandingModel',
+          'sitePayload',
+          'updatedAt'
+        ])
+      );
+      allow delete: if isSignedIn() && isValidId(siteId) && isAdmin();
+    }
+
+    // 6. Private Admin Sites Collection (Creator Studio Management Dashboard)
+    match /admin_sites/{siteId} {
+      allow get: if isSignedIn() && isValidId(siteId) && isAdmin();
+      allow list: if isSignedIn() && isAdmin();
+      allow create: if isSignedIn() && isValidId(siteId) && isValidAdminSite(incoming()) && incoming().id == siteId && isAdmin();
+      allow update: if isSignedIn() && isValidId(siteId) && isValidAdminSite(incoming()) && incoming().id == existing().id && incoming().ownerId == existing().ownerId && isAdmin() && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'clientName',
+          'nicheCategory',
+          'status',
+          'isLandingModel',
+          'recordPayload',
+          'updatedAt'
+        ])
+      );
+      allow delete: if isSignedIn() && isValidId(siteId) && isAdmin();
+    }
+  }
+}

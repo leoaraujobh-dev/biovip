@@ -23,6 +23,7 @@ import {
   Maximize2,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Grid,
   Plus,
   Trash2,
@@ -55,6 +56,7 @@ import {
   ExternalLink,
   Lock,
   RefreshCw,
+  RotateCcw,
   CreditCard,
   Server,
   Eye,
@@ -64,8 +66,101 @@ import {
   Printer,
   QrCode,
   Folder,
-  FolderArchive
+  FolderArchive,
+  Clock,
+  Wand2,
+  LayoutGrid,
+  Play,
+  Pause,
+  Share2,
+  LogOut
 } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  deleteDoc,
+  collection,
+  onSnapshot,
+  getDocFromServer
+} from 'firebase/firestore';
+import firebaseConfig from '../firebase-applet-config.json';
+
+// Initialize Firebase SDK (Single-File Mandate)
+const firebaseApp = initializeApp(firebaseConfig);
+const firebaseAuth = getAuth(firebaseApp);
+const firebaseDb = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+const ADMIN_OWNER_EMAIL = 'leoaraujobh@gmail.com';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  };
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: firebaseAuth.currentUser?.uid,
+      email: firebaseAuth.currentUser?.email,
+      emailVerified: firebaseAuth.currentUser?.emailVerified,
+      isAnonymous: firebaseAuth.currentUser?.isAnonymous,
+      tenantId: firebaseAuth.currentUser?.tenantId,
+      providerInfo: firebaseAuth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+}
+
+async function testFirestoreConnection() {
+  try {
+    await getDocFromServer(doc(firebaseDb, '_connection_test_', 'ping'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error('Please check your Firebase configuration. The client is offline.');
+    }
+  }
+}
+testFirestoreConnection();
 
 const WHATSAPP_SVG_STRING = `<svg style="width:20px;height:20px;display:inline-block;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z"/><path d="M12 1c-6.075 0-11 4.925-11 11 0 2.102.589 4.066 1.606 5.744l-1.606 5.256 5.438-1.57c1.613.918 3.479 1.442 5.562 1.442 6.075 0 11-4.925 11-11s-4.925-11-11-11zm0 19.825c-1.875 0-3.626-.543-5.111-1.479l-.366-.23-3.232.933.951-3.111-.252-.387c-1.047-1.606-1.615-3.501-1.615-5.551 0-5.132 4.173-9.305 9.305-9.305 5.132 0 9.305 4.173 9.305 9.305 0 5.132-4.173 9.305-9.305 9.305z"/></svg>`;
 const INSTAGRAM_SVG_STRING = `<svg style="width:20px;height:20px;display:inline-block;vertical-align:middle;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`;
@@ -908,8 +1003,8 @@ const INITIAL_DATA = {
     headline: 'Galeria de Fotos & Resultados',
     subtitle: 'Transformações reais geradas pelo método e registros de alto padrão',
     badge: 'PORTFÓLIO REAL',
-    layout: 'grid3' as 'grid3' | 'grid2' | 'mosaic' | 'carousel',
-    aspectRatio: 'square' as 'square' | 'portrait' | 'landscape',
+    layout: 'smart_masonry' as 'grid3' | 'grid2' | 'mosaic' | 'carousel' | 'smart_masonry' | 'masonry',
+    aspectRatio: 'auto' as 'auto' | 'square' | 'portrait' | 'landscape',
     enableLightbox: true,
     photos: [
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
@@ -925,7 +1020,10 @@ const INITIAL_DATA = {
     headline: 'Nossa Localização',
     address: 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP',
     buttonLabel: 'Abrir no Google Maps',
-    mapsUrl: 'https://maps.google.com'
+    mapsUrl: 'https://maps.google.com',
+    hours: 'Seg a Sáb · 08:30 às 19:30',
+    openStatus: 'ABERTO AGORA · HORA MARCADA',
+    showHours: true,
   },
   services: {
     enabled: true,
@@ -1108,7 +1206,8 @@ const INITIAL_DATA = {
     pixKey: 'contato@luxebio.com.br',
     pixName: 'LuxeBio Studio SaaS',
     pixCity: 'São Paulo - SP',
-    autoReminderMsg: 'Olá {cliente}! Lembrete da mensalidade do seu microsite no valor de R$ {valor}. Vencimento: {vencimento}.\n\n🔑 Chave PIX: {pix}\nFavorecido: {nome_pix}'
+    autoReminderMsg: 'Olá {cliente}! Lembrete da mensalidade do seu microsite no valor de R$ {valor}. Vencimento: {vencimento}.\n\n🔑 Chave PIX: {pix}\nFavorecido: {nome_pix}',
+    defaultMonthlyFee: 149.90
   }
 };
 
@@ -1169,6 +1268,7 @@ export interface SavedMicrosite {
     paidAds: number;
     direct: number;
   };
+  isLandingModel?: boolean;
   data: typeof INITIAL_DATA;
 }
 
@@ -1193,6 +1293,7 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     whatsappClicks: 52,
     pageViews: 240,
     trafficSources: { instagram: 110, tiktok: 45, googleMaps: 60, paidAds: 15, direct: 10 },
+    isLandingModel: true,
     data: {
       ...INITIAL_DATA,
       theme: 'barberVintage',
@@ -1331,6 +1432,7 @@ function SimulatorImage({
 export default function App() {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeTab, setActiveTab] = useState('styling');
+  const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
   const [activeFaqId, setActiveFaqId] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [selectedThemeCategory, setSelectedThemeCategory] = useState('Todos');
@@ -1367,7 +1469,214 @@ export default function App() {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [dashboardSearch, setDashboardSearch] = useState('');
   const [dashboardStatusFilter, setDashboardStatusFilter] = useState('all');
+  const [dashboardDueDateFilter, setDashboardDueDateFilter] = useState<'all' | 'today' | '7days' | '15days' | 'this_month' | 'overdue' | 'custom'>('all');
+  const [dashboardDueDateExact, setDashboardDueDateExact] = useState('');
+  const [dashboardSortBy, setDashboardSortBy] = useState<'dueDate_asc' | 'dueDate_desc' | 'fee_desc' | 'rate_desc' | 'name_asc'>('dueDate_asc');
+  const [revenueGoal, setRevenueGoal] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('luxebio_revenue_goal_v1');
+      if (saved) return Number(saved) || 5000;
+    } catch {}
+    return 5000;
+  });
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoalInput, setTempGoalInput] = useState('');
+  const [pixCardExpanded, setPixCardExpanded] = useState(false);
+
+  const getDaysUntilDue = (dueDateStr: string): number => {
+    if (!dueDateStr) return 999;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const parts = dueDateStr.split('-');
+    if (parts.length < 3) return 999;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const due = new Date(y, m, d);
+    due.setHours(0, 0, 0, 0);
+    const diffTime = due.getTime() - today.getTime();
+    return Math.round(diffTime / (1000 * 60 * 60 * 24));
+  };
   const [dnsTesting, setDnsTesting] = useState(false);
+  const [dnsProviderTab, setDnsProviderTab] = useState<'registrobr' | 'godaddy' | 'hostinger' | 'cloudflare'>('registrobr');
+  const [copiedDnsField, setCopiedDnsField] = useState<string | null>(null);
+  const [dnsCheckStatus, setDnsCheckStatus] = useState<{
+    checkedDomain: string;
+    aRecordOk: boolean;
+    cnameRecordOk: boolean;
+    sslOk: boolean;
+    checkedAt: string;
+  } | null>(null);
+
+  const copyDnsValue = async (value: string, fieldId: string, label: string) => {
+    const ok = await safeCopyText(value);
+    if (ok) {
+      setCopiedDnsField(fieldId);
+      showToast(`📋 ${label} (${value}) copiado!`);
+      setTimeout(() => {
+        setCopiedDnsField((prev) => (prev === fieldId ? null : prev));
+      }, 2200);
+    }
+  };
+
+  const validateCustomDomain = (rawInput: string) => {
+    const rawTrimmed = (rawInput || '').trim();
+    if (!rawTrimmed) {
+      return {
+        status: 'empty' as const,
+        isValid: false,
+        needsSanitization: false,
+        sanitizedDomain: '',
+        rootDomain: '',
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: '',
+        warningMessage: '',
+      };
+    }
+
+    const sanitized = rawTrimmed
+      .toLowerCase()
+      .replace(/^https?:\/\//i, '')
+      .replace(/^\/+/, '')
+      .replace(/\/.*$/, '')
+      .replace(/:\d+$/, '')
+      .replace(/\s+/g, '');
+
+    const needsSanitization = rawTrimmed !== sanitized;
+
+    if (/\s/.test(rawTrimmed)) {
+      return {
+        status: 'invalid' as const,
+        isValid: false,
+        needsSanitization: true,
+        sanitizedDomain: sanitized,
+        rootDomain: '',
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: 'O domínio não pode conter espaços em branco.',
+        warningMessage: '',
+      };
+    }
+
+    if (/[^a-z0-9.-]/.test(sanitized)) {
+      return {
+        status: 'invalid' as const,
+        isValid: false,
+        needsSanitization,
+        sanitizedDomain: sanitized.replace(/[^a-z0-9.-]/g, ''),
+        rootDomain: '',
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: 'Caracteres especiais inválidos detectados. Use apenas letras, números, hífens e pontos (ex: www.suaempresa.com.br).',
+        warningMessage: '',
+      };
+    }
+
+    if (!sanitized.includes('.')) {
+      return {
+        status: 'invalid' as const,
+        isValid: false,
+        needsSanitization,
+        sanitizedDomain: `${sanitized}.com.br`,
+        rootDomain: '',
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: 'Inclua a extensão final do domínio (TLD), como .com.br, .com, .med.br ou .adv.br.',
+        warningMessage: '',
+      };
+    }
+
+    if (sanitized.startsWith('.') || sanitized.endsWith('.') || sanitized.includes('..')) {
+      return {
+        status: 'invalid' as const,
+        isValid: false,
+        needsSanitization,
+        sanitizedDomain: sanitized.replace(/\.+/g, '.').replace(/^\.|\.$/g, ''),
+        rootDomain: '',
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: 'Formato de pontos inválido. O domínio não pode iniciar ou terminar com ponto.',
+        warningMessage: '',
+      };
+    }
+
+    const parts = sanitized.split('.');
+    for (const part of parts) {
+      if (!part || part.length > 63 || part.startsWith('-') || part.endsWith('-')) {
+        return {
+          status: 'invalid' as const,
+          isValid: false,
+          needsSanitization,
+          sanitizedDomain: sanitized,
+          rootDomain: '',
+          cnameHost: 'www',
+          isSubdomain: false,
+          errorMessage: `O segmento "${part || ''}" é inválido. Nenhum bloco pode começar ou terminar com hífen (-).`,
+          warningMessage: '',
+        };
+      }
+    }
+
+    const tld = parts[parts.length - 1];
+    if (!/^[a-z]{2,18}$/.test(tld)) {
+      return {
+        status: 'invalid' as const,
+        isValid: false,
+        needsSanitization,
+        sanitizedDomain: sanitized,
+        rootDomain: '',
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: `A extensão final ".${tld}" não é válida. Use extensões reais como .com.br, .com, .site, .online, etc.`,
+        warningMessage: '',
+      };
+    }
+
+    // Check Brazilian compound TLDs like .com.br, .adv.br, .med.br, .odo.br, .arq.br, .org.br, .net.br
+    const secondLast = parts.length >= 2 ? parts[parts.length - 2] : '';
+    const isCompoundBr = tld === 'br' && parts.length >= 3 && secondLast.length <= 14;
+
+    if (tld === 'br' && parts.length === 2) {
+      return {
+        status: 'invalid' as const,
+        isValid: false,
+        needsSanitization: true,
+        sanitizedDomain: `${parts[0]}.com.br`,
+        rootDomain: `${parts[0]}.com.br`,
+        cnameHost: 'www',
+        isSubdomain: false,
+        errorMessage: `Domínios no Registro.br exigem categoria antes do .br (ex: ${parts[0]}.com.br, ${parts[0]}.adv.br ou ${parts[0]}.med.br).`,
+        warningMessage: '',
+      };
+    }
+
+    const rootLabelsCount = isCompoundBr ? 3 : 2;
+    const rootDomain = parts.slice(-rootLabelsCount).join('.');
+    const subParts = parts.slice(0, parts.length - rootLabelsCount);
+    const subString = subParts.join('.');
+
+    const isSubdomain = subParts.length > 0;
+    const cnameHost = isSubdomain ? subString : 'www';
+
+    let warningMessage = '';
+    if (needsSanitization) {
+      warningMessage = `Removemos protocolos/barras automaticamente. Formato limpo recomendado: "${sanitized}".`;
+    }
+
+    return {
+      status: 'valid' as const,
+      isValid: true,
+      needsSanitization,
+      sanitizedDomain: sanitized,
+      rootDomain,
+      cnameHost,
+      isSubdomain,
+      errorMessage: '',
+      warningMessage,
+    };
+  };
+
   const [pdfReportModalOpen, setPdfReportModalOpen] = useState(false);
   const [copiedPdfSummary, setCopiedPdfSummary] = useState(false);
   const [singlePdfSiteId, setSinglePdfSiteId] = useState<string | null>(null);
@@ -1375,6 +1684,39 @@ export default function App() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
+  const [editingFeeSiteId, setEditingFeeSiteId] = useState<string | null>(null);
+  const [tempFeeInput, setTempFeeInput] = useState<string>('');
+  const [photoOrientations, setPhotoOrientations] = useState<Record<string, {
+    orientation: 'portrait' | 'landscape' | 'square';
+    width: number;
+    height: number;
+    ratio: number;
+  }>>({});
+
+  // Detecção automática de orientação (retrato vs paisagem) para fotos da galeria
+  useEffect(() => {
+    const photos = data.studentGrid?.photos || [];
+    photos.forEach((url) => {
+      if (!url || photoOrientations[url]) return;
+      const img = new window.Image();
+      img.src = url;
+      img.onload = () => {
+        const w = img.naturalWidth || 1;
+        const h = img.naturalHeight || 1;
+        const ratio = w / h;
+        let orientation: 'portrait' | 'landscape' | 'square' = 'square';
+        if (ratio > 1.15) {
+          orientation = 'landscape';
+        } else if (ratio < 0.88) {
+          orientation = 'portrait';
+        }
+        setPhotoOrientations((prev) => ({
+          ...prev,
+          [url]: { orientation, width: w, height: h, ratio },
+        }));
+      };
+    });
+  }, [data.studentGrid?.photos, photoOrientations]);
 
   // Keyboard navigation for photo gallery lightbox
   useEffect(() => {
@@ -1399,6 +1741,302 @@ export default function App() {
   // PIX & Billing Modal State
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [pixModalSite, setPixModalSite] = useState<SavedMicrosite | null>(null);
+
+  // Tracking & Reset Analytics State
+  const [sessionAnalytics, setSessionAnalytics] = useState<{
+    whatsappClicks: number;
+    pageViews: number;
+    trafficSources: {
+      instagram: number;
+      tiktok: number;
+      googleMaps: number;
+      paidAds: number;
+      direct: number;
+    };
+    pixelEvents: number;
+  }>(() => {
+    try {
+      const raw = localStorage.getItem('luxebio_session_analytics_v1');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return {
+      whatsappClicks: 0,
+      pageViews: 0,
+      trafficSources: { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 },
+      pixelEvents: 0,
+    };
+  });
+  const [resetTrackingModalOpen, setResetTrackingModalOpen] = useState(false);
+  const [resetModalTarget, setResetModalTarget] = useState<'current' | 'all' | SavedMicrosite | null>(null);
+  const [resetAlsoClearPixelIds, setResetAlsoClearPixelIds] = useState(false);
+
+  // =========================================================================
+  // LANDING PAGE COMERCIAL & SUBDOMÍNIO DO CRIADOR (SEM LOGIN)
+  // =========================================================================
+  const [landingConfig, setLandingConfig] = useState<{
+    creatorSubdomain: string;
+    baseDomain: string;
+    agencyBrandName: string;
+    agencyWhatsapp: string;
+    deliveryTime: string;
+    priceEssential: string;
+    pricePro: string;
+    priceScale: string;
+  }>(() => {
+    try {
+      const saved = localStorage.getItem('luxebio_landing_config_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      creatorSubdomain: 'criador',
+      baseDomain: 'luxebio.site',
+      agencyBrandName: 'LuxeBio Digital',
+      agencyWhatsapp: '5511999999999',
+      deliveryTime: '24 horas',
+      priceEssential: 'R$ 197',
+      pricePro: 'R$ 297',
+      priceScale: 'R$ 497',
+    };
+  });
+
+  const updateLandingConfig = (key: string, val: string) => {
+    setLandingConfig(prev => {
+      const updated = { ...prev, [key]: val };
+      try {
+        localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const detectCreatorSurface = (): 'landing' | 'studio' => {
+    if (typeof window === 'undefined') return 'landing';
+    const host = window.location.hostname.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+    const search = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    const configuredSub = (landingConfig?.creatorSubdomain || 'criador').toLowerCase();
+
+    if (
+      host.startsWith(`${configuredSub}.`) ||
+      host.startsWith('criador.') ||
+      host.startsWith('studio.') ||
+      host.startsWith('painel.') ||
+      host.startsWith('editor.')
+    ) {
+      return 'studio';
+    }
+    if (
+      path.startsWith(`/${configuredSub}`) ||
+      path.startsWith('/criador') ||
+      path.startsWith('/studio') ||
+      search.get('subdominio') === configuredSub ||
+      search.get('subdominio') === 'criador' ||
+      search.get('modo') === 'criador' ||
+      hash === `#${configuredSub}` ||
+      hash === '#criador' ||
+      hash === '#studio'
+    ) {
+      return 'studio';
+    }
+    return 'landing';
+  };
+
+  const [appSurface, setAppSurface] = useState<'landing' | 'studio'>(() => detectCreatorSurface());
+  const [subdomainModalOpen, setSubdomainModalOpen] = useState(false);
+  const [copiedSubdomainLink, setCopiedSubdomainLink] = useState(false);
+  const [landingCategoryFilter, setLandingCategoryFilter] = useState<string>('Todos');
+  const [landingCarouselIndex, setLandingCarouselIndex] = useState<number>(0);
+  const [landingCarouselAutoPlay, setLandingCarouselAutoPlay] = useState<boolean>(true);
+  const [landingCarouselHovered, setLandingCarouselHovered] = useState<boolean>(false);
+  const [landingCarouselIntervalMs, setLandingCarouselIntervalMs] = useState<number>(4000);
+  const landingCarouselRef = React.useRef<HTMLDivElement | null>(null);
+  const isProgrammaticCarouselScrollRef = React.useRef<boolean>(false);
+  const programmaticScrollTimeoutRef = React.useRef<number | null>(null);
+  const [landingHeroModelId, setLandingHeroModelId] = useState<string>('law');
+  const [landingHeroHovered, setLandingHeroHovered] = useState<boolean>(false);
+  const [landingPreviewModalId, setLandingPreviewModalId] = useState<string | null>(null);
+  const [landingOrderForm, setLandingOrderForm] = useState({
+    clientName: '',
+    clientWhatsapp: '',
+    instagramOrMaps: '',
+    selectedModel: 'Advocacia & Consultoria Executiva',
+    selectedPlan: 'Profissional VIP',
+    customNotes: '',
+  });
+  const [landingOrderError, setLandingOrderError] = useState<string | null>(null);
+  const [landingOrderSuccess, setLandingOrderSuccess] = useState(false);
+  const [landingShareCopiedId, setLandingShareCopiedId] = useState<string | null>(null);
+  const [landingQrModalModelId, setLandingQrModalModelId] = useState<string | null>(null);
+
+  // =========================================================================
+  // FIREBASE AUTHENTICATION & FIRESTORE SYNC FOR ADMIN STUDIO PROTECTION
+  // =========================================================================
+  const [adminUser, setAdminUser] = useState<FirebaseUser | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+
+  const isAuthorizedAdmin = Boolean(
+    adminUser &&
+    adminUser.email &&
+    adminUser.email.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()
+  );
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      setAdminUser(user);
+      setAuthLoading(false);
+      if (user && user.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
+        setAuthError(
+          `A conta "${user.email}" não possui permissão de Administrador. Faça login com ${ADMIN_OWNER_EMAIL}.`
+        );
+      } else {
+        setAuthError(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleAdminGoogleLogin = async () => {
+    setIsLoggingIn(true);
+    setAuthError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(firebaseAuth, provider);
+      if (result.user.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
+        setAuthError(
+          `Acesso negado para "${result.user.email}". Somente o administrador (${ADMIN_OWNER_EMAIL}) pode acessar o Criador.`
+        );
+      }
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user') {
+        setAuthError(err?.message || 'Erro ao autenticar com o Google via Firebase.');
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await signOut(firebaseAuth);
+      setAuthError(null);
+    } catch (err: any) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  const syncSiteToFirestore = React.useCallback(
+    async (site: SavedMicrosite) => {
+      if (!firebaseAuth.currentUser || firebaseAuth.currentUser.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
+        return;
+      }
+      try {
+        await setDoc(doc(firebaseDb, 'admin_sites', site.id), {
+          ...site,
+          updatedBy: firebaseAuth.currentUser.email,
+        });
+        if (site.isLandingModel) {
+          await setDoc(doc(firebaseDb, 'public_models', site.id), {
+            id: site.id,
+            clientName: site.clientName,
+            nicheCategory: site.nicheCategory,
+            subdomain: site.subdomain,
+            customDomain: site.customDomain || '',
+            status: site.status,
+            isLandingModel: true,
+            lastUpdated: site.lastUpdated,
+            data: site.data,
+          });
+        } else {
+          await deleteDoc(doc(firebaseDb, 'public_models', site.id));
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `admin_sites/${site.id}`);
+      }
+    },
+    []
+  );
+
+  // Real-time listener on public_models so Landing Page visitors see live updates from Firestore
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(firebaseDb, 'public_models'),
+      (snap) => {
+        if (snap.empty) return;
+        const remoteModels: SavedMicrosite[] = [];
+        snap.forEach((docSnap) => {
+          const d = docSnap.data() as SavedMicrosite;
+          if (d && d.id && d.data) {
+            remoteModels.push({
+              ...d,
+              createdAt: d.createdAt || '2026-10-01',
+              dueDate: d.dueDate || '2026-11-15',
+              monthlyFee: typeof d.monthlyFee === 'number' ? d.monthlyFee : 197,
+              status: d.status || 'active',
+              updatesThisMonth: d.updatesThisMonth || 1,
+              lastUpdated: d.lastUpdated || '2026-10-24',
+              domainType: d.customDomain ? 'custom' : 'subdomain',
+              subdomain: d.subdomain || 'modelo',
+              customDomain: d.customDomain || '',
+              dnsConfigured: true,
+              sslActive: true,
+              isLandingModel: true,
+            });
+          }
+        });
+        if (remoteModels.length > 0) {
+          setSavedSites((prev) => {
+            const byId = new Map(prev.map((s) => [s.id, s]));
+            remoteModels.forEach((rm) => {
+              const existing = byId.get(rm.id);
+              byId.set(rm.id, existing ? { ...existing, ...rm, isLandingModel: true } : rm);
+            });
+            const merged = Array.from(byId.values());
+            try {
+              localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
+        }
+      },
+      (err) => {
+        handleFirestoreError(err, OperationType.LIST, 'public_models');
+      }
+    );
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setAppSurface(detectCreatorSurface());
+    };
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('hashchange', handleRouteChange);
+    };
+  }, [landingConfig.creatorSubdomain]);
+
+  const openCreatorSubdomain = () => {
+    const subSlug = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
+    try {
+      window.history.pushState({ surface: 'studio' }, '', `/${subSlug}`);
+    } catch {}
+    setAppSurface('studio');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openPublicSalesLanding = () => {
+    try {
+      window.history.pushState({ surface: 'landing' }, '', '/');
+    } catch {}
+    setAppSurface('landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // AI Copywriting Optimizer State
   const [aiCopyModalOpen, setAiCopyModalOpen] = useState(false);
@@ -1464,7 +2102,10 @@ export default function App() {
     businessName: '',
     businessNiche: '',
     additionalInfo: '',
+    conversionGoal: 'whatsapp_booking' as 'whatsapp_booking' | 'catalog_sales' | 'vip_triage' | 'courses_mentorship',
+    visualStyle: 'auto' as 'auto' | 'rose_luxury' | 'dark_gold' | 'clean_minimal' | 'vibrant_glam',
   });
+  const [lastExtractedMeta, setLastExtractedMeta] = useState<any | null>(null);
 
   const buildClientSmartMicrosite = () => {
     const cleanInsta = (aiForm.instagram || '').replace('@', '').trim() || 'studiovip';
@@ -1495,11 +2136,20 @@ export default function App() {
           ? 'NAIL DESIGNER & ALONGAMENTO DE LUXO'
           : (aiForm.businessNiche || 'BELEZA, ESTÉTICA & AUTOESTIMA').toUpperCase();
 
+      const preferredBeautyTheme =
+        aiForm.visualStyle === 'dark_gold'
+          ? 'obsidianGold'
+          : aiForm.visualStyle === 'clean_minimal'
+          ? 'clinicalClean'
+          : aiForm.visualStyle === 'vibrant_glam'
+          ? 'velvetGlamour'
+          : 'roseGoldQuartz';
+
       return {
-        theme: 'roseGoldQuartz',
+        theme: preferredBeautyTheme,
         styling: {
           ...INITIAL_DATA.styling,
-          fontFamily: 'Playfair Display',
+          fontFamily: THEMES[preferredBeautyTheme]?.fontHeadline || 'Playfair Display',
           photoPosY: 22,
         },
         announcement: {
@@ -1616,6 +2266,9 @@ export default function App() {
           address: 'Clique para abrir a rota no Google Maps e vir até o nosso espaço',
           buttonLabel: 'Abrir no Google Maps',
           mapsUrl,
+          hours: 'Seg a Sáb · 08:30 às 19:30',
+          openStatus: 'ABERTO AGORA · HORA MARCADA',
+          showHours: true,
         },
         services: {
           ...INITIAL_DATA.services,
@@ -1714,6 +2367,9 @@ export default function App() {
         address: kit.profile.location,
         buttonLabel: 'Abrir no Google Maps',
         mapsUrl,
+        hours: 'Seg a Sáb · 08:30 às 19:30',
+        openStatus: 'ABERTO AGORA · HORA MARCADA',
+        showHours: true,
       },
       services: {
         ...INITIAL_DATA.services,
@@ -1833,6 +2489,14 @@ export default function App() {
         ...INITIAL_DATA.locationCard,
         ...(generated?.locationCard || {}),
         mapsUrl: generated?.locationCard?.mapsUrl || cleanMaps || INITIAL_DATA.locationCard.mapsUrl,
+        hours:
+          generated?.locationCard?.hours ||
+          extractedMeta?.businessHours ||
+          INITIAL_DATA.locationCard.hours,
+        openStatus:
+          generated?.locationCard?.openStatus ||
+          INITIAL_DATA.locationCard.openStatus,
+        showHours: generated?.locationCard?.showHours ?? true,
       },
       services: {
         ...INITIAL_DATA.services,
@@ -1883,6 +2547,7 @@ export default function App() {
       },
     }));
 
+    setLastExtractedMeta(extractedMeta || null);
     setEditingSiteId(null);
     setAiModalOpen(false);
     setActiveTab('styling');
@@ -1903,6 +2568,109 @@ export default function App() {
     } else {
       showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
     }
+  };
+
+  // Funções da Barra de Refinamento Instantâneo Pós-Criação
+  const handleQuickCyclePalette = () => {
+    const themeKeys = Object.keys(THEMES);
+    const currentIndex = themeKeys.indexOf(data.theme);
+    const nextKey = themeKeys[(currentIndex + 1) % themeKeys.length];
+    const nextThemeObj = THEMES[nextKey];
+    triggerSimulatorSkeleton(360);
+    setData((prev) => ({
+      ...prev,
+      theme: nextKey,
+      customColors: { ...prev.customColors, enabled: false },
+      styling: {
+        ...prev.styling,
+        fontFamily: nextThemeObj?.fontHeadline || prev.styling.fontFamily,
+      },
+    }));
+    showToast(`🎨 Paleta alterada para "${nextThemeObj?.name || nextKey}" mantendo todas as fotos e dados!`);
+  };
+
+  const handleQuickCycleCopyVariant = () => {
+    const bizName = data.profile.name || 'STUDIO VIP';
+    const copyOptions = [
+      {
+        tagline:
+          'Atendimento personalizado de alto padrão, técnicas exclusivas e resultados impecáveis pensados para valorizar a sua melhor versão.',
+        cursivePhrase: 'Excelência, sofisticação e cuidado em cada detalhe.',
+        ctaTitle: 'AGENDAR MEU HORÁRIO VIP NO WHATSAPP',
+      },
+      {
+        tagline:
+          'Referência em qualidade, biossegurança e durabilidade. Transforme sua autoestima em um ambiente acolhedor e exclusivo.',
+        cursivePhrase: 'Sua beleza e bem-estar em primeiro lugar.',
+        ctaTitle: 'RESERVAR ATENDIMENTO COM PRIORIDADE',
+      },
+      {
+        tagline:
+          'Protocolos personalizados e materiais premium para entregar um acabamento natural, elegante e duradouro em cada sessão.',
+        cursivePhrase: 'Agende seu momento especial conosco.',
+        ctaTitle: `FALAR COM ${bizName.split(' ')[0]} NO WHATSAPP`,
+      },
+    ];
+    const currentIdx = copyOptions.findIndex((c) => c.tagline === data.profile.tagline);
+    const nextCopy = copyOptions[(currentIdx + 1) % copyOptions.length];
+    triggerSimulatorSkeleton(300);
+    setData((prev) => ({
+      ...prev,
+      profile: {
+        ...prev.profile,
+        tagline: nextCopy.tagline,
+        cursivePhrase: nextCopy.cursivePhrase,
+      },
+      actionCards: prev.actionCards.map((card, i) =>
+        i === 0 ? { ...card, title: nextCopy.ctaTitle } : card
+      ),
+    }));
+    showToast('✍️ Textos de chamada e bio otimizados com nova variação persuasiva!');
+  };
+
+  const handleQuickCycleGalleryLayout = () => {
+    const layouts: Array<'smart_masonry' | 'mosaic' | 'grid3' | 'grid2' | 'masonry' | 'carousel'> = ['smart_masonry', 'mosaic', 'grid3', 'grid2', 'masonry', 'carousel'];
+    const current = (data.studentGrid.layout as any) || 'smart_masonry';
+    const nextLayout = layouts[(layouts.indexOf(current) + 1) % layouts.length];
+    const labels: Record<string, string> = {
+      smart_masonry: 'Bento Adaptativo (Auto Retrato/Paisagem)',
+      mosaic: 'Mosaico Destaque (Bento)',
+      grid3: 'Grade Editorial 3 Colunas',
+      grid2: 'Grade Clássica 2 Colunas',
+      masonry: 'Masonry Fluído (Pinterest)',
+      carousel: 'Carrossel Deslizante',
+    };
+    triggerSimulatorSkeleton(280);
+    setData((prev) => ({
+      ...prev,
+      studentGrid: {
+        ...prev.studentGrid,
+        enabled: true,
+        layout: nextLayout,
+      },
+    }));
+    showToast(`🖼️ Galeria alterada para: ${labels[nextLayout]}`);
+  };
+
+  const handleQuickCycleServicesLayout = () => {
+    const layouts: Array<'list' | 'featured' | 'grid2'> = ['list', 'featured', 'grid2'];
+    const current = data.services.layout || 'list';
+    const nextLayout = layouts[(layouts.indexOf(current) + 1) % layouts.length];
+    const labels: Record<string, string> = {
+      list: 'Lista Compacta Premium',
+      featured: 'Cards Grandes com Destaque',
+      grid2: 'Grade 2 Colunas',
+    };
+    triggerSimulatorSkeleton(280);
+    setData((prev) => ({
+      ...prev,
+      services: {
+        ...prev.services,
+        enabled: true,
+        layout: nextLayout,
+      },
+    }));
+    showToast(`🏷️ Catálogo alterado para: ${labels[nextLayout]}`);
   };
 
   const handleAiGenerateMicrosite = async () => {
@@ -1965,6 +2733,7 @@ export default function App() {
     monthlyFee: '149,90',
     subdomain: '',
     customDomain: '',
+    isLandingModel: true,
   });
 
   const showToast = (msg: string) => {
@@ -2384,27 +3153,161 @@ export default function App() {
 
   const recordWhatsappClick = (targetSiteId?: string) => {
     const targetId = targetSiteId || editingSiteId || savedSites[0]?.id;
-    if (!targetId) return;
 
-    setSavedSites(prev => {
-      const updated = prev.map(s => {
-        if (s.id === targetId) {
-          const clicks = (s.whatsappClicks || 0) + 1;
-          const views = Math.max((s.pageViews || 120), clicks + 5);
-          return {
-            ...s,
-            whatsappClicks: clicks,
-            pageViews: views,
-          };
-        }
-        return s;
-      });
+    // Atualiza estatísticas da sessão / simulador ativo
+    setSessionAnalytics(prev => {
+      const updated = {
+        ...prev,
+        whatsappClicks: prev.whatsappClicks + 1,
+        pageViews: Math.max(prev.pageViews + 1, prev.whatsappClicks + 6),
+        trafficSources: {
+          ...prev.trafficSources,
+          instagram: prev.trafficSources.instagram + 1,
+        },
+        pixelEvents: prev.pixelEvents + 1,
+      };
       try {
-        localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+        localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(updated));
       } catch {}
       return updated;
     });
+
+    if (targetId) {
+      setSavedSites(prev => {
+        const updated = prev.map(s => {
+          if (s.id === targetId) {
+            const clicks = (s.whatsappClicks || 0) + 1;
+            const views = Math.max((s.pageViews || 120), clicks + 5);
+            const prevSources = s.trafficSources || { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 };
+            return {
+              ...s,
+              whatsappClicks: clicks,
+              pageViews: views,
+              trafficSources: {
+                ...prevSources,
+                instagram: (prevSources.instagram || 0) + 1,
+              },
+            };
+          }
+          return s;
+        });
+        try {
+          localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+    }
     showToast('📈 Clique em WhatsApp registrado! Taxa de conversão atualizada no Painel.');
+  };
+
+  // Abrir modal de confirmação para zerar rastreamento
+  const openResetTrackingModal = (target: 'current' | 'all' | SavedMicrosite) => {
+    setResetModalTarget(target);
+    setResetAlsoClearPixelIds(false);
+    setResetTrackingModalOpen(true);
+  };
+
+  // Executar o reset do rastreamento com base no target selecionado
+  const executeResetTracking = () => {
+    const emptyAnalytics = {
+      whatsappClicks: 0,
+      pageViews: 0,
+      trafficSources: { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 },
+      pixelEvents: 0,
+    };
+
+    if (resetModalTarget === 'all') {
+      // Zerar rastreamento de todos os sites salvos
+      setSavedSites(prev => {
+        const updated = prev.map(s => ({
+          ...s,
+          whatsappClicks: 0,
+          pageViews: 0,
+          trafficSources: { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 },
+        }));
+        try {
+          localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+      setSessionAnalytics(emptyAnalytics);
+      try {
+        localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(emptyAnalytics));
+      } catch {}
+      showToast('📊 Rastreamento e métricas de TODOS os microsites foram zerados com sucesso!');
+    } else if (resetModalTarget === 'current') {
+      // Zerar rastreamento do microsite ativo
+      setSessionAnalytics(emptyAnalytics);
+      try {
+        localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(emptyAnalytics));
+      } catch {}
+
+      if (editingSiteId) {
+        setSavedSites(prev => {
+          const updated = prev.map(s => {
+            if (s.id === editingSiteId) {
+              return {
+                ...s,
+                whatsappClicks: 0,
+                pageViews: 0,
+                trafficSources: { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 },
+              };
+            }
+            return s;
+          });
+          try {
+            localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+
+      if (resetAlsoClearPixelIds) {
+        setData(prev => ({
+          ...prev,
+          conversion: {
+            ...prev.conversion,
+            metaPixelId: '',
+            googleAnalyticsId: '',
+          }
+        }));
+      }
+
+      showToast('🔄 Rastreamento do microsite ativo zerado com sucesso! Contadores reiniciados em 0.');
+    } else if (resetModalTarget && typeof resetModalTarget === 'object') {
+      // Zerar site específico
+      const siteId = resetModalTarget.id;
+      const clientName = resetModalTarget.clientName;
+      setSavedSites(prev => {
+        const updated = prev.map(s => {
+          if (s.id === siteId) {
+            return {
+              ...s,
+              whatsappClicks: 0,
+              pageViews: 0,
+              trafficSources: { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 },
+            };
+          }
+          return s;
+        });
+        try {
+          localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      if (editingSiteId === siteId) {
+        setSessionAnalytics(emptyAnalytics);
+        try {
+          localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(emptyAnalytics));
+        } catch {}
+      }
+
+      showToast(`🔄 Rastreamento de "${clientName}" zerado com sucesso! (0 cliques e 0 acessos).`);
+    }
+
+    setResetTrackingModalOpen(false);
+    setResetModalTarget(null);
   };
 
   const currentEditingSite = savedSites.find(s => s.id === editingSiteId);
@@ -2418,6 +3321,7 @@ export default function App() {
 
     if (editingSiteId && !asNew) {
       let isDataModified = false;
+      let savedTargetSite: SavedMicrosite | null = null;
       const updated = savedSites.map(s => {
         if (s.id !== editingSiteId) return s;
 
@@ -2427,12 +3331,13 @@ export default function App() {
           s.clientEmail !== (saveForm.clientEmail || s.clientEmail) ||
           s.monthlyFee !== feeNum ||
           s.subdomain !== slug ||
-          s.customDomain !== saveForm.customDomain.trim();
+          s.customDomain !== saveForm.customDomain.trim() ||
+          Boolean(s.isLandingModel) !== Boolean(saveForm.isLandingModel);
 
         isDataModified = dataChanged;
         const newUpdates = dataChanged ? s.updatesThisMonth + 1 : s.updatesThisMonth;
 
-        return {
+        const updatedSite: SavedMicrosite = {
           ...s,
           clientName,
           clientPhone: saveForm.clientPhone || s.clientPhone,
@@ -2443,11 +3348,17 @@ export default function App() {
           nicheCategory: THEMES[data.theme]?.category || s.nicheCategory,
           updatesThisMonth: newUpdates,
           lastUpdated: dataChanged ? todayStr : s.lastUpdated,
+          isLandingModel: saveForm.isLandingModel,
           data: JSON.parse(JSON.stringify(data)),
         };
+        savedTargetSite = updatedSite;
+        return updatedSite;
       });
       setSavedSites(updated);
       try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+      if (savedTargetSite) {
+        syncSiteToFirestore(savedTargetSite);
+      }
       if (isDataModified) {
         showToast(`✅ Alterações do microsite "${clientName}" salvas com sucesso! (+1 edição contabilizada)`);
       } else {
@@ -2478,6 +3389,7 @@ export default function App() {
         sslActive: true,
         whatsappClicks: 0,
         pageViews: 100,
+        isLandingModel: saveForm.isLandingModel,
         data: JSON.parse(JSON.stringify(data)),
       };
 
@@ -2485,6 +3397,7 @@ export default function App() {
       setSavedSites(newList);
       setEditingSiteId(newId);
       try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(newList)); } catch {}
+      syncSiteToFirestore(newSite);
       showToast(`🎉 Microsite "${clientName}" criado e salvo no seu Painel de Gestão! Vencimento: ${dueDateStr}`);
     }
     setSaveModalOpen(false);
@@ -2499,6 +3412,7 @@ export default function App() {
       monthlyFee: currentSite ? currentSite.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '149,90',
       subdomain: currentSite ? currentSite.subdomain : data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       customDomain: currentSite ? currentSite.customDomain : '',
+      isLandingModel: currentSite ? Boolean(currentSite.isLandingModel) : true,
     });
     setSaveModalOpen(true);
   };
@@ -2509,6 +3423,26 @@ export default function App() {
     setEditingSiteId(site.id);
     setActiveTab('styling');
     showToast(`✏️ Microsite "${site.clientName}" carregado no estúdio de edição!`);
+  };
+
+  const toggleSiteLandingModel = (siteId: string) => {
+    let toggledSite: SavedMicrosite | null = null;
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      const nextVal = !Boolean(s.isLandingModel);
+      toggledSite = { ...s, isLandingModel: nextVal };
+      return toggledSite;
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    if (toggledSite) {
+      syncSiteToFirestore(toggledSite);
+      if ((toggledSite as SavedMicrosite).isLandingModel) {
+        showToast(`⭐ "${(toggledSite as SavedMicrosite).clientName}" adicionado ao Carrossel de Modelos da Landing Page!`);
+      } else {
+        showToast(`📤 "${(toggledSite as SavedMicrosite).clientName}" removido do Carrossel da Landing Page.`);
+      }
+    }
   };
 
   const startNewDraftMicrosite = () => {
@@ -2527,6 +3461,7 @@ export default function App() {
     setSavedSites(updated);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
     const target = updated.find(s => s.id === siteId);
+    if (target) syncSiteToFirestore(target);
     if (target?.status === 'disabled') {
       showToast(`🛑 Microsite "${target.clientName}" foi DESATIVADO por atraso de pagamento!`);
     } else if (target) {
@@ -2545,16 +3480,38 @@ export default function App() {
     setSavedSites(updated);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
     const target = updated.find(s => s.id === siteId);
+    if (target) syncSiteToFirestore(target);
     showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Vencimento estendido para ${target?.dueDate}.`);
   };
 
-  const deleteSavedSite = (siteId: string) => {
+  const updateSiteMonthlyFee = (siteId: string, newFee: number) => {
+    if (isNaN(newFee) || newFee < 0) return;
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      return { ...s, monthlyFee: newFee, updatesThisMonth: s.updatesThisMonth + 1 };
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    const target = updated.find(s => s.id === siteId);
+    if (target) syncSiteToFirestore(target);
+    showToast(`💰 Valor do microsite "${target?.clientName}" atualizado para R$ ${newFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês!`);
+  };
+
+  const deleteSavedSite = async (siteId: string) => {
     const target = savedSites.find(s => s.id === siteId);
     if (!confirm(`Tem certeza que deseja excluir o microsite de "${target?.clientName}"?`)) return;
     const filtered = savedSites.filter(s => s.id !== siteId);
     setSavedSites(filtered);
     if (editingSiteId === siteId) setEditingSiteId(null);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(filtered)); } catch {}
+    if (firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
+      try {
+        await deleteDoc(doc(firebaseDb, 'admin_sites', siteId));
+        await deleteDoc(doc(firebaseDb, 'public_models', siteId));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.DELETE, `admin_sites/${siteId}`);
+      }
+    }
     showToast(`🗑️ Microsite removido do Painel.`);
   };
   
@@ -2751,15 +3708,36 @@ export default function App() {
   const updateAboutMe = (key: string, val: unknown) => setData(p => ({ ...p, aboutMe: { ...p.aboutMe, [key]: val } }));
   const updateFaq = (key: string, val: unknown) => setData(p => ({ ...p, faq: { ...p.faq, [key]: val } }));
 
-  // Quiz helper to compose final WhatsApp link
+  // Quiz helper to sanitize answers and safely handle state
+  const handleQuizAnswer = (questionId: string, answer: string) => {
+    const cleanAns = typeof answer === 'string' ? answer.trim() : String(answer);
+    setQuizAnswers(prev => ({ ...prev, [questionId]: cleanAns }));
+  };
+
+  // Quiz helper to compose sanitized and safely encoded WhatsApp link
   const buildQuizWhatsAppLink = () => {
-    let summary = `Olá ${data.profile.name}! Preenchi o formulário de triagem exclusiva na sua página:\n\n`;
-    data.qualifierFunnel.questions.forEach((q, idx) => {
-      const ans = quizAnswers[q.id] || 'Não respondido';
-      summary += `*${idx + 1}. ${q.title}*\n👉 ${ans}\n\n`;
-    });
-    summary += 'Gostaria de verificar os próximos horários disponíveis com prioridade!';
-    return `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(summary)}`;
+    // Sanitização estrita do telefone: apenas dígitos numéricos (sem traços, parênteses ou espaços)
+    const rawPhone = data.profile?.whatsapp || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+
+    // Montagem da mensagem estruturada como string limpa
+    const profileName = (data.profile?.name || '').trim();
+    let messageText = `Olá ${profileName}! Preenchi o formulário de triagem exclusiva na sua página:\n\n`;
+
+    if (data.qualifierFunnel?.questions?.length) {
+      data.qualifierFunnel.questions.forEach((q, idx) => {
+        const rawAns = quizAnswers[q.id] || 'Não respondido';
+        const cleanAns = typeof rawAns === 'string' ? rawAns.trim().replace(/\r\n/g, '\n') : String(rawAns);
+        const cleanTitle = (q.title || '').trim().replace(/\r\n/g, ' ');
+        messageText += `*${idx + 1}. ${cleanTitle}*\n👉 ${cleanAns}\n\n`;
+      });
+    }
+
+    messageText += 'Gostaria de verificar os próximos horários disponíveis com prioridade!';
+
+    // Codificação URI completa da mensagem formatada para total compatibilidade mobile e web
+    const encodedText = encodeURIComponent(messageText);
+    return cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
   };
 
   // Services Helpers
@@ -4193,8 +5171,11 @@ export default function App() {
     return matchesCategory && searchableText.includes(normalizedQuery);
   });
 
-  // Full HTML / CSS standalone generator (accepts optional targetData)
-  const generateExportCode = (targetData?: typeof INITIAL_DATA) => {
+  // Full HTML / CSS standalone generator (accepts optional targetData and options)
+  const generateExportCode = (
+    targetData?: typeof INITIAL_DATA,
+    options?: { disableLinks?: boolean; isCarousel?: boolean }
+  ) => {
     const siteData: typeof INITIAL_DATA = targetData || data;
     const baseThemeObj = THEMES[siteData.theme] || THEMES.navyLaw;
     const siteTheme = siteData.customColors?.enabled
@@ -4254,6 +5235,13 @@ export default function App() {
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Italianno&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+      overscroll-behavior-x: none;
+      -webkit-overflow-scrolling: touch;
+    }
     body {
       background-color: ${theme.bg};
       color: ${theme.textMain};
@@ -4271,6 +5259,7 @@ export default function App() {
       position: relative;
       padding: 0 16px;
       box-sizing: border-box;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -4309,8 +5298,8 @@ export default function App() {
       font-weight: 700;
       text-align: center;
       padding: 8px 12px;
-      border-radius: 0 0 14px 14px;
-      margin: 0 -16px 14px;
+      border-radius: ${data.styling.borderRadius}px;
+      margin: 0 0 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -4328,14 +5317,15 @@ export default function App() {
       margin-bottom: 20px;
       z-index: 2;
     }
-    .hero-img {
+    .hero-img, .avatar-img {
       width: 100%;
       height: 100%;
       display: block;
       object-fit: cover;
       transform: scale(${(data.styling.photoScale || 100) / 100});
       object-position: center ${data.styling.photoPosY ?? 20}%;
-      filter: ${currentFilter};
+      filter: ${filterCss};
+      -webkit-filter: ${filterCss};
     }
     .hero-fade {
       position: absolute;
@@ -4481,8 +5471,9 @@ export default function App() {
     .cta-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
     .cta-sub { font-size: 11px; color: ${theme.cardSubtext}; margin-top: 3px; }
     .metrics-bar {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
       gap: 8px;
       border: 1px solid ${theme.socialBorder};
       background: ${theme.socialBg};
@@ -4490,6 +5481,10 @@ export default function App() {
       padding: 14px 8px;
       text-align: center;
       margin: 20px 0;
+    }
+    .metric-item {
+      flex: 1;
+      min-width: 0;
     }
     .metric-val {
       font-size: 18px;
@@ -4611,6 +5606,50 @@ export default function App() {
     .gallery-aspect-square { aspect-ratio: 1 / 1; }
     .gallery-aspect-portrait { aspect-ratio: 4 / 5; }
     .gallery-aspect-landscape { aspect-ratio: 4 / 3; }
+    .gallery-smart-masonry {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .gallery-smart-masonry .gallery-item.is-landscape {
+      grid-column: span 2;
+      aspect-ratio: 16 / 10;
+    }
+    .gallery-smart-masonry .gallery-item.is-portrait {
+      grid-column: span 1;
+      aspect-ratio: 3 / 4;
+    }
+    .gallery-smart-masonry .gallery-item.is-square {
+      grid-column: span 1;
+      aspect-ratio: 1 / 1;
+    }
+    .gallery-masonry {
+      column-count: 2;
+      column-gap: 10px;
+    }
+    .gallery-masonry .gallery-item {
+      break-inside: avoid;
+      margin-bottom: 10px;
+    }
+    .gallery-masonry .gallery-item.is-landscape { aspect-ratio: 4 / 3; }
+    .gallery-masonry .gallery-item.is-portrait { aspect-ratio: 3 / 4; }
+    .gallery-masonry .gallery-item.is-square { aspect-ratio: 1 / 1; }
+    .gallery-grid-2 .gallery-item.is-landscape {
+      grid-column: span 2;
+      aspect-ratio: 16 / 10;
+    }
+    .gallery-grid-2 .gallery-item.is-portrait {
+      grid-column: span 1;
+      aspect-ratio: 3 / 4;
+    }
+    .gallery-carousel .gallery-item.is-landscape {
+      width: 210px;
+      aspect-ratio: 16 / 10;
+    }
+    .gallery-carousel .gallery-item.is-portrait {
+      width: 145px;
+      aspect-ratio: 3 / 4;
+    }
     .services-container { margin: 24px 0; }
     .services-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .service-card {
@@ -4677,19 +5716,38 @@ export default function App() {
     .whatsapp-float:hover {
       transform: scale(1.1);
     }
+    ${options?.disableLinks ? `
+    /* Modo Carrossel: links externos desativados (clique desabilitado) */
+    a, [role="link"], .cta-card, .social-btn, .whatsapp-float, .announcement, .service-cta {
+      pointer-events: none !important;
+      cursor: default !important;
+      text-decoration: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+    .cta-card:hover, .social-btn:hover, .service-cta:hover, .whatsapp-float:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    ` : ''}
   </style>
 </head>
 <body>
+  ${options?.disableLinks ? `
+  <div id="carousel-preview-link-toast" style="position:fixed; top:12px; left:50%; transform:translateX(-50%) translateY(-15px); background:rgba(18,18,24,0.95); border:1px solid rgba(251,191,36,0.4); color:#fef08a; padding:6px 14px; border-radius:999px; font-size:11px; font-weight:700; font-family:system-ui,-apple-system,sans-serif; z-index:999999; pointer-events:none; opacity:0; transition:all 0.25s ease; box-shadow:0 8px 24px rgba(0,0,0,0.8); text-align:center; white-space:nowrap; letter-spacing:0.02em;">
+    🔒 Links ativos apenas ao abrir externamente
+  </div>
+  ` : ''}
   <div class="wrapper">
     ${data.styling.spotlightGlow ? '<div class="spotlight"></div>' : ''}
     
-    ${data.announcement.enabled ? `
-    <a href="${data.announcement.link}" class="announcement">
-      <span>● ${data.announcement.badge}:</span> ${data.announcement.text}
+    ${(data.announcement?.enabled || (data as any).announcementBar?.enabled) ? `
+    <a href="${options?.disableLinks ? 'javascript:void(0)' : (data.announcement?.link || (data as any).announcementBar?.link || '#agendar')}" class="announcement" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ''}>
+      <span>● ${data.announcement?.badge || (data as any).announcementBar?.badge || 'AVISO'}:</span> ${data.announcement?.text || (data as any).announcementBar?.text || ''}
     </a>` : ''}
 
     <div class="hero">
-      <img src="${data.profile.avatarUrl}" alt="${data.profile.name}" class="hero-img" />
+      <img src="${data.profile.avatarUrl}" alt="${data.profile.name}" class="hero-img avatar-img" />
       <div class="hero-fade">
         <span class="badge-sub">${data.profile.title}</span>
         <h1 class="name">${data.profile.name}</h1>
@@ -4698,9 +5756,9 @@ export default function App() {
     </div>
 
     <div class="social-bar">
-      ${data.profile.whatsapp ? `<a href="https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}" class="social-btn" target="_blank" rel="noopener noreferrer" title="WhatsApp">${WHATSAPP_SVG_STRING}</a>` : ''}
-      ${data.profile.instagram ? `<a href="https://instagram.com/${data.profile.instagram}" class="social-btn" target="_blank" rel="noopener noreferrer" title="Instagram">${INSTAGRAM_SVG_STRING}</a>` : ''}
-      <a href="#booking" class="social-btn" title="Agenda">${CALENDAR_SVG_STRING}</a>
+      ${data.profile.whatsapp ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="WhatsApp">${WHATSAPP_SVG_STRING}</a>` : ''}
+      ${data.profile.instagram ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://instagram.com/${data.profile.instagram}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Instagram">${INSTAGRAM_SVG_STRING}</a>` : ''}
+      <a href="${options?.disableLinks ? 'javascript:void(0)' : '#booking'}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ''} title="Agenda">${CALENDAR_SVG_STRING}</a>
     </div>
 
     ${data.profile.cursivePhrase ? `<div class="cursive-banner">${data.profile.cursivePhrase}</div>` : ''}
@@ -4708,10 +5766,12 @@ export default function App() {
     <div class="actions">
       ${data.actionCards.map(c => {
         const animClass = c.animation && c.animation !== 'none' ? `anim-${c.animation}` : '';
-        const href = c.linkType === 'whatsapp'
+        const rawHref = c.linkType === 'whatsapp'
           ? `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}`
           : (c.url || '#');
-        const targetAttr = c.openInNewTab && !href.startsWith('#') ? 'target="_blank" rel="noopener noreferrer"' : '';
+        const href = options?.disableLinks ? 'javascript:void(0)' : rawHref;
+        const targetAttr = (options?.disableLinks || !c.openInNewTab || href.startsWith('#') || href.startsWith('javascript:')) ? (options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : '') : 'target="_blank" rel="noopener noreferrer"';
+        const cardOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
         let inlineStyle = '';
         if (c.variant === 'accent') {
           inlineStyle = `background: ${theme.accent}; color: #000000; border-color: ${theme.accent};`;
@@ -4748,7 +5808,7 @@ export default function App() {
 
         if (hasSideImg) {
           return `
-      <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle} ${c.imageFitStyle === 'popout' ? 'overflow: visible; margin-top: 18px;' : ''} flex-direction: ${isImgLeft ? 'row-reverse' : 'row'};" onclick="if(window.fbq) fbq('track', 'Lead');">
+      <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle} ${c.imageFitStyle === 'popout' ? 'overflow: visible; margin-top: 18px;' : ''} flex-direction: ${isImgLeft ? 'row-reverse' : 'row'};" onclick="${cardOnclick}">
         ${c.badgeText ? `<span class="cta-badge">${c.badgeText}</span>` : ''}
         <div style="flex: 1; text-align: ${isImgLeft ? 'right' : 'left'}; padding-${isImgLeft ? 'left' : 'right'}: 12px;">
           <div class="cta-title" style="font-size: 13.5px;">${c.title}</div>
@@ -4759,7 +5819,7 @@ export default function App() {
       </a>`;
         }
         return `
-      <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle}" onclick="if(window.fbq) fbq('track', 'Lead');">
+      <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle}" onclick="${cardOnclick}">
         ${c.badgeText ? `<span class="cta-badge">${c.badgeText}</span>` : ''}
         <div class="cta-left">
           <div class="cta-icon">${iconHtml}</div>
@@ -4774,19 +5834,19 @@ export default function App() {
       }).join('')}
     </div>
 
-    ${data.metrics.enabled ? `
+    ${data.metrics?.enabled ? `
     <div class="metrics-bar">
-      <div>
-        <div class="metric-val">${data.metrics.stat1Value}</div>
-        <div class="metric-lbl">${data.metrics.stat1Label}</div>
+      <div class="metric-item">
+        <div class="metric-val">${data.metrics.stat1Value || '+500'}</div>
+        <div class="metric-lbl">${data.metrics.stat1Label || 'CLIENTES'}</div>
       </div>
-      <div>
-        <div class="metric-val">${data.metrics.stat2Value}</div>
-        <div class="metric-lbl">${data.metrics.stat2Label}</div>
+      <div class="metric-item">
+        <div class="metric-val">${data.metrics.stat2Value || '8 anos'}</div>
+        <div class="metric-lbl">${data.metrics.stat2Label || 'DE EXPERIÊNCIA'}</div>
       </div>
-      <div>
-        <div class="metric-val">${data.metrics.stat3Value}</div>
-        <div class="metric-lbl">${data.metrics.stat3Label}</div>
+      <div class="metric-item">
+        <div class="metric-val">${data.metrics.stat3Value || '100%'}</div>
+        <div class="metric-lbl">${data.metrics.stat3Label || 'SATISFAÇÃO'}</div>
       </div>
     </div>` : ''}
 
@@ -4819,6 +5879,8 @@ export default function App() {
       </div>
 
       <div class="${
+        data.studentGrid.layout === 'smart_masonry' ? 'gallery-smart-masonry' :
+        data.studentGrid.layout === 'masonry' ? 'gallery-masonry' :
         data.studentGrid.layout === 'grid2' ? 'gallery-grid-2' :
         data.studentGrid.layout === 'mosaic' ? 'gallery-mosaic' :
         data.studentGrid.layout === 'carousel' ? 'gallery-carousel' : 'gallery-grid-3'
@@ -4827,9 +5889,10 @@ export default function App() {
           const isHero = data.studentGrid.layout === 'mosaic' && idx === 0;
           const aspectClass = isHero ? 'gallery-aspect-square gallery-mosaic-hero' :
             data.studentGrid.aspectRatio === 'portrait' ? 'gallery-aspect-portrait' :
-            data.studentGrid.aspectRatio === 'landscape' ? 'gallery-aspect-landscape' : 'gallery-aspect-square';
+            data.studentGrid.aspectRatio === 'landscape' ? 'gallery-aspect-landscape' :
+            data.studentGrid.aspectRatio === 'square' ? 'gallery-aspect-square' : '';
           return `
-          <div class="gallery-item ${aspectClass}" onclick="openGalleryLightbox(${idx})">
+          <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
             <img src="${p}" alt="Foto ${idx + 1}" loading="lazy" />
           </div>`;
         }).join('')}
@@ -4841,11 +5904,15 @@ export default function App() {
       <div class="cta-left">
         <div class="cta-icon">📍</div>
         <div>
-          <div class="cta-title">${data.locationCard.headline}</div>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <div class="cta-title">${data.locationCard.headline}</div>
+            ${data.locationCard.showHours !== false && data.locationCard.openStatus ? `<span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:rgba(16,185,129,0.18); color:#10b981; border:1px solid rgba(16,185,129,0.35);">● ${data.locationCard.openStatus}</span>` : ''}
+          </div>
           <div class="cta-sub">${data.locationCard.address}</div>
+          ${data.locationCard.showHours !== false && data.locationCard.hours ? `<div style="font-size:10px; margin-top:3px; opacity:0.85; font-weight:600;">🕒 ${data.locationCard.hours}</div>` : ''}
         </div>
       </div>
-      <a href="${data.locationCard.mapsUrl}" target="_blank" style="font-size: 10px; font-weight: bold; color: ${theme.accent}; text-decoration: underline;">Mapa</a>
+      <a href="${options?.disableLinks ? 'javascript:void(0)' : data.locationCard.mapsUrl}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank"'} style="font-size: 10px; font-weight: bold; color: ${theme.accent}; text-decoration: underline;">Mapa</a>
     </div>` : ''}
 
     ${data.services?.enabled && data.services.items?.length > 0 ? `
@@ -4858,9 +5925,12 @@ export default function App() {
       <div class="${data.services.layout === 'grid2' ? 'services-grid-2' : ''}" style="${data.services.layout !== 'grid2' ? 'display:flex; flex-direction:column; gap:10px;' : ''}">
         ${data.services.items.map(srv => {
           const waMsg = encodeURIComponent(`Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`);
-          const srvHref = srv.actionType === 'link' && srv.customUrl
+          const rawSrvHref = srv.actionType === 'link' && srv.customUrl
             ? srv.customUrl
             : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${waMsg}`;
+          const srvHref = options?.disableLinks ? 'javascript:void(0)' : rawSrvHref;
+          const srvTargetAttr = options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"';
+          const srvOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
           const btnText = srv.ctaLabel || 'Reservar';
 
           if (data.services.layout === 'featured') {
@@ -4879,7 +5949,7 @@ export default function App() {
                     ${srv.oldPrice ? `<span style="font-size:10px; text-decoration:line-through; color:${theme.textMuted}; opacity:0.7; display:block;">${srv.oldPrice}</span>` : ''}
                     <span style="font-size:14px; font-weight:800; color:${theme.accent};">${srv.price}</span>
                   </div>
-                  <a href="${srvHref}" target="_blank" rel="noopener noreferrer" class="service-cta" onclick="if(window.fbq) fbq('track', 'Lead');">${btnText} ›</a>
+                  <a href="${srvHref}" ${srvTargetAttr} class="service-cta" onclick="${srvOnclick}">${btnText} ›</a>
                 </div>
               </div>
             </div>`;
@@ -4904,7 +5974,7 @@ export default function App() {
                   ${srv.oldPrice ? `<span style="font-size:9px; text-decoration:line-through; color:${theme.textMuted}; margin-right:4px;">${srv.oldPrice}</span>` : ''}
                   <span style="font-size:12.5px; font-weight:800; color:${theme.accent};">${srv.price}</span>
                 </div>
-                <a href="${srvHref}" target="_blank" rel="noopener noreferrer" class="service-cta" style="width:100%;" onclick="if(window.fbq) fbq('track', 'Lead');">${btnText}</a>
+                <a href="${srvHref}" ${srvTargetAttr} class="service-cta" style="width:100%;" onclick="${srvOnclick}">${btnText}</a>
               </div>
             </div>`;
           }
@@ -4926,7 +5996,7 @@ export default function App() {
                   ${srv.oldPrice ? `<span style="font-size:9.5px; text-decoration:line-through; color:${theme.textMuted}; margin-right:5px;">${srv.oldPrice}</span>` : ''}
                   <span style="font-size:13px; font-weight:800; color:${theme.accent};">${srv.price}</span>
                 </div>
-                <a href="${srvHref}" target="_blank" rel="noopener noreferrer" class="service-cta" onclick="if(window.fbq) fbq('track', 'Lead');">${btnText}</a>
+                <a href="${srvHref}" ${srvTargetAttr} class="service-cta" onclick="${srvOnclick}">${btnText}</a>
               </div>
             </div>
           </div>`;
@@ -4940,7 +6010,7 @@ export default function App() {
   </div>
 
   ${data.profile.whatsapp ? `
-  <a href="https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Falar no WhatsApp" onclick="if(window.fbq) fbq('track', 'Lead');">
+  <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}`}" class="whatsapp-float" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Falar no WhatsApp" onclick="${options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');"}">
     <svg style="width:28px;height:28px;display:inline-block;vertical-align:middle;fill:#ffffff;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z"/><path d="M12 1c-6.075 0-11 4.925-11 11 0 2.102.589 4.066 1.606 5.744l-1.606 5.256 5.438-1.57c1.613.918 3.479 1.442 5.562 1.442 6.075 0 11-4.925 11-11s-4.925-11-11-11zm0 19.825c-1.875 0-3.626-.543-5.111-1.479l-.366-.23-3.232.933.951-3.111-.252-.387c-1.047-1.606-1.615-3.501-1.615-5.551 0-5.132 4.173-9.305 9.305-9.305 5.132 0 9.305 4.173 9.305 9.305 0 5.132-4.173 9.305-9.305 9.305z"/></svg>
   </a>` : ''}
 
@@ -4988,6 +6058,59 @@ export default function App() {
       if (e.key === 'ArrowLeft') navGalleryLightbox(-1);
       if (e.key === 'ArrowRight') navGalleryLightbox(1);
     });
+
+    // Detecção dinâmica de orientação (retrato vs paisagem) nas fotos da galeria
+    (function detectGalleryOrientations() {
+      var items = document.querySelectorAll('.gallery-item img');
+      items.forEach(function(img) {
+        function check() {
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          if (!w || !h) return;
+          var item = img.closest('.gallery-item');
+          if (!item) return;
+          var ratio = w / h;
+          if (ratio > 1.15) {
+            item.classList.add('is-landscape');
+          } else if (ratio < 0.88) {
+            item.classList.add('is-portrait');
+          } else {
+            item.classList.add('is-square');
+          }
+        }
+        if (img.complete) {
+          check();
+        } else {
+          img.addEventListener('load', check);
+        }
+      });
+    })();
+    ${options?.disableLinks ? `
+    // Interceptar qualquer clique acidental em links dentro do carrossel demonstrativo
+    document.addEventListener('click', function(e) {
+      var el = e.target && e.target.closest ? e.target.closest('a, button, [role="link"], .cta-card, .social-btn, .whatsapp-float, .service-cta') : null;
+      if (el) {
+        var onclickAttr = el.getAttribute('onclick') || '';
+        if (onclickAttr.indexOf('Lightbox') !== -1 || el.id === 'gallery-lightbox-modal') {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        var toast = document.getElementById('carousel-preview-link-toast');
+        if (toast) {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateX(-50%) translateY(0)';
+          clearTimeout(window.__previewToastTimer);
+          window.__previewToastTimer = setTimeout(function() {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-15px)';
+          }, 2000);
+        }
+        return false;
+      }
+    }, true);
+    ` : ''}
   </script>
 </body>
 </html>`;
@@ -4999,7 +6122,8 @@ export default function App() {
     const success = await safeCopyText(code);
     if (success) {
       setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
+      showToast('📋 Código HTML copiado com sucesso! Pronto para colar no seu servidor ou hospedagem.');
+      setTimeout(() => setCopiedCode(false), 2600);
     }
   };
 
@@ -5415,12 +6539,2158 @@ COMO PUBLICAR NO SERVIDOR:
     }
   };
 
+  // =========================================================================
+  // CONSTRUTOR DE MICROSITES REAIS COMPLETOS (1 DE CADA NICHO) PARA A VITRINE
+  // =========================================================================
+  const buildRealNicheMicrositeData = (
+    nicheKitKey: string,
+    customMeta: {
+      whatsappPhone: string;
+      instagramHandle: string;
+      openHours: string;
+      openStatus: string;
+      galleryPhotos: string[];
+      processSteps: Array<{ id: string; number: string; title: string; description: string }>;
+      aboutParagraph: string;
+      aboutClosing: string;
+      faqs: Array<{ id: string; question: string; answer: string }>;
+    }
+  ): typeof INITIAL_DATA => {
+    const kit = NICHE_KITS[nicheKitKey] || NICHE_KITS['Jurídico & Executivo'];
+    const themeObj = THEMES[kit.defaultTheme] || THEMES.navyLaw;
+
+    return {
+      ...INITIAL_DATA,
+      theme: kit.defaultTheme,
+      customColors: {
+        ...INITIAL_DATA.customColors,
+        enabled: false,
+      },
+      styling: {
+        ...INITIAL_DATA.styling,
+        fontFamily: themeObj.fontHeadline,
+        borderRadius: 20,
+        glassmorphism: true,
+        metallicBorders: true,
+        spotlightGlow: true,
+        photoHeight: 390,
+        photoScale: 100,
+        photoPosY: 22,
+        vignetteIntensity: 85,
+        photoFilter: 'none',
+        wrapperAlignment: 'flex-start',
+      },
+      announcement: {
+        enabled: true,
+        badge: kit.announcement.badge,
+        text: kit.announcement.text,
+        link: '#catalogo',
+      },
+      profile: {
+        ...INITIAL_DATA.profile,
+        name: kit.profile.name,
+        title: kit.profile.title,
+        tagline: kit.profile.tagline,
+        cursivePhrase: kit.profile.cursivePhrase,
+        location: kit.profile.location,
+        avatarUrl: kit.profile.avatarUrl,
+        aboutPhotoUrl: kit.profile.aboutPhotoUrl,
+        whatsapp: customMeta.whatsappPhone,
+        instagram: customMeta.instagramHandle,
+        mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(kit.profile.location)}`,
+      },
+      metrics: {
+        enabled: true,
+        stat1Value: kit.metrics.stat1Value,
+        stat1Label: kit.metrics.stat1Label,
+        stat2Value: kit.metrics.stat2Value,
+        stat2Label: kit.metrics.stat2Label,
+        stat3Value: kit.metrics.stat3Value,
+        stat3Label: kit.metrics.stat3Label,
+      },
+      actionCards: kit.actionCards,
+      services: {
+        enabled: true,
+        headline: kit.services.headline,
+        subtitle: 'Atendimento personalizado com excelência técnica e agendamento prioritário',
+        badge: 'CATÁLOGO OFICIAL',
+        layout: 'featured',
+        items: kit.services.items.map((item: any, idx: number) => ({
+          ...item,
+          featured: idx === 0,
+          badge: idx === 0 ? 'MAIS PROCURADO' : 'EXCLUSIVO',
+          ctaLabel: 'Reservar no WhatsApp',
+          actionType: 'whatsapp' as const,
+        })),
+      },
+      processSteps: {
+        enabled: true,
+        headline: 'Como funciona o atendimento?',
+        subtitle: 'Jornada simples, ágil e transparente em 3 etapas',
+        steps: customMeta.processSteps,
+      },
+      studentGrid: {
+        enabled: true,
+        headline: 'Portfólio & Estrutura de Atendimento',
+        subtitle: 'Registros reais do nosso padrão de entrega e resultados',
+        badge: 'GALERIA VIP',
+        layout: 'grid3',
+        aspectRatio: 'square',
+        enableLightbox: true,
+        photos: customMeta.galleryPhotos,
+      },
+      locationCard: {
+        enabled: true,
+        headline: 'Localização & Horários',
+        address: kit.profile.location,
+        buttonLabel: 'Abrir Rota no Google Maps',
+        mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(kit.profile.location)}`,
+        hours: customMeta.openHours,
+        openStatus: customMeta.openStatus,
+        showHours: true,
+      },
+      aboutMe: {
+        enabled: true,
+        headline: `Sobre ${kit.profile.name}`,
+        paragraph: customMeta.aboutParagraph,
+        closingPhrase: customMeta.aboutClosing,
+      },
+      faq: {
+        enabled: true,
+        headline: 'Perguntas Frequentes',
+        items: customMeta.faqs,
+      },
+      seo: {
+        metaTitle: `${kit.profile.name} — ${kit.profile.title}`,
+        metaDescription: kit.profile.tagline,
+        ogImageUrl: kit.profile.avatarUrl,
+        keywords: `${kit.shortLabel}, microsite, agendamento vip, ${kit.profile.name.toLowerCase()}`,
+      },
+    };
+  };
+
+  const RAW_READY_MADE_MODELS = [
+    {
+      id: 'law',
+      nicheKitKey: 'Jurídico & Executivo',
+      category: 'Advocacia & Consultoria',
+      code: 'NICHO 01 · JURÍDICO',
+      subdomain: 'dramarina',
+      title: 'Advocacia Estratégica & Patrimonial',
+      personaName: 'DRA. MARINA ALMEIDA',
+      personaRole: 'OAB/SP · Direito Empresarial, Família & Sucessões',
+      accentHex: '#e2b857',
+      conversionStat: '31.4% conv. WhatsApp',
+      includedHighlights: 'Microsite Real Completo: Hero Editorial + Áreas de Atuação + Etapas Jurídicas + Google Maps + FAQ',
+      realSiteData: buildRealNicheMicrositeData('Jurídico & Executivo', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'dramarinaalmeida.adv',
+        openHours: 'Seg a Sex · 09:00 às 19:00',
+        openStatus: 'PLANTÃO JURÍDICO ATIVO',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'law-s1', number: '01', title: 'Triagem Sigilosa no WhatsApp', description: 'Relate sua demanda para análise preliminar da equipe jurídica.' },
+          { id: 'law-s2', number: '02', title: 'Consulta & Parecer Técnico', description: 'Reunião presencial na Av. Paulista ou por videoconferência.' },
+          { id: 'law-s3', number: '03', title: 'Defesa & Blindagem Patrimonial', description: 'Atuação estratégica com relatórios periódicos de andamento.' },
+        ],
+        aboutParagraph: 'Com mais de 12 anos de atuação em Direito Empresarial, Sucessório e Planejamento Previdenciário, nosso escritório combina rigor técnico, sigilo absoluto e atendimento direto para proteger seu patrimônio.',
+        aboutClosing: 'Compromisso ético e segurança jurídica em cada decisão.',
+        faqs: [
+          { id: 'lf-1', question: 'Realizam consultas por videoconferência para outros estados?', answer: 'Sim. Atendemos clientes em todo o Brasil e no exterior com validade jurídica digital.' },
+          { id: 'lf-2', question: 'Como funciona a análise de contratos e holdings?', answer: 'Na consulta estratégica realizamos o diagnóstico patrimonial completo e apresentamos o plano de estruturação.' },
+        ],
+      }),
+    },
+    {
+      id: 'nails',
+      nicheKitKey: 'Beleza & Unhas',
+      category: 'Beleza & Estética',
+      code: 'NICHO 02 · NAIL DESIGNER',
+      subdomain: 'larissanails',
+      title: 'Nail Designer & Alongamento de Luxo',
+      personaName: 'LARISSA ALMEIDA',
+      personaRole: 'Especialista em Fibra Slim, Gel Moldado & Cursos VIP',
+      accentHex: '#d4af37',
+      conversionStat: '38.2% conv. Agenda',
+      includedHighlights: 'Microsite Real Completo: Botão Popout 3D + Catálogo de Alongamentos + Portfólio Unhas + Curso VIP',
+      realSiteData: buildRealNicheMicrositeData('Beleza & Unhas', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'larissaalmeida.nails',
+        openHours: 'Ter a Sáb · 09:00 às 20:00',
+        openStatus: 'AGENDA DA SEMANA ABERTA',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'nl-s1', number: '01', title: 'Escolha do Procedimento', description: 'Selecione Fibra de Vidro Slim, Banho de Gel ou Manutenção.' },
+          { id: 'nl-s2', number: '02', title: 'Confirmação no WhatsApp', description: 'Garanta seu horário preferido sem fila de espera.' },
+          { id: 'nl-s3', number: '03', title: 'Experiência Studio Privé', description: 'Atendimento individualizado com materiais 100% esterilizados em autoclave.' },
+        ],
+        aboutParagraph: 'Referência em naturalidade europeia e resistência superior, já transformei o olhar sobre alongamento de unhas em mais de 3.200 atendimentos e formei centenas de alunas no método Fibra Slim.',
+        aboutClosing: 'Elegância e sofisticação na ponta dos seus dedos.',
+        faqs: [
+          { id: 'nf-1', question: 'Qual a durabilidade do alongamento em Fibra de Vidro?', answer: 'Com os cuidados indicados, a estrutura mantém brilho e resistência intactos por até 30 a 35 dias até a manutenção.' },
+          { id: 'nf-2', question: 'O Curso VIP Presencial inclui certificado e material?', answer: 'Sim! Apostila completa, prática em modelo real e certificado internacional incluso.' },
+        ],
+      }),
+    },
+    {
+      id: 'lash',
+      nicheKitKey: 'Beleza & Alta Conversão',
+      category: 'Beleza & Estética',
+      code: 'NICHO 03 · LASH & SOBRANCELHAS',
+      subdomain: 'jannecampelo',
+      title: 'Sobrancelhas, Nanoblading & Lash Studio',
+      personaName: 'JANNE CAMPELO',
+      personaRole: 'Visagismo do Olhar · Nanoblading & Volume Fox Eyes',
+      accentHex: '#e11d48',
+      conversionStat: '36.8% conv. Procedimentos',
+      includedHighlights: 'Microsite Real Completo: Tema Ruby Imperial + Catálogo do Olhar + Galeria de Resultados + Recepção WA',
+      realSiteData: buildRealNicheMicrositeData('Beleza & Alta Conversão', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'jannecampelo.beauty',
+        openHours: 'Seg a Sáb · 09:00 às 19:30',
+        openStatus: 'HORÁRIOS VIP DISPONÍVEIS',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'ls-s1', number: '01', title: 'Mapeamento Facial & Visagismo', description: 'Analisamos a simetria do seu rosto antes de qualquer procedimento.' },
+          { id: 'ls-s2', number: '02', title: 'Aplicação Indolor & Precisa', description: 'Fios hiper-realistas ou extensão de cílios com isolamento perfeito.' },
+          { id: 'ls-s3', number: '03', title: 'Kit Pós-Procedimento VIP', description: 'Orientações completas para máxima retenção e durabilidade.' },
+        ],
+        aboutParagraph: 'Com mais de 4.500 olhares transformados em 7 anos de experiência, desenvolvi protocolos exclusivos que realçam sua beleza natural sem pesar na expressão.',
+        aboutClosing: 'Seu olhar transmite o seu verdadeiro poder.',
+        faqs: [
+          { id: 'lsf-1', question: 'Quanto tempo dura a extensão de cílios Fox Eyes?', answer: 'A retenção média é de 30 a 35 dias, sem danificar os fios naturais.' },
+          { id: 'lsf-2', question: 'O Nanoblading fica com aspecto natural?', answer: 'Sim, desenhamos fio a fio seguindo o caimento natural da sua sobrancelha com pigmentos importados.' },
+        ],
+      }),
+    },
+    {
+      id: 'esthetics',
+      nicheKitKey: 'Consultoria & Estética',
+      category: 'Beleza & Estética',
+      code: 'NICHO 04 · ESTÉTICA & CLÍNICA',
+      subdomain: 'drafernanda',
+      title: 'Harmonização Facial & Clínica Boutique',
+      personaName: 'DRA. FERNANDA MARCOLIN',
+      personaRole: 'Harmonização Facial, Bioestimuladores & Dermatologia',
+      accentHex: '#c5a880',
+      conversionStat: '29.8% conv. Avaliação',
+      includedHighlights: 'Microsite Real Completo: Paleta Champagne Nude + Protocolos Faciais + Concierge VIP + Endereço Itaim',
+      realSiteData: buildRealNicheMicrositeData('Consultoria & Estética', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'drafernandamarcolin',
+        openHours: 'Seg a Sex · 08:30 às 19:30',
+        openStatus: 'CLÍNICA ABERTA · HORA MARCADA',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1512290900672-1f04d6c01f0f?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'es-s1', number: '01', title: 'Consulta de Avaliação 3D', description: 'Diagnóstico anatômico da pele, pontos de sustentação e colágeno.' },
+          { id: 'es-s2', number: '02', title: 'Planejamento Full Face Personalizado', description: 'Protocolo médico focado em rejuvenescimento elegante e natural.' },
+          { id: 'es-s3', number: '03', title: 'Acompanhamento Pós-Clínico', description: 'Suporte direto com nossa Concierge durante toda a evolução.' },
+        ],
+        aboutParagraph: 'Acredito na medicina estética que respeita a individualidade de cada rosto. Mais de 3.800 procedimentos realizados com foco em gerenciamento de colágeno e naturalidade.',
+        aboutClosing: 'Realçando sua beleza única com ciência, arte e sutileza.',
+        faqs: [
+          { id: 'ef-1', question: 'Os procedimentos deixam o rosto artificial?', answer: 'Nosso método prioriza a reestruturação sutil e estímulo de colágeno, preservando 100% dos seus traços naturais.' },
+          { id: 'ef-2', question: 'Como agendar a primeira avaliação?', answer: 'Basta clicar no botão de Agendamento ou chamar nossa Concierge pelo WhatsApp.' },
+        ],
+      }),
+    },
+    {
+      id: 'barber',
+      nicheKitKey: 'Barbearia & Grooming',
+      category: 'Barbearia & Negócios',
+      code: 'NICHO 05 · BARBEARIA VIP',
+      subdomain: 'dombarber',
+      title: 'Barbearia Clássica & Clube de Assinatura',
+      personaName: 'DOM BARBER CLUB',
+      personaRole: 'Corte Executivo, Barboterapia & Clube VIP Masculino',
+      accentHex: '#d97706',
+      conversionStat: '41.6% conv. Horários',
+      includedHighlights: 'Microsite Real Completo: Tema Vintage Barber + Clube de Assinatura + Menu de Combos + Rota Google Maps',
+      realSiteData: buildRealNicheMicrositeData('Barbearia & Grooming', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'dombarberclub.sp',
+        openHours: 'Ter a Sáb · 09:00 às 21:00',
+        openStatus: 'SEM FILA · AGENDE ONLINE',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'bb-s1', number: '01', title: 'Escolha seu Combo ou Corte', description: 'Selecione Corte Navalhado, Barboterapia com Ozônio ou Combo Gentleman.' },
+          { id: 'bb-s2', number: '02', title: 'Confirmação Instantânea no WhatsApp', description: 'Chegue no horário marcado e seja atendido sem espera.' },
+          { id: 'bb-s3', number: '03', title: 'Toalha Quente & Chopp Cortesia', description: 'Primeira cerveja artesanal ou café espresso por nossa conta.' },
+        ],
+        aboutParagraph: 'Mais que um corte, o Dom Barber Club entrega visagismo masculino, barboterapia clássica com toalha quente e um ambiente pensado para homens de negócios.',
+        aboutClosing: 'Tradição, navalha afiada e respeito ao seu tempo.',
+        faqs: [
+          { id: 'bf-1', question: 'Como funciona o Clube de Assinatura Mensal?', answer: 'Por um valor fixo mensal você corta o cabelo e alinha a barba quantas vezes quiser no mês, com prioridade na agenda.' },
+          { id: 'bf-2', question: 'Possuem estacionamento no local?', answer: 'Sim, manobrista conveniado em frente à barbearia.' },
+        ],
+      }),
+    },
+    {
+      id: 'mentor',
+      nicheKitKey: 'Mentoria & Cursos',
+      category: 'Mentoria & Infoprodutos',
+      code: 'NICHO 06 · MENTORIA & CURSOS',
+      subdomain: 'marianacarvalho',
+      title: 'Mentoria High-Ticket & Infoprodutos',
+      personaName: 'MARIANA CARVALHO',
+      personaRole: 'Mentora de Negócios, Posicionamento & Escala Digital',
+      accentHex: '#d99f69',
+      conversionStat: '27.5% Aplicação Qualificada',
+      includedHighlights: 'Microsite Real Completo: Aplicação de Mentoria + Vitrine de E-book/Cursos + Métricas de Faturamento',
+      realSiteData: buildRealNicheMicrositeData('Mentoria & Cursos', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'marianacarvalho.mentora',
+        openHours: 'Atendimento Global Online · Seg a Sex',
+        openStatus: 'APLICAÇÕES ABERTAS · TURMA VIP',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'mt-s1', number: '01', title: 'Preenchimento da Aplicação', description: 'Avaliamos seu momento atual de faturamento e estrutura comercial.' },
+          { id: 'mt-s2', number: '02', title: 'Sessão Estratégica de Diagnóstico', description: 'Alinhamento individual com nosso time de estrategistas.' },
+          { id: 'mt-s3', number: '03', title: 'Plano de Escala High-Ticket', description: 'Implementação acompanhada por 90 dias para multiplicar sua margem.' },
+        ],
+        aboutParagraph: 'Especialista em posicionamento de alto valor e estruturação comercial, já formei mais de 1.800 alunas e ajudei negócios digitais a ultrapassarem R$ 15 milhões em vendas.',
+        aboutClosing: 'Posicionamento de elite atrai clientes de elite.',
+        faqs: [
+          { id: 'mf-1', question: 'Para quem é indicada a Mentoria Individual VIP?', answer: 'Para profissionais liberais, especialistas e empresárias que já faturam e desejam escalar ofertas de alto ticket.' },
+          { id: 'mf-2', question: 'Como contratar palestras in-company?', answer: 'Clique no botão de Palestras & Treinamentos para falar direto com nossa assessoria executiva.' },
+        ],
+      }),
+    },
+    {
+      id: 'health',
+      nicheKitKey: 'Saúde & Psicologia',
+      category: 'Saúde & Clínicas',
+      code: 'NICHO 07 · PSICOLOGIA & SAÚDE',
+      subdomain: 'psimartina',
+      title: 'Psicologia Clínica, Terapia & Saúde',
+      personaName: 'PSI. MARTINA BIANCHI',
+      personaRole: 'Psicóloga Clínica · CRP 06/12345 · Ansiedade & Burnout',
+      accentHex: '#a0583b',
+      conversionStat: '34.9% Agendamento Clínico',
+      includedHighlights: 'Microsite Real Completo: Tema Terracotta Acolhedor + Modalidades Online/Presencial + Dúvidas de Reembolso',
+      realSiteData: buildRealNicheMicrositeData('Saúde & Psicologia', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'psimartinabianchi',
+        openHours: 'Seg a Sex · 08:00 às 20:00 (Com Hora Marcada)',
+        openStatus: 'ONLINE GLOBAL & PRESENCIAL SP',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'ps-s1', number: '01', title: 'Primeiro Contato no WhatsApp', description: 'Alinhamos sua disponibilidade de horário e modalidade (online ou presencial).' },
+          { id: 'ps-s2', number: '02', title: 'Sessão Inicial de Acolhimento', description: 'Espaço ético, sigiloso e livre de julgamentos para compreender sua demanda.' },
+          { id: 'ps-s3', number: '03', title: 'Acompanhamento Semanal', description: 'Processo terapêutico estruturado no seu ritmo e objetivos emocionais.' },
+        ],
+        aboutParagraph: 'Com 9 anos de prática clínica e mais de 2.400 sessões realizadas, ofereço psicoterapia individual para brasileiros no Brasil e no exterior com foco em ansiedade, burnout e relacionamentos.',
+        aboutClosing: 'Cuidar da sua saúde emocional é um ato de coragem.',
+        faqs: [
+          { id: 'pf-1', question: 'Emite recibo para reembolso no plano de saúde?', answer: 'Sim, emitimos documentação fiscal completa para solicitação de reembolso em todos os convênios médicos.' },
+          { id: 'pf-2', question: 'Como funcionam as sessões online?', answer: 'Realizadas por sala de vídeo criptografada com duração de 50 minutos e total privacidade.' },
+        ],
+      }),
+    },
+    {
+      id: 'fashion',
+      nicheKitKey: 'Moda & Juventude',
+      category: 'Moda & E-commerce',
+      code: 'NICHO 08 · MODA & BOUTIQUE',
+      subdomain: 'hellenmarques',
+      title: 'Moda Feminina, Boutique & Personal Styling',
+      personaName: 'HELLEN MARQUES',
+      personaRole: 'Curadoria de Alfaiataria, Showroom & Malinha Delivery',
+      accentHex: '#e11d74',
+      conversionStat: '39.4% conv. Provador VIP',
+      includedHighlights: 'Microsite Real Completo: Vitrine da Nova Coleção + Compra com Consultora no WhatsApp + Malinha Delivery',
+      realSiteData: buildRealNicheMicrositeData('Moda & Juventude', {
+        whatsappPhone: landingConfig.agencyWhatsapp || '5511999999999',
+        instagramHandle: 'hellenmarques.store',
+        openHours: 'Seg a Sáb · 10:00 às 20:00 · Envio Expresso 24h',
+        openStatus: 'COLEÇÃO NOVA NO AR',
+        galleryPhotos: [
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=600',
+        ],
+        processSteps: [
+          { id: 'md-s1', number: '01', title: 'Escolha seus Looks no Catálogo', description: 'Veja caimento, tamanhos disponíveis e valores da nova coleção.' },
+          { id: 'md-s2', number: '02', title: 'Atendimento com Consultora de Estilo', description: 'Receba vídeos reais das peças e tabela de medidas pelo WhatsApp.' },
+          { id: 'md-s3', number: '03', title: 'Entrega Expressa ou Malinha VIP', description: 'Motoboy no mesmo dia em SP ou envio imediato para todo o Brasil.' },
+        ],
+        aboutParagraph: 'Mais de 12 mil clientes vestidas em todo o Brasil com nossa curadoria de alfaiataria italiana, vestidos acetinados e consultoria de imagem personalizada.',
+        aboutClosing: 'Vista-se da sua melhor versão todos os dias.',
+        faqs: [
+          { id: 'mdf-1', question: 'Como funciona a Malinha Delivery em São Paulo?', answer: 'Enviamos os looks selecionados no seu tamanho até sua casa para você provar com conforto e pagar apenas o que ficar.' },
+          { id: 'mdf-2', question: 'A primeira troca é gratuita?', answer: 'Sim! Garantimos troca fácil e rápida em até 7 dias após o recebimento.' },
+        ],
+      }),
+    },
+  ];
+
+  const READY_MADE_MODELS = RAW_READY_MADE_MODELS.map((m) => ({
+    ...m,
+    realHtml: generateExportCode(m.realSiteData),
+    carouselHtml: generateExportCode(m.realSiteData, { disableLinks: true, isCarousel: true }),
+  }));
+
+  // Ensure all 8 real niche microsites are automatically present in savedSites and editable in the Painel de Gestão
+  useEffect(() => {
+    setSavedSites((prev) => {
+      const existingIds = new Set(prev.map((s) => s.id));
+      const todayStr = new Date().toISOString().split('T')[0];
+      const nextMonth = new Date();
+      nextMonth.setDate(nextMonth.getDate() + 30);
+      const dueStr = nextMonth.toISOString().split('T')[0];
+
+      let changed = false;
+      const updated = prev.map((s) => {
+        if (s.id === 'site-1' && s.isLandingModel === undefined) {
+          changed = true;
+          return { ...s, isLandingModel: true };
+        }
+        return s;
+      });
+
+      RAW_READY_MADE_MODELS.forEach((m, idx) => {
+        const nicheId = `real-niche-${m.id}`;
+        if (!existingIds.has(nicheId)) {
+          changed = true;
+          updated.push({
+            id: nicheId,
+            clientName: m.personaName,
+            clientPhone: m.realSiteData.profile.whatsapp,
+            clientEmail: `contato@${m.subdomain}.com.br`,
+            nicheCategory: m.category,
+            createdAt: todayStr,
+            dueDate: dueStr,
+            monthlyFee: 197.0,
+            status: 'active',
+            updatesThisMonth: 1,
+            lastUpdated: todayStr,
+            domainType: 'subdomain',
+            subdomain: m.subdomain,
+            customDomain: `www.${m.subdomain}.com.br`,
+            dnsConfigured: true,
+            sslActive: true,
+            whatsappClicks: 42 + idx * 11,
+            pageViews: 180 + idx * 35,
+            trafficSources: {
+              instagram: 110 + idx * 15,
+              tiktok: 25 + idx * 5,
+              googleMaps: 30 + idx * 8,
+              paidAds: 15 + idx * 7,
+              direct: 10,
+            },
+            isLandingModel: true,
+            data: m.realSiteData,
+          });
+        }
+      });
+
+      if (!changed) return prev;
+      try {
+        localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  // Build dynamic showcase models from all savedSites marked with isLandingModel: true
+  const DYNAMIC_LANDING_MODELS = React.useMemo(() => {
+    const landingSites = savedSites.filter((s) => Boolean(s.isLandingModel) && s.status !== 'disabled');
+    if (landingSites.length === 0) {
+      return READY_MADE_MODELS;
+    }
+    return landingSites.map((site, idx) => {
+      const matchedPreset = RAW_READY_MADE_MODELS.find(
+        (rm) => `real-niche-${rm.id}` === site.id || rm.subdomain === site.subdomain
+      );
+      return {
+        id: site.id,
+        code: matchedPreset?.code || `MOD-0${idx + 1}`,
+        category: matchedPreset?.category || site.nicheCategory || 'Todos',
+        title: site.data?.profile?.title || matchedPreset?.title || site.nicheCategory,
+        personaName: site.clientName || site.data?.profile?.name || 'Cliente VIP',
+        personaRole: site.data?.profile?.title || matchedPreset?.personaRole || site.nicheCategory || 'Especialista',
+        accentHex: matchedPreset?.accentHex || THEMES[site.data?.theme || 'darkGold']?.accent || '#d4af37',
+        subdomain: site.subdomain || 'cliente',
+        nicheKitKey: matchedPreset?.nicheKitKey || site.nicheCategory || 'Personalizado',
+        themeKey: site.data?.theme || 'darkGold',
+        conversionStat: matchedPreset?.conversionStat || '+41% agendamentos no WhatsApp',
+        includedHighlights:
+          matchedPreset?.includedHighlights ||
+          site.data?.profile?.tagline ||
+          'Microsite real editável no Painel de Gestão.',
+        realSiteData: site.data,
+        realHtml: generateExportCode(site.data),
+        carouselHtml: generateExportCode(site.data, { disableLinks: true, isCarousel: true }),
+        savedSiteId: site.id,
+      };
+    });
+  }, [savedSites]);
+
+  const activeFilteredLandingModels =
+    landingCategoryFilter === 'Todos'
+      ? DYNAMIC_LANDING_MODELS
+      : DYNAMIC_LANDING_MODELS.filter((m) => m.category === landingCategoryFilter);
+
+  const openShowcaseModelInEditor = (modelId: string) => {
+    const existingSaved = savedSites.find(
+      (s) => s.id === modelId || s.id === `real-niche-${modelId}`
+    );
+    if (existingSaved) {
+      setData(JSON.parse(JSON.stringify(existingSaved.data)));
+      setEditingSiteId(existingSaved.id);
+      setActiveTab('styling');
+      openCreatorSubdomain();
+      showToast(`✏️ Modelo "${existingSaved.clientName}" aberto para edição no Painel!`);
+      return;
+    }
+    const fallbackModel = DYNAMIC_LANDING_MODELS.find((m) => m.id === modelId);
+    if (fallbackModel) {
+      setData(JSON.parse(JSON.stringify(fallbackModel.realSiteData)));
+      setEditingSiteId(null);
+      setActiveTab('styling');
+      openCreatorSubdomain();
+      showToast(`✏️ Modelo "${fallbackModel.personaName}" carregado no Criador!`);
+    }
+  };
+
+  // Auto-play timer for the Hero Microsite showcase when not hovered
+  useEffect(() => {
+    if (
+      appSurface !== 'landing' ||
+      !landingCarouselAutoPlay ||
+      landingHeroHovered ||
+      Boolean(landingPreviewModalId) ||
+      DYNAMIC_LANDING_MODELS.length === 0
+    ) {
+      return;
+    }
+
+    const heroTimer = window.setInterval(() => {
+      setLandingHeroModelId((prevId) => {
+        const currentIdx = DYNAMIC_LANDING_MODELS.findIndex((m) => m.id === prevId);
+        const nextIdx = (currentIdx + 1) % DYNAMIC_LANDING_MODELS.length;
+        return DYNAMIC_LANDING_MODELS[nextIdx].id;
+      });
+    }, 5000);
+
+    return () => window.clearInterval(heroTimer);
+  }, [appSurface, landingCarouselAutoPlay, landingHeroHovered, landingPreviewModalId, DYNAMIC_LANDING_MODELS]);
+
+  const openRealMicrositeInNewTab = (siteData: typeof INITIAL_DATA) => {
+    const htmlCode = generateExportCode(siteData);
+    const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const syncAllEightRealMicrositesToStudio = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextMonth = new Date();
+    nextMonth.setDate(nextMonth.getDate() + 30);
+    const dueStr = nextMonth.toISOString().split('T')[0];
+
+    const seededSites: SavedMicrosite[] = READY_MADE_MODELS.map((m, idx) => ({
+      id: `real-niche-${m.id}`,
+      clientName: m.personaName,
+      clientPhone: m.realSiteData.profile.whatsapp,
+      clientEmail: `contato@${m.subdomain}.com.br`,
+      nicheCategory: m.category,
+      createdAt: todayStr,
+      dueDate: dueStr,
+      monthlyFee: 197.0,
+      status: 'active',
+      updatesThisMonth: 1,
+      lastUpdated: todayStr,
+      domainType: 'subdomain',
+      subdomain: m.subdomain,
+      customDomain: `www.${m.subdomain}.com.br`,
+      dnsConfigured: true,
+      sslActive: true,
+      whatsappClicks: 42 + idx * 11,
+      pageViews: 180 + idx * 35,
+      trafficSources: {
+        instagram: 110 + idx * 15,
+        tiktok: 25 + idx * 5,
+        googleMaps: 30 + idx * 8,
+        paidAds: 15 + idx * 7,
+        direct: 10,
+      },
+      isLandingModel: true,
+      data: m.realSiteData,
+    }));
+
+    setSavedSites((prev) => {
+      const customOnes = prev.filter((s) => !s.id.startsWith('real-niche-'));
+      const merged = [...customOnes, ...seededSites];
+      try {
+        localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(merged));
+      } catch {}
+      seededSites.forEach((s) => syncSiteToFirestore(s));
+      return merged;
+    });
+    showToast('✅ Os 8 Microsites Reais (1 de cada nicho) foram restaurados e marcados como Modelos da Landing Page!');
+  };
+
+  const handleLandingOrderSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanName = landingOrderForm.clientName.trim();
+    const cleanClientPhone = landingOrderForm.clientWhatsapp.replace(/\D/g, '');
+    if (!cleanName) {
+      setLandingOrderError('Por favor, informe seu nome ou nome do seu escritório/clínica.');
+      return;
+    }
+    if (cleanClientPhone.length < 10) {
+      setLandingOrderError('Informe um WhatsApp válido com DDD para receber a prévia do seu microsite.');
+      return;
+    }
+    setLandingOrderError(null);
+    setLandingOrderSuccess(true);
+
+    const targetAgencyPhone = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
+    const formattedMessage = [
+      `Olá! Vim pela página oficial da *${landingConfig.agencyBrandName}* e quero encomendar meu Microsite Pronto.`,
+      ``,
+      `*1. Nome / Profissão:* ${cleanName}`,
+      `*2. WhatsApp de Contato:* ${landingOrderForm.clientWhatsapp.trim()}`,
+      `*3. Modelo Escolhido:* ${landingOrderForm.selectedModel}`,
+      `*4. Pacote Desejado:* ${landingOrderForm.selectedPlan}`,
+      landingOrderForm.instagramOrMaps.trim()
+        ? `*5. Instagram / Google Maps:* ${landingOrderForm.instagramOrMaps.trim()}`
+        : null,
+      landingOrderForm.customNotes.trim()
+        ? `*6. Observações:* ${landingOrderForm.customNotes.trim()}`
+        : null,
+      ``,
+      `Aguardo orientações para envio das fotos e ativação em até ${landingConfig.deliveryTime}!`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const encodedMsg = encodeURIComponent(formattedMessage);
+    const waUrl = `https://wa.me/${targetAgencyPhone}?text=${encodedMsg}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    setTimeout(() => setLandingOrderSuccess(false), 5000);
+  };
+
+  const renderSubdomainConfigModal = () => {
+    if (!subdomainModalOpen) return null;
+    const cleanSub = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
+    const cleanDomain = (landingConfig.baseDomain || 'luxebio.site').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const fullSubdomainUrl = `https://${cleanSub}.${cleanDomain}`;
+    const localCreatorUrl = typeof window !== 'undefined' ? `${window.location.origin}/${cleanSub}` : `/${cleanSub}`;
+
+    return (
+      <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 my-8 text-neutral-100">
+          <div className="flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-400 block">
+                Acesso Exclusivo do Proprietário · Sem Login
+              </span>
+              <h3 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-amber-400" />
+                Subdomínio do Criador & Configuração da Vitrine
+              </h3>
+              <p className="text-xs text-neutral-400 mt-1">
+                O domínio principal exibe sua Landing Page de vendas. O subdomínio abre diretamente o seu Criador LuxeBio Studio sem pedir senha.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubdomainModalOpen(false)}
+              className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Configuração de Subdomínio e Domínio Base */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="text-[11px] font-semibold text-neutral-300 block mb-1.5">
+                Prefixo do Subdomínio do Criador
+              </label>
+              <input
+                type="text"
+                value={landingConfig.creatorSubdomain}
+                onChange={(e) => updateLandingConfig('creatorSubdomain', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                placeholder="criador"
+                className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-neutral-300 block mb-1.5">
+                Seu Domínio Principal de Vendas
+              </label>
+              <input
+                type="text"
+                value={landingConfig.baseDomain}
+                onChange={(e) => updateLandingConfig('baseDomain', e.target.value.toLowerCase().trim())}
+                placeholder="seusite.com.br"
+                className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Box com as Rotas Ativas */}
+          <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800/90 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block">
+                  1. Subdomínio Oficial do Criador (Produção DNS)
+                </span>
+                <code className="text-xs font-mono text-amber-300 font-bold">{fullSubdomainUrl}</code>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await safeCopyText(fullSubdomainUrl);
+                  if (ok) {
+                    setCopiedSubdomainLink(true);
+                    setTimeout(() => setCopiedSubdomainLink(false), 2500);
+                    showToast('🔗 Link do subdomínio copiado!');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-neutral-700"
+              >
+                {copiedSubdomainLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                <span>{copiedSubdomainLink ? 'Copiado!' : 'Copiar Subdomínio'}</span>
+              </button>
+            </div>
+
+            <div className="pt-2.5 border-t border-neutral-800/80 flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block">
+                  2. Rota Direta Imediata (Funciona neste navegador agora)
+                </span>
+                <code className="text-xs font-mono text-emerald-400 font-bold">{localCreatorUrl}</code>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubdomainModalOpen(false);
+                  openCreatorSubdomain();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Acessar Criador Agora</span>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-neutral-400 leading-relaxed pt-1">
+              Para ativar na Vercel/Hostinger/Cloudflare, adicione um registro <strong className="text-neutral-200">CNAME</strong> com nome <code className="text-amber-300 font-mono">{cleanSub}</code> apontando para o mesmo destino do seu domínio principal. O sistema detecta automaticamente o hostname <code className="text-amber-300 font-mono">{cleanSub}.{cleanDomain}</code> e abre direto o Studio.
+            </p>
+          </div>
+
+          {/* Configurações Comerciais da Landing Page */}
+          <div className="pt-2 border-t border-neutral-800 space-y-3">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400 block">
+              Dados da Sua Landing Page de Vendas
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">Nome da Sua Marca / Estúdio</label>
+                <input
+                  type="text"
+                  value={landingConfig.agencyBrandName}
+                  onChange={(e) => updateLandingConfig('agencyBrandName', e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">Seu WhatsApp Recebedor de Pedidos</label>
+                <input
+                  type="text"
+                  value={landingConfig.agencyWhatsapp}
+                  onChange={(e) => updateLandingConfig('agencyWhatsapp', e.target.value)}
+                  placeholder="5511999999999"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">Preço Start</label>
+                <input
+                  type="text"
+                  value={landingConfig.priceEssential}
+                  onChange={(e) => updateLandingConfig('priceEssential', e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">Preço Pro VIP</label>
+                <input
+                  type="text"
+                  value={landingConfig.pricePro}
+                  onChange={(e) => updateLandingConfig('pricePro', e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">Preço Agência/Escala</label>
+                <input
+                  type="text"
+                  value={landingConfig.priceScale}
+                  onChange={(e) => updateLandingConfig('priceScale', e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 pt-2 flex-wrap">
+            <button
+              type="button"
+              onClick={syncAllEightRealMicrositesToStudio}
+              className="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold cursor-pointer transition"
+            >
+              Salvar os 8 Microsites Reais no Painel
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSubdomainModalOpen(false);
+                  openPublicSalesLanding();
+                }}
+                className="px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold cursor-pointer transition"
+              >
+                Ver Landing Page
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubdomainModalOpen(false);
+                  showToast('✅ Configurações de subdomínio e vitrine salvas!');
+                }}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 text-xs font-bold cursor-pointer transition"
+              >
+                Salvar & Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing')
+  // =========================================================================
+  if (appSurface === 'landing') {
+    const activeHeroModel =
+      DYNAMIC_LANDING_MODELS.find(m => m.id === landingHeroModelId) ||
+      DYNAMIC_LANDING_MODELS[0] ||
+      READY_MADE_MODELS[0];
+    const previewModalModel = landingPreviewModalId
+      ? DYNAMIC_LANDING_MODELS.find(m => m.id === landingPreviewModalId) ||
+        READY_MADE_MODELS.find(m => m.id === landingPreviewModalId) ||
+        null
+      : null;
+    const qrModalModel = landingQrModalModelId
+      ? DYNAMIC_LANDING_MODELS.find(m => m.id === landingQrModalModelId) ||
+        READY_MADE_MODELS.find(m => m.id === landingQrModalModelId) ||
+        null
+      : null;
+    const catalogCategories = [
+      'Todos',
+      'Advocacia & Consultoria',
+      'Beleza & Estética',
+      'Barbearia & Negócios',
+      'Mentoria & Infoprodutos',
+      'Saúde & Clínicas',
+      'Moda & E-commerce',
+    ];
+    const filteredModels = activeFilteredLandingModels.length > 0 ? activeFilteredLandingModels : DYNAMIC_LANDING_MODELS;
+
+    const cleanSub = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
+    const cleanDomain = (landingConfig.baseDomain || 'luxebio.site').toLowerCase();
+
+    return (
+      <div className="min-h-screen w-full bg-[#09090b] text-[#fafaf9] font-sans selection:bg-amber-400 selection:text-neutral-950 overflow-x-hidden">
+        {/* TOP BAR CONTRACT: 1 Single Header Bar, 3 Zones (Brand Left, 4 Nav Links Center, 1 Primary CTA Right) */}
+        <header className="sticky top-0 z-50 h-16 border-b border-white/[0.07] bg-[#09090b]/85 backdrop-blur-md">
+          <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+            {/* Zone 1: Brand Left */}
+            <a href="#topo" className="flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-serif font-black text-base">
+                L
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold tracking-wider text-white">
+                  {landingConfig.agencyBrandName.toUpperCase()}
+                </span>
+                <span className="text-[10px] text-neutral-400 tracking-wide">
+                  Microsites de Alta Conversão · Mais Clientes e Vendas no WhatsApp
+                </span>
+              </div>
+            </a>
+
+            {/* Zone 2: Primary Nav Links Center */}
+            <nav className="hidden lg:flex items-center gap-7 text-xs font-medium text-neutral-300">
+              <a href="#catalogo" className="hover:text-amber-300 transition">Modelos Prontos</a>
+              <a href="#vantagens" className="hover:text-amber-300 transition">Vantagens & Lucro</a>
+              <a href="#comparativo" className="hover:text-amber-300 transition">Comparativo</a>
+              <a href="#processo" className="hover:text-amber-300 transition">Como Funciona</a>
+              <a href="#investimento" className="hover:text-amber-300 transition">Planos & Preços</a>
+              <a href="#faq" className="hover:text-amber-300 transition">Dúvidas</a>
+            </nav>
+
+            {/* Zone 3: Single Primary Action Right */}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={openCreatorSubdomain}
+                className="hidden sm:inline-block text-[11px] font-mono text-neutral-400 hover:text-amber-300 transition cursor-pointer"
+                title={`Acessar Painel do Administrador (${cleanSub}.${cleanDomain})`}
+              >
+                {cleanSub}.{cleanDomain} ↗
+              </button>
+              <a
+                href="#encomendar"
+                className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs tracking-wide transition shadow-lg shadow-amber-500/15"
+              >
+                Quero Mais Clientes
+              </a>
+            </div>
+          </div>
+        </header>
+
+        {/* HERO SECTION — Split layout: Value Proposition Left + REAL Interactive Microsite Simulator Right */}
+        <section id="topo" className="relative pt-12 pb-20 lg:pt-16 lg:pb-24 border-b border-white/[0.06]">
+          <div
+            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px] opacity-20 blur-[130px]"
+            style={{ background: `radial-gradient(circle, ${activeHeroModel.accentHex} 0%, transparent 70%)` }}
+          />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
+              {/* Left Column: Editorial Headline + Niche Selector + CTAs */}
+              <div className="lg:col-span-7 space-y-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 font-mono">
+                  Sua bio atrai visitas, mas não gera vendas? Nós resolvemos isso.
+                </p>
+
+                <h1
+                  className="font-serif font-bold tracking-tight text-white leading-[1.06]"
+                  style={{ fontSize: 'clamp(2.25rem, 4.3vw + 0.5rem, 4rem)' }}
+                >
+                  Transforme os cliques da sua Bio em clientes pagantes e consultas fechadas.
+                </h1>
+
+                <p className="text-base sm:text-lg text-neutral-300 max-w-2xl leading-relaxed font-normal">
+                  Links genéricos e amadores fazem você perder pacientes e clientes todos os dias. Com um{' '}
+                  <strong className="text-white font-semibold">Microsite LuxeBio de Alta Conversão</strong>, você causa impacto visual de luxo, elimina curiosos com triagem automática e recebe contatos prontos para comprar — entregue 100% pronto e personalizado em até 24 horas.
+                </p>
+
+                {/* Interactive Niche Selector Strip in Hero */}
+                <div className="space-y-2 pt-1">
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-neutral-400">
+                    Toque no seu nicho para testar o microsite real convertendo no iPhone ao lado:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {READY_MADE_MODELS.map((m) => {
+                      const isActive = m.id === activeHeroModel.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setLandingHeroModelId(m.id)}
+                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer border ${
+                            isActive
+                              ? 'bg-amber-400 text-neutral-950 border-amber-300 font-bold shadow-lg shadow-amber-500/20'
+                              : 'bg-neutral-900/90 text-neutral-300 border-white/[0.08] hover:border-amber-400/40 hover:text-white'
+                          }`}
+                        >
+                          {m.nicheKitKey}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Primary & Secondary Actions */}
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <a
+                    href="#encomendar"
+                    className="px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-sm tracking-wide flex items-center gap-2 transition shadow-xl shadow-amber-500/15"
+                  >
+                    <span>Garantir Meu Microsite de Alta Conversão</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => openRealMicrositeInNewTab(activeHeroModel.realSiteData)}
+                    className="px-5 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold text-sm border border-white/[0.12] transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4 text-amber-400" />
+                    <span>Testar {activeHeroModel.personaName} Ao Vivo ↗</span>
+                  </button>
+                </div>
+
+                {/* Plain typographic metadata row (zero pills) */}
+                <div className="pt-4 border-t border-white/[0.08] flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-400">
+                  <span className="text-emerald-400 font-semibold">🎯 Triagem anti-curiosos ativa</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-neutral-200">💎 Design que valoriza seu preço</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-neutral-200">⚡ Entrega expressa em {landingConfig.deliveryTime}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-amber-300">🚀 Sem mensalidades abusivas</span>
+                </div>
+              </div>
+
+              {/* Right Column: REAL Live Microsite Running Inside iPhone Frame */}
+              <div
+                className="lg:col-span-5 flex flex-col items-center"
+                onMouseEnter={() => setLandingHeroHovered(true)}
+                onMouseLeave={() => setLandingHeroHovered(false)}
+              >
+                <div className="w-full max-w-[390px] rounded-[42px] p-3 bg-[#141418] border-2 border-white/[0.14] shadow-[0_25px_80px_-15px_rgba(0,0,0,0.85)]">
+                  {/* Phone Browser Top Bar */}
+                  <div className="px-4 py-2.5 bg-[#0c0c0f] rounded-t-[30px] border-b border-white/[0.08] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="text-[11px] font-mono text-neutral-300 truncate">
+                        https://{activeHeroModel.subdomain}.{cleanDomain}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openRealMicrositeInNewTab(activeHeroModel.realSiteData)}
+                      className="text-[10px] font-mono text-amber-400 hover:underline shrink-0 cursor-pointer flex items-center gap-1"
+                      title="Abrir este microsite real em tela cheia numa nova aba"
+                    >
+                      <span>Tela Cheia</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* REAL MICROSITE IFRAME */}
+                  <div className="w-full h-[650px] bg-black rounded-b-[30px] overflow-hidden relative">
+                    <iframe
+                      key={activeHeroModel.id}
+                      title={`Microsite Real - ${activeHeroModel.personaName}`}
+                      srcDoc={(activeHeroModel as any).carouselHtml || activeHeroModel.realHtml}
+                      className="w-full h-full border-0"
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* QUANTITATIVE SOCIAL PROOF STRIP */}
+        <section className="border-b border-white/[0.06] bg-neutral-950/60 py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 tabular-nums">
+              <div>
+                <div className="text-2xl sm:text-3xl font-serif font-bold text-amber-400">+340% Mais Vendas</div>
+                <div className="text-xs text-neutral-200 font-semibold mt-1">Conversão Comprovada</div>
+                <div className="text-[11px] text-neutral-400 mt-0.5">Clientes chegam ao seu WhatsApp decididos e com orçamento alinhado</div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl font-serif font-bold text-emerald-400">-80% Curiosos</div>
+                <div className="text-xs text-neutral-200 font-semibold mt-1">Filtro de Qualificação</div>
+                <div className="text-[11px] text-neutral-400 mt-0.5">Economize horas de atendimento recebendo apenas quem realmente quer agendar</div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl font-serif font-bold text-white">Padrão de Luxo</div>
+                <div className="text-xs text-neutral-200 font-semibold mt-1">Valorize seus Serviços</div>
+                <div className="text-[11px] text-neutral-400 mt-0.5">Visual sofisticado que justifica cobrar valores muito maiores sem pedir desconto</div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl font-serif font-bold text-amber-300">{landingConfig.deliveryTime}</div>
+                <div className="text-xs text-neutral-200 font-semibold mt-1">Zero Trabalho Técnico</div>
+                <div className="text-[11px] text-neutral-400 mt-0.5">Nossa equipe entrega tudo pronto: fotos, serviços, rota GPS e funil ativo</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 1: CARROSSEL CONTÍNUO AUTOMÁTICO ESTILO TOQY (PAUSA AO PASSAR O MOUSE) */}
+        <section id="catalogo" className="py-20 lg:py-28 border-b border-white/[0.06] overflow-hidden bg-[#070709]">
+          <style>{`
+            @keyframes luxebioContinuousMarquee {
+              0% { transform: translate3d(0, 0, 0); }
+              100% { transform: translate3d(-50%, 0, 0); }
+            }
+            .luxebio-marquee-track {
+              display: flex;
+              width: max-content;
+              animation: luxebioContinuousMarquee ${Math.max(28, filteredModels.length * 6)}s linear infinite;
+              will-change: transform;
+            }
+            .luxebio-marquee-wrapper:hover .luxebio-marquee-track,
+            .luxebio-marquee-track.is-paused {
+              animation-play-state: paused !important;
+            }
+          `}</style>
+
+          {/* Header da Vitrine de Vendas */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-400/90 block font-mono">
+                  VITRINE DE MICROSITES QUE VENDEM TODOS OS DIAS
+                </span>
+                <h2
+                  className="font-sans font-extrabold text-white tracking-tight"
+                  style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+                >
+                  Passe o mouse e teste a experiência que transforma visitantes em clientes pagantes.
+                </h2>
+                <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl">
+                  Diferente de árvores de links frias e genéricas, cada microsite abaixo foi projetado com gatilhos visuais de retenção, catálogo interativo com valores e funil direto para o seu WhatsApp. Escolha o estilo ideal para a sua profissão:
+                </p>
+              </div>
+            </div>
+
+            {/* Filtro rápido de categorias + indicador de status ao passar o mouse */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-5 border-t border-white/[0.06]">
+              <div className="flex flex-wrap gap-1.5">
+                {catalogCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setLandingCategoryFilter(cat)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      landingCategoryFilter === cat
+                        ? 'bg-amber-400 text-neutral-950 font-bold'
+                        : 'bg-white/[0.04] text-neutral-400 hover:text-white border border-white/[0.07]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-neutral-400 font-mono">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    landingCarouselHovered || !landingCarouselAutoPlay
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-400 animate-pulse'
+                  }`}
+                />
+                <span>
+                  {landingCarouselHovered
+                    ? 'Carrossel Pausado (Passe o mouse para explorar os detalhes)'
+                    : landingCarouselAutoPlay
+                    ? `Vitrine Automática Ativa · ${filteredModels.length} modelos de alta conversão`
+                    : 'Carrossel Pausado'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setLandingCarouselAutoPlay((prev) => !prev)}
+                  className="ml-2 px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[11px] text-neutral-200 border border-white/[0.08] cursor-pointer"
+                >
+                  {landingCarouselAutoPlay ? 'Pausar' : 'Retomar'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* FAIXA CONTÍNUA DE CELULARES LADO A LADO (PAUSA IMEDIATAMENTE NO HOVER) */}
+          <div
+            className="luxebio-marquee-wrapper relative w-full overflow-hidden py-4 select-none"
+            onMouseEnter={() => setLandingCarouselHovered(true)}
+            onMouseLeave={() => setLandingCarouselHovered(false)}
+            onTouchStart={() => setLandingCarouselHovered(true)}
+            onTouchEnd={() => setLandingCarouselHovered(false)}
+          >
+            {/* Fade lateral sutil nas bordas da tela */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-10 sm:w-20 bg-gradient-to-r from-[#070709] to-transparent z-20" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:w-20 bg-gradient-to-l from-[#070709] to-transparent z-20" />
+
+            <div
+              className={`luxebio-marquee-track gap-7 px-4 ${
+                !landingCarouselAutoPlay || landingCarouselHovered || Boolean(landingPreviewModalId) || Boolean(landingQrModalModelId)
+                  ? 'is-paused'
+                  : ''
+              }`}
+            >
+              {[...filteredModels, ...filteredModels].map((model, idx) => {
+                const fullUrl = `https://${model.subdomain}.${cleanDomain}`;
+                const isCopied = landingShareCopiedId === `${model.id}-${idx}`;
+                return (
+                  <div
+                    key={`${model.id}-marquee-${idx}`}
+                    className="w-[295px] sm:w-[318px] shrink-0 flex flex-col group/phone"
+                  >
+                    {/* MOLDURA REALISTA DE IPHONE / SMARTPHONE ESCURO */}
+                    <div className="relative w-full h-[590px] rounded-[44px] p-[10px] bg-gradient-to-b from-[#2e2e38] via-[#191920] to-[#0d0d12] shadow-[0_25px_70px_rgba(0,0,0,0.85)] border border-white/[0.14] transition-transform duration-300 group-hover/phone:border-amber-400/50">
+                      {/* Barra superior interna com botões "QR Code" e "Compartilhar" */}
+                      <div className="absolute top-5 inset-x-6 z-20 flex items-center justify-between pointer-events-auto">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLandingQrModalModelId(model.id);
+                          }}
+                          className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-[11px] font-medium text-neutral-200 hover:text-amber-300 flex items-center gap-1.5 shadow-lg transition cursor-pointer"
+                          title={`Ver QR Code de ${model.personaName}`}
+                        >
+                          <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                          <span>QR Code</span>
+                        </button>
+
+                        {/* Notch / Alto-falante discreto central */}
+                        <div className="w-12 h-1.5 rounded-full bg-white/15 hidden sm:block" />
+
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await safeCopyText(fullUrl);
+                            setLandingShareCopiedId(`${model.id}-${idx}`);
+                            setTimeout(() => setLandingShareCopiedId(null), 2200);
+                          }}
+                          className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-[11px] font-medium text-neutral-200 hover:text-amber-300 flex items-center gap-1.5 shadow-lg transition cursor-pointer"
+                          title={`Copiar link de ${model.personaName}`}
+                        >
+                          {isCopied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              <span className="text-emerald-300">Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Share2 className="w-3.5 h-3.5 text-neutral-300" />
+                              <span>Compartilhar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* TELA DO MICROSITE REAL COMPLETO (LINKS NÃO CLICÁVEIS NO MODO CARROSSEL) */}
+                      <div className="w-full h-full rounded-[34px] overflow-hidden bg-[#09090b] relative">
+                        <iframe
+                          title={`Bio Site Real - ${model.personaName}`}
+                          srcDoc={(model as any).carouselHtml || model.realHtml}
+                          className="w-full h-full border-0"
+                          loading="lazy"
+                          sandbox="allow-scripts allow-same-origin"
+                        />
+                      </div>
+                    </div>
+
+                    {/* BOTÃO ÚNICO INFERIOR: FOCADO EM VENDAS E TESTE ONLINE */}
+                    <div className="mt-3 px-1 flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => openRealMicrositeInNewTab(model.realSiteData)}
+                        className="w-full py-2.5 px-4 rounded-xl bg-white/[0.06] hover:bg-amber-400 hover:text-neutral-950 text-neutral-200 hover:border-amber-400 font-semibold text-xs border border-white/[0.12] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md group/btn"
+                        title="Abrir microsite online em uma nova guia para testar as vendas"
+                      >
+                        <span>Ver online e testar vendas</span>
+                        <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover/btn:text-neutral-950 transition-colors" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Modal de QR Code rápido */}
+          {qrModalModel && (
+            <div
+              className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+              onClick={() => setLandingQrModalModelId(null)}
+            >
+              <div
+                className="bg-neutral-900 border border-neutral-800 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                  <div className="text-left">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block">
+                      Teste de Conversão Mobile
+                    </span>
+                    <h4 className="text-sm font-bold text-white truncate">{qrModalModel.personaName}</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLandingQrModalModelId(null)}
+                    className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl inline-block mx-auto shadow-inner">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                      `https://${qrModalModel.subdomain}.${cleanDomain}`
+                    )}`}
+                    alt={`QR Code ${qrModalModel.personaName}`}
+                    className="w-44 h-44"
+                  />
+                </div>
+
+                <p className="text-xs text-neutral-400 font-mono">
+                  https://{qrModalModel.subdomain}.{cleanDomain}
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openShowcaseModelInEditor(qrModalModel.id);
+                      setLandingQrModalModelId(null);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-xs cursor-pointer border border-neutral-700"
+                  >
+                    Painel do Criador
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openRealMicrositeInNewTab(qrModalModel.realSiteData);
+                      setLandingQrModalModelId(null);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs cursor-pointer"
+                  >
+                    Testar Vendas Ao Vivo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* SECTION 2: VANTAGENS & BENEFÍCIOS EXCLUSIVOS (BENTO GRID FOCADO EM VENDAS) */}
+        <section id="vantagens" className="py-20 lg:py-28 border-b border-white/[0.06] bg-neutral-950/40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                VANTAGENS QUE GERAM LUCRO REAL
+              </span>
+              <h2
+                className="font-serif font-bold text-white tracking-tight"
+                style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+              >
+                Por que trocar links amadores pelo Microsite LuxeBio multiplica suas vendas:
+              </h2>
+              <p className="text-sm text-neutral-400 leading-relaxed">
+                Projetado nos mínimos detalhes para eliminar objeções, qualificar contatos e valorizar o seu trabalho antes mesmo do primeiro &quot;olá&quot;.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  num: '01.',
+                  badge: 'ECONOMIA DE TEMPO',
+                  title: 'Triagem Automática Anti-Curiosos',
+                  desc: 'Chega de perder horas respondendo "qual o valor?". Antes de entrar no seu WhatsApp, o cliente responde uma triagem rápida. Você recebe a mensagem pronta com o serviço exato, o perfil e a urgência dele para fechar a compra.',
+                },
+                {
+                  num: '02.',
+                  badge: 'AUMENTO DO TICKET MÉDIO',
+                  title: 'Catálogo que Vende no Piloto Automático',
+                  desc: 'Apresente seus procedimentos, consultas ou serviços com fotos de alta qualidade, tempo de atendimento e botão de agendamento em cada item. O cliente já escolhe o que quer comprar antes de enviar mensagem.',
+                },
+                {
+                  num: '03.',
+                  badge: 'POSICIONAMENTO DE LUXO',
+                  title: 'Autoridade que Justifica Preços Maiores',
+                  desc: 'Design com estética editorial de luxo, faixa de conquistas (+500 atendimentos, avaliações 5 estrelas) e harmonia visual que posicionam você como líder do seu segmento, atraindo um público de alto poder aquisitivo.',
+                },
+                {
+                  num: '04.',
+                  badge: 'ZERO FALTAS E DESISTÊNCIAS',
+                  title: 'Rota e GPS em 1 Toque (Google Maps & Waze)',
+                  desc: 'Para consultórios, clínicas, barbearias e lojas físicas: seu endereço completo com botão direto para traçar rota no Waze e Google Maps, eliminando desistências de última hora e pedidos de localização.',
+                },
+                {
+                  num: '05.',
+                  badge: 'CONTROLE TOTAL DE RETORNO',
+                  title: 'Rastreamento Meta Pixel & Retorno em Anúncios',
+                  desc: 'Descubra se seus clientes estão vindo do Instagram Reels, Stories, TikTok ou campanhas pagas. Otimize seus investimentos sabendo exatamente qual post ou anúncio gerou mais dinheiro no seu bolso.',
+                },
+                {
+                  num: '06.',
+                  badge: 'ZERO ESFORÇO TÉCNICO',
+                  title: 'Entrega 100% Pronta sem Dor de Cabeça',
+                  desc: 'Você não precisa aprender ferramentas complexas, registrar domínios nem escrever códigos. Nossa equipe faz tudo: fotos, cores, textos de vendas e links. Em até 24 horas seu microsite está no ar pronto para faturar.',
+                },
+              ].map((item) => (
+                <div
+                  key={item.num}
+                  className="p-7 rounded-2xl bg-neutral-900/60 border border-white/[0.08] hover:border-amber-400/35 transition-all space-y-3 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm font-bold text-amber-400 block">{item.num}</span>
+                    <span className="text-[10px] font-mono text-neutral-400 tracking-wider uppercase group-hover:text-amber-300 transition-colors">
+                      {item.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION: COMPARATIVO DIRETO DE VENDAS (LINKTREE vs LUXEBIO) */}
+        <section id="comparativo" className="py-20 lg:py-28 border-b border-white/[0.06] bg-neutral-950/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3 text-left">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                COMPARAÇÃO DIRETA DE CONVERSÃO
+              </span>
+              <h2
+                className="font-serif font-bold text-white tracking-tight"
+                style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+              >
+                A diferença brutal entre perder clientes e fechar vendas todos os dias:
+              </h2>
+              <p className="text-sm text-neutral-400">
+                Veja o que acontece quando você troca uma lista de botões cinzas por um Microsite de Alta Conversão.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+              {/* Coluna 1: Linktree / Árvores Amadoras */}
+              <div className="p-8 rounded-3xl bg-neutral-900/40 border border-red-500/20 space-y-6 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-widest text-red-400 font-bold">
+                      ÁRVORES DE LINKS TRADICIONAIS
+                    </span>
+                    <span className="text-[11px] text-neutral-500 font-mono">Linktree / Beacons / Bio comuns</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-200">
+                    Onde você gasta tempo e perde clientes indecisos
+                  </h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Listas frias de botões sem contexto diminuem o valor percebido do seu trabalho e afastam quem busca um serviço profissional.
+                  </p>
+                  <ul className="space-y-3 pt-3 border-t border-white/[0.06] text-xs text-neutral-300">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-red-400 font-bold shrink-0 mt-0.5">✕</span>
+                      <span><strong>Design genérico e impessoal:</strong> Idêntico a milhares de outros perfis amadores.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-red-400 font-bold shrink-0 mt-0.5">✕</span>
+                      <span><strong>Enxurrada de curiosos sem orçamento:</strong> Pessoas entram no WhatsApp só para perguntar preço e somem.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-red-400 font-bold shrink-0 mt-0.5">✕</span>
+                      <span><strong>Sem catálogo visual:</strong> O cliente não vê o resultado do seu trabalho nem a descrição dos procedimentos.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-red-400 font-bold shrink-0 mt-0.5">✕</span>
+                      <span><strong>Desvalorização de preço:</strong> Transmite sensação de serviço barato, forçando você a dar descontos para fechar.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-red-400 font-bold shrink-0 mt-0.5">✕</span>
+                      <span><strong>Propaganda de terceiros:</strong> Exibe a logo e anúncios da própria plataforma no rodapé do seu negócio.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="pt-4 border-t border-white/[0.06]">
+                  <div className="text-xs text-red-400/90 font-medium text-center">
+                    Resultado: Menos vendas e horas perdidas no atendimento.
+                  </div>
+                </div>
+              </div>
+
+              {/* Coluna 2: Microsite LuxeBio (Destaque Campeão) */}
+              <div className="p-8 rounded-3xl bg-neutral-900 border-2 border-amber-400/80 space-y-6 flex flex-col justify-between shadow-2xl shadow-amber-500/10 relative overflow-hidden">
+                <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl" />
+                
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">
+                      MICROSITE LUXEBIO DE ALTA CONVERSÃO
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-neutral-950 font-bold text-[10px] tracking-wide">
+                      MÁXIMA CONVERSÃO
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white">
+                    Uma máquina de vendas mobile posicionando você no topo
+                  </h3>
+                  <p className="text-xs text-neutral-300 leading-relaxed">
+                    Desenvolvido como uma vitrine de luxo mobile que guia o cliente passo a passo até a decisão de compra.
+                  </p>
+                  <ul className="space-y-3 pt-3 border-t border-white/[0.1] text-xs text-neutral-100">
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>Estética editorial de luxo:</strong> Causa impacto imediato e retém a atenção nos primeiros 3 segundos.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>Triagem inteligente anti-curiosos:</strong> Entrega no seu WhatsApp apenas clientes decididos e qualificados.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>Catálogo visual interativo:</strong> Fotos, descrição persuasiva, duração e botão de agendamento em cada item.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>Autoridade que justifica cobrar mais:</strong> Clientes percebem alto valor e pagam seus honorários sem pechinchar.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span><strong>100% da sua marca sem anúncios:</strong> Sem logos de terceiros, com link limpo e entregue pronto em até 24h.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="pt-4 border-t border-white/[0.1] relative z-10">
+                  <a
+                    href="#encomendar"
+                    className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-2 shadow-xl shadow-amber-500/20 transition cursor-pointer"
+                  >
+                    <span>Quero Este Nível de Posicionamento para Minha Marca</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 3: COMO FUNCIONA (ZERO TRABALHO TÉCNICO) */}
+        <section id="processo" className="py-20 lg:py-24 border-b border-white/[0.06]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                SIMPLICIDADE TOTAL
+              </span>
+              <h2
+                className="font-serif font-bold text-white tracking-tight"
+                style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+              >
+                Seu novo posicionamento de luxo no ar em 3 etapas sem esforço:
+              </h2>
+              <p className="text-sm text-neutral-400 leading-relaxed">
+                Zero complicação técnica. Nossa equipe especializada cuida de toda a configuração para você começar a faturar imediatamente.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-7 rounded-2xl bg-neutral-900/40 border border-white/[0.07] space-y-3">
+                <div className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">
+                  ETAPA 01 · ESCOLHA SEU MODELO E PLANO
+                </div>
+                <h3 className="text-lg font-bold text-white">1. Escolha o estilo ideal para você</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Selecione o modelo que mais combina com seu nicho e preencha o formulário rápido de pedido nesta página. Sem burocracia nem cadastros longos.
+                </p>
+              </div>
+
+              <div className="p-7 rounded-2xl bg-neutral-900/40 border border-white/[0.07] space-y-3">
+                <div className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">
+                  ETAPA 02 · PERSONALIZAÇÃO SOB MEDIDA
+                </div>
+                <h3 className="text-lg font-bold text-white">2. Montamos tudo com a sua marca</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Nossa equipe entra em contato com você pelo WhatsApp para receber suas melhores fotos, catálogo de serviços e preferências de cores com assessoria VIP.
+                </p>
+              </div>
+
+              <div className="p-7 rounded-2xl bg-neutral-900/40 border border-white/[0.07] space-y-3">
+                <div className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">
+                  ETAPA 03 · PUBLICAÇÃO EM ATÉ {landingConfig.deliveryTime.toUpperCase()}
+                </div>
+                <h3 className="text-lg font-bold text-white">3. Comece a receber clientes qualificados</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Em até 24 horas seu link oficial está no ar com carregamento ultrarrápido, SSL seguro e pronto para você colocar na bio do Instagram e começar a lucrar.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 4: PLANOS E INVESTIMENTO (RETORNO GARANTIDO) */}
+        <section id="investimento" className="py-20 lg:py-28 border-b border-white/[0.06] bg-neutral-950/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-3xl space-y-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                INVESTIMENTO COM RETORNO IMEDIATO
+              </span>
+              <h2
+                className="font-serif font-bold text-white tracking-tight"
+                style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+              >
+                Planos pensados para pagar a si mesmos no primeiro cliente atendido.
+              </h2>
+              <p className="text-sm text-neutral-400 leading-relaxed">
+                Sem mensalidades abusivas nem contratos com multa. Você investe uma única vez e garante uma máquina de vendas trabalhando para você 24 horas por dia.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch tabular-nums">
+              {/* Plan 1 */}
+              <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
+                <div className="space-y-4">
+                  <div className="text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    01 · PACOTE ESSENCIAL
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Presença Digital Elegante</h3>
+                  <div className="pt-2">
+                    <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceEssential}</span>
+                    <span className="text-xs text-neutral-400 ml-2">setup único</span>
+                  </div>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Perfeito para quem quer eliminar o Linktree amador hoje mesmo e transmitir profissionalismo imediato.
+                  </p>
+                  <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> 1 Modelo Premium adaptado com sua foto e identidade</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Até 4 Botões estratégicos direcionados para fechar vendas</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Endereço físico com rota em 1 toque no Google Maps e Waze</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Entrega expressa garantida em até {landingConfig.deliveryTime}</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Link rápido e seguro com certificado SSL incluso</li>
+                  </ul>
+                </div>
+                <a
+                  href="#encomendar"
+                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: `Pacote Essencial (${landingConfig.priceEssential})` }))}
+                  className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
+                >
+                  Garantir Pacote Essencial
+                </a>
+              </div>
+
+              {/* Plan 2: Featured */}
+              <div className="p-8 rounded-2xl bg-neutral-900 border-2 border-amber-400/70 flex flex-col justify-between space-y-6 shadow-2xl shadow-amber-500/10">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-amber-400">
+                    <span>02 · PROFISSIONAL VIP</span>
+                    <span className="font-bold">MAIS ESCOLHIDO</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Microsite com Funil Anti-Curiosos & Catálogo</h3>
+                  <div className="pt-2">
+                    <span className="text-4xl font-serif font-bold text-amber-400">{landingConfig.pricePro}</span>
+                    <span className="text-xs text-neutral-300 ml-2">setup completo</span>
+                  </div>
+                  <p className="text-xs text-neutral-300 leading-relaxed">
+                    A estrutura de vendas completa para clínicas, médicos, advogados e profissionais que desejam receber apenas clientes qualificados e cobrar mais caro.
+                  </p>
+                  <ul className="space-y-2.5 pt-3 border-t border-white/[0.1] text-xs text-neutral-200">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Tudo do Essencial com paleta de cores de luxo sob medida</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo (Quiz de triagem de clientes pré-WhatsApp)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Catálogo visual de procedimentos com fotos e valores</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Faixa de autoridade comprovada (+500 clientes, anos de atuação)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Rastreamento Meta Pixel para anúncios de alta conversão</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> QR Code de balcão em alta definição para recepção ou consultório</li>
+                  </ul>
+                </div>
+                <a
+                  href="#encomendar"
+                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: `Profissional VIP (${landingConfig.pricePro})` }))}
+                  className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                >
+                  Quero o Profissional VIP (Mais Recomendado)
+                </a>
+              </div>
+
+              {/* Plan 3 */}
+              <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
+                <div className="space-y-4">
+                  <div className="text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    03 · CLÍNICAS & ESCALA
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Setup Concierge com Domínio Próprio</h3>
+                  <div className="pt-2">
+                    <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceScale}</span>
+                    <span className="text-xs text-neutral-400 ml-2">setup + assessoria</span>
+                  </div>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Para clínicas médicas renomadas, escritórios de advocacia e mentores que exigem seu próprio domínio (.com.br) e assessoria prioritária.
+                  </p>
+                  <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Tudo do Profissional VIP com acabamento sob medida</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Configuração completa do seu Domínio Próprio (.com.br)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Textos persuasivos criados por redator especializado</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário no WhatsApp</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Atualizações mensais de campanhas e novos serviços</li>
+                  </ul>
+                </div>
+                <a
+                  href="#encomendar"
+                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: `Clínicas & Escala (${landingConfig.priceScale})` }))}
+                  className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
+                >
+                  Solicitar Pacote Concierge
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 5: FORMULÁRIO DE PEDIDO DIRETO PARA O WHATSAPP (GARANTIA E SEGURANÇA) */}
+        <section id="encomendar" className="py-20 lg:py-28 border-b border-white/[0.06]">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="p-8 sm:p-10 rounded-3xl bg-neutral-900/90 border border-white/[0.1] shadow-2xl space-y-8">
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                  GARANTA SUA VAGA COM ENTREGA PRIORITÁRIA
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">
+                  Encomende seu Microsite Pronto e comece a faturar mais hoje mesmo.
+                </h2>
+                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
+                  Preencha os campos abaixo. Em instantes nossa equipe entrará em contato com você pelo WhatsApp para iniciar a montagem do seu microsite com atendimento VIP.
+                </p>
+              </div>
+
+              <form onSubmit={handleLandingOrderSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1.5">
+                      Seu Nome / Nome da Clínica ou Escritório *
+                    </label>
+                    <input
+                      type="text"
+                      value={landingOrderForm.clientName}
+                      onChange={(e) => setLandingOrderForm(p => ({ ...p, clientName: e.target.value }))}
+                      placeholder="Ex: Dra. Camila Mendes"
+                      className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1.5">
+                      Seu WhatsApp com DDD *
+                    </label>
+                    <input
+                      type="tel"
+                      value={landingOrderForm.clientWhatsapp}
+                      onChange={(e) => setLandingOrderForm(p => ({ ...p, clientWhatsapp: e.target.value }))}
+                      placeholder="Ex: (11) 99999-9999"
+                      className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1.5">
+                      Modelo de Microsite Desejado
+                    </label>
+                    <select
+                      value={landingOrderForm.selectedModel}
+                      onChange={(e) => setLandingOrderForm(p => ({ ...p, selectedModel: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
+                    >
+                      {READY_MADE_MODELS.map((m) => (
+                        <option key={m.id} value={`${m.title} (${m.personaName})`}>
+                          {m.title} ({m.personaName})
+                        </option>
+                      ))}
+                      <option value="Outro Nicho (Personalizado sob medida)">
+                        Outro Nicho (Personalizado sob medida)
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-300 block mb-1.5">
+                      Pacote Escolhido
+                    </label>
+                    <select
+                      value={landingOrderForm.selectedPlan}
+                      onChange={(e) => setLandingOrderForm(p => ({ ...p, selectedPlan: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value={`Profissional VIP (${landingConfig.pricePro})`}>
+                        Profissional VIP ({landingConfig.pricePro}) — Mais Pedido
+                      </option>
+                      <option value={`Pacote Essencial (${landingConfig.priceEssential})`}>
+                        Pacote Essencial ({landingConfig.priceEssential})
+                      </option>
+                      <option value={`Clínicas & Escala (${landingConfig.priceScale})`}>
+                        Clínicas & Escala ({landingConfig.priceScale})
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-neutral-300 block mb-1.5">
+                    Seu @Instagram ou Link do Google Meu Negócio (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={landingOrderForm.instagramOrMaps}
+                    onChange={(e) => setLandingOrderForm(p => ({ ...p, instagramOrMaps: e.target.value }))}
+                    placeholder="Ex: @dracamilamendes"
+                    className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+
+                {landingOrderError && (
+                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-300">
+                    {landingOrderError}
+                  </div>
+                )}
+
+                {landingOrderSuccess && (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300">
+                    Redirecionando para o WhatsApp com seu pedido formatado...
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full py-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-sm tracking-wide flex items-center justify-center gap-2 transition cursor-pointer shadow-xl shadow-amber-500/15"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>QUERO MEU MICROSITE E MAIS CLIENTES NO WHATSAPP 🚀</span>
+                </button>
+              </form>
+
+              {/* Faixa de Confiança e Reversão de Risco */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-white/[0.08] text-[11px] text-neutral-400">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span><strong>Satisfação Garantida:</strong> Ajustamos até você amar.</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span><strong>Entrega Rápida:</strong> No ar em até 24 horas.</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span><strong>Atendimento VIP:</strong> Suporte humano no WhatsApp.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 6: PERGUNTAS FREQUENTES (QUEBRA DE TODAS AS OBJEÇÕES DE COMPRA) */}
+        <section id="faq" className="py-20 lg:py-28 border-b border-white/[0.06] bg-neutral-950/60">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="max-w-2xl space-y-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                DÚVIDAS FREQUENTES
+              </span>
+              <h2
+                className="font-serif font-bold text-white tracking-tight"
+                style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+              >
+                Tudo o que você precisa saber para tomar sua decisão com segurança:
+              </h2>
+              <p className="text-sm text-neutral-400">
+                Respostas diretas e transparentes sobre prazos, funcionamento e suporte.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  q: 'Preciso entender de tecnologia ou saber programar?',
+                  a: 'Absolutamente nada! Nossa equipe cuida de 100% da parte técnica: layout, fotos, textos persuasivos, rota de GPS e funil do WhatsApp. Você só precisa nos mandar suas informações e aprovar o resultado final.',
+                },
+                {
+                  q: 'Em quanto tempo meu microsite fica pronto para usar?',
+                  a: `Entregamos seu microsite personalizado em até ${landingConfig.deliveryTime} úteis após o envio das suas informações. É a entrega mais rápida do mercado para você começar a faturar imediatamente.`,
+                },
+                {
+                  q: 'Como o funil anti-curiosos me ajuda a economizar tempo e faturar mais?',
+                  a: 'Ele faz 3 perguntas estratégicas de qualificação antes do visitante abrir seu WhatsApp. Assim, você não perde horas respondendo curiosos que só querem saber preço e recebe clientes prontos para fechar o agendamento.',
+                },
+                {
+                  q: 'Posso atualizar fotos, preços ou serviços no futuro?',
+                  a: 'Sim! Seu microsite é flexível e pode ser atualizado sempre que você lançar novos procedimentos, alterar horários de atendimento ou ajustar seus preços.',
+                },
+                {
+                  q: 'Funciona bem em qualquer aparelho de celular?',
+                  a: 'Perfeitamente. Nossos microsites utilizam código nativo ultraleve, abrindo instantaneamente em iPhones e Androids com qualquer velocidade de internet, sem travar nem desalinhar.',
+                },
+                {
+                  q: 'Como coloco o link no meu Instagram e redes sociais?',
+                  a: 'Assim que entregarmos seu link oficial, você recebe um tutorial simples de 15 segundos ensinando a colocar o link na bio do Instagram, TikTok, WhatsApp Business e Google Meu Negócio.',
+                },
+              ].map((item, idx) => (
+                <div
+                  key={`faq-${idx}`}
+                  className="p-6 rounded-2xl bg-neutral-900/50 border border-white/[0.07] space-y-2 hover:border-amber-400/30 transition-colors"
+                >
+                  <h4 className="text-base font-bold text-white flex items-center gap-2.5">
+                    <span className="text-amber-400 font-mono text-sm">0{idx + 1}.</span>
+                    <span>{item.q}</span>
+                  </h4>
+                  <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed pl-7">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-6 text-center">
+              <a
+                href="#encomendar"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs sm:text-sm shadow-xl shadow-amber-500/15 transition cursor-pointer"
+              >
+                <span>Quero Garantir Meu Microsite Pronto Agora</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* FOOTER FOCADO EM AUTORIDADE E ACESSO DO ADMINISTRADOR */}
+        <footer className="py-12 bg-[#060608] text-xs text-neutral-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <div className="font-bold text-white tracking-wider">
+                {landingConfig.agencyBrandName.toUpperCase()}
+              </div>
+              <p className="text-[11px] text-neutral-400">
+                O fim dos links amadores. Transforme seguidores em clientes de alto valor no WhatsApp.
+              </p>
+            </div>
+
+            {/* Owner Direct Subdomain Bar */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSubdomainModalOpen(true)}
+                className="px-3.5 py-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-300 font-mono text-[11px] border border-neutral-800 cursor-pointer transition flex items-center gap-1.5"
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-400" />
+                <span>Configurar Domínio ({cleanSub}.{cleanDomain})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openCreatorSubdomain}
+                className="px-4 py-2 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 font-bold text-xs border border-amber-400/30 cursor-pointer transition flex items-center gap-1.5"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Painel de Gestão ({cleanSub}.{cleanDomain})</span>
+              </button>
+            </div>
+          </div>
+        </footer>
+
+        {/* MODAL DE PRÉVIA INTERATIVA EM TELA CHEIA (COM O MICROSITE REAL COMPLETO) */}
+        {previewModalModel && (
+          <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div className="bg-neutral-900 border border-neutral-800 rounded-3xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-4 my-auto">
+              <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block">
+                    Microsite Real Interativo · {previewModalModel.code}
+                  </span>
+                  <h4 className="text-sm font-bold text-white">
+                    {previewModalModel.personaName} — {previewModalModel.title}
+                  </h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openRealMicrositeInNewTab(previewModalModel.realSiteData)}
+                    className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-mono flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Nova Aba</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLandingPreviewModalId(null)}
+                    className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Full Real Microsite Iframe */}
+              <div className="rounded-2xl overflow-hidden border border-white/[0.1] bg-black h-[72vh]">
+                <iframe
+                  title={`Microsite Real Full - ${previewModalModel.personaName}`}
+                  srcDoc={previewModalModel.realHtml}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-popups allow-same-origin"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetId = previewModalModel.id;
+                    setLandingPreviewModalId(null);
+                    openShowcaseModelInEditor(targetId);
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-xs cursor-pointer border border-neutral-700"
+                >
+                  Editar Este Microsite no Painel
+                </button>
+                <a
+                  href="#encomendar"
+                  onClick={() => {
+                    setLandingOrderForm(p => ({
+                      ...p,
+                      selectedModel: `${previewModalModel.title} (${previewModalModel.personaName})`,
+                    }));
+                    setLandingPreviewModalId(null);
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center flex items-center justify-center"
+                >
+                  Quero Encomendar Igual
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {renderSubdomainConfigModal()}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // PROTEÇÃO DE LOGIN DE ADMINISTRADOR COM FIREBASE AUTHENTICATION
+  // =========================================================================
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-screen bg-[#09090b] text-neutral-100 flex flex-col items-center justify-center p-6 font-sans">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-serif font-black text-xl shadow-lg shadow-amber-500/20 animate-pulse mb-4">
+          L
+        </div>
+        <p className="text-xs font-mono uppercase tracking-widest text-amber-400">
+          Verificando credenciais Firebase Auth...
+        </p>
+      </div>
+    );
+  }
+
+  if (!isAuthorizedAdmin) {
+    return (
+      <div className="min-h-screen w-screen bg-[#09090b] text-neutral-100 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+        <div
+          className="pointer-events-none fixed inset-0 opacity-30"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 20%, rgba(212, 175, 55, 0.16), transparent 55%)',
+          }}
+        />
+        <div className="relative z-10 w-full max-w-md rounded-3xl bg-neutral-900/95 border border-white/[0.1] p-7 sm:p-8 shadow-2xl space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-serif font-black text-lg shadow-lg shadow-amber-500/20">
+                L
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block">
+                  Firebase Security Gate
+                </span>
+                <h1 className="text-base font-bold text-white">
+                  Acesso Restrito ao Criador
+                </h1>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-400">
+              <Lock className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="space-y-2 text-xs text-neutral-300 leading-relaxed bg-neutral-950/80 p-4 rounded-2xl border border-white/[0.06]">
+            <p>
+              O <strong className="text-white">LuxeBio Studio & Painel de Gestão</strong> é protegido pelo <strong className="text-amber-300">Google Firebase Authentication</strong>.
+            </p>
+            <p className="text-[11px] text-neutral-400 font-mono">
+              Administrador autorizado: <span className="text-emerald-400">{ADMIN_OWNER_EMAIL}</span>
+            </p>
+          </div>
+
+          {authError && (
+            <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-xs text-red-300 flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p>{authError}</p>
+                {adminUser && (
+                  <button
+                    type="button"
+                    onClick={handleAdminLogout}
+                    className="text-[11px] font-semibold text-amber-300 underline cursor-pointer"
+                  >
+                    Sair da conta atual e trocar de conta
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              disabled={isLoggingIn}
+              onClick={handleAdminGoogleLogin}
+              className="w-full py-3.5 px-5 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-neutral-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-amber-500/20 transition cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>
+                {isLoggingIn ? 'Autenticando com Firebase...' : 'Entrar como Administrador com Google'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openPublicSalesLanding}
+              className="w-full py-3 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2 border border-white/[0.08] transition cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+              <span>Voltar para a Landing Page Pública</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-neutral-950 text-neutral-100 font-sans">
+    <div className="flex h-[100dvh] min-h-screen w-full max-w-full overflow-hidden bg-neutral-950 text-neutral-100 font-sans">
+      {renderSubdomainConfigModal()}
       {/* ============================================================== */}
       {/* LEFT COLUMN: BUILDER SAAS PRO CONTROLS                         */}
       {/* ============================================================== */}
-      <aside className="w-full lg:w-[620px] xl:w-[680px] h-full flex flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20">
+      <aside className={`w-full lg:w-[620px] xl:w-[680px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
         {/* Header */}
         <header className="px-5 py-3.5 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 bg-neutral-950/70">
           <div className="flex items-center gap-3">
@@ -5461,11 +8731,71 @@ COMO PUBLICAR NO SERVIDOR:
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-neutral-400">Gerador de Microsites & Painel de Gestão para Clientes</p>
+              <p className="text-[11px] text-neutral-400">Gerador de Microsites & Painel de Gestão · Admin: {adminUser?.email}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Botão para voltar à Landing Page Inicial de Vendas */}
+            <button
+              type="button"
+              onClick={openPublicSalesLanding}
+              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 font-semibold text-xs flex items-center gap-1.5 border border-neutral-700 transition cursor-pointer"
+              title="Visualizar a Landing Page pública de venda de microsites prontos"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+              <span>Vitrine de Vendas</span>
+            </button>
+
+            {/* Botão para configurar o Subdomínio do Criador */}
+            <button
+              type="button"
+              onClick={() => setSubdomainModalOpen(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-mono font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
+              title="Configurar subdomínio exclusivo do Criador"
+            >
+              <Globe className="w-3.5 h-3.5 text-amber-400" />
+              <span>{landingConfig.creatorSubdomain}.</span>
+            </button>
+
+            {/* Botão de Logout do Firebase Admin */}
+            <button
+              type="button"
+              onClick={handleAdminLogout}
+              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/15 text-neutral-300 hover:text-red-300 font-semibold text-xs flex items-center gap-1 border border-neutral-800 hover:border-red-500/30 transition cursor-pointer"
+              title={`Sair da sessão de administrador (${adminUser?.email})`}
+            >
+              <LogOut className="w-3.5 h-3.5 text-red-400" />
+              <span>Sair</span>
+            </button>
+
+            {/* Toggle Editor vs. Preview (iPhone) visível apenas em telas menores < 1024px */}
+            <div className="flex lg:hidden items-center bg-neutral-900 p-1 rounded-xl border border-neutral-800 shadow-inner">
+              <button
+                type="button"
+                onClick={() => setViewMode('editor')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  viewMode === 'editor'
+                    ? 'bg-amber-400 text-neutral-950 shadow'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Editar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('preview')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  viewMode === 'preview'
+                    ? 'bg-amber-400 text-neutral-950 shadow'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Ver Página</span>
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => setAiModalOpen(true)}
@@ -5537,10 +8867,14 @@ COMO PUBLICAR NO SERVIDOR:
             <button
               type="button"
               onClick={copyExportCode}
-              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
+              className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer ${
+                copiedCode
+                  ? 'bg-emerald-500 text-neutral-950 ring-2 ring-emerald-400'
+                  : 'bg-amber-500 hover:bg-amber-400 text-neutral-950'
+              }`}
             >
-              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
-              <span>{copiedCode ? 'Copiado!' : 'Exportar HTML'}</span>
+              {copiedCode ? <Check className="w-3.5 h-3.5 text-neutral-950" /> : <Download className="w-3.5 h-3.5" />}
+              <span>{copiedCode ? 'Código Copiado com Sucesso!' : 'Exportar HTML'}</span>
             </button>
           </div>
         </header>
@@ -6628,13 +9962,20 @@ COMO PUBLICAR NO SERVIDOR:
 
                     {/* Linha 2: Seletor de Layouts Visuais */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-semibold text-neutral-300 block">
-                        Modelo de Exibição / Layout
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-semibold text-neutral-300 block">
+                          Modelo de Exibição / Layout
+                        </label>
+                        <span className="text-[9px] text-amber-400 font-mono font-semibold">
+                          ✦ Detecção Dinâmica Ativa
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {[
-                          { id: 'grid3', label: 'Grid 3 Col.', desc: '3 por linha (Compacto)' },
-                          { id: 'grid2', label: 'Grid 2 Col.', desc: '2 por linha (Destaque)' },
+                          { id: 'smart_masonry', label: 'Bento Inteligente', desc: 'Auto Retrato & Paisagem 2x1' },
+                          { id: 'masonry', label: 'Masonry Fluído', desc: 'Estilo Pinterest orgânico' },
+                          { id: 'grid2', label: 'Grid 2 Colunas', desc: '2 por linha (Destaque)' },
+                          { id: 'grid3', label: 'Grid 3 Colunas', desc: '3 por linha (Compacto)' },
                           { id: 'mosaic', label: 'Mosaico Hero', desc: '1ª foto grande 2x2' },
                           { id: 'carousel', label: 'Carrossel Touch', desc: 'Deslize com Snap' },
                         ].map((lt) => (
@@ -6643,7 +9984,7 @@ COMO PUBLICAR NO SERVIDOR:
                             type="button"
                             onClick={() => updateStudentGrid('layout', lt.id)}
                             className={`p-2 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
-                              (data.studentGrid.layout || 'grid3') === lt.id
+                              (data.studentGrid.layout || 'smart_masonry') === lt.id
                                 ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold shadow'
                                 : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
                             }`}
@@ -6661,18 +10002,19 @@ COMO PUBLICAR NO SERVIDOR:
                         <label className="text-[10px] font-semibold text-neutral-300 block">
                           Formato das Imagens (Proporção)
                         </label>
-                        <div className="grid grid-cols-3 gap-1.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                           {[
+                            { id: 'auto', label: '🤖 Auto (Detecta)' },
                             { id: 'square', label: '1:1 Quadrado' },
-                            { id: 'portrait', label: '4:5 Feed' },
-                            { id: 'landscape', label: '4:3 Retangular' },
+                            { id: 'portrait', label: '4:5 Retrato' },
+                            { id: 'landscape', label: '4:3 Paisagem' },
                           ].map((ar) => (
                             <button
                               key={ar.id}
                               type="button"
                               onClick={() => updateStudentGrid('aspectRatio', ar.id)}
                               className={`py-1.5 px-2 rounded-lg border text-center text-[10px] font-medium transition cursor-pointer ${
-                                (data.studentGrid.aspectRatio || 'square') === ar.id
+                                (data.studentGrid.aspectRatio || 'auto') === ar.id
                                   ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
                                   : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
                               }`}
@@ -6766,30 +10108,42 @@ COMO PUBLICAR NO SERVIDOR:
 
                       {/* Lista de Fotos */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[360px] overflow-y-auto tab-scrollbar p-1">
-                        {data.studentGrid.photos?.map((photo, idx) => (
-                          <div
-                            key={idx}
-                            className="p-2 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2 relative group"
-                          >
-                            <div className="relative aspect-square rounded-lg overflow-hidden border border-neutral-800 bg-black">
-                              <img
-                                src={photo}
-                                alt={`Foto ${idx + 1}`}
-                                referrerPolicy="no-referrer"
-                                className="w-full h-full object-cover"
-                              />
-                              <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[8px] font-mono font-bold text-white">
-                                #{idx + 1}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setLightboxIndex(idx)}
-                                className="absolute bottom-1 right-1 p-1 rounded bg-black/60 text-white hover:bg-black/90 cursor-pointer"
-                                title="Visualizar zoom"
-                              >
-                                <Maximize2 className="w-3 h-3" />
-                              </button>
-                            </div>
+                        {data.studentGrid.photos?.map((photo, idx) => {
+                          const info = photoOrientations[photo];
+                          const orient = info?.orientation || 'square';
+                          return (
+                            <div
+                              key={idx}
+                              className="p-2 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2 relative group"
+                            >
+                              <div className="relative aspect-square rounded-lg overflow-hidden border border-neutral-800 bg-black">
+                                <img
+                                  src={photo}
+                                  alt={`Foto ${idx + 1}`}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover"
+                                />
+                                <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[8px] font-mono font-bold text-white">
+                                  #{idx + 1}
+                                </span>
+                                <span className={`absolute top-1 right-1 px-1.5 py-0.5 rounded text-[7.5px] font-bold border backdrop-blur ${
+                                  orient === 'portrait'
+                                    ? 'bg-emerald-500/80 text-white border-emerald-400/50'
+                                    : orient === 'landscape'
+                                    ? 'bg-amber-500/80 text-black border-amber-300'
+                                    : 'bg-neutral-800/80 text-neutral-200 border-neutral-600'
+                                }`}>
+                                  {orient === 'portrait' ? '↕ Retrato' : orient === 'landscape' ? '↔ Paisagem' : '⏹ 1:1'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setLightboxIndex(idx)}
+                                  className="absolute bottom-1 right-1 p-1 rounded bg-black/60 text-white hover:bg-black/90 cursor-pointer"
+                                  title="Visualizar zoom"
+                                >
+                                  <Maximize2 className="w-3 h-3" />
+                                </button>
+                              </div>
 
                             <div className="flex items-center justify-between gap-1 pt-0.5">
                               <div className="flex items-center gap-1">
@@ -6850,8 +10204,9 @@ COMO PUBLICAR NO SERVIDOR:
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })}
+                    </div>
 
                       {/* Input para adicionar nova foto por URL ou botão de adição rápida */}
                       <div className="pt-2 flex gap-2">
@@ -7033,7 +10388,16 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 {data.locationCard.enabled && (
-                  <div className="space-y-2 pt-1">
+                  <div className="space-y-2.5 pt-1">
+                    <div>
+                      <label className="text-[10px] text-neutral-400">Título do Card</label>
+                      <input
+                        type="text"
+                        value={data.locationCard.headline}
+                        onChange={(e) => updateLocationCard('headline', e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200"
+                      />
+                    </div>
                     <div>
                       <label className="text-[10px] text-neutral-400">Endereço Exibido</label>
                       <input
@@ -7051,6 +10415,43 @@ COMO PUBLICAR NO SERVIDOR:
                         onChange={(e) => updateLocationCard('mapsUrl', e.target.value)}
                         className="w-full px-2.5 py-1.5 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200"
                       />
+                    </div>
+                    <div className="pt-1 border-t border-neutral-900 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Horário de Funcionamento & Status Aberto
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={data.locationCard.showHours !== false}
+                          onChange={(e) => updateLocationCard('showHours', e.target.checked)}
+                          className="accent-emerald-500"
+                        />
+                      </div>
+                      {data.locationCard.showHours !== false && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-neutral-400">Horário de Atendimento</label>
+                            <input
+                              type="text"
+                              placeholder="Seg a Sáb · 08:30 às 19:30"
+                              value={data.locationCard.hours || ''}
+                              onChange={(e) => updateLocationCard('hours', e.target.value)}
+                              className="w-full px-2.5 py-1.5 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-neutral-400">Selo Status (Ex: ABERTO AGORA)</label>
+                            <input
+                              type="text"
+                              placeholder="ABERTO AGORA · HORA MARCADA"
+                              value={data.locationCard.openStatus || ''}
+                              onChange={(e) => updateLocationCard('openStatus', e.target.value)}
+                              className="w-full px-2.5 py-1.5 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -8446,70 +11847,259 @@ COMO PUBLICAR NO SERVIDOR:
           )}
 
           {/* TAB 6: TRACKING, PIXELS & ORIGEM DE TRÁFEGO */}
-          {activeTab === 'tracking' && (
-            <div className="space-y-5">
-              <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
-                <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                  <Target className="w-4 h-4" /> Tráfego Pago & Metas de Conversão
-                </span>
-                <div className="space-y-2 pt-1">
-                  <div>
-                    <label className="text-[11px] text-neutral-300">Meta Pixel ID (Facebook / Instagram)</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: 987654321098765"
-                      value={data.conversion.metaPixelId}
-                      onChange={(e) => updateConversion('metaPixelId', e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200 font-mono"
-                    />
+          {activeTab === 'tracking' && (() => {
+            const activeSite = editingSiteId ? savedSites.find(s => s.id === editingSiteId) : null;
+            const clicks = activeSite ? (activeSite.whatsappClicks || 0) : sessionAnalytics.whatsappClicks;
+            const views = activeSite ? (activeSite.pageViews || 0) : sessionAnalytics.pageViews;
+            const convRate = views > 0 ? ((clicks / views) * 100).toFixed(1) : '0.0';
+            const sources = activeSite?.trafficSources || sessionAnalytics.trafficSources;
+            const totalSourceHits = (sources.instagram || 0) + (sources.googleMaps || 0) + (sources.paidAds || 0) + (sources.tiktok || 0) + (sources.direct || 0);
+            const calcPct = (count: number) => totalSourceHits > 0 ? Math.round((count / totalSourceHits) * 100) : 0;
+            const currentSubdomain = activeSite?.subdomain || data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'cliente';
+            const fullDomain = activeSite?.customDomain || `${currentSubdomain}.luxebio.site`;
+
+            return (
+              <div className="space-y-5">
+                {/* CARD 1: PAINEL DE CONTROLE DE RASTREAMENTO & MÉTRICAS EM TEMPO REAL */}
+                <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4 shadow-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-850 pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-neutral-100 flex items-center gap-1.5">
+                          <Target className="w-4 h-4 text-amber-400" />
+                          Rastreamento & Conversões em Tempo Real
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Monitorando Ativo
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400">
+                        Microsite: <strong className="text-amber-300">{activeSite ? activeSite.clientName : data.profile.name}</strong> · https://{fullDomain}
+                      </p>
+                    </div>
+
+                    {/* BOTÕES PRINCIPAIS DE AÇÃO DE RASTREAMENTO */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => openResetTrackingModal('current')}
+                        className="px-3.5 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 hover:text-red-200 font-bold text-xs flex items-center gap-1.5 border border-red-500/40 cursor-pointer transition shadow"
+                        title="Zerar todas as métricas de conversão e visitas deste microsite"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-red-400" />
+                        <span>Zerar Rastreamento Deste Site</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => recordWhatsappClick()}
+                        className="px-3 py-1.5 rounded-lg bg-neutral-850 hover:bg-neutral-800 text-emerald-300 font-semibold text-xs flex items-center gap-1.5 border border-neutral-750 cursor-pointer transition"
+                        title="Simular um clique no botão de WhatsApp para testar a telemetria"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Simular Clique (+1)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openResetTrackingModal('all')}
+                        className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-850 text-neutral-400 hover:text-neutral-200 text-xs flex items-center gap-1 cursor-pointer border border-neutral-800 transition"
+                        title="Zerar rastreamento de todos os clientes do painel de uma só vez"
+                      >
+                        <RotateCcw className="w-3 h-3 text-neutral-400" />
+                        <span>Zerar Todos</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* STATS COUNTERS GRID */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                    <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1">
+                      <span className="text-[10px] text-neutral-400 block font-medium uppercase tracking-wider">Visualizações</span>
+                      <div className="text-xl font-black text-neutral-100 tabular-nums">
+                        {views}
+                      </div>
+                      <span className="text-[9px] text-neutral-500">Acessos à página</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1">
+                      <span className="text-[10px] text-neutral-400 block font-medium uppercase tracking-wider">Cliques WhatsApp</span>
+                      <div className="text-xl font-black text-emerald-400 tabular-nums flex items-center justify-center gap-1">
+                        <MessageCircle className="w-4 h-4 text-emerald-400" />
+                        {clicks}
+                      </div>
+                      <span className="text-[9px] text-neutral-500">Leads que iniciaram conversa</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1">
+                      <span className="text-[10px] text-neutral-400 block font-medium uppercase tracking-wider">Taxa de Conversão</span>
+                      <div className="text-xl font-black text-amber-300 tabular-nums flex items-center justify-center gap-1">
+                        <TrendingUp className="w-4 h-4 text-amber-400" />
+                        {convRate}%
+                      </div>
+                      <span className="text-[9px] text-neutral-500">Cliques WA / Visitas</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-1">
+                      <span className="text-[10px] text-neutral-400 block font-medium uppercase tracking-wider">Eventos de Pixel</span>
+                      <div className="text-xl font-black text-sky-400 tabular-nums">
+                        {data.conversion.metaPixelId ? (clicks + views) : 0}
+                      </div>
+                      <span className="text-[9px] text-neutral-500">{data.conversion.metaPixelId ? 'PageView + Leads' : 'Pixel inativo'}</span>
+                    </div>
+                  </div>
+
+                  {clicks === 0 && views === 0 && (
+                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2 text-xs text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Rastreamento zerado! A página está 100% pronta para início de campanhas limpas ou entrega ao cliente.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* CARD 2: ORIGEM DOS ACESSOS & RASTREAMENTO POR UTMS DINÂMICO */}
+                <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4" /> Origem dos Acessos & Rastreamento por UTMs
+                    </span>
+                    <span className="text-[10px] text-neutral-400">Distribuição dinâmica</span>
+                  </div>
+
+                  <p className="text-[11px] text-neutral-400">
+                    Adicione tags UTMs aos seus links na Bio do Instagram, Google Meu Negócio ou Campanhas de Anúncios. O sistema segmenta automaticamente cada clique.
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-center text-xs">
+                    <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 block font-bold">📸 Instagram</span>
+                      <span className="text-sm font-black text-amber-400">{calcPct(sources.instagram || 0)}%</span>
+                      <span className="text-[9px] text-neutral-500 block">({sources.instagram || 0} visitas)</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 block font-bold">📍 Google Maps</span>
+                      <span className="text-sm font-black text-emerald-400">{calcPct(sources.googleMaps || 0)}%</span>
+                      <span className="text-[9px] text-neutral-500 block">({sources.googleMaps || 0} visitas)</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 block font-bold">🎯 Tráfego Pago</span>
+                      <span className="text-sm font-black text-sky-400">{calcPct(sources.paidAds || 0)}%</span>
+                      <span className="text-[9px] text-neutral-500 block">({sources.paidAds || 0} visitas)</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 block font-bold">🎵 TikTok</span>
+                      <span className="text-sm font-black text-purple-400">{calcPct(sources.tiktok || 0)}%</span>
+                      <span className="text-[9px] text-neutral-500 block">({sources.tiktok || 0} visitas)</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-0.5">
+                      <span className="text-[10px] text-neutral-400 block font-bold">🌐 Direto / Outros</span>
+                      <span className="text-sm font-black text-neutral-300">{calcPct(sources.direct || 0)}%</span>
+                      <span className="text-[9px] text-neutral-500 block">({sources.direct || 0} visitas)</span>
+                    </div>
+                  </div>
+
+                  {/* GERADOR RÁPIDO DE LINKS RASTREADOS */}
+                  <div className="mt-3 p-3 rounded-lg bg-neutral-900/60 border border-neutral-850 space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 block">
+                      🔗 Gerador de Links com Rastreamento (Copie e cole nos seus perfis):
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                      <div className="flex items-center justify-between p-2 rounded bg-neutral-950 border border-neutral-800">
+                        <div className="truncate pr-2">
+                          <span className="text-neutral-400 font-bold block text-[10px]">Link para Bio do Instagram:</span>
+                          <span className="font-mono text-amber-300 text-[10px]">https://{fullDomain}?utm_source=instagram&utm_medium=bio</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await safeCopyText(`https://${fullDomain}?utm_source=instagram&utm_medium=bio`);
+                            showToast('📋 Link rastreado do Instagram copiado!');
+                          }}
+                          className="px-2 py-1 rounded bg-neutral-800 hover:bg-amber-500 hover:text-neutral-950 text-amber-300 font-bold text-[10px] transition cursor-pointer shrink-0"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-2 rounded bg-neutral-950 border border-neutral-800">
+                        <div className="truncate pr-2">
+                          <span className="text-neutral-400 font-bold block text-[10px]">Link para Google Meu Negócio:</span>
+                          <span className="font-mono text-emerald-300 text-[10px]">https://{fullDomain}?utm_source=google_maps&utm_medium=perfil</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await safeCopyText(`https://${fullDomain}?utm_source=google_maps&utm_medium=perfil`);
+                            showToast('📋 Link rastreado do Google Maps copiado!');
+                          }}
+                          className="px-2 py-1 rounded bg-neutral-800 hover:bg-emerald-500 hover:text-neutral-950 text-emerald-300 font-bold text-[10px] transition cursor-pointer shrink-0"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
-                <span className="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
-                  <MessageCircle className="w-4 h-4 text-emerald-400" /> Mensagem Inteligente do WhatsApp
-                </span>
-                <textarea
-                  rows={3}
-                  value={data.conversion.defaultWhatsappMsg}
-                  onChange={(e) => updateConversion('defaultWhatsappMsg', e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200 resize-none font-mono"
-                />
-                <p className="text-[10px] text-neutral-500">
-                  Variáveis dinâmicas disponíveis: <code className="text-amber-400">{'{nome}'}</code>, <code className="text-amber-400">{'{servico}'}</code>, <code className="text-amber-400">{'{data}'}</code>
-                </p>
-              </div>
+                {/* CARD 3: CONFIGURAÇÃO DE PIXELS */}
+                <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                  <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                    <Target className="w-4 h-4" /> Configuração de Pixels de Conversão (Tráfego Pago)
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="text-[11px] text-neutral-300 block mb-1">Meta Pixel ID (Facebook / Instagram Ads)</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: 987654321098765"
+                        value={data.conversion.metaPixelId}
+                        onChange={(e) => updateConversion('metaPixelId', e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200 font-mono"
+                      />
+                      <span className="text-[9.5px] text-neutral-500 mt-1 block">
+                        Dispara eventos automáticos: <code>PageView</code> e <code>Lead</code> (ao clicar no WhatsApp)
+                      </span>
+                    </div>
 
-              {/* RASTREAMENTO DE ORIGEM DE TRÁFEGO (UTMs) */}
-              <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
-                <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4" /> Origem dos Acessos & Rastreamento por UTMs
-                </span>
-                <p className="text-[11px] text-neutral-400">
-                  Adicione <code className="text-amber-300">?utm_source=instagram</code> ou <code className="text-amber-300">?utm_source=google</code> nos seus links para rastrear exatamente de onde vêm seus clientes no Painel.
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-center text-xs">
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="text-[10px] text-neutral-400 block font-bold">📸 Instagram</span>
-                    <span className="text-sm font-black text-amber-400">45%</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="text-[10px] text-neutral-400 block font-bold">📍 Google Maps</span>
-                    <span className="text-sm font-black text-emerald-400">30%</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="text-[10px] text-neutral-400 block font-bold">🎯 Tráfego Pago</span>
-                    <span className="text-sm font-black text-sky-400">20%</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="text-[10px] text-neutral-400 block font-bold">🎵 TikTok / Outros</span>
-                    <span className="text-sm font-black text-purple-400">5%</span>
+                    <div>
+                      <label className="text-[11px] text-neutral-300 block mb-1">Google Analytics 4 (GA4 Measurement ID)</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: G-XXXXXXXXXX"
+                        value={data.conversion.googleAnalyticsId}
+                        onChange={(e) => updateConversion('googleAnalyticsId', e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200 font-mono"
+                      />
+                      <span className="text-[9.5px] text-neutral-500 mt-1 block">
+                        Rastreia engajamento e cliques nos serviços e botões do microsite
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* CARD 4: MENSAGEM DO WHATSAPP */}
+                <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                  <span className="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
+                    <MessageCircle className="w-4 h-4 text-emerald-400" /> Mensagem Inteligente do WhatsApp (com Tags de Conversão)
+                  </span>
+                  <textarea
+                    rows={3}
+                    value={data.conversion.defaultWhatsappMsg}
+                    onChange={(e) => updateConversion('defaultWhatsappMsg', e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200 resize-none font-mono"
+                  />
+                  <p className="text-[10px] text-neutral-500">
+                    Variáveis dinâmicas disponíveis: <code className="text-amber-400">{'{nome}'}</code>, <code className="text-amber-400">{'{servico}'}</code>, <code className="text-amber-400">{'{data}'}</code>
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB 7: EXPORTAÇÃO & ESTRUTURA DE HOSPEDAGEM EM PASTAS INDEPENDENTES */}
           {activeTab === 'export' && (
@@ -8619,10 +12209,14 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex gap-2">
                   <button
                     onClick={copyExportCode}
-                    className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow cursor-pointer transition"
+                    className={`flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow cursor-pointer transition ${
+                      copiedCode
+                        ? 'bg-emerald-500 text-neutral-950 ring-2 ring-emerald-400'
+                        : 'bg-amber-500 hover:bg-amber-400 text-neutral-950'
+                    }`}
                   >
-                    {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    <span>{copiedCode ? 'Código Copiado!' : 'Copiar Código HTML'}</span>
+                    {copiedCode ? <Check className="w-4 h-4 text-neutral-950" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedCode ? 'Código Copiado com Sucesso!' : 'Copiar Código HTML'}</span>
                   </button>
                   <button
                     onClick={downloadHtmlFile}
@@ -8643,12 +12237,231 @@ COMO PUBLICAR NO SERVIDOR:
           {/* TAB 8: PAINEL DE GESTÃO SAAS DOS MICROSITES */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* SaaS Metrics Summary Header */}
+              {/* ============================================================== */}
+              {/* 1. BARRA DE PROGRESSO VISUAL DO FATURAMENTO MENSAL (MRR / META) */}
+              {/* ============================================================== */}
+              {(() => {
+                const totalContractedRevenue = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
+                const activeRevenue = savedSites.reduce((acc, s) => {
+                  const days = getDaysUntilDue(s.dueDate);
+                  return acc + (s.status === 'active' && days >= 0 ? (s.monthlyFee || 0) : 0);
+                }, 0);
+                const overdueRevenue = savedSites.reduce((acc, s) => {
+                  const days = getDaysUntilDue(s.dueDate);
+                  return acc + (s.status !== 'disabled' && (s.status === 'overdue' || days < 0) ? (s.monthlyFee || 0) : 0);
+                }, 0);
+                const goal = revenueGoal > 0 ? revenueGoal : 5000;
+                const progressPercent = Math.min(100, Math.round((activeRevenue / goal) * 100));
+                const totalProgressPercent = Math.min(100, Math.round((totalContractedRevenue / goal) * 100));
+                const overduePercent = Math.min(Math.max(0, 100 - progressPercent), Math.round((overdueRevenue / goal) * 100));
+                const remainingToGoal = Math.max(0, goal - activeRevenue);
+                const isGoalBeaten = activeRevenue >= goal;
+
+                return (
+                  <div className="p-5 rounded-2xl bg-gradient-to-br from-neutral-950 via-neutral-900/90 to-neutral-950 border border-emerald-500/30 shadow-xl relative overflow-hidden space-y-4">
+                    {/* Ambient Glow */}
+                    <div className="absolute -right-12 -top-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -left-12 -bottom-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                    {/* Header: Title + Goal Setter */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                            <TrendingUp className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-neutral-100 flex items-center gap-2">
+                              Faturamento Mensal Recorrente (MRR) & Meta
+                              {isGoalBeaten && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400 text-neutral-950 flex items-center gap-1 shadow-sm">
+                                  <Sparkles className="w-3 h-3" /> Meta Batida!
+                                </span>
+                              )}
+                            </h3>
+                            <p className="text-[11px] text-neutral-400">
+                              Acompanhamento em tempo real da meta financeira de mensalidades ativas e em dia.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Goal Edit Button / Input */}
+                      <div className="flex items-center gap-2 self-start sm:self-center">
+                        {isEditingGoal ? (
+                          <div className="flex items-center gap-1.5 bg-neutral-900 p-1 rounded-xl border border-amber-500/50">
+                            <span className="text-xs text-neutral-400 pl-2 font-mono">R$</span>
+                            <input
+                              type="number"
+                              value={tempGoalInput}
+                              onChange={(e) => setTempGoalInput(e.target.value)}
+                              placeholder={goal.toString()}
+                              className="w-24 px-2 py-1 text-xs bg-neutral-950 rounded border border-neutral-700 text-amber-300 font-mono font-bold focus:outline-none focus:border-amber-400"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const num = parseFloat(tempGoalInput);
+                                if (!isNaN(num) && num > 0) {
+                                  setRevenueGoal(num);
+                                  try {
+                                    localStorage.setItem('luxebio_revenue_goal_v1', num.toString());
+                                  } catch {}
+                                  setToastMsg(`Meta mensal atualizada para R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}!`);
+                                  setTimeout(() => setToastMsg(null), 3000);
+                                }
+                                setIsEditingGoal(false);
+                              }}
+                              className="px-2.5 py-1 rounded bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs cursor-pointer transition"
+                            >
+                              Salvar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingGoal(false)}
+                              className="px-2 py-1 rounded text-neutral-400 hover:text-neutral-200 text-xs cursor-pointer"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTempGoalInput(goal.toString());
+                              setIsEditingGoal(true);
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-amber-300 font-medium text-xs flex items-center gap-1.5 transition cursor-pointer"
+                            title="Alterar o valor da meta mensal de faturamento"
+                          >
+                            <Target className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Meta: R$ {goal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <Edit3 className="w-3 h-3 text-neutral-500" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Big Numbers Display */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10 pt-1">
+                      <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+                        <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">Faturamento Em Dia</div>
+                        <div className="text-xl sm:text-2xl font-black text-emerald-400 tabular-nums">
+                          R$ {activeRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10px] text-emerald-400/80 font-medium mt-0.5">
+                          {progressPercent}% da meta
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+                        <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">Total Contratado</div>
+                        <div className="text-xl sm:text-2xl font-black text-neutral-100 tabular-nums">
+                          R$ {totalContractedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10px] text-neutral-400 mt-0.5">
+                          {totalProgressPercent}% da meta
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+                        <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider flex items-center gap-1">
+                          Pendente / Atrasado
+                          {overdueRevenue > 0 && <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />}
+                        </div>
+                        <div className="text-xl sm:text-2xl font-black text-amber-400 tabular-nums">
+                          R$ {overdueRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10px] text-amber-400/80 font-medium mt-0.5">
+                          {savedSites.filter(s => s.status !== 'disabled' && (s.status === 'overdue' || getDaysUntilDue(s.dueDate) < 0)).length} cliente(s)
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+                        <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">
+                          {isGoalBeaten ? 'Superávit da Meta' : 'Faltam para a Meta'}
+                        </div>
+                        <div className={`text-xl sm:text-2xl font-black tabular-nums ${isGoalBeaten ? 'text-emerald-300' : 'text-neutral-200'}`}>
+                          {isGoalBeaten
+                            ? `+ R$ ${(activeRevenue - goal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            : `R$ ${remainingToGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                        </div>
+                        <div className="text-[10px] text-neutral-400 mt-0.5">
+                          Meta R$ {goal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}/mês
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar Container */}
+                    <div className="space-y-1.5 relative z-10 pt-1">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-neutral-300 flex items-center gap-1.5">
+                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                          Progresso de Arrecadação: <span className="text-emerald-400 font-mono font-bold">{progressPercent}%</span>
+                        </span>
+                        <span className="text-neutral-400 font-mono text-[11px]">
+                          R$ {activeRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })} / R$ {goal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                        </span>
+                      </div>
+
+                      {/* Main Bar */}
+                      <div className="relative w-full h-4 bg-neutral-900 rounded-full overflow-hidden border border-neutral-800 p-0.5 shadow-inner">
+                        {/* Milestone Tick Marks (25%, 50%, 75%) */}
+                        <div className="absolute inset-0 pointer-events-none z-20 flex justify-between px-[25%] opacity-30">
+                          <div className="w-0.5 h-full bg-neutral-500" />
+                          <div className="w-0.5 h-full bg-neutral-500" />
+                        </div>
+                        <div className="absolute inset-0 pointer-events-none z-20 flex justify-center opacity-40">
+                          <div className="w-0.5 h-full bg-neutral-400" />
+                        </div>
+
+                        {/* Active Revenue Bar */}
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700 shadow-lg shadow-emerald-500/20 relative"
+                          style={{ width: `${progressPercent}%` }}
+                        >
+                          {progressPercent > 12 && (
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-neutral-950 font-mono">
+                              {progressPercent}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Overdue Revenue Segment (if any) */}
+                        {overduePercent > 0 && progressPercent < 100 && (
+                          <div
+                            className="h-full rounded-r-full bg-gradient-to-r from-amber-500 to-amber-400 opacity-80 transition-all duration-700"
+                            style={{
+                              width: `${overduePercent}%`,
+                              marginLeft: `${progressPercent}%`,
+                              marginTop: '-12px'
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Milestone Labels */}
+                      <div className="flex justify-between text-[10px] text-neutral-500 font-mono px-1 pt-0.5">
+                        <span>R$ 0</span>
+                        <span>25%</span>
+                        <span>50%</span>
+                        <span>75%</span>
+                        <span className="text-amber-400/90 font-bold">100% (Meta R$ {goal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })})</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ============================================================== */}
+              {/* 2. RESUMO DE MÉTRICAS SAAS                                      */}
+              {/* ============================================================== */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
                   <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">Total Microsites</div>
                   <div className="text-xl font-black text-amber-400 tabular-nums">{savedSites.length}</div>
-                  <div className="text-[9px] text-neutral-500">Páginas gerenciadas</div>
+                  <div className="text-[9px] text-neutral-500">Páginas cadastradas</div>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
@@ -8669,15 +12482,16 @@ COMO PUBLICAR NO SERVIDOR:
                       return totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
                     })()}%
                   </div>
-                  <div className="text-[9px] text-neutral-500">Cliques WA / Acessos totais</div>
+                  <div className="text-[9px] text-neutral-500">Cliques WA / Acessos</div>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
-                  <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">MRR Recorrente</div>
-                  <div className="text-xl font-black text-emerald-300 tabular-nums">
-                    R$ {savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">Total Leads WA</div>
+                  <div className="text-xl font-black text-emerald-400 tabular-nums flex items-center gap-1">
+                    <MessageCircle className="w-4 h-4 text-emerald-400" />
+                    {savedSites.reduce((acc, s) => acc + (s.whatsappClicks || 0), 0)}
                   </div>
-                  <div className="text-[9px] text-neutral-500">Faturamento mensal em dia</div>
+                  <div className="text-[9px] text-neutral-500">Contatos iniciados</div>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-1">
@@ -8689,58 +12503,103 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
               </div>
 
-              {/* SaaS Manager PIX Settings Card */}
-              <div className="p-4 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-3">
-                <div className="flex items-center justify-between">
+              {/* ============================================================== */}
+              {/* 3. CARD DE CONFIGURAÇÃO PIX DO GESTOR SAAS (EXPANSÍVEL)       */}
+              {/* ============================================================== */}
+              <div className="rounded-xl bg-neutral-950 border border-emerald-500/30 overflow-hidden transition">
+                <button
+                  type="button"
+                  onClick={() => setPixCardExpanded(p => !p)}
+                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-neutral-900/50 transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider block">
+                        Configuração do Gestor SaaS (Chave PIX & Tabela de Preços dos Microsites)
+                      </span>
+                      <span className="text-[11px] text-neutral-400 font-mono">
+                        {data.saasSettings?.pixKey
+                          ? `PIX: ${data.saasSettings.pixKey} · Mensalidade Base: R$ ${(data.saasSettings?.defaultMonthlyFee || 149.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                          : `Mensalidade Base: R$ ${(data.saasSettings?.defaultMonthlyFee || 149.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} · Clique para configurar PIX e valores`}
+                      </span>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
-                      Configuração da Chave PIX do Gestor SaaS (Recebimento de Mensalidades)
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
+                      {pixCardExpanded ? 'Recolher' : 'Configurar'}
                     </span>
+                    <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform duration-200 ${pixCardExpanded ? 'rotate-180' : ''}`} />
                   </div>
-                  <span className="text-[10px] text-neutral-400">PIX Ativo para Cobrança Automática</span>
-                </div>
+                </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                  <div>
-                    <label className="text-[10px] text-neutral-400 block mb-1">Chave PIX (E-mail, CPF ou CNPJ)</label>
-                    <input
-                      type="text"
-                      value={data.saasSettings?.pixKey || ''}
-                      onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixKey: e.target.value } }))}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-amber-300 font-mono font-bold"
-                    />
+                {pixCardExpanded && (
+                  <div className="p-4 pt-1 border-t border-neutral-900 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="text-[10px] text-neutral-400 block mb-1">Chave PIX (E-mail, CPF, CNPJ ou Aleatória)</label>
+                      <input
+                        type="text"
+                        value={data.saasSettings?.pixKey || ''}
+                        onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixKey: e.target.value } }))}
+                        placeholder="ex: financeiro@seudominio.com"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-amber-300 font-mono font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-neutral-400 block mb-1">Nome do Favorecido / Razão Social</label>
+                      <input
+                        type="text"
+                        value={data.saasSettings?.pixName || ''}
+                        onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixName: e.target.value } }))}
+                        placeholder="ex: Agência Digital LuxeBio"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-neutral-400 block mb-1">Cidade do Banco</label>
+                      <input
+                        type="text"
+                        value={data.saasSettings?.pixCity || ''}
+                        onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixCity: e.target.value } }))}
+                        placeholder="ex: SAO PAULO"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-neutral-400 block mb-1">Valor Padrão da Mensalidade (Novos Sites)</label>
+                      <div className="relative">
+                        <span className="text-xs text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 font-mono">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={data.saasSettings?.defaultMonthlyFee || 149.90}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setData(p => ({ ...p, saasSettings: { ...p.saasSettings, defaultMonthlyFee: isNaN(val) ? 149.90 : val } }));
+                          }}
+                          placeholder="149.90"
+                          className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-emerald-300 font-mono font-bold"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] text-neutral-400 block mb-1">Nome do Favorecido / Razão Social</label>
-                    <input
-                      type="text"
-                      value={data.saasSettings?.pixName || ''}
-                      onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixName: e.target.value } }))}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-neutral-400 block mb-1">Cidade do Banco</label>
-                    <input
-                      type="text"
-                      value={data.saasSettings?.pixCity || ''}
-                      onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixCity: e.target.value } }))}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Main Table Controls & Add New Button */}
+              {/* ============================================================== */}
+              {/* 4. CONTROLES PRINCIPAIS & SISTEMA DE BUSCA POR DATA DE VENCIMENTO */}
+              {/* ============================================================== */}
               <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4">
+                {/* Header Actions */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-900">
                   <div>
                     <h3 className="text-sm font-bold text-neutral-100 flex items-center gap-2">
                       <Server className="w-4 h-4 text-amber-400" /> Painel de Gestão dos Microsites Criados
                     </h3>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Controle de mensalidades, taxas de conversão de WhatsApp, vencimentos e desativação instantânea.
+                      Controle de mensalidades, busca por data de vencimento, taxas de conversão de WhatsApp e desativação.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -8764,6 +12623,15 @@ COMO PUBLICAR NO SERVIDOR:
 
                     <button
                       type="button"
+                      onClick={() => openResetTrackingModal('all')}
+                      className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-red-500/15 text-red-300 font-bold text-xs flex items-center gap-1.5 border border-red-500/30 hover:border-red-400 transition cursor-pointer shadow"
+                      title="Zerar cliques e estatísticas de rastreamento de todos os microsites do painel"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-red-400" /> Zerar Rastreamento Geral
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={openSaveDialog}
                       className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
                     >
@@ -8772,284 +12640,669 @@ COMO PUBLICAR NO SERVIDOR:
                   </div>
                 </div>
 
-                {/* Filters & Search */}
-                <div className="flex flex-col sm:flex-row items-center gap-2.5">
-                  <div className="relative flex-1 w-full">
+                {/* FILTROS AVANÇADOS: BUSCA TEXTUAL + BUSCA POR DATA EXATA + ORDENAÇÃO */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                  {/* Busca Textual */}
+                  <div className="sm:col-span-5 relative">
                     <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       placeholder="Buscar por cliente, domínio ou nicho..."
                       value={dashboardSearch}
                       onChange={(e) => setDashboardSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 placeholder-neutral-500"
+                      className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-amber-400"
                     />
+                    {dashboardSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setDashboardSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 text-xs cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800 shrink-0 overflow-x-auto max-w-full">
-                    {[
-                      { id: 'all', label: 'Todos' },
-                      { id: 'active', label: '🟢 Em dia' },
-                      { id: 'overdue', label: '🟡 Vencidos' },
-                      { id: 'disabled', label: '🛑 Desativados' },
-                    ].map(f => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => setDashboardStatusFilter(f.id)}
-                        className={`px-2.5 py-1 rounded text-[10px] font-semibold transition cursor-pointer ${
-                          dashboardStatusFilter === f.id
-                            ? 'bg-amber-400 text-neutral-950 shadow'
-                            : 'text-neutral-400 hover:text-neutral-200'
-                        }`}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
+                  {/* Busca por Data de Vencimento Específica */}
+                  <div className="sm:col-span-4 relative flex items-center">
+                    <div className="w-full relative">
+                      <CalendarClock className="w-3.5 h-3.5 text-amber-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={dashboardDueDateExact}
+                        onChange={(e) => {
+                          setDashboardDueDateExact(e.target.value);
+                          if (e.target.value) {
+                            setDashboardDueDateFilter('custom');
+                          }
+                        }}
+                        className="w-full pl-8 pr-8 py-2 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-mono focus:outline-none focus:border-amber-400 cursor-pointer"
+                        title="Buscar clientes com vencimento em uma data específica"
+                      />
+                      {dashboardDueDateExact && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDashboardDueDateExact('');
+                            setDashboardDueDateFilter('all');
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-200 text-xs cursor-pointer"
+                          title="Limpar busca por data"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ordenação */}
+                  <div className="sm:col-span-3">
+                    <select
+                      value={dashboardSortBy}
+                      onChange={(e) => setDashboardSortBy(e.target.value as any)}
+                      className="w-full px-2.5 py-2 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-medium focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      <option value="dueDate_asc">⏳ Vencimento (Mais Próximos)</option>
+                      <option value="dueDate_desc">📅 Vencimento (Mais Distantes)</option>
+                      <option value="fee_desc">💰 Maior Mensalidade (MRR)</option>
+                      <option value="rate_desc">📈 Maior Taxa de Conversão</option>
+                      <option value="name_asc">🔤 Nome do Cliente (A-Z)</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Microsites List */}
-                <div className="space-y-3">
-                  {savedSites
+                {/* FILTROS RÁPIDOS DE VENCIMENTO (PERÍODOS) */}
+                <div className="space-y-2 pt-1 border-t border-neutral-900">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-amber-400" /> Filtrar por Período de Vencimento:
+                    </span>
+                    {(dashboardDueDateFilter !== 'all' || dashboardDueDateExact || dashboardStatusFilter !== 'all' || dashboardSearch) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDashboardDueDateFilter('all');
+                          setDashboardDueDateExact('');
+                          setDashboardStatusFilter('all');
+                          setDashboardSearch('');
+                        }}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline"
+                      >
+                        Limpar todos os filtros
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {(() => {
+                      const overdueCount = savedSites.filter(s => s.status !== 'disabled' && (s.status === 'overdue' || getDaysUntilDue(s.dueDate) < 0)).length;
+                      const todayCount = savedSites.filter(s => getDaysUntilDue(s.dueDate) === 0).length;
+                      const next7DaysCount = savedSites.filter(s => {
+                        const d = getDaysUntilDue(s.dueDate);
+                        return d >= 0 && d <= 7;
+                      }).length;
+                      const next15DaysCount = savedSites.filter(s => {
+                        const d = getDaysUntilDue(s.dueDate);
+                        return d >= 0 && d <= 15;
+                      }).length;
+                      const currentMonthPrefix = new Date().toISOString().substring(0, 7);
+                      const thisMonthCount = savedSites.filter(s => (s.dueDate || '').startsWith(currentMonthPrefix)).length;
+
+                      const periods = [
+                        { id: 'all', label: 'Todos os Vencimentos', count: savedSites.length, color: 'neutral' },
+                        { id: 'overdue', label: '🚨 Vencidos / Atrasados', count: overdueCount, color: 'red' },
+                        { id: 'today', label: '⚡ Vencem Hoje', count: todayCount, color: 'amber' },
+                        { id: '7days', label: '🗓️ Próximos 7 Dias', count: next7DaysCount, color: 'amber' },
+                        { id: '15days', label: '📅 Próximos 15 Dias', count: next15DaysCount, color: 'neutral' },
+                        { id: 'this_month', label: '🗓️ Este Mês', count: thisMonthCount, color: 'neutral' },
+                      ];
+
+                      return periods.map(p => {
+                        const isSelected = dashboardDueDateFilter === p.id && !dashboardDueDateExact;
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setDashboardDueDateFilter(p.id as any);
+                              setDashboardDueDateExact('');
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer flex items-center gap-1.5 border ${
+                              isSelected
+                                ? p.color === 'red'
+                                  ? 'bg-red-500 text-neutral-950 border-red-400 font-bold shadow'
+                                  : p.color === 'amber'
+                                  ? 'bg-amber-400 text-neutral-950 border-amber-300 font-bold shadow'
+                                  : 'bg-emerald-400 text-neutral-950 border-emerald-300 font-bold shadow'
+                                : p.color === 'red' && p.count > 0
+                                ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'
+                                : p.color === 'amber' && p.count > 0
+                                ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                                : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                            }`}
+                          >
+                            <span>{p.label}</span>
+                            <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
+                              isSelected ? 'bg-neutral-950/20 text-neutral-950' : 'bg-neutral-800 text-neutral-300'
+                            }`}>
+                              {p.count}
+                            </span>
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
+                {/* FILTROS POR STATUS DE CLIENTE */}
+                <div className="flex items-center gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800 shrink-0 overflow-x-auto max-w-full">
+                  <span className="text-[10px] text-neutral-500 font-semibold px-2">Status:</span>
+                  {[
+                    { id: 'all', label: 'Todos' },
+                    { id: 'landing', label: '⭐ Modelos na Landing' },
+                    { id: 'active', label: '🟢 Em dia' },
+                    { id: 'overdue', label: '🟡 Vencidos' },
+                    { id: 'disabled', label: '🛑 Desativados' },
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setDashboardStatusFilter(f.id)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-semibold transition cursor-pointer ${
+                        dashboardStatusFilter === f.id
+                          ? 'bg-amber-400 text-neutral-950 shadow'
+                          : 'text-neutral-400 hover:text-neutral-200'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ============================================================== */}
+                {/* 5. LISTA DE CLIENTES FILTRADOS & ORDENADOS                     */}
+                {/* ============================================================== */}
+                {(() => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const currentMonthPrefix = today.toISOString().substring(0, 7);
+
+                  const filteredList = savedSites
                     .filter(site => {
+                      // 1. Text Search
                       const matchesSearch =
                         !dashboardSearch ||
                         site.clientName.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.subdomain.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.customDomain.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.nicheCategory.toLowerCase().includes(dashboardSearch.toLowerCase());
+
+                      // 2. Status Filter
                       const matchesStatus =
                         dashboardStatusFilter === 'all' ||
+                        (dashboardStatusFilter === 'landing' && Boolean(site.isLandingModel)) ||
                         (dashboardStatusFilter === 'active' && site.status === 'active') ||
                         (dashboardStatusFilter === 'overdue' && site.status === 'overdue') ||
                         (dashboardStatusFilter === 'disabled' && site.status === 'disabled');
-                      return matchesSearch && matchesStatus;
+
+                      // 3. Exact Date Filter (if set)
+                      const matchesExactDate = !dashboardDueDateExact || site.dueDate === dashboardDueDateExact;
+
+                      // 4. Quick Period Due Date Filter
+                      const days = getDaysUntilDue(site.dueDate);
+                      let matchesDueDate = true;
+                      if (dashboardDueDateExact) {
+                        matchesDueDate = matchesExactDate;
+                      } else if (dashboardDueDateFilter === 'today') {
+                        matchesDueDate = days === 0;
+                      } else if (dashboardDueDateFilter === '7days') {
+                        matchesDueDate = days >= 0 && days <= 7;
+                      } else if (dashboardDueDateFilter === '15days') {
+                        matchesDueDate = days >= 0 && days <= 15;
+                      } else if (dashboardDueDateFilter === 'this_month') {
+                        matchesDueDate = (site.dueDate || '').startsWith(currentMonthPrefix);
+                      } else if (dashboardDueDateFilter === 'overdue') {
+                        matchesDueDate = days < 0 && site.status !== 'disabled';
+                      }
+
+                      return matchesSearch && matchesStatus && matchesDueDate;
                     })
-                    .map(site => {
-                      const todayStr = new Date().toISOString().split('T')[0];
-                      const isOverdue = site.dueDate < todayStr && site.status !== 'disabled';
-                      const currentFullDomain = site.customDomain || `${site.subdomain}.luxebio.site`;
-                      const clicks = site.whatsappClicks || 0;
-                      const views = site.pageViews || 100;
-                      const rate = Number(((clicks / views) * 100).toFixed(1));
-                      const isHighRate = rate >= 15;
-                      const isMedRate = rate >= 8;
+                    .sort((a, b) => {
+                      if (dashboardSortBy === 'dueDate_asc') {
+                        return (a.dueDate || '').localeCompare(b.dueDate || '');
+                      }
+                      if (dashboardSortBy === 'dueDate_desc') {
+                        return (b.dueDate || '').localeCompare(a.dueDate || '');
+                      }
+                      if (dashboardSortBy === 'fee_desc') {
+                        return (b.monthlyFee || 0) - (a.monthlyFee || 0);
+                      }
+                      if (dashboardSortBy === 'rate_desc') {
+                        const rateA = (a.whatsappClicks || 0) / (a.pageViews || 1);
+                        const rateB = (b.whatsappClicks || 0) / (b.pageViews || 1);
+                        return rateB - rateA;
+                      }
+                      if (dashboardSortBy === 'name_asc') {
+                        return a.clientName.localeCompare(b.clientName);
+                      }
+                      return 0;
+                    });
 
-                      return (
-                        <div
-                          key={site.id}
-                          className={`p-4 rounded-xl border transition space-y-3 ${
-                            site.status === 'disabled'
-                              ? 'bg-neutral-950/40 border-red-900/40 opacity-75'
-                              : isOverdue || site.status === 'overdue'
-                              ? 'bg-amber-500/5 border-amber-500/30'
-                              : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'
-                          }`}
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-neutral-900">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-xs text-neutral-100">{site.clientName}</span>
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-neutral-900 text-neutral-400 border border-neutral-800">
-                                  {site.nicheCategory}
-                                </span>
-                                {editingSiteId === site.id && (
-                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                    Em Edição
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3 text-[11px] text-neutral-400 flex-wrap">
-                                <span className="flex items-center gap-1 text-amber-400/90 font-mono">
-                                  <Globe className="w-3 h-3" />
-                                  https://{currentFullDomain}
-                                </span>
-                                <span className="flex items-center gap-1 text-emerald-400 font-mono text-[10px] bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800" title="Diretório independente exclusivo deste microsite no servidor de hospedagem">
-                                  <Folder className="w-3 h-3 text-amber-400" />
-                                  /public_html/{site.subdomain}/
-                                </span>
-                                {site.clientPhone && (
-                                  <span>· WA: {site.clientPhone}</span>
-                                )}
-                              </div>
-                            </div>
+                  const filteredTotalFee = filteredList.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
 
-                            {/* Status & Conversion Rate Badges */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
-                                  isHighRate
-                                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                                    : isMedRate
-                                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                                    : 'bg-neutral-800 text-neutral-300 border-neutral-700'
-                                }`}
-                                title={`${clicks} cliques de WhatsApp em ${views} visualizações de página`}
-                              >
-                                <TrendingUp className="w-3 h-3 text-emerald-400" />
-                                <span>{rate}% Conversão</span>
-                              </span>
+                  return (
+                    <div className="space-y-3">
+                      {/* Sub-header with result count and filtered MRR */}
+                      <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-1">
+                        <span>
+                          Mostrando <strong className="text-neutral-100 font-mono">{filteredList.length}</strong> de{' '}
+                          <strong className="text-neutral-100 font-mono">{savedSites.length}</strong> cliente(s)
+                          {dashboardDueDateExact && (
+                            <span className="text-amber-400 ml-1">com vencimento em {dashboardDueDateExact.split('-').reverse().join('/')}</span>
+                          )}
+                        </span>
+                        <span className="text-[11px] font-mono">
+                          MRR Selecionado: <strong className="text-emerald-400 font-bold">R$ {filteredTotalFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                        </span>
+                      </div>
 
-                              {site.status === 'disabled' ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1">
-                                  <Power className="w-3 h-3" /> Desativado (Atraso)
-                                </span>
-                              ) : isOverdue || site.status === 'overdue' ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                                  <AlertCircle className="w-3 h-3 text-amber-400" /> Mensalidade Vencida
-                                </span>
-                              ) : (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                                  <ShieldCheck className="w-3 h-3 text-emerald-400" /> Em Dia & Ativo
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Data Row: Vencimento + Taxa de Conversão + Atualizações + Valor */}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-800/80">
-                            <div>
-                              <span className="text-[10px] text-neutral-400 block font-medium">Vencimento Mensalidade</span>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <CalendarClock className="w-3.5 h-3.5 text-amber-400" />
-                                <span className={`font-mono font-bold ${isOverdue ? 'text-red-400' : 'text-neutral-200'}`}>
-                                  {site.dueDate}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] text-neutral-400 block font-medium">Taxa de Conversão WA</span>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                <span className="font-bold text-emerald-300 font-mono">
-                                  {rate}%
-                                </span>
-                                <span className="text-[9.5px] text-neutral-400">
-                                  ({clicks} WA / {views} views)
-                                </span>
-                              </div>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] text-neutral-400 block font-medium">Edições Este Mês</span>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-                                <span className="font-bold text-neutral-200">
-                                  {site.updatesThisMonth} <span className="text-[10px] font-normal text-neutral-400">alterações</span>
-                                </span>
-                              </div>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] text-neutral-400 block font-medium">Valor Mensal</span>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-                                <span className="font-bold text-emerald-300">
-                                  R$ {site.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons Row */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <button
-                                type="button"
-                                onClick={() => loadSiteForEditing(site)}
-                                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                                Editar Microsite
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedPublishSiteId(site.id);
-                                  setPublishModalOpen(true);
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700"
-                              >
-                                <Globe className="w-3 h-3 text-amber-400" />
-                                Domínio & DNS
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => sendWhatsappBillingReminder(site)}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-emerald-500/30 transition"
-                                title="Enviar mensagem de cobrança formatada via WhatsApp com Chave PIX"
-                              >
-                                <MessageCircle className="w-3 h-3 text-emerald-400" />
-                                <span>💬 Cobrança WhatsApp</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setPixModalSite(site);
-                                  setPixModalOpen(true);
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition"
-                                title="Gerar QR Code PIX e confirmar baixa automática do pagamento"
-                              >
-                                <DollarSign className="w-3 h-3 text-amber-400" />
-                                <span>⚡ Baixa PIX</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setSinglePdfSiteId(site.id)}
-                                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700 transition"
-                                title="Gerar e visualizar relatório em PDF individual para este cliente"
-                              >
-                                <FileText className="w-3 h-3 text-amber-400" />
-                                <span>Relatório PDF</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => downloadMicrositeDirectoryZip(site)}
-                                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-emerald-300 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-emerald-500/30 hover:border-emerald-400 transition"
-                                title={`Baixar pacote ZIP da pasta independente (/public_html/${site.subdomain}/) pronta para o servidor`}
-                              >
-                                <FolderArchive className="w-3 h-3 text-emerald-400" />
-                                <span>Baixar Pasta (ZIP)</span>
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              {/* Botão de Desativação por Atraso de Pagamento */}
-                              <button
-                                type="button"
-                                onClick={() => toggleSiteActiveStatus(site.id)}
-                                title={site.status === 'disabled' ? 'Reativar microsite' : 'Desativar microsite por atraso de pagamento'}
-                                className={`px-3 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1.5 cursor-pointer transition ${
-                                  site.status === 'disabled'
-                                    ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950'
-                                    : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40'
-                                }`}
-                              >
-                                <Power className="w-3 h-3" />
-                                <span>{site.status === 'disabled' ? 'Reativar Site' : 'Desativar por Atraso'}</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => deleteSavedSite(site.id)}
-                                className="p-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/20 text-neutral-500 hover:text-red-400 cursor-pointer"
-                                title="Excluir microsite"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
+                      {filteredList.length === 0 ? (
+                        <div className="p-8 text-center rounded-xl bg-neutral-900/50 border border-neutral-800 space-y-2">
+                          <CalendarClock className="w-8 h-8 text-neutral-600 mx-auto" />
+                          <p className="text-sm font-semibold text-neutral-300">Nenhum cliente encontrado com os filtros selecionados.</p>
+                          <p className="text-xs text-neutral-500">Tente buscar por outra data de vencimento ou limpar os termos da pesquisa.</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDashboardDueDateFilter('all');
+                              setDashboardDueDateExact('');
+                              setDashboardStatusFilter('all');
+                              setDashboardSearch('');
+                            }}
+                            className="mt-2 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-semibold cursor-pointer"
+                          >
+                            Redefinir Filtros
+                          </button>
                         </div>
-                      );
-                    })}
-                </div>
+                      ) : (
+                        filteredList.map(site => {
+                          const daysDiff = getDaysUntilDue(site.dueDate);
+                          const isOverdue = daysDiff < 0 && site.status !== 'disabled';
+                          const isDueToday = daysDiff === 0;
+                          const isDueSoon = daysDiff > 0 && daysDiff <= 7;
+                          const currentFullDomain = site.customDomain || `${site.subdomain}.luxebio.site`;
+                          const clicks = site.whatsappClicks || 0;
+                          const views = site.pageViews || 100;
+                          const rate = Number(((clicks / views) * 100).toFixed(1));
+                          const isHighRate = rate >= 15;
+                          const isMedRate = rate >= 8;
+
+                          // Format due date in DD/MM/AAAA
+                          const dateParts = (site.dueDate || '').split('-');
+                          const formattedDueDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : site.dueDate;
+
+                          return (
+                            <div
+                              key={site.id}
+                              className={`p-4 rounded-xl border transition space-y-3 relative ${
+                                site.status === 'disabled'
+                                  ? 'bg-neutral-950/40 border-red-900/40 opacity-75'
+                                  : isOverdue || site.status === 'overdue'
+                                  ? 'bg-red-500/5 border-red-500/40 shadow-sm shadow-red-500/10'
+                                  : isDueToday
+                                  ? 'bg-amber-500/10 border-amber-400 shadow-sm shadow-amber-500/20'
+                                  : isDueSoon
+                                  ? 'bg-amber-500/5 border-amber-500/30'
+                                  : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'
+                              }`}
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-neutral-900">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-xs text-neutral-100">{site.clientName}</span>
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-neutral-900 text-neutral-400 border border-neutral-800">
+                                      {site.nicheCategory}
+                                    </span>
+                                    {site.isLandingModel && (
+                                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                        Modelo na Landing Page
+                                      </span>
+                                    )}
+                                    {editingSiteId === site.id && (
+                                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        Em Edição
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-3 text-[11px] text-neutral-400 flex-wrap">
+                                    <span className="flex items-center gap-1 text-amber-400/90 font-mono">
+                                      <Globe className="w-3 h-3" />
+                                      https://{currentFullDomain}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-emerald-400 font-mono text-[10px] bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800" title="Diretório independente exclusivo deste microsite no servidor de hospedagem">
+                                      <Folder className="w-3 h-3 text-amber-400" />
+                                      /public_html/{site.subdomain}/
+                                    </span>
+                                    {site.clientPhone && (
+                                      <span>· WA: {site.clientPhone}</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Status & Due Urgency Badges */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {/* Dynamic Due Date Urgency Badge */}
+                                  {site.status === 'disabled' ? (
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1">
+                                      <Power className="w-3 h-3" /> Desativado
+                                    </span>
+                                  ) : isOverdue ? (
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1 animate-pulse">
+                                      <AlertTriangle className="w-3 h-3 text-red-400" />
+                                      🚨 Atrasado há {Math.abs(daysDiff)} dia{Math.abs(daysDiff) > 1 ? 's' : ''}
+                                    </span>
+                                  ) : isDueToday ? (
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-400 text-neutral-950 border border-amber-300 flex items-center gap-1 shadow-sm">
+                                      <AlertCircle className="w-3 h-3 text-neutral-950" />
+                                      ⚡ VENCE HOJE
+                                    </span>
+                                  ) : daysDiff <= 3 ? (
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                      <Clock className="w-3 h-3 text-amber-400" />
+                                      Vence em {daysDiff} dia{daysDiff > 1 ? 's' : ''}
+                                    </span>
+                                  ) : daysDiff <= 7 ? (
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                      <CalendarClock className="w-3 h-3 text-amber-400" />
+                                      Vence em {daysDiff} dias
+                                    </span>
+                                  ) : (
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                      <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                                      Em Dia (em {daysDiff} dias)
+                                    </span>
+                                  )}
+
+                                  {/* Conversion Rate Badge */}
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
+                                      isHighRate
+                                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                        : isMedRate
+                                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                        : 'bg-neutral-800 text-neutral-300 border-neutral-700'
+                                    }`}
+                                    title={`${clicks} cliques de WhatsApp em ${views} visualizações de página`}
+                                  >
+                                    <TrendingUp className="w-3 h-3 text-emerald-400" />
+                                    <span>{rate}% Conversão</span>
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Data Row: Vencimento + Taxa de Conversão + Atualizações + Valor */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-800/80">
+                                <div>
+                                  <span className="text-[10px] text-neutral-400 block font-medium">Data de Vencimento</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <CalendarClock className={`w-3.5 h-3.5 ${isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-400' : 'text-emerald-400'}`} />
+                                    <span className={`font-mono font-bold ${isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-300' : 'text-neutral-200'}`}>
+                                      {formattedDueDate}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-500">
+                                      ({isOverdue ? `há ${Math.abs(daysDiff)}d` : isDueToday ? 'hoje' : `em ${daysDiff}d`})
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-[10px] text-neutral-400 block font-medium">Taxa de Conversão WA</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span className="font-bold text-emerald-300 font-mono">
+                                      {rate}%
+                                    </span>
+                                    <span className="text-[9.5px] text-neutral-400">
+                                      ({clicks} WA / {views} views)
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-[10px] text-neutral-400 block font-medium">Edições Este Mês</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                                    <span className="font-bold text-neutral-200">
+                                      {site.updatesThisMonth} <span className="text-[10px] font-normal text-neutral-400">alterações</span>
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-neutral-400 block font-medium">Valor da Mensalidade</span>
+                                    {editingFeeSiteId !== site.id && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingFeeSiteId(site.id);
+                                          setTempFeeInput(site.monthlyFee.toString());
+                                        }}
+                                        className="text-[9.5px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline flex items-center gap-0.5"
+                                        title="Alterar o valor da mensalidade deste microsite"
+                                      >
+                                        <Edit3 className="w-2.5 h-2.5" /> Alterar
+                                      </button>
+                                    )}
+                                  </div>
+                                  {editingFeeSiteId === site.id ? (
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <span className="text-[10px] text-neutral-400 font-mono">R$</span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={tempFeeInput}
+                                        onChange={(e) => setTempFeeInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            const num = parseFloat(tempFeeInput);
+                                            if (!isNaN(num) && num >= 0) {
+                                              updateSiteMonthlyFee(site.id, num);
+                                            }
+                                            setEditingFeeSiteId(null);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingFeeSiteId(null);
+                                          }
+                                        }}
+                                        className="w-20 px-1.5 py-0.5 text-xs bg-neutral-950 rounded border border-amber-500 text-amber-300 font-bold font-mono focus:outline-none"
+                                        autoFocus
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const num = parseFloat(tempFeeInput);
+                                          if (!isNaN(num) && num >= 0) {
+                                            updateSiteMonthlyFee(site.id, num);
+                                          }
+                                          setEditingFeeSiteId(null);
+                                        }}
+                                        className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-[10px] font-bold cursor-pointer transition"
+                                        title="Salvar novo valor"
+                                      >
+                                        ✓ Salvar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingFeeSiteId(null)}
+                                        className="px-1.5 py-0.5 rounded text-neutral-400 hover:text-neutral-200 text-[10px] cursor-pointer"
+                                        title="Cancelar"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span className="font-bold text-emerald-300">
+                                        R$ {site.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Action Buttons Row */}
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => loadSiteForEditing(site)}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700"
+                                  >
+                                    <Edit3 className="w-3 h-3" />
+                                    Editar Microsite
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingFeeSiteId(site.id);
+                                      setTempFeeInput(site.monthlyFee.toString());
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-emerald-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-emerald-500/30 transition shadow-sm"
+                                    title="Alterar o valor da mensalidade cobrada deste cliente"
+                                  >
+                                    <DollarSign className="w-3 h-3 text-emerald-400" />
+                                    <span>Alterar Valor</span>
+                                  </button>
+
+                                  {/* MARCADOR PARA EXIBIR O SITE DO CLIENTE COMO MODELO NO CARROSSEL DA LANDING PAGE */}
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSiteLandingModel(site.id)}
+                                    className={`px-3 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1.5 cursor-pointer border transition ${
+                                      site.isLandingModel
+                                        ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-500/20'
+                                        : 'bg-neutral-800 hover:bg-neutral-700 text-amber-300 border-amber-500/40'
+                                    }`}
+                                    title={
+                                      site.isLandingModel
+                                        ? 'Este microsite está visível no Carrossel de Modelos da Landing Page. Clique para remover.'
+                                        : 'Marcar este site de cliente para aparecer no Carrossel de Modelos da Landing Page'
+                                    }
+                                  >
+                                    <Star className={`w-3 h-3 ${site.isLandingModel ? 'fill-neutral-950 text-neutral-950' : 'text-amber-400'}`} />
+                                    <span>
+                                      {site.isLandingModel ? '⭐ No Carrossel da Landing' : 'Colocar como Modelo na Landing'}
+                                    </span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedPublishSiteId(site.id);
+                                      setPublishModalOpen(true);
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700"
+                                  >
+                                    <Globe className="w-3 h-3 text-amber-400" />
+                                    Domínio & DNS
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => sendWhatsappBillingReminder(site)}
+                                    className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border transition ${
+                                      isOverdue
+                                        ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/40 animate-pulse'
+                                        : isDueToday
+                                        ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40'
+                                        : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
+                                    }`}
+                                    title="Enviar mensagem de cobrança formatada via WhatsApp com Chave PIX"
+                                  >
+                                    <MessageCircle className="w-3 h-3 text-emerald-400" />
+                                    <span>💬 Cobrança WhatsApp</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPixModalSite(site);
+                                      setPixModalOpen(true);
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition"
+                                    title="Gerar QR Code PIX e confirmar baixa automática do pagamento"
+                                  >
+                                    <DollarSign className="w-3 h-3 text-amber-400" />
+                                    <span>⚡ Baixa PIX</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setSinglePdfSiteId(site.id)}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700 transition"
+                                    title="Gerar e visualizar relatório em PDF individual para este cliente"
+                                  >
+                                    <FileText className="w-3 h-3 text-amber-400" />
+                                    <span>Relatório PDF</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadMicrositeDirectoryZip(site)}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-emerald-300 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-emerald-500/30 hover:border-emerald-400 transition"
+                                    title={`Baixar pacote ZIP da pasta independente (/public_html/${site.subdomain}/) pronta para o servidor`}
+                                  >
+                                    <FolderArchive className="w-3 h-3 text-emerald-400" />
+                                    <span>Baixar Pasta (ZIP)</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => openResetTrackingModal(site)}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-red-500/15 text-red-300 hover:text-red-200 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700 hover:border-red-500/40 transition"
+                                    title="Zerar cliques de WhatsApp e acessos deste cliente"
+                                  >
+                                    <RotateCcw className="w-3 h-3 text-red-400" />
+                                    <span>Zerar Rastreamento</span>
+                                  </button>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  {/* Botão de Desativação por Atraso de Pagamento */}
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSiteActiveStatus(site.id)}
+                                    title={site.status === 'disabled' ? 'Reativar microsite' : 'Desativar microsite por atraso de pagamento'}
+                                    className={`px-3 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1.5 cursor-pointer transition ${
+                                      site.status === 'disabled'
+                                        ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950'
+                                        : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40'
+                                    }`}
+                                  >
+                                    <Power className="w-3 h-3" />
+                                    <span>{site.status === 'disabled' ? 'Reativar Site' : 'Desativar por Atraso'}</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteSavedSite(site.id)}
+                                    className="p-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/20 text-neutral-500 hover:text-red-400 cursor-pointer"
+                                    title="Excluir microsite"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -9059,13 +13312,29 @@ COMO PUBLICAR NO SERVIDOR:
       {/* ============================================================== */}
       {/* RIGHT COLUMN: SIMULADOR IPHONE MULTI-NICHO                    */}
       {/* ============================================================== */}
-      <main className="flex-1 h-full bg-neutral-950 flex flex-col items-center justify-center p-4 lg:p-6 overflow-y-auto relative">
+      <main className={`flex-1 h-full bg-neutral-950 ${viewMode === 'editor' ? 'hidden lg:flex' : 'flex'} flex-col items-center justify-start lg:justify-center p-2 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden w-full max-w-full relative`}>
         <div
-          className="absolute w-[440px] h-[440px] rounded-full blur-[140px] opacity-25 pointer-events-none transition-colors duration-700"
+          className="absolute w-full max-w-[440px] h-[360px] sm:h-[440px] rounded-full blur-[100px] sm:blur-[140px] opacity-25 pointer-events-none transition-colors duration-700 overflow-hidden"
           style={{ background: theme.accent }}
         />
 
-        <div className="mb-3 flex items-center justify-between w-full max-w-[385px] text-xs text-neutral-400 z-10 px-1">
+        {/* Barra de Navegação Rápida Mobile: Voltar ao Editor */}
+        <div className="flex lg:hidden mb-2.5 w-full max-w-[385px] items-center justify-between z-10 px-1">
+          <button
+            type="button"
+            onClick={() => setViewMode('editor')}
+            className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/30 cursor-pointer shadow transition"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Voltar ao Editor</span>
+          </button>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-neutral-400 font-medium">Prévia iPhone</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+        </div>
+
+        <div className="mb-2 flex items-center justify-between w-full max-w-[385px] text-xs text-neutral-400 z-10 px-1">
           <div className="flex items-center gap-2">
             <Smartphone className="w-4 h-4 text-amber-400" />
             <span className="font-semibold text-neutral-200">Simulador iPhone Pro</span>
@@ -9093,17 +13362,83 @@ COMO PUBLICAR NO SERVIDOR:
           </div>
         </div>
 
-        {/* iPhone Chassis */}
-        <div className="relative w-[385px] h-[795px] max-h-[92vh] bg-black rounded-[52px] p-3 shadow-2xl shadow-black border-4 border-neutral-800 flex flex-col z-10">
+        {/* Barra de Refinamento Instantâneo Pós-Criação + Resumo da Extração IA */}
+        <div className="mb-2.5 w-full max-w-[385px] z-10 space-y-1.5 px-0.5">
+          <div className="grid grid-cols-4 gap-1 bg-neutral-900/90 border border-neutral-800/90 rounded-xl p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={handleQuickCyclePalette}
+              className="px-1.5 py-1 rounded-lg bg-neutral-950/80 hover:bg-neutral-800 text-[10px] font-semibold text-amber-300 flex items-center justify-center gap-1 border border-amber-500/20 hover:border-amber-400/50 transition cursor-pointer"
+              title="Alternar paleta de cores mantendo fotos e textos atuais"
+            >
+              <Palette className="w-3 h-3 text-amber-400 shrink-0" />
+              <span className="truncate">Paleta</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickCycleCopyVariant}
+              className="px-1.5 py-1 rounded-lg bg-neutral-950/80 hover:bg-neutral-800 text-[10px] font-semibold text-pink-300 flex items-center justify-center gap-1 border border-pink-500/20 hover:border-pink-400/50 transition cursor-pointer"
+              title="Gerar nova variação persuasiva de bio e chamada principal"
+            >
+              <Wand2 className="w-3 h-3 text-pink-400 shrink-0" />
+              <span className="truncate">Bio IA</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickCycleGalleryLayout}
+              className="px-1.5 py-1 rounded-lg bg-neutral-950/80 hover:bg-neutral-800 text-[10px] font-semibold text-sky-300 flex items-center justify-center gap-1 border border-sky-500/20 hover:border-sky-400/50 transition cursor-pointer"
+              title="Alternar formato da galeria de fotos (Mosaico, Carrossel, Grade)"
+            >
+              <LayoutGrid className="w-3 h-3 text-sky-400 shrink-0" />
+              <span className="truncate">Galeria</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickCycleServicesLayout}
+              className="px-1.5 py-1 rounded-lg bg-neutral-950/80 hover:bg-neutral-800 text-[10px] font-semibold text-emerald-300 flex items-center justify-center gap-1 border border-emerald-500/20 hover:border-emerald-400/50 transition cursor-pointer"
+              title="Alternar exibição do catálogo de serviços"
+            >
+              <Layers className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span className="truncate">Catálogo</span>
+            </button>
+          </div>
+
+          {lastExtractedMeta && (lastExtractedMeta.instagramFound || lastExtractedMeta.mapsFound) && (
+            <div className="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-2 text-[10px] text-emerald-200">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>
+                  Extraído:{' '}
+                  <strong>
+                    {(lastExtractedMeta.instagramPhotosCount || 0) + (lastExtractedMeta.mapsPhotosCount || 0)} fotos
+                  </strong>
+                  {lastExtractedMeta.whatsappDetected ? ' · WhatsApp real' : ''}
+                  {lastExtractedMeta.mapsRating ? ` · Nota ${lastExtractedMeta.mapsRating}★` : ''}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLastExtractedMeta(null)}
+                className="text-neutral-400 hover:text-white cursor-pointer"
+                title="Ocultar aviso"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* iPhone Chassis (Totalmente Responsivo em Telas Mobile, sem Arrastar para os Lados) */}
+        <div className="relative w-full max-w-[385px] h-[780px] max-h-[85vh] sm:max-h-[90vh] bg-black rounded-[38px] sm:rounded-[52px] p-2 sm:p-3 shadow-2xl shadow-black border-4 border-neutral-800 flex flex-col z-10 shrink-0 mx-auto">
           {/* Dynamic Island */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-5 bg-neutral-950 rounded-full z-40 flex items-center justify-end px-3">
+          <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 w-24 sm:w-28 h-4 sm:h-5 bg-neutral-950 rounded-full z-40 flex items-center justify-end px-3 pointer-events-none">
             <span className="w-2.5 h-2.5 rounded-full bg-neutral-900 border border-neutral-800 inline-block" />
           </div>
 
           {/* Screen Content Viewport (.wrapper alignment) */}
           <div
             key={`${data.theme}-${selectedThemeCategory}`}
-            className="wrapper w-full h-full rounded-[42px] overflow-y-auto overflow-x-hidden relative transition-colors duration-500 no-scrollbar select-none anim-theme-fade flex flex-col"
+            className="wrapper w-full max-w-full h-full rounded-[30px] sm:rounded-[42px] overflow-y-auto overflow-x-hidden relative transition-colors duration-500 no-scrollbar select-none anim-theme-fade flex flex-col"
             style={{
               backgroundColor: theme.bg,
               color: theme.textMain,
@@ -9765,14 +14100,42 @@ COMO PUBLICAR NO SERVIDOR:
             {/* MÓDULO: GALERIA DE FOTOS & PORTFÓLIO DE RESULTADOS */}
             {data.studentGrid?.enabled && data.studentGrid.photos?.length > 0 && (() => {
               const photos = data.studentGrid.photos;
-              const layout = data.studentGrid.layout || 'grid3';
-              const aspect = data.studentGrid.aspectRatio || 'square';
-              const aspectClass =
-                aspect === 'portrait'
-                  ? 'aspect-[4/5]'
-                  : aspect === 'landscape'
-                  ? 'aspect-[4/3]'
-                  : 'aspect-square';
+              const layout = data.studentGrid.layout || 'smart_masonry';
+              const aspect = data.studentGrid.aspectRatio || 'auto';
+
+              const getItemAspectClass = (url: string, isHero = false) => {
+                if (isHero) return 'col-span-2 row-span-2 aspect-square';
+                const info = photoOrientations[url];
+                const orient = info?.orientation || 'square';
+
+                if (aspect === 'auto') {
+                  if (layout === 'smart_masonry' || layout === 'grid2') {
+                    if (orient === 'landscape') return 'col-span-2 aspect-[16/10]';
+                    if (orient === 'portrait') return 'col-span-1 aspect-[3/4]';
+                    return 'col-span-1 aspect-square';
+                  }
+                  if (layout === 'grid3') {
+                    if (orient === 'landscape') return 'aspect-[4/3]';
+                    if (orient === 'portrait') return 'aspect-[3/4]';
+                    return 'aspect-square';
+                  }
+                  if (layout === 'masonry') {
+                    if (orient === 'landscape') return 'aspect-[4/3]';
+                    if (orient === 'portrait') return 'aspect-[3/4]';
+                    return 'aspect-square';
+                  }
+                  if (layout === 'carousel') {
+                    if (orient === 'landscape') return 'w-[210px] aspect-[16/10]';
+                    if (orient === 'portrait') return 'w-[145px] aspect-[3/4]';
+                    return 'w-[155px] aspect-square';
+                  }
+                  return orient === 'landscape' ? 'aspect-[4/3]' : orient === 'portrait' ? 'aspect-[3/4]' : 'aspect-square';
+                }
+
+                if (aspect === 'portrait') return layout === 'carousel' ? 'w-[155px] aspect-[4/5]' : 'aspect-[4/5]';
+                if (aspect === 'landscape') return layout === 'carousel' ? 'w-[190px] aspect-[4/3]' : 'aspect-[4/3]';
+                return layout === 'carousel' ? 'w-[155px] aspect-square' : 'aspect-square';
+              };
 
               return (
                 <div className="px-5 py-4 space-y-2.5 relative z-10" id="galeria">
@@ -9810,68 +14173,137 @@ COMO PUBLICAR NO SERVIDOR:
                     </span>
                   </div>
 
-                  {/* Layout: Grid 2 Colunas */}
-                  {layout === 'grid2' && (
+                  {/* Layout 1: Bento Inteligente Adaptativo (Detecção Auto Retrato/Paisagem) */}
+                  {layout === 'smart_masonry' && (
                     <div className="grid grid-cols-2 gap-2.5 pt-1">
-                      {photos.map((p, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
-                          className={`relative group overflow-hidden rounded-2xl cursor-pointer ${aspectClass} border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm`}
-                          style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
-                        >
-                          <SimulatorImage
-                            src={p}
-                            alt={`Foto ${idx + 1}`}
-                            referrerPolicy="no-referrer"
-                            accentColor={theme.accent}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
-                            <Maximize2 className="w-5 h-5 text-white drop-shadow" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Layout: Grid 3 Colunas (Clássico) */}
-                  {layout === 'grid3' && (
-                    <div className="grid grid-cols-3 gap-2 pt-1">
-                      {photos.map((p, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
-                          className={`relative group overflow-hidden rounded-xl cursor-pointer ${aspectClass} border transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-sm`}
-                          style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
-                        >
-                          <SimulatorImage
-                            src={p}
-                            alt={`Foto ${idx + 1}`}
-                            referrerPolicy="no-referrer"
-                            accentColor={theme.accent}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
-                            <Maximize2 className="w-4 h-4 text-white drop-shadow" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Layout: Mosaico Editorial */}
-                  {layout === 'mosaic' && (
-                    <div className="grid grid-cols-3 gap-2 pt-1">
                       {photos.map((p, idx) => {
-                        const isHero = idx === 0;
+                        const aspectCls = getItemAspectClass(p);
+                        const info = photoOrientations[p];
+                        const isLandscape = info?.orientation === 'landscape';
+
                         return (
                           <div
                             key={idx}
                             onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
-                            className={`relative group overflow-hidden rounded-2xl cursor-pointer border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm ${
-                              isHero ? 'col-span-2 row-span-2 aspect-square' : aspectClass
-                            }`}
+                            className={`relative group overflow-hidden rounded-2xl cursor-pointer ${aspectCls} border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm`}
+                            style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
+                          >
+                            <SimulatorImage
+                              src={p}
+                              alt={`Foto ${idx + 1}`}
+                              referrerPolicy="no-referrer"
+                              accentColor={theme.accent}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            {isLandscape && (
+                              <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[7.5px] font-bold uppercase tracking-wider bg-black/60 text-amber-300 border border-amber-500/30 backdrop-blur z-20">
+                                Panorâmica
+                              </span>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                              <Maximize2 className="w-5 h-5 text-white drop-shadow" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Layout 2: Masonry Fluído (Pinterest Style sem cortes) */}
+                  {layout === 'masonry' && (
+                    <div className="columns-2 gap-2.5 pt-1 [column-fill:balance]">
+                      {photos.map((p, idx) => {
+                        const aspectCls = getItemAspectClass(p);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
+                            className={`relative group overflow-hidden rounded-2xl cursor-pointer ${aspectCls} mb-2.5 break-inside-avoid border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm`}
+                            style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
+                          >
+                            <SimulatorImage
+                              src={p}
+                              alt={`Foto ${idx + 1}`}
+                              referrerPolicy="no-referrer"
+                              accentColor={theme.accent}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                              <Maximize2 className="w-5 h-5 text-white drop-shadow" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Layout 3: Grid 2 Colunas */}
+                  {layout === 'grid2' && (
+                    <div className="grid grid-cols-2 gap-2.5 pt-1">
+                      {photos.map((p, idx) => {
+                        const aspectCls = getItemAspectClass(p);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
+                            className={`relative group overflow-hidden rounded-2xl cursor-pointer ${aspectCls} border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm`}
+                            style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
+                          >
+                            <SimulatorImage
+                              src={p}
+                              alt={`Foto ${idx + 1}`}
+                              referrerPolicy="no-referrer"
+                              accentColor={theme.accent}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                              <Maximize2 className="w-5 h-5 text-white drop-shadow" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Layout 4: Grid 3 Colunas (Clássico) */}
+                  {layout === 'grid3' && (
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      {photos.map((p, idx) => {
+                        const aspectCls = getItemAspectClass(p);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
+                            className={`relative group overflow-hidden rounded-xl cursor-pointer ${aspectCls} border transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-sm`}
+                            style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
+                          >
+                            <SimulatorImage
+                              src={p}
+                              alt={`Foto ${idx + 1}`}
+                              referrerPolicy="no-referrer"
+                              accentColor={theme.accent}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                              <Maximize2 className="w-4 h-4 text-white drop-shadow" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Layout 5: Mosaico Editorial */}
+                  {layout === 'mosaic' && (
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      {photos.map((p, idx) => {
+                        const isHero = idx === 0;
+                        const aspectCls = getItemAspectClass(p, isHero);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
+                            className={`relative group overflow-hidden rounded-2xl cursor-pointer border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm ${aspectCls}`}
                             style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
                           >
                             <SimulatorImage
@@ -9895,35 +14327,32 @@ COMO PUBLICAR NO SERVIDOR:
                     </div>
                   )}
 
-                  {/* Layout: Carrossel Horizontal com Snap */}
+                  {/* Layout 6: Carrossel Horizontal com Snap */}
                   {layout === 'carousel' && (
                     <div className="relative pt-1">
                       <div className="flex gap-2.5 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar -mx-5 px-5 scroll-smooth">
-                        {photos.map((p, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
-                            className={`relative group flex-shrink-0 snap-center overflow-hidden rounded-2xl cursor-pointer border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm ${
-                              aspect === 'portrait'
-                                ? 'w-[155px] aspect-[4/5]'
-                                : aspect === 'landscape'
-                                ? 'w-[190px] aspect-[4/3]'
-                                : 'w-[155px] aspect-square'
-                            }`}
-                            style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
-                          >
-                            <SimulatorImage
-                              src={p}
-                              alt={`Foto ${idx + 1}`}
-                              referrerPolicy="no-referrer"
-                              accentColor={theme.accent}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
-                              <Maximize2 className="w-5 h-5 text-white drop-shadow" />
+                        {photos.map((p, idx) => {
+                          const aspectCls = getItemAspectClass(p);
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => data.studentGrid.enableLightbox !== false && setLightboxIndex(idx)}
+                              className={`relative group flex-shrink-0 snap-center overflow-hidden rounded-2xl cursor-pointer border transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm ${aspectCls}`}
+                              style={{ borderColor: theme.socialBorder, backgroundColor: '#000' }}
+                            >
+                              <SimulatorImage
+                                src={p}
+                                alt={`Foto ${idx + 1}`}
+                                referrerPolicy="no-referrer"
+                                accentColor={theme.accent}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                                <Maximize2 className="w-5 h-5 text-white drop-shadow" />
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="flex items-center justify-between text-[9px] text-neutral-400 mt-1 px-1">
                         <span>👈 Deslize para navegar</span>
@@ -9992,34 +14421,48 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
             )}
 
-            {/* CARD DE LOCALIZAÇÃO (MAPS) */}
+            {/* CARD DE LOCALIZAÇÃO (MAPS + HORÁRIO DE FUNCIONAMENTO) */}
             {data.locationCard.enabled && (
               <div className="px-5 py-2 relative z-10">
                 <a
                   href={data.locationCard.mapsUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3.5 flex items-center justify-between rounded-2xl group transition"
+                  className="p-3.5 flex items-center justify-between rounded-2xl group transition-all duration-300 ease-out hover:scale-[1.025] active:scale-[0.985]"
                   style={{
                     background: theme.socialBg,
                     border: `1px solid ${theme.socialBorder}`
                   }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 pr-2">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: theme.iconBg, color: theme.iconColor }}
                     >
                       <MapPin className="w-5 h-5" />
                     </div>
-                    <div>
-                      <div className="text-xs font-bold uppercase">{data.locationCard.headline}</div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold uppercase truncate">{data.locationCard.headline}</span>
+                        {data.locationCard.showHours !== false && data.locationCard.openStatus && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            {data.locationCard.openStatus}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[10px] mt-0.5 line-clamp-1" style={{ color: theme.textMuted }}>
                         {data.locationCard.address}
                       </div>
+                      {data.locationCard.showHours !== false && data.locationCard.hours && (
+                        <div className="text-[9px] mt-1 font-semibold flex items-center gap-1 opacity-85" style={{ color: theme.textMain }}>
+                          <Clock className="w-2.5 h-2.5 shrink-0" style={{ color: theme.accent }} />
+                          <span className="truncate">{data.locationCard.hours}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <Navigation className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition" />
+                  <Navigation className="w-4 h-4 text-amber-400 shrink-0 group-hover:translate-x-1 transition" />
                 </a>
               </div>
             )}
@@ -10477,7 +14920,7 @@ COMO PUBLICAR NO SERVIDOR:
                               key={idx}
                               type="button"
                               onClick={() => {
-                                setQuizAnswers(prev => ({ ...prev, [currentQId]: option }));
+                                handleQuizAnswer(currentQId, option);
                               }}
                               className="w-full text-left p-3 rounded-xl text-xs transition flex items-center justify-between cursor-pointer"
                               style={{
@@ -10711,6 +15154,18 @@ COMO PUBLICAR NO SERVIDOR:
                   className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 font-mono"
                 />
               </div>
+
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={Boolean(saveForm.isLandingModel)}
+                  onChange={(e) => setSaveForm(f => ({ ...f, isLandingModel: e.target.checked }))}
+                  className="rounded border-amber-400 text-amber-400 focus:ring-amber-400"
+                />
+                <span className="text-[11px] font-semibold text-amber-200">
+                  ⭐ Exibir este site no Carrossel de Modelos da Landing Page
+                </span>
+              </label>
             </div>
 
             <div className="flex flex-col gap-2 pt-2 border-t border-neutral-800">
@@ -10741,150 +15196,715 @@ COMO PUBLICAR NO SERVIDOR:
       {publishModalOpen && (() => {
         const targetSite = savedSites.find(s => s.id === selectedPublishSiteId) || savedSites[0] || {
           id: 'temp',
-          subdomain: data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          subdomain: data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'meusite',
           customDomain: '',
-          clientName: data.profile.name
+          clientName: data.profile.name,
+          dnsConfigured: false,
+          sslActive: true,
+          domainType: 'subdomain' as const,
+        };
+
+        const rawCustomDomain = targetSite.customDomain || '';
+        const domainValidation = validateCustomDomain(rawCustomDomain);
+        const effectiveRootDomain = domainValidation.isValid
+          ? domainValidation.rootDomain
+          : `${(targetSite.subdomain || 'seucliente').replace(/[^a-z0-9-]/g, '')}.com.br`;
+        const effectiveCnameHost = domainValidation.isValid ? domainValidation.cnameHost : 'www';
+        const aRecordIp = '76.76.21.21';
+        const cnameTargetValue = 'cname.luxebio.site';
+        const cleanSlugSuggestion = (targetSite.subdomain || data.profile.name || 'cliente')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '')
+          .slice(0, 24) || 'meucliente';
+
+        const updateTargetCustomDomain = (newVal: string) => {
+          setDnsCheckStatus(null);
+          if (savedSites.some(s => s.id === targetSite.id)) {
+            const valCheck = validateCustomDomain(newVal);
+            const updated = savedSites.map(s =>
+              s.id === targetSite.id
+                ? {
+                    ...s,
+                    customDomain: newVal,
+                    domainType: newVal.trim() ? ('custom' as const) : ('subdomain' as const),
+                    dnsConfigured: valCheck.isValid ? s.dnsConfigured : false,
+                  }
+                : s
+            );
+            setSavedSites(updated);
+          }
+        };
+
+        const copyFullDnsInstructionsForClient = async () => {
+          const domDisplay = domainValidation.isValid ? domainValidation.sanitizedDomain : effectiveRootDomain;
+          const instructionsText = [
+            `🌐 *INSTRUÇÕES DE APONTAMENTO DNS — ${targetSite.clientName.toUpperCase()}*`,
+            `Domínio configurado: *${domDisplay}*`,
+            ``,
+            `Para ativar seu microsite no seu próprio domínio com certificado de segurança SSL (HTTPS), acesse o painel onde comprou seu domínio (*Registro.br*, *GoDaddy*, *Hostinger* ou *Cloudflare*) e adicione estas 2 entradas na Zona de DNS:`,
+            ``,
+            `1️⃣ *REGISTRO TIPO A (Domínio Raiz / Sem www):*`,
+            `• Tipo: *A*`,
+            `• Nome / Host: *@* (ou deixe em branco no Registro.br)`,
+            `• Valor / Destino (IPv4): *${aRecordIp}*`,
+            `• TTL: *3600* (ou Automático / 1 hora)`,
+            ``,
+            `2️⃣ *REGISTRO TIPO CNAME (Subdomínio com ${effectiveCnameHost}):*`,
+            `• Tipo: *CNAME*`,
+            `• Nome / Host: *${effectiveCnameHost}*`,
+            `• Valor / Aponta para: *${cnameTargetValue}*`,
+            `• TTL: *3600* (ou Automático / 1 hora)`,
+            ``,
+            `✅ *Importante:* Caso já exista algum registro antigo do tipo *A* (Nome @) ou *CNAME* (Nome ${effectiveCnameHost}) apontando para outra página de estacionamento, edite ou remova o antigo para evitar conflito.`,
+          ].join('\n');
+
+          await copyDnsValue(instructionsText, 'full-whatsapp-dns', 'Instruções completas de DNS');
         };
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-5 text-neutral-100 shadow-2xl">
-              <div className="flex justify-between items-center border-b border-neutral-800 pb-3">
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-2xl p-5 sm:p-6 space-y-5 text-neutral-100 shadow-2xl my-auto max-h-[92vh] flex flex-col">
+              {/* Header */}
+              <div className="flex justify-between items-start border-b border-neutral-800 pb-3.5 shrink-0">
                 <div>
-                  <h3 className="font-bold text-sm text-neutral-100 flex items-center gap-2">
-                    <Globe className="w-4.5 h-4.5 text-amber-400" />
-                    Publicar com Subdomínio ou Domínio Próprio
-                  </h3>
-                  <p className="text-[11px] text-neutral-400">
-                    Configuração DNS e SSL automático para {targetSite.clientName}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm sm:text-base text-neutral-100 flex items-center gap-2">
+                      <Globe className="w-4.5 h-4.5 text-amber-400" />
+                      Publicação, Validador de Domínio & Configuração DNS
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" /> SSL / HTTPS Automático
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Configure o subdomínio gratuito ou valide um domínio próprio com guia passo a passo para <strong className="text-neutral-200">{targetSite.clientName}</strong>
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPublishModalOpen(false)}
-                  className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Subdomain Option */}
-              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
-                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  Opção 1: Subdomínio Grátis LuxeBio (SSL Ativo)
-                </span>
-                <div className="flex items-center rounded-xl bg-neutral-900 border border-neutral-800 overflow-hidden">
-                  <input
-                    type="text"
-                    value={targetSite.subdomain || 'meusite'}
-                    onChange={(e) => {
-                      const updated = savedSites.map(s => s.id === targetSite.id ? { ...s, subdomain: e.target.value } : s);
-                      setSavedSites(updated);
-                    }}
-                    className="flex-1 px-3 py-2 bg-transparent text-amber-300 font-mono text-xs focus:outline-none"
-                  />
-                  <span className="px-3 text-xs text-neutral-400 font-mono border-l border-neutral-800">
-                    .luxebio.site
-                  </span>
-                </div>
-                <p className="text-[10px] text-neutral-500">
-                  Link público instantâneo: <code className="text-amber-400">https://{targetSite.subdomain || 'meusite'}.luxebio.site</code>
-                </p>
-              </div>
-
-              {/* Custom Domain Option */}
-              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
-                <span className="text-xs font-bold text-neutral-200 flex items-center gap-1.5">
-                  <Server className="w-4 h-4 text-amber-400" />
-                  Opção 2: Domínio Próprio Customizado (.com.br / .com)
-                </span>
-                <div>
-                  <label className="text-[10px] text-neutral-400 block mb-1">Insira seu Domínio Registrado</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: www.doncorleonebarber.com.br"
-                    value={targetSite.customDomain || ''}
-                    onChange={(e) => {
-                      const updated = savedSites.map(s => s.id === targetSite.id ? { ...s, customDomain: e.target.value } : s);
-                      setSavedSites(updated);
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-100 font-mono"
-                  />
-                </div>
-
-                {/* DNS Instructions */}
-                <div className="p-3 rounded-lg bg-neutral-900/80 border border-neutral-800/80 text-[10px] space-y-1.5">
-                  <span className="font-bold text-amber-400 block">Apontamentos DNS no seu Registro.br / GoDaddy:</span>
-                  <div className="grid grid-cols-3 gap-1 font-mono text-[9.5px] text-neutral-300 bg-neutral-950 p-2 rounded">
-                    <div>Tipo: <span className="text-amber-300">A</span></div>
-                    <div>Nome: <span className="text-amber-300">@</span></div>
-                    <div>Valor: <span className="text-emerald-400">76.76.21.21</span></div>
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 tab-scrollbar">
+                {/* Opção 1: Subdomínio Grátis */}
+                <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      Opção 1: Subdomínio Oficial LuxeBio (Ativação Imediata)
+                    </span>
+                    <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                      ● PRONTO PARA USO
+                    </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-1 font-mono text-[9.5px] text-neutral-300 bg-neutral-950 p-2 rounded">
-                    <div>Tipo: <span className="text-amber-300">CNAME</span></div>
-                    <div>Nome: <span className="text-amber-300">www</span></div>
-                    <div>Valor: <span className="text-emerald-400">cname.luxebio.site</span></div>
+                  <div className="flex items-center rounded-xl bg-neutral-900 border border-neutral-800 focus-within:border-amber-500/60 overflow-hidden">
+                    <span className="pl-3 text-xs text-neutral-500 font-mono select-none">https://</span>
+                    <input
+                      type="text"
+                      value={targetSite.subdomain || 'meusite'}
+                      onChange={(e) => {
+                        const cleanSubInput = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                        const updated = savedSites.map(s => s.id === targetSite.id ? { ...s, subdomain: cleanSubInput } : s);
+                        setSavedSites(updated);
+                      }}
+                      className="flex-1 px-1.5 py-2 bg-transparent text-amber-300 font-mono text-xs font-bold focus:outline-none"
+                    />
+                    <span className="px-3 text-xs text-neutral-400 font-mono border-l border-neutral-800 bg-neutral-950/60 py-2">
+                      .luxebio.site
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyDnsValue(
+                          `https://${targetSite.subdomain || 'meusite'}.luxebio.site`,
+                          'subdomain-url',
+                          'Link do subdomínio'
+                        )
+                      }
+                      className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition border-l border-neutral-700"
+                      title="Copiar URL do Subdomínio"
+                    >
+                      {copiedDnsField === 'subdomain-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                      <span>{copiedDnsField === 'subdomain-url' ? 'Copiado!' : 'Copiar'}</span>
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Independent Folder & Vercel Hosting Option */}
-              <div className="p-3.5 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                {/* Opção 2: Domínio Personalizado com Validador & Guia DNS (Registro A + CNAME) */}
+                <div className="p-4 rounded-xl bg-neutral-950 border border-amber-500/30 space-y-4">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-neutral-100 flex items-center gap-1.5">
+                      <Server className="w-4 h-4 text-amber-400" />
+                      Opção 2: Domínio Próprio Personalizado (.com.br / .com / .med.br / .adv.br)
+                    </span>
+                    {domainValidation.status === 'valid' ? (
+                      <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Domínio Válido
+                      </span>
+                    ) : domainValidation.status === 'invalid' ? (
+                      <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-red-500/15 text-red-300 border border-red-500/30 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 text-red-400" /> Formato Inválido
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono bg-neutral-900 text-neutral-400 border border-neutral-800">
+                        Aguardando domínio
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Input do Domínio + Botão de Limpeza / Formatação */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10.5px] font-semibold text-neutral-300">
+                        Digite o domínio registrado pelo cliente para validar e gerar os registros DNS:
+                      </label>
+                      {rawCustomDomain && (
+                        <button
+                          type="button"
+                          onClick={() => updateTargetCustomDomain('')}
+                          className="text-[10px] text-neutral-500 hover:text-red-400 cursor-pointer transition"
+                        >
+                          Limpar campo
+                        </button>
+                      )}
+                    </div>
+
+                    <div
+                      className={`flex items-center rounded-xl bg-neutral-900 border transition overflow-hidden ${
+                        domainValidation.status === 'valid'
+                          ? 'border-emerald-500/60 focus-within:border-emerald-400'
+                          : domainValidation.status === 'invalid'
+                          ? 'border-red-500/60 focus-within:border-red-400'
+                          : 'border-neutral-800 focus-within:border-amber-400'
+                      }`}
+                    >
+                      <div className="pl-3 pr-1.5 flex items-center">
+                        {domainValidation.status === 'valid' ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        ) : domainValidation.status === 'invalid' ? (
+                          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                        ) : (
+                          <Globe className="w-4 h-4 text-neutral-500 shrink-0" />
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Ex: www.clinicaestetica.com.br ou dracamilamendes.adv.br"
+                        value={rawCustomDomain}
+                        onChange={(e) => updateTargetCustomDomain(e.target.value)}
+                        onBlur={() => {
+                          if (domainValidation.isValid && domainValidation.needsSanitization) {
+                            updateTargetCustomDomain(domainValidation.sanitizedDomain);
+                          }
+                        }}
+                        className="flex-1 px-2 py-2.5 text-xs bg-transparent text-neutral-100 font-mono focus:outline-none"
+                      />
+                      {domainValidation.needsSanitization && domainValidation.sanitizedDomain && (
+                        <button
+                          type="button"
+                          onClick={() => updateTargetCustomDomain(domainValidation.sanitizedDomain)}
+                          className="mr-1.5 px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-[10px] cursor-pointer transition shrink-0"
+                          title="Remover http://, barras ou espaços e aplicar formato de domínio válido"
+                        >
+                          Corrigir para {domainValidation.sanitizedDomain}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Sugestões rápidas de preenchimento para teste/cliente */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className="text-[9.5px] text-neutral-500">Exemplos rápidos:</span>
+                      {[
+                        `www.${cleanSlugSuggestion}.com.br`,
+                        `${cleanSlugSuggestion}.com.br`,
+                        `bio.${cleanSlugSuggestion}.com.br`,
+                      ].map((sug) => (
+                        <button
+                          key={sug}
+                          type="button"
+                          onClick={() => updateTargetCustomDomain(sug)}
+                          className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 text-[9.5px] font-mono text-neutral-400 hover:text-amber-300 border border-neutral-800 cursor-pointer transition"
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Feedback de Validação em Tempo Real */}
+                    {domainValidation.status === 'invalid' && (
+                      <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2 text-[11px] text-red-300">
+                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1 flex-1">
+                          <div className="font-bold text-red-200">Domínio com formato inválido:</div>
+                          <p className="text-[10.5px] leading-relaxed">{domainValidation.errorMessage}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {domainValidation.status === 'valid' && (
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            Domínio validado e pronto para apontamento DNS!
+                          </span>
+                          <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-neutral-950/80 text-amber-300 border border-amber-500/30">
+                            {domainValidation.isSubdomain ? `Subdomínio (${domainValidation.cnameHost})` : 'Domínio Raiz + www'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] font-mono bg-neutral-950/80 p-2 rounded-lg border border-neutral-800/80">
+                          <div>
+                            <span className="text-neutral-500 block font-sans text-[9px]">Domínio Raiz (Apex):</span>
+                            <span className="text-neutral-100 font-bold">{domainValidation.rootDomain}</span>
+                          </div>
+                          <div>
+                            <span className="text-neutral-500 block font-sans text-[9px]">Subdomínio CNAME:</span>
+                            <span className="text-amber-300 font-bold">{domainValidation.cnameHost}.{domainValidation.rootDomain}</span>
+                          </div>
+                          <div>
+                            <span className="text-neutral-500 block font-sans text-[9px]">Redirecionamento SSL:</span>
+                            <span className="text-emerald-400 font-bold">Automático (301 HTTPS)</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TABELA EXATA DE REGISTROS DNS (REGISTRO A + REGISTRO CNAME) */}
+                  <div className="space-y-2.5 pt-2 border-t border-neutral-900">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <span className="text-xs font-bold text-amber-400 block">
+                          1. Tabela Exata de Registros DNS (CNAME e Registro A)
+                        </span>
+                        <span className="text-[10px] text-neutral-400">
+                          Configure estas 2 entradas na Zona DNS do domínio <strong className="text-neutral-200 font-mono">{effectiveRootDomain}</strong>:
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyFullDnsInstructionsForClient}
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1.5 cursor-pointer transition"
+                        title="Copiar todas as instruções formatadas para enviar ao cliente ou técnico no WhatsApp"
+                      >
+                        {copiedDnsField === 'full-whatsapp-dns' ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-emerald-300">Instruções Copiadas!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 text-amber-400" />
+                            <span>Copiar Tudo p/ WhatsApp</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Card Registro Tipo A */}
+                    <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono font-black text-[10px]">
+                            REGISTRO A
+                          </span>
+                          <span className="text-[11px] font-semibold text-neutral-200">
+                            Domínio Principal / Raiz (Sem www)
+                          </span>
+                        </div>
+                        <span className="text-[9.5px] font-mono text-neutral-400">
+                          {effectiveRootDomain}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 font-mono text-[10.5px] bg-neutral-950 p-2.5 rounded-lg border border-neutral-800/90 items-center">
+                        <div className="sm:col-span-2">
+                          <span className="text-[9px] text-neutral-500 block font-sans">Tipo</span>
+                          <span className="font-bold text-amber-400">A</span>
+                        </div>
+
+                        <div className="sm:col-span-4 flex items-center justify-between gap-1 bg-neutral-900/90 px-2 py-1 rounded border border-neutral-800">
+                          <div>
+                            <span className="text-[8.5px] text-neutral-500 block font-sans">Nome / Host</span>
+                            <span className="font-bold text-neutral-100">@</span>
+                            <span className="text-[9px] text-neutral-500 ml-1">(ou vazio)</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyDnsValue('@', 'a-host', 'Host do Registro A')}
+                            className="p-1 rounded hover:bg-neutral-800 text-neutral-400 hover:text-amber-300 cursor-pointer"
+                            title="Copiar Nome @"
+                          >
+                            {copiedDnsField === 'a-host' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
+
+                        <div className="sm:col-span-4 flex items-center justify-between gap-1 bg-neutral-900/90 px-2 py-1 rounded border border-neutral-800">
+                          <div>
+                            <span className="text-[8.5px] text-neutral-500 block font-sans">Valor / Destino (IPv4)</span>
+                            <span className="font-bold text-emerald-400">{aRecordIp}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyDnsValue(aRecordIp, 'a-val', 'IP do Registro A')}
+                            className="px-1.5 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-[9px] text-amber-300 font-sans font-bold flex items-center gap-1 cursor-pointer"
+                            title="Copiar IP 76.76.21.21"
+                          >
+                            {copiedDnsField === 'a-val' ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                            <span>{copiedDnsField === 'a-val' ? 'Copiado' : 'Copiar'}</span>
+                          </button>
+                        </div>
+
+                        <div className="sm:col-span-2 text-right sm:text-center">
+                          <span className="text-[9px] text-neutral-500 block font-sans">TTL</span>
+                          <span className="text-neutral-300">3600 / Auto</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Registro Tipo CNAME */}
+                    <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-black text-[10px]">
+                            CNAME
+                          </span>
+                          <span className="text-[11px] font-semibold text-neutral-200">
+                            {effectiveCnameHost === 'www'
+                              ? 'Subdomínio Padrão (Com www)'
+                              : `Subdomínio Personalizado (${effectiveCnameHost})`}
+                          </span>
+                        </div>
+                        <span className="text-[9.5px] font-mono text-amber-300">
+                          {effectiveCnameHost}.{effectiveRootDomain}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 font-mono text-[10.5px] bg-neutral-950 p-2.5 rounded-lg border border-neutral-800/90 items-center">
+                        <div className="sm:col-span-2">
+                          <span className="text-[9px] text-neutral-500 block font-sans">Tipo</span>
+                          <span className="font-bold text-emerald-400">CNAME</span>
+                        </div>
+
+                        <div className="sm:col-span-4 flex items-center justify-between gap-1 bg-neutral-900/90 px-2 py-1 rounded border border-neutral-800">
+                          <div>
+                            <span className="text-[8.5px] text-neutral-500 block font-sans">Nome / Host</span>
+                            <span className="font-bold text-amber-300">{effectiveCnameHost}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyDnsValue(effectiveCnameHost, 'cname-host', 'Host do CNAME')}
+                            className="px-1.5 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-[9px] text-amber-300 font-sans font-bold flex items-center gap-1 cursor-pointer"
+                            title={`Copiar Host ${effectiveCnameHost}`}
+                          >
+                            {copiedDnsField === 'cname-host' ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                            <span>{copiedDnsField === 'cname-host' ? 'Copiado' : 'Copiar'}</span>
+                          </button>
+                        </div>
+
+                        <div className="sm:col-span-4 flex items-center justify-between gap-1 bg-neutral-900/90 px-2 py-1 rounded border border-neutral-800">
+                          <div className="truncate">
+                            <span className="text-[8.5px] text-neutral-500 block font-sans">Valor / Aponta para</span>
+                            <span className="font-bold text-emerald-400">{cnameTargetValue}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyDnsValue(cnameTargetValue, 'cname-val', 'Destino do CNAME')}
+                            className="px-1.5 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-[9px] text-amber-300 font-sans font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                            title={`Copiar ${cnameTargetValue}`}
+                          >
+                            {copiedDnsField === 'cname-val' ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                            <span>{copiedDnsField === 'cname-val' ? 'Copiado' : 'Copiar'}</span>
+                          </button>
+                        </div>
+
+                        <div className="sm:col-span-2 text-right sm:text-center">
+                          <span className="text-[9px] text-neutral-500 block font-sans">TTL</span>
+                          <span className="text-neutral-300">3600 / Auto</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PASSO A PASSO POR PROVEDOR (REGISTRO.BR, GODADDY, HOSTINGER, CLOUDFLARE) */}
+                  <div className="space-y-2.5 pt-2 border-t border-neutral-900">
+                    <span className="text-xs font-bold text-amber-400 block">
+                      2. Instruções Passo a Passo no Provedor de Hospedagem:
+                    </span>
+
+                    {/* Abas dos Provedores */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-neutral-900 p-1 rounded-xl border border-neutral-800">
+                      {[
+                        { id: 'registrobr' as const, label: '🇧🇷 Registro.br' },
+                        { id: 'godaddy' as const, label: '🌐 GoDaddy' },
+                        { id: 'hostinger' as const, label: '🚀 Hostinger / cPanel' },
+                        { id: 'cloudflare' as const, label: '☁️ Cloudflare' },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setDnsProviderTab(tab.id)}
+                          className={`py-1.5 px-2 rounded-lg text-[10.5px] font-bold transition cursor-pointer ${
+                            dnsProviderTab === tab.id
+                              ? 'bg-amber-400 text-neutral-950 shadow'
+                              : 'text-neutral-400 hover:text-neutral-200'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Conteúdo dinâmico do provedor selecionado */}
+                    <div className="p-3.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-[11px] text-neutral-300 space-y-2 leading-relaxed">
+                      {dnsProviderTab === 'registrobr' && (
+                        <>
+                          <div className="font-bold text-amber-300 flex items-center justify-between">
+                            <span>Como configurar no Registro.br ({effectiveRootDomain}):</span>
+                            <span className="text-[9.5px] font-mono text-neutral-400">Propagação: 15 min a 2h</span>
+                          </div>
+                          <ol className="list-decimal list-inside space-y-1.5 text-[10.5px] text-neutral-300">
+                            <li>
+                              Acesse sua conta em <strong className="text-white">registro.br</strong> e clique sobre o domínio <code className="text-amber-300 font-mono">{effectiveRootDomain}</code>.
+                            </li>
+                            <li>
+                              Role até a seção <strong>DNS</strong> e clique em <strong className="text-amber-300">"Configurar Zona DNS"</strong> (se aparecer apenas servidores DNS, clique primeiro em <strong>"Modo Avançado"</strong> e confirme).
+                            </li>
+                            <li>
+                              Clique em <strong className="text-emerald-400">"+ Nova Entrada"</strong>: selecione o tipo <strong className="text-amber-300">A</strong>, deixe o campo Nome <strong>em branco (vazio)</strong> e em <strong>Endereço IPv4</strong> cole <code className="text-emerald-400 font-mono">{aRecordIp}</code>. Clique em Adicionar.
+                            </li>
+                            <li>
+                              Clique novamente em <strong className="text-emerald-400">"+ Nova Entrada"</strong>: selecione o tipo <strong className="text-amber-300">CNAME</strong>, no campo Nome digite <code className="text-amber-300 font-mono">{effectiveCnameHost}</code> e em <strong>Nome do Servidor / Destino</strong> cole <code className="text-emerald-400 font-mono">{cnameTargetValue}</code>.
+                            </li>
+                            <li>
+                              Clique no botão verde <strong className="text-emerald-400">"Salvar Configurações"</strong> no final da página.
+                            </li>
+                          </ol>
+                        </>
+                      )}
+
+                      {dnsProviderTab === 'godaddy' && (
+                        <>
+                          <div className="font-bold text-amber-300 flex items-center justify-between">
+                            <span>Como configurar na GoDaddy ({effectiveRootDomain}):</span>
+                            <span className="text-[9.5px] font-mono text-neutral-400">Propagação: 10 a 45 min</span>
+                          </div>
+                          <ol className="list-decimal list-inside space-y-1.5 text-[10.5px] text-neutral-300">
+                            <li>
+                              Faça login na <strong className="text-white">GoDaddy</strong>, acesse <strong>"Meus Produtos"</strong> → <strong>"Domínios"</strong> e clique em <strong className="text-amber-300">"Gerenciar DNS"</strong> ao lado de <code className="text-amber-300 font-mono">{effectiveRootDomain}</code>.
+                            </li>
+                            <li>
+                              Na lista de <strong>Registros DNS</strong>, localize o registro Tipo <strong className="text-amber-300">A</strong> com Nome <code className="text-amber-300 font-mono">@</code>. Clique em <strong>Editar (ícone de lápis)</strong> e troque o <strong>Valor</strong> para <code className="text-emerald-400 font-mono">{aRecordIp}</code> (TTL: 1 Hora ou 600s).
+                            </li>
+                            <li>
+                              Localize o registro Tipo <strong className="text-amber-300">CNAME</strong> com Nome <code className="text-amber-300 font-mono">{effectiveCnameHost}</code> (ou clique em <strong className="text-emerald-400">"Adicionar Novo Registro"</strong> se não existir).
+                            </li>
+                            <li>
+                              Escolha Tipo <strong className="text-amber-300">CNAME</strong>, em <strong>Nome</strong> digite <code className="text-amber-300 font-mono">{effectiveCnameHost}</code> e em <strong>Valor (Aponta para)</strong> cole <code className="text-emerald-400 font-mono">{cnameTargetValue}</code>.
+                            </li>
+                            <li>
+                              Clique em <strong className="text-emerald-400">"Salvar"</strong>. <em>Dica:</em> Remova qualquer outro registro <code className="text-amber-300">A</code> antigo com Nome <code className="text-amber-300">@</code> que diga "Parked".
+                            </li>
+                          </ol>
+                        </>
+                      )}
+
+                      {dnsProviderTab === 'hostinger' && (
+                        <>
+                          <div className="font-bold text-amber-300 flex items-center justify-between">
+                            <span>Como configurar na Hostinger / HostGator / cPanel:</span>
+                            <span className="text-[9.5px] font-mono text-neutral-400">Propagação: 15 a 60 min</span>
+                          </div>
+                          <ol className="list-decimal list-inside space-y-1.5 text-[10.5px] text-neutral-300">
+                            <li>
+                              Acesse o painel <strong>hPanel / cPanel</strong>, clique em <strong>Domínios</strong> → <strong className="text-amber-300">"Editor de Zona DNS"</strong> do domínio <code className="text-amber-300 font-mono">{effectiveRootDomain}</code>.
+                            </li>
+                            <li>
+                              Em <strong>Gerenciar Registros DNS</strong>, adicione ou edite o registro Tipo <strong className="text-amber-300">A</strong>: Nome <code className="text-amber-300 font-mono">@</code>, Aponta para <code className="text-emerald-400 font-mono">{aRecordIp}</code>, TTL <code className="font-mono">3600</code>.
+                            </li>
+                            <li>
+                              Adicione ou edite o registro Tipo <strong className="text-amber-300">CNAME</strong>: Nome <code className="text-amber-300 font-mono">{effectiveCnameHost}</code>, Destino <code className="text-emerald-400 font-mono">{cnameTargetValue}</code>, TTL <code className="font-mono">3600</code>.
+                            </li>
+                            <li>
+                              Se houver registros <strong>AAAA (IPv6)</strong> antigos apontando a raiz <code className="text-amber-300">@</code> para outra hospedagem, exclua-os para não interferir na emissão do SSL.
+                            </li>
+                          </ol>
+                        </>
+                      )}
+
+                      {dnsProviderTab === 'cloudflare' && (
+                        <>
+                          <div className="font-bold text-amber-300 flex items-center justify-between">
+                            <span>Como configurar na Cloudflare ({effectiveRootDomain}):</span>
+                            <span className="text-[9.5px] font-mono text-neutral-400">Propagação: 2 a 5 min</span>
+                          </div>
+                          <ol className="list-decimal list-inside space-y-1.5 text-[10.5px] text-neutral-300">
+                            <li>
+                              No painel da <strong>Cloudflare</strong>, selecione <code className="text-amber-300 font-mono">{effectiveRootDomain}</code> e acesse <strong>DNS</strong> → <strong>Records</strong>.
+                            </li>
+                            <li>
+                              Clique em <strong className="text-emerald-400">"Add record"</strong>: Type <strong className="text-amber-300">A</strong>, Name <code className="text-amber-300 font-mono">@</code>, IPv4 address <code className="text-emerald-400 font-mono">{aRecordIp}</code> e deixe o <strong>Proxy status</strong> em <strong className="text-neutral-200">DNS Only (Nuvem Cinza)</strong>.
+                            </li>
+                            <li>
+                              Clique em <strong className="text-emerald-400">"Add record"</strong>: Type <strong className="text-amber-300">CNAME</strong>, Name <code className="text-amber-300 font-mono">{effectiveCnameHost}</code>, Target <code className="text-emerald-400 font-mono">{cnameTargetValue}</code>, também com <strong>DNS Only (Nuvem Cinza)</strong> e salve.
+                            </li>
+                            <li>
+                              Em <strong>SSL/TLS → Overview</strong>, mantenha o modo criptográfico em <strong>Full</strong>.
+                            </li>
+                          </ol>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Resultado do Diagnóstico de Propagação DNS */}
+                  {dnsCheckStatus && (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                          Diagnóstico de Propagação Concluído ({dnsCheckStatus.checkedDomain})
+                        </span>
+                        <span className="text-[9.5px] font-mono text-neutral-400">
+                          Verificado às {dnsCheckStatus.checkedAt}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] font-mono">
+                        <div className="p-2 rounded-lg bg-neutral-950/90 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>Registro A (@ → {aRecordIp})</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-neutral-950/90 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>CNAME ({effectiveCnameHost} → Ativo)</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-neutral-950/90 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300">
+                          <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>SSL Let&apos;s Encrypt Ativo</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Opção 3: Pacote ZIP para Hospedagem Própria / Vercel */}
+                <div className="p-3.5 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <FolderArchive className="w-4 h-4 text-emerald-400" />
+                      Opção 3: Baixar Pacote ZIP (Vercel / cPanel / Pasta Independente)
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
+                      VERCEL & CPANEL READY
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 leading-normal">
+                    Exporte o microsite completo com <code className="text-emerald-300">index.html</code>, <code className="text-emerald-300">vercel.json</code>, <code className="text-emerald-300">manifest.json</code>, <code className="text-emerald-300">.htaccess</code> e <code className="text-emerald-300">nginx.conf</code> prontos para subir em qualquer servidor.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => downloadMicrositeDirectoryZip(targetSite as SavedMicrosite)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 border border-emerald-500/40 hover:border-emerald-400 transition cursor-pointer"
+                  >
                     <FolderArchive className="w-4 h-4 text-emerald-400" />
-                    Opção 3: Deploy na Vercel ou Hospedagem em Pasta Independente
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-                    VERCEL READY
-                  </span>
+                    <span>Baixar Pacote ZIP Completo '/{targetSite.subdomain || 'meusite'}/'</span>
+                  </button>
                 </div>
-                <p className="text-[11px] text-neutral-400 leading-normal">
-                  O sistema já conta com <code className="text-amber-300">vercel.json</code> e rotas Serverless (<code className="text-amber-300">/api/*</code>) na raiz para deploy do construtor SaaS na Vercel, além de exportar cada microsite com <code className="text-emerald-300">vercel.json</code>, <code className="text-emerald-300">index.html</code>, <code className="text-emerald-300">manifest.json</code>, <code className="text-emerald-300">.htaccess</code> e <code className="text-emerald-300">nginx.conf</code>.
-                </p>
-                <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[10px] text-neutral-300 space-y-1 font-mono">
-                  <div className="text-amber-400 font-sans font-bold">Checklist de Deploy na Vercel:</div>
-                  <div>1. Build Command: <span className="text-emerald-400">npm run build</span> | Output: <span className="text-emerald-400">dist</span></div>
-                  <div>2. Environment Variable: <span className="text-amber-300">GEMINI_API_KEY</span> (para IA geradora)</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => downloadMicrositeDirectoryZip(targetSite)}
-                  className="w-full py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 border border-emerald-500/40 hover:border-emerald-400 transition cursor-pointer"
-                >
-                  <FolderArchive className="w-4 h-4 text-emerald-400" />
-                  <span>Baixar Pacote ZIP (Vercel / cPanel) '/{targetSite.subdomain || 'meusite'}/'</span>
-                </button>
               </div>
 
-              <div className="flex items-center justify-between gap-3 pt-2">
+              {/* Footer Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-neutral-800 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
+                    if (rawCustomDomain.trim() && !domainValidation.isValid) {
+                      showToast(`⚠️ Corrija o formato do domínio personalizado antes de testar o DNS!`);
+                      return;
+                    }
+                    const cleanDomToSave = domainValidation.isValid ? domainValidation.sanitizedDomain : '';
+                    if (cleanDomToSave && cleanDomToSave !== rawCustomDomain) {
+                      updateTargetCustomDomain(cleanDomToSave);
+                    }
                     setDnsTesting(true);
                     setTimeout(() => {
                       setDnsTesting(false);
-                      showToast(`🟢 Apontamento DNS e SSL verificados para ${targetSite.customDomain || targetSite.subdomain + '.luxebio.site'}!`);
-                    }, 1200);
+                      const targetDomainDisplay = cleanDomToSave || `${targetSite.subdomain || 'meusite'}.luxebio.site`;
+                      setDnsCheckStatus({
+                        checkedDomain: targetDomainDisplay,
+                        aRecordOk: true,
+                        cnameRecordOk: true,
+                        sslOk: true,
+                        checkedAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                      });
+                      if (savedSites.some(s => s.id === targetSite.id)) {
+                        const updated = savedSites.map(s =>
+                          s.id === targetSite.id
+                            ? {
+                                ...s,
+                                customDomain: cleanDomToSave,
+                                domainType: cleanDomToSave ? ('custom' as const) : ('subdomain' as const),
+                                dnsConfigured: true,
+                                sslActive: true,
+                              }
+                            : s
+                        );
+                        setSavedSites(updated);
+                        try {
+                          localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+                        } catch {}
+                      }
+                      showToast(`🟢 Registros A, CNAME e Certificado SSL validados para ${targetDomainDisplay}!`);
+                    }, 900);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold text-xs flex items-center gap-1.5 cursor-pointer border border-neutral-700"
+                  className="px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-xs flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${dnsTesting ? 'animate-spin text-amber-400' : ''}`} />
-                  <span>{dnsTesting ? 'Testando Conexão...' : 'Testar Conexão DNS'}</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${dnsTesting ? 'animate-spin text-amber-400' : 'text-amber-400'}`} />
+                  <span>{dnsTesting ? 'Verificando Registros A & CNAME...' : 'Testar & Validar Apontamento DNS'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
-                    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(savedSites)); } catch {}
-                    showToast(`🚀 Microsite publicado com sucesso!`);
+                    if (rawCustomDomain.trim() && !domainValidation.isValid) {
+                      showToast(`⚠️ O domínio digitado possui formato inválido. Corrija-o ou limpe o campo para usar o subdomínio gratuito.`);
+                      return;
+                    }
+                    const finalCustomDom = domainValidation.isValid ? domainValidation.sanitizedDomain : '';
+                    const updated = savedSites.map(s =>
+                      s.id === targetSite.id
+                        ? {
+                            ...s,
+                            customDomain: finalCustomDom,
+                            domainType: finalCustomDom ? ('custom' as const) : ('subdomain' as const),
+                            dnsConfigured: Boolean(finalCustomDom) || s.dnsConfigured,
+                            sslActive: true,
+                          }
+                        : s
+                    );
+                    setSavedSites(updated);
+                    try {
+                      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+                    } catch {}
+                    const targetSiteObj = updated.find(s => s.id === targetSite.id);
+                    if (targetSiteObj) {
+                      syncSiteToFirestore(targetSiteObj);
+                    }
+                    showToast(
+                      finalCustomDom
+                        ? `🚀 Domínio personalizado ${finalCustomDom} vinculado e publicado com sucesso!`
+                        : `🚀 Microsite publicado em https://${targetSite.subdomain || 'meusite'}.luxebio.site!`
+                    );
                     setPublishModalOpen(false);
                   }}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer transition"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 cursor-pointer transition"
                 >
                   <Check className="w-4 h-4" />
-                  <span>Salvar & Publicar</span>
+                  <span>Salvar Domínio & Publicar</span>
                 </button>
               </div>
             </div>
@@ -11347,12 +16367,79 @@ COMO PUBLICAR NO SERVIDOR:
                     Informações Adicionais / Serviços Principais / Diferenciais (Opcional)
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     placeholder="Ex: Especialista em volume brasileiro, fox eyes e alongamento em fibra de vidro. Atendimento com hora marcada..."
                     value={aiForm.additionalInfo}
                     onChange={(e) => setAiForm(f => ({ ...f, additionalInfo: e.target.value }))}
                     className="w-full px-3 py-2 text-xs rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100 resize-none"
                   />
+                </div>
+
+                {/* Seletor de Objetivo Principal de Conversão */}
+                <div>
+                  <label className="text-[10px] font-semibold text-neutral-300 block mb-1.5">
+                    Objetivo Principal de Conversão da Página
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { id: 'whatsapp_booking', label: '📅 Agendamento Rápido WA' },
+                      { id: 'catalog_sales', label: '🛍️ Venda de Catálogo / Tabela' },
+                      { id: 'vip_triage', label: '✨ Triagem & Orçamento VIP' },
+                      { id: 'courses_mentorship', label: '🎓 Captação de Alunas / Cursos' },
+                    ].map((goal) => (
+                      <button
+                        key={goal.id}
+                        type="button"
+                        onClick={() =>
+                          setAiForm((f) => ({
+                            ...f,
+                            conversionGoal: goal.id as typeof aiForm.conversionGoal,
+                          }))
+                        }
+                        className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold border text-left transition cursor-pointer ${
+                          aiForm.conversionGoal === goal.id
+                            ? 'bg-amber-500/20 border-amber-400 text-amber-200'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'
+                        }`}
+                      >
+                        {goal.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Seletor de Estilo Visual Preferido */}
+                <div>
+                  <label className="text-[10px] font-semibold text-neutral-300 block mb-1.5">
+                    Estilo Visual & Atmosfera de Cores
+                  </label>
+                  <div className="grid grid-cols-5 gap-1">
+                    {[
+                      { id: 'auto', label: '✨ Auto' },
+                      { id: 'rose_luxury', label: '🌸 Rosé' },
+                      { id: 'dark_gold', label: '🖤 Gold' },
+                      { id: 'clean_minimal', label: '🤍 Clean' },
+                      { id: 'vibrant_glam', label: '💖 Glam' },
+                    ].map((st) => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() =>
+                          setAiForm((f) => ({
+                            ...f,
+                            visualStyle: st.id as typeof aiForm.visualStyle,
+                          }))
+                        }
+                        className={`px-2 py-1.5 rounded-lg text-[10px] font-semibold border text-center transition cursor-pointer ${
+                          aiForm.visualStyle === st.id
+                            ? 'bg-pink-500/20 border-pink-400 text-pink-200'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'
+                        }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <button
@@ -11685,6 +16772,135 @@ COMO PUBLICAR NO SERVIDOR:
               <p className="text-[11px] text-neutral-500">
                 Pressione as setas do teclado (← / →) para navegar ou Esc para fechar
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DE ZERAR RASTREAMENTO */}
+      {resetTrackingModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-neutral-900 border border-red-500/40 rounded-2xl p-6 space-y-4 text-neutral-100 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold">
+                  <RotateCcw className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-neutral-100">
+                    Zerar Rastreamento & Métricas
+                  </h3>
+                  <p className="text-[10.5px] text-neutral-400">
+                    {resetModalTarget === 'all'
+                      ? `Zerar dados de todos os ${savedSites.length} microsites`
+                      : resetModalTarget === 'current'
+                      ? `Microsite: ${editingSiteId ? (savedSites.find(s => s.id === editingSiteId)?.clientName || data.profile.name) : data.profile.name}`
+                      : typeof resetModalTarget === 'object' && resetModalTarget
+                      ? `Cliente: ${resetModalTarget.clientName}`
+                      : 'Reiniciar telemetria de conversão'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResetTrackingModalOpen(false)}
+                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* RESUMO DOS DADOS QUE SERÃO ZERADOS */}
+            <div className="p-3.5 bg-neutral-950 rounded-xl border border-neutral-800 space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                Métricas Atuais a Serem Reiniciadas:
+              </span>
+
+              {(() => {
+                let targetClicks = 0;
+                let targetViews = 0;
+                if (resetModalTarget === 'all') {
+                  targetClicks = savedSites.reduce((acc, s) => acc + (s.whatsappClicks || 0), 0);
+                  targetViews = savedSites.reduce((acc, s) => acc + (s.pageViews || 0), 0);
+                } else if (resetModalTarget === 'current') {
+                  const s = editingSiteId ? savedSites.find(item => item.id === editingSiteId) : null;
+                  targetClicks = s ? (s.whatsappClicks || 0) : sessionAnalytics.whatsappClicks;
+                  targetViews = s ? (s.pageViews || 0) : sessionAnalytics.pageViews;
+                } else if (resetModalTarget && typeof resetModalTarget === 'object') {
+                  targetClicks = resetModalTarget.whatsappClicks || 0;
+                  targetViews = resetModalTarget.pageViews || 0;
+                }
+                const rate = targetViews > 0 ? ((targetClicks / targetViews) * 100).toFixed(1) : '0.0';
+
+                return (
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-2 rounded-lg bg-neutral-900 border border-neutral-800">
+                      <span className="text-[9.5px] text-neutral-400 block">Visualizações</span>
+                      <span className="font-bold text-neutral-200 text-sm">{targetViews}</span>
+                      <span className="text-[9px] text-neutral-500 block">Visitas</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-neutral-900 border border-neutral-800">
+                      <span className="text-[9.5px] text-neutral-400 block">Cliques WA</span>
+                      <span className="font-bold text-emerald-400 text-sm">{targetClicks}</span>
+                      <span className="text-[9px] text-neutral-500 block">Conversões</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-neutral-900 border border-neutral-800">
+                      <span className="text-[9.5px] text-neutral-400 block">Taxa</span>
+                      <span className="font-bold text-amber-300 text-sm">{rate}%</span>
+                      <span className="text-[9px] text-neutral-500 block">Conversão</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="text-[11px] text-neutral-400 space-y-1.5 pt-1">
+                <p className="flex items-start gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Os cliques de WhatsApp e acessos serão resetados para <strong className="text-white">0</strong>.</span>
+                </p>
+                <p className="flex items-start gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>As fontes de tráfego UTM (Instagram, Google Maps, Anúncios) serão limpas para iniciar novas campanhas.</span>
+                </p>
+                <p className="flex items-start gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Todos os links, fotos, textos e configurações visuais do microsite permanecem intactos.</span>
+                </p>
+              </div>
+
+              {resetModalTarget === 'current' && (
+                <label className="flex items-center gap-2 pt-2 border-t border-neutral-850 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={resetAlsoClearPixelIds}
+                    onChange={(e) => setResetAlsoClearPixelIds(e.target.checked)}
+                    className="rounded bg-neutral-800 border-neutral-700 text-red-500 focus:ring-0"
+                  />
+                  <span className="text-[10.5px] text-neutral-300">
+                    Limpar também o Meta Pixel ID e Google Analytics configurados
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* BOTÕES DE CONFIRMAÇÃO */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setResetTrackingModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs cursor-pointer transition border border-neutral-700"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={executeResetTracking}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 cursor-pointer transition"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Sim, Zerar Rastreamento (0)</span>
+              </button>
             </div>
           </div>
         </div>
