@@ -73,7 +73,8 @@ import {
   Play,
   Pause,
   Share2,
-  LogOut
+  LogOut,
+  Mail
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import {
@@ -847,6 +848,16 @@ const INITIAL_DATA = {
     socialBg: '#1e293b',
     glowColor: '#e2b857'
   },
+  moduleColors: {} as Record<
+    string,
+    {
+      headlineColor?: string;
+      titleColor?: string;
+      textColor?: string;
+      accentColor?: string;
+      bgColor?: string;
+    }
+  >,
   styling: {
     fontFamily: 'Cinzel',
     borderRadius: 20,
@@ -972,7 +983,29 @@ const INITIAL_DATA = {
       imageSize: 84,
       ctaActionText: 'CLIQUE AQUI'
     }
-  ],
+  ] as Array<{
+    id: string;
+    title: string;
+    subtitle: string;
+    icon: string;
+    linkType: string;
+    url: string;
+    whatsappMessage: string;
+    openInNewTab: boolean;
+    animation: string;
+    variant: string;
+    badgeText: string;
+    customBg: string;
+    customText: string;
+    customTitleColor?: string;
+    customSubtitleColor?: string;
+    bgImage: string;
+    imagePosition: string;
+    cardImage: string;
+    imageFitStyle: string;
+    imageSize: number;
+    ctaActionText: string;
+  }>,
   processSteps: {
     enabled: true,
     headline: 'Como funciona o processo?',
@@ -1241,6 +1274,55 @@ const safeCopyText = async (text: string) => {
   }
 };
 
+// Regras Oficiais de Taxa de Manutenção, Criação & Desativação Automática dos Biosites:
+// - 1º Mês: Cobrada apenas a Taxa de Criação (NÃO há mensalidade no 1º mês).
+// - R$ 29,90/mês: Direito a 1 alteração mensal.
+// - R$ 49,90/mês: Direito a 4 alterações mensais.
+// - R$ 79,90/mês: Alterações mensais ilimitadas.
+// - Alterações adicionais excedentes: R$ 14,90 cada.
+// - Desativação por atraso: Automática a partir do 7º dia de atraso (daysOverdue >= 7).
+export type MaintenancePlanId = 'basic_1' | 'pro_4' | 'vip_unlimited';
+
+export const EXTRA_UPDATE_FEE = 14.90;
+export const AUTO_DISABLE_OVERDUE_DAYS = 7;
+
+export const MAINTENANCE_PLANS: Record<
+  MaintenancePlanId,
+  {
+    id: MaintenancePlanId;
+    name: string;
+    shortName: string;
+    price: number;
+    maxUpdates: number; // Infinity for unlimited
+    description: string;
+  }
+> = {
+  basic_1: {
+    id: 'basic_1',
+    name: 'Manutenção Básica (1 alteração/mês)',
+    shortName: '1 alt./mês (R$ 29,90)',
+    price: 29.90,
+    maxUpdates: 1,
+    description: 'Inclui 1 alteração mensal + Hospedagem & SSL. Alterações extras: R$ 14,90 cada.',
+  },
+  pro_4: {
+    id: 'pro_4',
+    name: 'Manutenção Pro (4 alterações/mês)',
+    shortName: '4 alt./mês (R$ 49,90)',
+    price: 49.90,
+    maxUpdates: 4,
+    description: 'Inclui até 4 alterações mensais + Hospedagem & SSL. Alterações extras: R$ 14,90 cada.',
+  },
+  vip_unlimited: {
+    id: 'vip_unlimited',
+    name: 'Manutenção VIP (Alterações Ilimitadas)',
+    shortName: 'Ilimitado (R$ 79,90)',
+    price: 79.90,
+    maxUpdates: Infinity,
+    description: 'Alterações mensais ilimitadas sem custo extra + Suporte Prioritário & SSL.',
+  },
+};
+
 // Saved Microsite SaaS Data Structure
 export interface SavedMicrosite {
   id: string;
@@ -1250,8 +1332,13 @@ export interface SavedMicrosite {
   nicheCategory: string;
   createdAt: string;
   dueDate: string; // YYYY-MM-DD
-  monthlyFee: number;
+  monthlyFee: number; // Valor da taxa de manutenção mensal (29.90, 49.90 ou 79.90)
+  maintenancePlan?: MaintenancePlanId;
+  creationFee?: number; // Taxa de criação cobrada exclusivamente no 1º mês
+  isFirstMonth?: boolean; // No 1º mês cobra apenas a taxa de criação e NÃO há mensalidade
   status: 'active' | 'overdue' | 'disabled';
+  autoDisabledByOverdue?: boolean; // True quando desativado automaticamente a partir do 7º dia de atraso
+  manualOverrideUntil?: string; // Permite exceção manual temporária pelo admin
   updatesThisMonth: number;
   lastUpdated: string;
   domainType: 'subdomain' | 'custom';
@@ -1272,6 +1359,41 @@ export interface SavedMicrosite {
   data: typeof INITIAL_DATA;
 }
 
+export const getSiteBillingSummary = (site: SavedMicrosite) => {
+  const planKey: MaintenancePlanId =
+    site.maintenancePlan ||
+    (site.monthlyFee >= 75 ? 'vip_unlimited' : site.monthlyFee >= 45 ? 'pro_4' : 'basic_1');
+  const plan = MAINTENANCE_PLANS[planKey] || MAINTENANCE_PLANS.basic_1;
+  const maintenanceFee = typeof site.monthlyFee === 'number' && site.monthlyFee > 0 ? site.monthlyFee : plan.price;
+  const creationFee = typeof site.creationFee === 'number' ? site.creationFee : 197.00;
+  const isFirstMonth = Boolean(site.isFirstMonth);
+  const updatesUsed = site.updatesThisMonth || 0;
+  const isUnlimited = plan.maxUpdates === Infinity;
+  const extraUpdatesCount = isUnlimited ? 0 : Math.max(0, updatesUsed - plan.maxUpdates);
+  const extraUpdatesCost = Number((extraUpdatesCount * EXTRA_UPDATE_FEE).toFixed(2));
+
+  // Regra oficial: A taxa de criação só é cobrada no 1º mês e nele NÃO há mensalidade.
+  const baseChargeThisMonth = isFirstMonth ? creationFee : maintenanceFee;
+  const monthlyMaintenanceChargeThisMonth = isFirstMonth ? 0 : maintenanceFee;
+  const totalDueThisMonth = Number((baseChargeThisMonth + extraUpdatesCost).toFixed(2));
+
+  return {
+    planKey,
+    plan,
+    maintenanceFee,
+    creationFee,
+    isFirstMonth,
+    updatesUsed,
+    isUnlimited,
+    includedUpdatesLabel: isUnlimited ? 'Ilimitadas' : `${plan.maxUpdates}`,
+    extraUpdatesCount,
+    extraUpdatesCost,
+    baseChargeThisMonth,
+    monthlyMaintenanceChargeThisMonth,
+    totalDueThisMonth,
+  };
+};
+
 const INITIAL_SAVED_SITES: SavedMicrosite[] = [
   {
     id: 'site-1',
@@ -1281,7 +1403,10 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     nicheCategory: 'Barbearia & Grooming',
     createdAt: '2026-09-15',
     dueDate: '2026-11-15',
-    monthlyFee: 149.90,
+    monthlyFee: 49.90,
+    maintenancePlan: 'pro_4',
+    creationFee: 197.00,
+    isFirstMonth: false,
     status: 'active',
     updatesThisMonth: 2,
     lastUpdated: '2026-10-21',
@@ -1313,9 +1438,12 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     nicheCategory: 'Jurídico & Executivo',
     createdAt: '2026-08-10',
     dueDate: '2026-10-20',
-    monthlyFee: 199.90,
+    monthlyFee: 79.90,
+    maintenancePlan: 'vip_unlimited',
+    creationFee: 297.00,
+    isFirstMonth: false,
     status: 'overdue',
-    updatesThisMonth: 4,
+    updatesThisMonth: 5,
     lastUpdated: '2026-10-18',
     domainType: 'custom',
     subdomain: 'dramarina',
@@ -1335,9 +1463,12 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     nicheCategory: 'Beleza & Unhas',
     createdAt: '2026-07-01',
     dueDate: '2026-10-10',
-    monthlyFee: 129.90,
+    monthlyFee: 29.90,
+    maintenancePlan: 'basic_1',
+    creationFee: 149.90,
+    isFirstMonth: false,
     status: 'disabled',
-    updatesThisMonth: 0,
+    updatesThisMonth: 2,
     lastUpdated: '2026-09-28',
     domainType: 'subdomain',
     subdomain: 'larissanails',
@@ -1450,19 +1581,102 @@ export default function App() {
     }, durationMs);
   };
 
-  // Saved Microsites Management State
+  const getDaysUntilDue = (dueDateStr: string): number => {
+    if (!dueDateStr) return 999;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const parts = dueDateStr.split('-');
+    if (parts.length < 3) return 999;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const due = new Date(y, m, d);
+    due.setHours(0, 0, 0, 0);
+    const diffTime = due.getTime() - today.getTime();
+    return Math.round(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Regra Oficial: Desativação por atraso automática a partir do 7º dia de atraso (daysDiff <= -7)
+  const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
+    normalized: SavedMicrosite[];
+    changed: boolean;
+    newlyAutoDisabled: string[];
+  } => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    let changed = false;
+    const newlyAutoDisabled: string[] = [];
+
+    const normalized = sitesList.map((site) => {
+      const daysDiff = getDaysUntilDue(site.dueDate);
+      const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+      const hasActiveManualOverride = Boolean(site.manualOverrideUntil && site.manualOverrideUntil >= todayStr);
+
+      // A partir do 7º dia de atraso (daysOverdue >= 7, ou seja daysDiff <= -7): desativação automática
+      if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS && !hasActiveManualOverride) {
+        if (site.status !== 'disabled' || !site.autoDisabledByOverdue) {
+          changed = true;
+          if (site.status !== 'disabled') {
+            newlyAutoDisabled.push(`${site.clientName} (${daysOverdue} dias em atraso)`);
+          }
+          return {
+            ...site,
+            status: 'disabled' as const,
+            autoDisabledByOverdue: true,
+          };
+        }
+        return site;
+      }
+
+      // Entre 1 e 6 dias de atraso: status 'overdue' (em tolerância até o 6º dia)
+      if (daysOverdue > 0 && daysOverdue < AUTO_DISABLE_OVERDUE_DAYS) {
+        if (site.status === 'active' || (site.status === 'disabled' && site.autoDisabledByOverdue)) {
+          changed = true;
+          return {
+            ...site,
+            status: 'overdue' as const,
+            autoDisabledByOverdue: false,
+          };
+        }
+        return site;
+      }
+
+      // Em dia (daysDiff >= 0): se estava desativado automaticamente por atraso ou como overdue, reativa automaticamente
+      if (daysDiff >= 0 && (site.status === 'overdue' || (site.status === 'disabled' && site.autoDisabledByOverdue))) {
+        changed = true;
+        return {
+          ...site,
+          status: 'active' as const,
+          autoDisabledByOverdue: false,
+          manualOverrideUntil: undefined,
+        };
+      }
+
+      return site;
+    });
+
+    return { normalized, changed, newlyAutoDisabled };
+  };
+
+  // Saved Microsites Management State (já aplica a desativação automática de 7 dias ao inicializar)
   const [savedSites, setSavedSites] = useState<SavedMicrosite[]>(() => {
+    let baseList = INITIAL_SAVED_SITES;
     try {
       const raw = localStorage.getItem('luxebio_saved_sites_v1');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) baseList = parsed;
       }
     } catch {}
-    return INITIAL_SAVED_SITES;
+    const { normalized } = enforceAutoSevenDayOverdueRule(baseList);
+    try {
+      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
+    } catch {}
+    return normalized;
   });
 
   const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
+  const [editingDueDateSiteId, setEditingDueDateSiteId] = useState<string | null>(null);
+  const [tempDueDateInput, setTempDueDateInput] = useState<string>('');
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [selectedPublishSiteId, setSelectedPublishSiteId] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -1482,21 +1696,6 @@ export default function App() {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoalInput, setTempGoalInput] = useState('');
   const [pixCardExpanded, setPixCardExpanded] = useState(false);
-
-  const getDaysUntilDue = (dueDateStr: string): number => {
-    if (!dueDateStr) return 999;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const parts = dueDateStr.split('-');
-    if (parts.length < 3) return 999;
-    const y = parseInt(parts[0], 10);
-    const m = parseInt(parts[1], 10) - 1;
-    const d = parseInt(parts[2], 10);
-    const due = new Date(y, m, d);
-    due.setHours(0, 0, 0, 0);
-    const diffTime = due.getTime() - today.getTime();
-    return Math.round(diffTime / (1000 * 60 * 60 * 24));
-  };
   const [dnsTesting, setDnsTesting] = useState(false);
   const [dnsProviderTab, setDnsProviderTab] = useState<'registrobr' | 'godaddy' | 'hostinger' | 'cloudflare'>('registrobr');
   const [copiedDnsField, setCopiedDnsField] = useState<string | null>(null);
@@ -1782,21 +1981,26 @@ export default function App() {
     priceEssential: string;
     pricePro: string;
     priceScale: string;
+    creatorFooterUrl?: string;
+    creatorFooterLabel?: string;
   }>(() => {
-    try {
-      const saved = localStorage.getItem('luxebio_landing_config_v1');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
+    const defaults = {
       creatorSubdomain: 'criador',
       baseDomain: 'luxebio.site',
       agencyBrandName: 'LuxeBio Digital',
       agencyWhatsapp: '5511999999999',
       deliveryTime: '24 horas',
-      priceEssential: 'R$ 197',
-      pricePro: 'R$ 297',
-      priceScale: 'R$ 497',
+      priceEssential: 'R$ 79,90',
+      pricePro: 'R$ 79,90',
+      priceScale: 'R$ 79,90',
+      creatorFooterUrl: '',
+      creatorFooterLabel: 'Quero um microsite assim',
     };
+    try {
+      const saved = localStorage.getItem('luxebio_landing_config_v1');
+      if (saved) return { ...defaults, ...JSON.parse(saved) };
+    } catch {}
+    return defaults;
   });
 
   const updateLandingConfig = (key: string, val: string) => {
@@ -1807,6 +2011,45 @@ export default function App() {
       } catch {}
       return updated;
     });
+  };
+
+  const resolveCreatorFooterInfo = (siteData?: typeof INITIAL_DATA) => {
+    const profileAny = (siteData?.profile || data?.profile || {}) as Record<string, any>;
+    const brandName = (
+      profileAny.creatorName ||
+      landingConfig.agencyBrandName ||
+      'LuxeBio Digital'
+    ).trim();
+    const ctaLabel = (
+      profileAny.creatorCtaLabel ||
+      landingConfig.creatorFooterLabel ||
+      'Quero um microsite assim'
+    ).trim();
+    const rawCustomUrl = (
+      profileAny.creatorUrl ||
+      landingConfig.creatorFooterUrl ||
+      ''
+    ).trim();
+
+    let href = '';
+    if (rawCustomUrl) {
+      href = /^https?:\/\//i.test(rawCustomUrl) ? rawCustomUrl : `https://${rawCustomUrl}`;
+    } else if (
+      landingConfig.baseDomain &&
+      landingConfig.baseDomain.trim() &&
+      landingConfig.baseDomain.trim().toLowerCase() !== 'luxebio.site'
+    ) {
+      const cleanDomain = landingConfig.baseDomain.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+      href = `https://${cleanDomain}`;
+    } else if (typeof window !== 'undefined' && window.location?.origin) {
+      href = window.location.origin;
+    } else {
+      const targetAgencyPhone = (landingConfig.agencyWhatsapp || '5511999999999').replace(/\D/g, '');
+      const msg = encodeURIComponent(`Olá! Vi um microsite criado por ${brandName} e quero encomendar o meu!`);
+      href = `https://wa.me/${targetAgencyPhone}?text=${msg}`;
+    }
+
+    return { brandName, ctaLabel, href };
   };
 
   const detectCreatorSurface = (): 'landing' | 'studio' => {
@@ -1861,7 +2104,7 @@ export default function App() {
     clientWhatsapp: '',
     instagramOrMaps: '',
     selectedModel: 'Advocacia & Consultoria Executiva',
-    selectedPlan: 'Profissional VIP',
+    selectedPlan: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação R$ 79,90 (Promoção 10 Primeiros)',
     customNotes: '',
   });
   const [landingOrderError, setLandingOrderError] = useState<string | null>(null);
@@ -1992,7 +2235,15 @@ export default function App() {
             const byId = new Map(prev.map((s) => [s.id, s]));
             remoteModels.forEach((rm) => {
               const existing = byId.get(rm.id);
-              byId.set(rm.id, existing ? { ...existing, ...rm, isLandingModel: true } : rm);
+              const isStaleEsthetics =
+                (rm.id === 'real-niche-esthetics' || rm.subdomain === 'drafernanda') &&
+                (rm.data?.profile?.avatarUrl?.includes('1594824476967') ||
+                  rm.data?.studentGrid?.photos?.some((p: string) => p.includes('1512290900672')));
+              if (isStaleEsthetics && existing) {
+                byId.set(rm.id, { ...rm, data: existing.data, isLandingModel: true });
+              } else {
+                byId.set(rm.id, existing ? { ...existing, ...rm, isLandingModel: true } : rm);
+              }
             });
             const merged = Array.from(byId.values());
             try {
@@ -2076,19 +2327,195 @@ export default function App() {
   const sendWhatsappBillingReminder = (site: SavedMicrosite) => {
     const pixKey = data.saasSettings?.pixKey || 'contato@luxebio.com.br';
     const pixName = data.saasSettings?.pixName || 'LuxeBio Studio SaaS';
-    const feeFormatted = site.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const billing = getSiteBillingSummary(site);
+    const dueBr = formatDueDateBr(site.dueDate);
+    const daysDiff = getDaysUntilDue(site.dueDate);
+    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+
     let msg = `👋 Olá *${site.clientName}*!\n\n`;
-    msg += `Lembrete da mensalidade da sua página de alta conversão (*${site.customDomain || site.subdomain + '.luxebio.site'}*).\n\n`;
-    msg += `💰 *Valor:* R$ ${feeFormatted}\n`;
-    msg += `📅 *Vencimento:* ${site.dueDate}\n\n`;
-    msg += `🔑 *Chave PIX:* ${pixKey}\n`;
+    msg += `Segue o resumo da fatura do seu Biosite de Alta Conversão (*${site.customDomain || site.subdomain + '.luxebio.site'}*):\n\n`;
+    if (billing.isFirstMonth) {
+      msg += `✨ *Ciclo Atual:* 1º Mês (Taxa Única de Criação — *Isento de Mensalidade no 1º mês*)\n`;
+      msg += `🎨 *Taxa de Criação (1º Mês):* R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      msg += `🛠️ *Mensalidade no 1º Mês:* R$ 0,00 (Isento)\n`;
+      msg += `📌 *Plano de Manutenção (a partir do 2º mês):* ${billing.plan.name} — R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês\n`;
+    } else {
+      msg += `🛠️ *Plano de Manutenção:* ${billing.plan.name}\n`;
+      msg += `💰 *Taxa de Manutenção Mensal:* R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      msg += `🔄 *Alterações realizadas no mês:* ${billing.updatesUsed} (Franquia do plano: ${billing.includedUpdatesLabel})\n`;
+    }
+    if (billing.extraUpdatesCount > 0) {
+      msg += `➕ *Alterações Adicionais (${billing.extraUpdatesCount}x R$ 14,90):* R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+    }
+    msg += `\n💵 *VALOR TOTAL A PAGAR:* *R$ ${billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n`;
+    msg += `📅 *Data de Vencimento:* ${dueBr}\n`;
+    if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS) {
+      msg += `🛑 *Status:* *Desativado automaticamente (${daysOverdue} dias de atraso — Regra do 7º dia).* Efetue o pagamento para reativação imediata do seu link.\n`;
+    } else if (daysOverdue > 0) {
+      msg += `⚠️ *Atenção:* Fatura com *${daysOverdue} dia(s) de atraso*. A desativação automática ocorre a partir do *7º dia de atraso* (restam *${AUTO_DISABLE_OVERDUE_DAYS - daysOverdue} dia(s)*).\n`;
+    } else {
+      msg += `ℹ️ *Política de Manutenção:* A desativação por atraso é automática a partir do 7º dia após o vencimento.\n`;
+    }
+    msg += `\n🔑 *Chave PIX:* ${pixKey}\n`;
     msg += `👤 *Favorecido:* ${pixName}\n\n`;
-    msg += `Após realizar a transferência, por favor envie o comprovante por aqui para baixa automática. Qualquer dúvida estou à disposição! 🚀`;
+    msg += `Após realizar a transferência, por favor envie o comprovante por aqui para baixa e liberação automática. Qualquer dúvida estou à disposição! 🚀`;
 
     const phone = (site.clientPhone || '').replace(/\D/g, '');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
-    showToast(`📲 Lembrete de cobrança formatado enviado no WhatsApp de ${site.clientName}!`);
+    showToast(`📲 Lembrete de cobrança detalhado enviado no WhatsApp de ${site.clientName}!`);
+  };
+
+  // Prompt de Envio de Mensagem WhatsApp para o Cliente (Detalhes do Microsite, Vencimento, Valores, Links Redes Sociais e Tutorial Bio do Instagram)
+  const [clientWaPromptSite, setClientWaPromptSite] = useState<SavedMicrosite | null>(null);
+  const [clientWaPromptTemplate, setClientWaPromptTemplate] = useState<'complete_kit' | 'onboarding_bio' | 'renewal_details'>('complete_kit');
+  const [clientWaPromptPhone, setClientWaPromptPhone] = useState('');
+  const [clientWaPromptText, setClientWaPromptText] = useState('');
+  const [copiedClientWaPrompt, setCopiedClientWaPrompt] = useState(false);
+
+  const formatDueDateBr = (isoOrDate: string) => {
+    if (!isoOrDate) return '—';
+    const parts = isoOrDate.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return isoOrDate;
+  };
+
+  const buildClientWhatsappPromptText = (
+    site: SavedMicrosite,
+    templateType: 'complete_kit' | 'onboarding_bio' | 'renewal_details' = 'complete_kit'
+  ) => {
+    const primaryDomain = (site.customDomain || '').trim() || `${site.subdomain || 'meusite'}.luxebio.site`;
+    const primaryUrl = `https://${primaryDomain}`;
+    const subdomainUrl = `https://${site.subdomain || 'meusite'}.luxebio.site`;
+    const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
+    const billing = getSiteBillingSummary(site);
+    const dueBr = formatDueDateBr(site.dueDate);
+    const pixKey = data.saasSettings?.pixKey || 'contato@luxebio.com.br';
+    const pixName = data.saasSettings?.pixName || 'LuxeBio Studio SaaS';
+    const statusText = site.status === 'disabled' ? '🔴 Desativado por Atraso (>= 7 dias)' : site.status === 'overdue' ? '🟡 Pagamento em Atraso (Desativação no 7º dia)' : '🟢 Ativo & Online com SSL';
+
+    if (templateType === 'onboarding_bio') {
+      let msg = `🎉 Olá *${site.clientName}*! Seu novo Biosite de Alta Conversão já está no ar e pronto para receber clientes nas suas redes sociais!\n\n`;
+      msg += `🌐 *SEUS LINKS OFICIAIS PARA REDES SOCIAIS:*\n`;
+      msg += `🔗 *Link Principal (Curtinho p/ Bio):*\n${primaryUrl}\n\n`;
+      msg += `📈 *Link com Rastreamento p/ Instagram (Recomendado):*\n${instagramBioTrackedUrl}\n`;
+      if (site.customDomain) {
+        msg += `\n🔹 *Link Alternativo (Subdomínio):*\n${subdomainUrl}\n`;
+      }
+      msg += `\n📋 *DADOS DO SEU PLANO, VALORES & MANUTENÇÃO:*\n`;
+      msg += `• *Negócio/Nicho:* ${site.nicheCategory}\n`;
+      msg += `• *Status:* ${statusText}\n`;
+      msg += `• *1º Mês (Taxa Única de Criação):* R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} *(No 1º mês NÃO há cobrança de mensalidade!)*\n`;
+      msg += `• *Seu Plano de Manutenção (a partir do 2º mês):* ${billing.plan.name} — *R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês*\n`;
+      msg += `• *Alterações Adicionais Avulsas:* R$ 14,90 por alteração extra (Opções de planos: R$ 29,90 c/ 1 alt. | R$ 49,90 c/ 4 alt. | R$ 79,90 Ilimitado)\n`;
+      msg += `• *Próxima Data de Vencimento:* ${dueBr} *(Obs.: desativação automática a partir do 7º dia de atraso)*\n\n`;
+      msg += `📲 *COMO INSERIR O LINK NA BIO DO SEU INSTAGRAM (PASSO A PASSO):*\n`;
+      msg += `1️⃣ Abra o aplicativo do *Instagram* no celular e acesse o seu *Perfil* (toque na sua foto no canto inferior direito).\n`;
+      msg += `2️⃣ Toque no botão *"Editar perfil"* (logo abaixo da sua biografia).\n`;
+      msg += `3️⃣ Toque na opção *"Links"* e depois em *"Adicionar link externo"*.\n`;
+      msg += `4️⃣ No campo *URL*, cole o seu link oficial:\n👉 ${primaryUrl}\n`;
+      msg += `5️⃣ No campo *Título*, escreva uma chamada atrativa (Ex: *"✨ Agende seu Horário / Catálogo VIP"*).\n`;
+      msg += `6️⃣ Toque em *Concluir (✔️)* no canto superior direito para salvar!\n\n`;
+      msg += `💡 *Dica Bônus p/ Multiplicar Clientes:*\n`;
+      msg += `• Coloque também este link nos *Stories* usando a figurinha *"Link"* sempre que postar resultados ou novidades.\n`;
+      msg += `• No *WhatsApp Business*, vá em *Configurações > Ferramentas Comerciais > Perfil Comercial* e cole o link no campo *Site*.\n\n`;
+      msg += `Qualquer alteração de fotos, preços ou textos que precisar, é só me chamar por aqui! 🚀✨`;
+      return msg;
+    }
+
+    if (templateType === 'renewal_details') {
+      let msg = `👋 Olá *${site.clientName}*, tudo bem?\n\n`;
+      msg += `Segue o resumo atualizado com os detalhes de manutenção, vencimento, valores e os links oficiais do seu Biosite (*${primaryDomain}*):\n\n`;
+      msg += `💳 *RESUMO FINANCEIRO, MANUTENÇÃO & VENCIMENTO:*\n`;
+      msg += `• *Status do Biosite:* ${statusText}\n`;
+      if (billing.isFirstMonth) {
+        msg += `• *Ciclo Atual:* 1º Mês — Taxa de Criação (Isento de mensalidade no 1º mês)\n`;
+        msg += `• *Valor da Taxa de Criação:* R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      } else {
+        msg += `• *Plano de Manutenção Ativo:* ${billing.plan.name}\n`;
+        msg += `• *Taxa de Manutenção Mensal:* R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+        msg += `• *Alterações no Mês:* ${billing.updatesUsed} realizada(s) (Franquia inclusa: ${billing.includedUpdatesLabel})\n`;
+      }
+      if (billing.extraUpdatesCount > 0) {
+        msg += `• *Alterações Adicionais (${billing.extraUpdatesCount}x R$ 14,90):* + R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      }
+      msg += `• *Total da Fatura Atual:* *R$ ${billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n`;
+      msg += `• *Data de Vencimento:* ${dueBr}\n`;
+      msg += `• *Regra de Tolerância:* Desativação automática do link a partir do 7º dia de atraso\n`;
+      msg += `• *Chave PIX:* ${pixKey} (${pixName})\n\n`;
+      msg += `🔗 *LINKS ATIVOS PARA USAR NAS SUAS REDES SOCIAIS:*\n`;
+      msg += `• *Link Oficial (Instagram / TikTok / WhatsApp):*\n${primaryUrl}\n`;
+      msg += `• *Link com Rastreio de Cliques da Bio:*\n${instagramBioTrackedUrl}\n\n`;
+      msg += `📸 *COMO COLOCAR OU ATUALIZAR O LINK NA BIO DO INSTAGRAM:*\n`;
+      msg += `1. Acesse seu perfil no app do Instagram e toque em *"Editar perfil"*.\n`;
+      msg += `2. Toque em *"Links"* > *"Adicionar link externo"*.\n`;
+      msg += `3. Em *URL*, cole: ${primaryUrl}\n`;
+      msg += `4. Em *Título*, coloque: *"Agendamento & Catálogo Exclusivo"* e toque em *Salvar (✔️)*.\n\n`;
+      msg += `Assim que realizar o pagamento, envie o comprovante por aqui para mantermos seu link 100% ativo e atualizado. Muito obrigado pela parceria! 🤝🚀`;
+      return msg;
+    }
+
+    // Default: 'complete_kit'
+    let msg = `👋 Olá *${site.clientName}*! Tudo bem?\n\n`;
+    msg += `Aqui estão todos os detalhes atualizados do seu Biosite Profissional, incluindo informações de vencimento, valores de manutenção, seus links prontos para redes sociais e o tutorial de como colocar na Bio do Instagram:\n\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📌 *1. DETALHES DO BIOSITE, VALORES & VENCIMENTO*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `• *Cliente / Marca:* ${site.clientName}\n`;
+    msg += `• *Categoria:* ${site.nicheCategory}\n`;
+    msg += `• *Status da Página:* ${statusText}\n`;
+    if (billing.isFirstMonth) {
+      msg += `• *Ciclo Atual:* 1º Mês (Cobrada apenas a Taxa de Criação de *R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}* — *Não há mensalidade no 1º mês!*)\n`;
+      msg += `• *Plano de Manutenção (a partir do 2º mês):* ${billing.plan.name} (*R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês*)\n`;
+    } else {
+      msg += `• *Plano de Manutenção:* ${billing.plan.name}\n`;
+      msg += `• *Valor da Taxa de Manutenção:* *R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês*\n`;
+      msg += `• *Alterações no Mês:* ${billing.updatesUsed} utilizada(s) (Franquia: ${billing.includedUpdatesLabel})\n`;
+    }
+    if (billing.extraUpdatesCount > 0) {
+      msg += `• *Alterações Adicionais Excedentes (${billing.extraUpdatesCount}x R$ 14,90):* R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+    }
+    msg += `• *Valor Total do Ciclo Atual:* *R$ ${billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n`;
+    msg += `• *Data de Vencimento:* *${dueBr}* *(Desativação automática a partir do 7º dia de atraso)*\n`;
+    msg += `• *Chave PIX:* ${pixKey} (${pixName})\n`;
+    msg += `• *Tabela de Planos de Manutenção:* R$ 29,90 (1 alt./mês) | R$ 49,90 (4 alt./mês) | R$ 79,90 (Ilimitado) | Alteração extra avulsa: R$ 14,90\n\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `🌐 *2. SEUS LINKS PARA REDES SOCIAIS*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `✅ *Link Oficial Principal (Bio do Instagram, TikTok e WhatsApp):*\n${primaryUrl}\n\n`;
+    msg += `📊 *Link com Rastreamento de Cliques da Bio (UTM Instagram):*\n${instagramBioTrackedUrl}\n`;
+    if (site.customDomain) {
+      msg += `\n🔹 *Link Espelho (Subdomínio Direto):*\n${subdomainUrl}\n`;
+    }
+    msg += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📸 *3. COMO INSERIR O LINK NA BIO DO INSTAGRAM*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `Siga este passo a passo rápido no seu celular:\n\n`;
+    msg += `1️⃣ Abra o aplicativo do *Instagram* e entre no seu *Perfil* (ícone da sua foto no canto inferior direito).\n`;
+    msg += `2️⃣ Toque no botão *"Editar perfil"* logo abaixo da sua descrição.\n`;
+    msg += `3️⃣ Toque na opção *"Links"* e em seguida em *"Adicionar link externo"*.\n`;
+    msg += `4️⃣ No campo *URL*, cole o seu link oficial:\n👉 ${primaryUrl}\n`;
+    msg += `5️⃣ No campo *Título*, digite uma frase chamativa (ex: *"✨ Agende seu Horário / Nosso Catálogo"*).\n`;
+    msg += `6️⃣ Toque em *Concluir (✔️)* no canto superior direito para salvar!\n\n`;
+    msg += `💡 *Onde mais usar o seu link:*\n`;
+    msg += `• *Stories do Instagram:* Use a figurinha *"Link"* nos seus Stories diários para levar seguidores direto para o agendamento.\n`;
+    msg += `• *WhatsApp Business:* Vá em *Configurações > Ferramentas Comerciais > Perfil Comercial* e adicione o link no campo *Site* e na *Mensagem de Ausência*.\n`;
+    msg += `• *TikTok & Google Meu Negócio:* Cole no campo *Site/Website* do seu perfil.\n\n`;
+    msg += `Qualquer dúvida ou se precisar solicitar alterações de fotos, valores ou serviços no seu biosite, estou à disposição por aqui! 🚀✨`;
+    return msg;
+  };
+
+  const openClientWaPromptModal = (
+    site: SavedMicrosite,
+    initialTemplate: 'complete_kit' | 'onboarding_bio' | 'renewal_details' = 'complete_kit'
+  ) => {
+    setClientWaPromptSite(site);
+    setClientWaPromptTemplate(initialTemplate);
+    setClientWaPromptPhone(site.clientPhone || '');
+    setClientWaPromptText(buildClientWhatsappPromptText(site, initialTemplate));
+    setCopiedClientWaPrompt(false);
   };
 
   // AI Generator Modal State
@@ -2730,7 +3157,10 @@ export default function App() {
     clientName: '',
     clientPhone: '',
     clientEmail: '',
-    monthlyFee: '149,90',
+    maintenancePlan: 'pro_4' as MaintenancePlanId,
+    monthlyFee: '49,90',
+    creationFee: '79,90',
+    isFirstMonth: true,
     subdomain: '',
     customDomain: '',
     isLandingModel: true,
@@ -3312,11 +3742,248 @@ export default function App() {
 
   const currentEditingSite = savedSites.find(s => s.id === editingSiteId);
 
-  // Save current microsite
+  const [saveEmailError, setSaveEmailError] = useState<string | null>(null);
+  const [editingEmailSiteId, setEditingEmailSiteId] = useState<string | null>(null);
+  const [tempEmailInput, setTempEmailInput] = useState<string>('');
+
+  const isValidClientEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((email || '').trim());
+  };
+
+  const updateSiteClientEmail = (siteId: string, newEmailRaw: string) => {
+    const cleanEmail = (newEmailRaw || '').trim().toLowerCase();
+    if (!isValidClientEmail(cleanEmail)) {
+      showToast('⚠️ Informe um endereço de e-mail válido (ex: cliente@empresa.com.br)!');
+      return false;
+    }
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      return { ...s, clientEmail: cleanEmail };
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    const target = updated.find(s => s.id === siteId);
+    if (target) syncSiteToFirestore(target);
+    showToast(`📧 E-mail de "${target?.clientName}" atualizado para ${cleanEmail}!`);
+    return true;
+  };
+
+  // =========================================================================
+  // SISTEMA DE DISPARO DE E-MAIL EM MASSA PARA CLIENTES (MANUTENÇÕES E AVISOS)
+  // =========================================================================
+  const [bulkEmailModalOpen, setBulkEmailModalOpen] = useState(false);
+  const [bulkEmailCategory, setBulkEmailCategory] = useState<'scheduled_maintenance' | 'maintenance_completed' | 'new_features' | 'billing_notice' | 'custom_announcement'>('scheduled_maintenance');
+  const [bulkEmailAudience, setBulkEmailAudience] = useState<'all' | 'active' | 'overdue' | 'custom'>('all');
+  const [bulkEmailSelectedIds, setBulkEmailSelectedIds] = useState<string[]>([]);
+  const [bulkEmailSubject, setBulkEmailSubject] = useState('');
+  const [bulkEmailBody, setBulkEmailBody] = useState('');
+  const [bulkEmailSending, setBulkEmailSending] = useState(false);
+  const [copiedBulkEmails, setCopiedBulkEmails] = useState(false);
+  const [copiedBulkMessage, setCopiedBulkMessage] = useState(false);
+  const [bulkEmailHistory, setBulkEmailHistory] = useState<Array<{
+    id: string;
+    protocol: string;
+    sentAt: string;
+    subject: string;
+    category: string;
+    recipientCount: number;
+    recipientsList: string[];
+  }>>(() => {
+    try {
+      const saved = localStorage.getItem('luxebio_bulk_email_history_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const buildBulkEmailTemplate = (
+    cat: 'scheduled_maintenance' | 'maintenance_completed' | 'new_features' | 'billing_notice' | 'custom_announcement'
+  ) => {
+    const todayBr = new Date().toLocaleDateString('pt-BR');
+    const pixKey = data.saasSettings?.pixKey || 'contato@luxebio.com.br';
+    const pixName = data.saasSettings?.pixName || 'LuxeBio Studio SaaS';
+
+    if (cat === 'scheduled_maintenance') {
+      return {
+        subject: `[Comunicado Importante] Manutenção Programada de Servidores & DNS — LuxeBio Studio`,
+        body: `Olá, {{nome_cliente}}!\n\nInformamos que realizaremos uma manutenção preventiva programada em nossa infraestrutura de servidores, CDN e certificados SSL para garantir ainda mais velocidade e estabilidade ao seu Microsite ({{dominio}}).\n\n📅 DETALHES DA JANELA DE MANUTENÇÃO:\n• Data Programada: ${todayBr} (Madrugada, das 02:00h às 03:30h)\n• Impacto Estimado: Nenhum impacto nos seus dados ou agendamentos (possível oscilação de apenas alguns segundos durante a atualização de cache SSL).\n• O que será atualizado: Otimização de carregamento de imagens em alta definição, blindagem de segurança DNS e velocidade dos botões de WhatsApp.\n\nVocê não precisa realizar nenhuma ação no seu link da Bio do Instagram ou redes sociais — tudo continuará funcionando automaticamente.\n\nEm caso de dúvidas, nossa equipe de suporte está à disposição pelo WhatsApp.\n\nAtenciosamente,\nEquipe de Administração & Infraestrutura — LuxeBio Studio Pro`,
+      };
+    }
+
+    if (cat === 'maintenance_completed') {
+      return {
+        subject: `[Atualização Concluída] Seu Microsite está ainda mais rápido e seguro 🚀`,
+        body: `Olá, {{nome_cliente}}!\n\nComunicamos que a manutenção e atualização de infraestrutura nos servidores do seu Microsite ({{dominio}}) foi concluída com 100% de sucesso!\n\n✅ MELHORIAS APLICADAS NA SUA PÁGINA:\n• Carregamento instantâneo de fotos e portfólio (orientação inteligente retrato/paisagem)\n• Renovação automática do Certificado de Segurança SSL (HTTPS)\n• Otimização do redirecionamento rápido para o seu WhatsApp comercial\n\nSeu link oficial (https://{{dominio}}) está 100% online e operando em velocidade máxima para converter visitantes do seu Instagram.\n\nAtenciosamente,\nAdministração — LuxeBio Studio Pro`,
+      };
+    }
+
+    if (cat === 'new_features') {
+      return {
+        subject: `[Novidades Liberadas] Novos recursos disponíveis para o seu Microsite Profissional ✨`,
+        body: `Olá, {{nome_cliente}}!\n\nTemos ótimas notícias! Liberamos novas atualizações e ferramentas de conversão para os clientes da nossa plataforma:\n\n🚀 O QUE HÁ DE NOVO:\n1. Galeria Inteligente Adaptativa: Suas fotos em formato vertical (retrato) e horizontal (paisagem) agora se ajustam automaticamente sem cortes.\n2. Rastreamento Avançado da Bio do Instagram: Acompanhe quantos cliques vieram diretamente do seu perfil.\n3. Catálogo e Agendamento Otimizado para WhatsApp.\n\nCaso deseje atualizar fotos, preços ou textos do seu microsite ({{dominio}}), basta responder a este comunicado ou nos chamar no WhatsApp de suporte!\n\nAtenciosamente,\nEquipe LuxeBio Studio Pro`,
+      };
+    }
+
+    if (cat === 'billing_notice') {
+      return {
+        subject: `[Informativo Financeiro] Lembrete de Assinatura e Manutenção do Microsite`,
+        body: `Olá, {{nome_cliente}}!\n\nEste é um informativo administrativo referente à manutenção mensal, hospedagem premium e suporte contínuo do seu Microsite Profissional ({{dominio}}).\n\n📋 RESUMO DOS DADOS DE ASSINATURA:\n• Valor Mensal Vigente: R$ {{valor}}\n• Data de Vencimento Cadastrada: {{vencimento}}\n• Chave PIX Oficial p/ Renovação: ${pixKey} (${pixName})\n\nManter sua assinatura em dia garante que o link na Bio do seu Instagram e no Google Meu Negócio permaneça ativo 24h por dia com certificado SSL e suporte prioritário.\n\nCaso já tenha efetuado o pagamento do ciclo atual, por favor desconsidere este aviso.\n\nAtenciosamente,\nDepartamento Financeiro — LuxeBio Studio Pro`,
+      };
+    }
+
+    return {
+      subject: `[Comunicado Oficial] Aviso Importante aos Clientes — LuxeBio Studio`,
+      body: `Olá, {{nome_cliente}}!\n\nEntramos em contato para informar sobre uma atualização importante referente ao seu Microsite ({{dominio}}):\n\n[Escreva aqui os detalhes do aviso, manutenção ou comunicado relevante para todos os clientes...]\n\nQualquer dúvida ou solicitação, nossa equipe está pronta para atender você.\n\nAtenciosamente,\nAdministração — LuxeBio Studio Pro`,
+    };
+  };
+
+  const openBulkEmailModal = (
+    initialCategory: 'scheduled_maintenance' | 'maintenance_completed' | 'new_features' | 'billing_notice' | 'custom_announcement' = 'scheduled_maintenance',
+    initialAudience: 'all' | 'active' | 'overdue' | 'custom' = 'all'
+  ) => {
+    setBulkEmailCategory(initialCategory);
+    setBulkEmailAudience(initialAudience);
+    const tpl = buildBulkEmailTemplate(initialCategory);
+    setBulkEmailSubject(tpl.subject);
+    setBulkEmailBody(tpl.body);
+
+    const matchingIds = savedSites
+      .filter(s => {
+        if (!s.clientEmail || !isValidClientEmail(s.clientEmail)) return false;
+        if (initialAudience === 'active') return s.status === 'active';
+        if (initialAudience === 'overdue') return s.status === 'overdue' || getDaysUntilDue(s.dueDate) <= 3;
+        return true;
+      })
+      .map(s => s.id);
+
+    setBulkEmailSelectedIds(matchingIds);
+    setCopiedBulkEmails(false);
+    setCopiedBulkMessage(false);
+    setBulkEmailModalOpen(true);
+  };
+
+  const handleSelectBulkEmailAudience = (aud: 'all' | 'active' | 'overdue' | 'custom') => {
+    setBulkEmailAudience(aud);
+    if (aud === 'custom') return;
+    const matchingIds = savedSites
+      .filter(s => {
+        if (!s.clientEmail || !isValidClientEmail(s.clientEmail)) return false;
+        if (aud === 'active') return s.status === 'active';
+        if (aud === 'overdue') return s.status === 'overdue' || getDaysUntilDue(s.dueDate) <= 3;
+        return true;
+      })
+      .map(s => s.id);
+    setBulkEmailSelectedIds(matchingIds);
+  };
+
+  const handleSendBulkEmail = async () => {
+    const targetSites = savedSites.filter(
+      s => bulkEmailSelectedIds.includes(s.id) && s.clientEmail && isValidClientEmail(s.clientEmail)
+    );
+
+    if (targetSites.length === 0) {
+      showToast('⚠️ Selecione pelo menos 1 cliente com e-mail válido cadastrado para enviar o comunicado!');
+      return;
+    }
+
+    if (!bulkEmailSubject.trim() || !bulkEmailBody.trim()) {
+      showToast('⚠️ Preencha o assunto e a mensagem do e-mail antes de disparar!');
+      return;
+    }
+
+    setBulkEmailSending(true);
+    try {
+      const recipientsPayload = targetSites.map(s => ({
+        id: s.id,
+        clientName: s.clientName,
+        email: (s.clientEmail || '').trim(),
+        domain: s.customDomain || `${s.subdomain}.luxebio.site`,
+      }));
+
+      let protocol = `MAIL-${Date.now().toString(36).toUpperCase()}`;
+      try {
+        const res = await fetch('/api/send-bulk-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject: bulkEmailSubject.trim(),
+            body: bulkEmailBody.trim(),
+            category: bulkEmailCategory,
+            recipients: recipientsPayload,
+          }),
+        });
+        const json = await res.json();
+        if (res.ok && json?.protocol) {
+          protocol = json.protocol;
+        }
+      } catch {
+        // Fallback local protocol if offline
+      }
+
+      const newEntry = {
+        id: 'mail-' + Date.now(),
+        protocol,
+        sentAt: new Date().toLocaleString('pt-BR'),
+        subject: bulkEmailSubject.trim(),
+        category: bulkEmailCategory,
+        recipientCount: targetSites.length,
+        recipientsList: targetSites.map(s => `${s.clientName} <${s.clientEmail}>`),
+      };
+
+      setBulkEmailHistory(prev => {
+        const updated = [newEntry, ...prev].slice(0, 20);
+        try {
+          localStorage.setItem('luxebio_bulk_email_history_v1', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      showToast(`📧 E-mail em massa disparado com sucesso para ${targetSites.length} cliente(s)! Protocolo: ${protocol}`);
+    } finally {
+      setBulkEmailSending(false);
+    }
+  };
+
+  const openMailtoBulkEmail = () => {
+    const targetSites = savedSites.filter(
+      s => bulkEmailSelectedIds.includes(s.id) && s.clientEmail && isValidClientEmail(s.clientEmail)
+    );
+    if (targetSites.length === 0) {
+      showToast('⚠️ Selecione pelo menos 1 cliente com e-mail válido cadastrado!');
+      return;
+    }
+    const bccList = targetSites.map(s => (s.clientEmail || '').trim()).join(',');
+    const cleanBody = bulkEmailBody
+      .replace(/\{\{nome_cliente\}\}/g, 'Cliente Parceiro(a)')
+      .replace(/\{\{dominio\}\}/g, 'seu Microsite LuxeBio')
+      .replace(/\{\{vencimento\}\}/g, 'conforme seu plano')
+      .replace(/\{\{valor\}\}/g, (data.saasSettings?.defaultMonthlyFee || 149.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+
+    const mailtoUrl = `mailto:?bcc=${encodeURIComponent(bccList)}&subject=${encodeURIComponent(bulkEmailSubject)}&body=${encodeURIComponent(cleanBody)}`;
+    window.location.href = mailtoUrl;
+    showToast(`📬 Abrindo cliente de e-mail com ${targetSites.length} destinatário(s) em Cópia Oculta (BCC)!`);
+  };
+
+  // Save current microsite (E-mail do cliente obrigatório + Planos de Manutenção 29,90 / 49,90 / 79,90 + Taxa de Criação no 1º mês sem mensalidade)
   const handleSaveMicrosite = (asNew = false) => {
+    const cleanEmail = (saveForm.clientEmail || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      setSaveEmailError('O cadastro de um e-mail do cliente é obrigatório para notificações e comunicados.');
+      showToast('⚠️ O cadastro de um e-mail do cliente é obrigatório!');
+      return;
+    }
+    if (!isValidClientEmail(cleanEmail)) {
+      setSaveEmailError('Formato de e-mail inválido. Digite um e-mail válido (ex: contato@cliente.com.br).');
+      showToast('⚠️ Digite um endereço de e-mail válido para o cliente!');
+      return;
+    }
+    setSaveEmailError(null);
+
     const clientName = saveForm.clientName.trim() || data.profile.name || 'Novo Cliente';
     const slug = (saveForm.subdomain.trim() || clientName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'microsite';
-    const feeNum = parseFloat(saveForm.monthlyFee.replace('R$', '').replace('.', '').replace(',', '.')) || 149.90;
+    const selectedPlanObj = MAINTENANCE_PLANS[saveForm.maintenancePlan] || MAINTENANCE_PLANS.pro_4;
+    const feeNum = parseFloat(saveForm.monthlyFee.replace('R$', '').replace('.', '').replace(',', '.')) || selectedPlanObj.price;
+    const creationFeeNum = parseFloat((saveForm.creationFee || '79,90').replace('R$', '').replace('.', '').replace(',', '.')) || 79.90;
     const todayStr = new Date().toISOString().split('T')[0];
 
     if (editingSiteId && !asNew) {
@@ -3325,24 +3992,31 @@ export default function App() {
       const updated = savedSites.map(s => {
         if (s.id !== editingSiteId) return s;
 
-        const dataChanged = JSON.stringify(s.data) !== JSON.stringify(data) ||
+        const contentChanged = JSON.stringify(s.data) !== JSON.stringify(data);
+        const dataChanged = contentChanged ||
           s.clientName !== clientName ||
           s.clientPhone !== (saveForm.clientPhone || s.clientPhone) ||
-          s.clientEmail !== (saveForm.clientEmail || s.clientEmail) ||
+          s.clientEmail !== cleanEmail ||
           s.monthlyFee !== feeNum ||
+          s.maintenancePlan !== saveForm.maintenancePlan ||
+          s.creationFee !== creationFeeNum ||
+          Boolean(s.isFirstMonth) !== Boolean(saveForm.isFirstMonth) ||
           s.subdomain !== slug ||
           s.customDomain !== saveForm.customDomain.trim() ||
           Boolean(s.isLandingModel) !== Boolean(saveForm.isLandingModel);
 
         isDataModified = dataChanged;
-        const newUpdates = dataChanged ? s.updatesThisMonth + 1 : s.updatesThisMonth;
+        const newUpdates = contentChanged ? s.updatesThisMonth + 1 : s.updatesThisMonth;
 
         const updatedSite: SavedMicrosite = {
           ...s,
           clientName,
           clientPhone: saveForm.clientPhone || s.clientPhone,
-          clientEmail: saveForm.clientEmail || s.clientEmail,
+          clientEmail: cleanEmail,
           monthlyFee: feeNum,
+          maintenancePlan: saveForm.maintenancePlan,
+          creationFee: creationFeeNum,
+          isFirstMonth: Boolean(saveForm.isFirstMonth),
           subdomain: slug,
           customDomain: saveForm.customDomain.trim(),
           nicheCategory: THEMES[data.theme]?.category || s.nicheCategory,
@@ -3360,9 +4034,9 @@ export default function App() {
         syncSiteToFirestore(savedTargetSite);
       }
       if (isDataModified) {
-        showToast(`✅ Alterações do microsite "${clientName}" salvas com sucesso! (+1 edição contabilizada)`);
+        showToast(`✅ Alterações do biosite "${clientName}" salvas com sucesso!`);
       } else {
-        showToast(`ℹ️ Nenhuma alteração detectada em "${clientName}". Salvo sem alterar o contador de edições.`);
+        showToast(`ℹ️ Nenhuma alteração detectada em "${clientName}".`);
       }
     } else {
       const newId = 'site-' + Date.now();
@@ -3374,13 +4048,16 @@ export default function App() {
         id: newId,
         clientName,
         clientPhone: saveForm.clientPhone || data.profile.whatsapp,
-        clientEmail: saveForm.clientEmail,
+        clientEmail: cleanEmail,
         nicheCategory: THEMES[data.theme]?.category || 'Geral',
         createdAt: todayStr,
         dueDate: dueDateStr,
         monthlyFee: feeNum,
+        maintenancePlan: saveForm.maintenancePlan,
+        creationFee: creationFeeNum,
+        isFirstMonth: Boolean(saveForm.isFirstMonth),
         status: 'active',
-        updatesThisMonth: 1,
+        updatesThisMonth: 0, // Criação inicial no 1º mês não desconta alteração mensal
         lastUpdated: todayStr,
         domainType: saveForm.customDomain.trim() ? 'custom' : 'subdomain',
         subdomain: slug,
@@ -3398,18 +4075,29 @@ export default function App() {
       setEditingSiteId(newId);
       try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(newList)); } catch {}
       syncSiteToFirestore(newSite);
-      showToast(`🎉 Microsite "${clientName}" criado e salvo no seu Painel de Gestão! Vencimento: ${dueDateStr}`);
+      showToast(
+        newSite.isFirstMonth
+          ? `🎉 Biosite "${clientName}" cadastrado! 1º Mês: Taxa de Criação R$ ${creationFeeNum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (Isento de mensalidade no 1º mês).`
+          : `🎉 Biosite "${clientName}" cadastrado com Manutenção de R$ ${feeNum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês!`
+      );
     }
     setSaveModalOpen(false);
   };
 
   const openSaveDialog = () => {
     const currentSite = savedSites.find(s => s.id === editingSiteId);
+    const planKey: MaintenancePlanId = currentSite?.maintenancePlan || 'pro_4';
+    const planPrice = currentSite ? currentSite.monthlyFee : MAINTENANCE_PLANS[planKey].price;
+    const creationVal = currentSite?.creationFee ?? 79.90;
+    setSaveEmailError(null);
     setSaveForm({
       clientName: currentSite ? currentSite.clientName : data.profile.name,
       clientPhone: currentSite ? (currentSite.clientPhone || '') : data.profile.whatsapp,
       clientEmail: currentSite ? (currentSite.clientEmail || '') : '',
-      monthlyFee: currentSite ? currentSite.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '149,90',
+      maintenancePlan: planKey,
+      monthlyFee: planPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      creationFee: creationVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      isFirstMonth: currentSite ? Boolean(currentSite.isFirstMonth) : true,
       subdomain: currentSite ? currentSite.subdomain : data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       customDomain: currentSite ? currentSite.customDomain : '',
       isLandingModel: currentSite ? Boolean(currentSite.isLandingModel) : true,
@@ -3452,11 +4140,116 @@ export default function App() {
     showToast('✨ Modo Rascunho ativado. Nenhuma alteração afetará clientes existentes.');
   };
 
+  // Monitoramento automático contínuo: desativa qualquer microsite a partir do 7º dia de atraso
+  useEffect(() => {
+    const { normalized, changed, newlyAutoDisabled } = enforceAutoSevenDayOverdueRule(savedSites);
+    if (changed) {
+      setSavedSites(normalized);
+      try {
+        localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
+      } catch {}
+      normalized.forEach((s) => {
+        if (s.autoDisabledByOverdue) {
+          syncSiteToFirestore(s);
+        }
+      });
+      if (newlyAutoDisabled.length > 0) {
+        showToast(
+          `🛑 Desativação automática por atraso (>= ${AUTO_DISABLE_OVERDUE_DAYS} dias): ${newlyAutoDisabled.join(', ')}`
+        );
+      }
+    }
+  }, [savedSites]);
+
+  const runAutoOverdueSweepNow = () => {
+    const { normalized, changed, newlyAutoDisabled } = enforceAutoSevenDayOverdueRule(savedSites);
+    const totalAutoDisabled = normalized.filter(
+      (s) => s.status === 'disabled' && (s.autoDisabledByOverdue || Math.abs(Math.min(0, getDaysUntilDue(s.dueDate))) >= AUTO_DISABLE_OVERDUE_DAYS)
+    ).length;
+    const inGracePeriod = normalized.filter((s) => {
+      const d = getDaysUntilDue(s.dueDate);
+      return d < 0 && Math.abs(d) < AUTO_DISABLE_OVERDUE_DAYS && s.status !== 'disabled';
+    }).length;
+
+    if (changed) {
+      setSavedSites(normalized);
+      try {
+        localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
+      } catch {}
+      normalized.forEach((s) => syncSiteToFirestore(s));
+    }
+
+    if (newlyAutoDisabled.length > 0) {
+      showToast(`🛑 Varredura concluída: ${newlyAutoDisabled.length} site(s) desativado(s) automaticamente por atingir >= 7 dias de atraso!`);
+    } else {
+      showToast(
+        `✅ Varredura automática (Regra 7º Dia): ${totalAutoDisabled} desativado(s) por atraso >= 7 dias · ${inGracePeriod} em tolerância (1 a 6 dias).`
+      );
+    }
+  };
+
+  const updateSiteDueDate = (siteId: string, newDueDateStr: string) => {
+    if (!newDueDateStr || !/^\d{4}-\d{2}-\d{2}$/.test(newDueDateStr)) {
+      showToast('⚠️ Selecione uma data de vencimento válida!');
+      return;
+    }
+    const daysDiff = getDaysUntilDue(newDueDateStr);
+    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+
+    let updatedTarget: SavedMicrosite | null = null;
+    const updated = savedSites.map((s) => {
+      if (s.id !== siteId) return s;
+      // Aplica automaticamente a regra do 7º dia de atraso ao alterar o vencimento
+      const nextStatus: SavedMicrosite['status'] =
+        daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
+          ? 'disabled'
+          : daysOverdue > 0
+          ? 'overdue'
+          : 'active';
+
+      updatedTarget = {
+        ...s,
+        dueDate: newDueDateStr,
+        status: nextStatus,
+        autoDisabledByOverdue: daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS,
+        manualOverrideUntil: undefined,
+      };
+      return updatedTarget;
+    });
+
+    setSavedSites(updated);
+    try {
+      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+    } catch {}
+    if (updatedTarget) {
+      syncSiteToFirestore(updatedTarget);
+      const targetObj = updatedTarget as SavedMicrosite;
+      if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS) {
+        showToast(
+          `🛑 Vencimento de "${targetObj.clientName}" alterado (${daysOverdue} dias de atraso): Microsite DESATIVADO AUTOMATICAMENTE pela regra do 7º dia!`
+        );
+      } else if (daysOverdue > 0) {
+        showToast(
+          `🟡 Vencimento de "${targetObj.clientName}" alterado (${daysOverdue}d de atraso): Desativação automática em ${AUTO_DISABLE_OVERDUE_DAYS - daysOverdue} dia(s) (no 7º dia).`
+        );
+      } else {
+        showToast(`📅 Data de vencimento de "${targetObj.clientName}" atualizada para ${formatDueDateBr(newDueDateStr)} (Status: Ativo)!`);
+      }
+    }
+  };
+
   const toggleSiteActiveStatus = (siteId: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
     const updated = savedSites.map(s => {
       if (s.id !== siteId) return s;
       const newStatus: SavedMicrosite['status'] = s.status === 'disabled' ? 'active' : 'disabled';
-      return { ...s, status: newStatus };
+      return {
+        ...s,
+        status: newStatus,
+        autoDisabledByOverdue: newStatus === 'disabled' ? Boolean(s.autoDisabledByOverdue) : false,
+        // Se o admin reativar manualmente um site com >= 7 dias de atraso, concede exceção manual hoje
+        manualOverrideUntil: newStatus === 'active' ? todayStr : undefined,
+      };
     });
     setSavedSites(updated);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
@@ -3465,7 +4258,7 @@ export default function App() {
     if (target?.status === 'disabled') {
       showToast(`🛑 Microsite "${target.clientName}" foi DESATIVADO por atraso de pagamento!`);
     } else if (target) {
-      showToast(`🟢 Microsite "${target.clientName}" foi REATIVADO com sucesso!`);
+      showToast(`🟢 Microsite "${target.clientName}" foi REATIVADO manualmente com sucesso!`);
     }
   };
 
@@ -3475,26 +4268,107 @@ export default function App() {
       const currentDue = new Date(s.dueDate > new Date().toISOString().split('T')[0] ? s.dueDate : new Date());
       currentDue.setDate(currentDue.getDate() + 30);
       const newDueDateStr = currentDue.toISOString().split('T')[0];
-      return { ...s, dueDate: newDueDateStr, status: 'active' as const };
+      // Ao confirmar o pagamento do 1º mês (criação), o próximo ciclo passa a ser manutenção mensal normal e zera o contador de alterações do mês
+      return {
+        ...s,
+        dueDate: newDueDateStr,
+        status: 'active' as const,
+        autoDisabledByOverdue: false,
+        manualOverrideUntil: undefined,
+        isFirstMonth: false,
+        updatesThisMonth: 0,
+      };
     });
     setSavedSites(updated);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
-    showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Vencimento estendido para ${target?.dueDate}.`);
+    showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Site reativado, vencimento estendido para ${formatDueDateBr(target?.dueDate || '')} e franquia renovada.`);
   };
 
   const updateSiteMonthlyFee = (siteId: string, newFee: number) => {
     if (isNaN(newFee) || newFee < 0) return;
+    const autoPlan: MaintenancePlanId =
+      Math.abs(newFee - 29.9) < 0.5
+        ? 'basic_1'
+        : Math.abs(newFee - 49.9) < 0.5
+        ? 'pro_4'
+        : Math.abs(newFee - 79.9) < 0.5
+        ? 'vip_unlimited'
+        : (savedSites.find(s => s.id === siteId)?.maintenancePlan || 'pro_4');
+
     const updated = savedSites.map(s => {
       if (s.id !== siteId) return s;
-      return { ...s, monthlyFee: newFee, updatesThisMonth: s.updatesThisMonth + 1 };
+      return { ...s, monthlyFee: newFee, maintenancePlan: autoPlan };
     });
     setSavedSites(updated);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
-    showToast(`💰 Valor do microsite "${target?.clientName}" atualizado para R$ ${newFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês!`);
+    showToast(`💰 Taxa de manutenção de "${target?.clientName}" atualizada para R$ ${newFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês!`);
+  };
+
+  const updateSiteMaintenancePlan = (siteId: string, planId: MaintenancePlanId) => {
+    const plan = MAINTENANCE_PLANS[planId];
+    if (!plan) return;
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      return {
+        ...s,
+        maintenancePlan: planId,
+        monthlyFee: plan.price,
+      };
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    const target = updated.find(s => s.id === siteId);
+    if (target) syncSiteToFirestore(target);
+    showToast(`🛠️ Plano de "${target?.clientName}" alterado para ${plan.name} (R$ ${plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)!`);
+  };
+
+  const toggleSiteFirstMonth = (siteId: string) => {
+    let targetSite: SavedMicrosite | null = null;
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      const nextFirst = !Boolean(s.isFirstMonth);
+      targetSite = {
+        ...s,
+        isFirstMonth: nextFirst,
+        creationFee: typeof s.creationFee === 'number' ? s.creationFee : 197.00,
+      };
+      return targetSite;
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    if (targetSite) {
+      syncSiteToFirestore(targetSite);
+      if ((targetSite as SavedMicrosite).isFirstMonth) {
+        showToast(`🎨 "${(targetSite as SavedMicrosite).clientName}" marcado como 1º Mês: cobra apenas Taxa de Criação (Isento de mensalidade no 1º mês)!`);
+      } else {
+        showToast(`🔄 "${(targetSite as SavedMicrosite).clientName}" em Ciclo Mensal Normal: cobra Taxa de Manutenção (R$ ${(targetSite as SavedMicrosite).monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês).`);
+      }
+    }
+  };
+
+  const adjustSiteUpdatesCount = (siteId: string, delta: number) => {
+    let targetSite: SavedMicrosite | null = null;
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      const nextCount = Math.max(0, (s.updatesThisMonth || 0) + delta);
+      targetSite = { ...s, updatesThisMonth: nextCount };
+      return targetSite;
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    if (targetSite) {
+      syncSiteToFirestore(targetSite);
+      const billing = getSiteBillingSummary(targetSite);
+      if (billing.extraUpdatesCount > 0) {
+        showToast(`➕ Alterações no mês: ${billing.updatesUsed} (${billing.extraUpdatesCount} extra = +R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} na fatura).`);
+      } else {
+        showToast(`🔄 Alterações no mês de "${(targetSite as SavedMicrosite).clientName}": ${billing.updatesUsed} (Dentro da franquia do plano).`);
+      }
+    }
   };
 
   const deleteSavedSite = async (siteId: string) => {
@@ -3707,6 +4581,161 @@ export default function App() {
   const updateBeforeAfter = (key: string, val: unknown) => setData(p => ({ ...p, beforeAfter: { ...p.beforeAfter, [key]: val } }));
   const updateAboutMe = (key: string, val: unknown) => setData(p => ({ ...p, aboutMe: { ...p.aboutMe, [key]: val } }));
   const updateFaq = (key: string, val: unknown) => setData(p => ({ ...p, faq: { ...p.faq, [key]: val } }));
+
+  const toSafeHexColor = (colorStr?: string, fallback = '#ffffff'): string => {
+    if (!colorStr || typeof colorStr !== 'string') return fallback;
+    const trimmed = colorStr.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed;
+    if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+      const r = trimmed[1];
+      const g = trimmed[2];
+      const b = trimmed[3];
+      return `#${r}${r}${g}${g}${b}${b}`;
+    }
+    if (/^#[0-9a-fA-F]{8}$/.test(trimmed)) return trimmed.slice(0, 7);
+    return fallback;
+  };
+
+  const updateModuleColor = (
+    moduleKey: string,
+    field: 'headlineColor' | 'titleColor' | 'textColor' | 'accentColor' | 'bgColor',
+    value: string
+  ) => {
+    setData(p => ({
+      ...p,
+      moduleColors: {
+        ...(p.moduleColors || {}),
+        [moduleKey]: {
+          ...(p.moduleColors?.[moduleKey] || {}),
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const resetModuleColors = (moduleKey: string) => {
+    setData(p => {
+      const next = { ...(p.moduleColors || {}) };
+      delete next[moduleKey];
+      return { ...p, moduleColors: next };
+    });
+  };
+
+  const renderModuleColorControls = (
+    moduleKey: string,
+    moduleLabel: string,
+    fields: Array<{
+      field: 'headlineColor' | 'titleColor' | 'textColor' | 'accentColor' | 'bgColor';
+      label: string;
+      defaultColor?: string;
+      fallback?: string;
+    }>
+  ) => {
+    const modColors = data.moduleColors?.[moduleKey] || {};
+    const hasCustom = Object.values(modColors).some(v => Boolean(v));
+
+    const applyQuickContrast = (preset: 'light' | 'dark' | 'gold') => {
+      const updates: Record<string, string> = {};
+      fields.forEach(f => {
+        if (f.field === 'bgColor') return;
+        if (preset === 'light') {
+          updates[f.field] = f.field === 'textColor' ? '#e5e7eb' : '#ffffff';
+        } else if (preset === 'dark') {
+          updates[f.field] = f.field === 'textColor' ? '#374151' : '#111827';
+        } else if (preset === 'gold') {
+          updates[f.field] =
+            f.field === 'headlineColor' || f.field === 'accentColor' || f.field === 'titleColor'
+              ? '#d4af37'
+              : '#f3f4f6';
+        }
+      });
+      setData(p => ({
+        ...p,
+        moduleColors: {
+          ...(p.moduleColors || {}),
+          [moduleKey]: {
+            ...(p.moduleColors?.[moduleKey] || {}),
+            ...updates,
+          },
+        },
+      }));
+    };
+
+    return (
+      <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800/90 space-y-2 mt-2">
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+            <Palette className="w-3 h-3 text-amber-400" />
+            <span>Cores da Fonte: {moduleLabel}</span>
+          </span>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button
+              type="button"
+              onClick={() => applyQuickContrast('light')}
+              className="px-2 py-0.5 rounded bg-neutral-950 hover:bg-neutral-800 text-[9.5px] font-semibold text-white border border-neutral-700 cursor-pointer transition"
+              title="Aplicar fonte clara neste módulo (ideal para fundos escuros)"
+            >
+              ☀️ Fonte Clara
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickContrast('dark')}
+              className="px-2 py-0.5 rounded bg-neutral-200 hover:bg-white text-[9.5px] font-bold text-neutral-950 border border-neutral-300 cursor-pointer transition"
+              title="Aplicar fonte escura neste módulo (ideal para fundos claros)"
+            >
+              🌙 Fonte Escura
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickContrast('gold')}
+              className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-[9.5px] font-semibold text-amber-300 border border-amber-500/40 cursor-pointer transition"
+              title="Aplicar destaque dourado e texto claro"
+            >
+              ✨ Dourado
+            </button>
+            {hasCustom && (
+              <button
+                type="button"
+                onClick={() => resetModuleColors(moduleKey)}
+                className="px-2 py-0.5 rounded bg-red-500/15 hover:bg-red-500/25 text-[9.5px] font-semibold text-red-300 border border-red-500/30 cursor-pointer transition"
+                title="Voltar para as cores automáticas do tema"
+              >
+                ↺ Padrão
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {fields.map(f => {
+            const currentVal = modColors[f.field] || '';
+            const pickerHex = toSafeHexColor(currentVal || f.defaultColor || f.fallback, '#ffffff');
+            return (
+              <div
+                key={f.field}
+                className="flex items-center justify-between gap-1.5 bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800"
+              >
+                <span className="text-[9.5px] text-neutral-300 truncate" title={f.label}>
+                  {f.label}
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <input
+                    type="color"
+                    value={pickerHex}
+                    onChange={e => updateModuleColor(moduleKey, f.field, e.target.value)}
+                    className="w-5 h-5 rounded cursor-pointer bg-transparent border-0"
+                    title={`Alterar ${f.label}`}
+                  />
+                  <span className="text-[9px] font-mono text-neutral-400">
+                    {currentVal ? currentVal.toUpperCase() : 'Auto'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   // Quiz helper to sanitize answers and safely handle state
   const handleQuizAnswer = (questionId: string, answer: string) => {
@@ -4986,8 +6015,8 @@ export default function App() {
         tagline: 'Protocolos médicos e estéticos de Bioestimuladores, Toxina Botulínica e Rejuvenescimento com foco na naturalidade.',
         cursivePhrase: 'Realçando sua beleza única com ciência, arte e sutileza.',
         location: 'Clínica Concept · Itaim Bibi, São Paulo - SP',
-        avatarUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=600',
+        avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+3.800',
@@ -5014,7 +6043,7 @@ export default function App() {
           customText: '#ffffff',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'AGENDAR CONSULTA',
@@ -5034,11 +6063,11 @@ export default function App() {
           customBg: '#ffffff',
           customText: '#26221c',
           bgImage: '',
-          imagePosition: 'none',
-          cardImage: '',
+          imagePosition: 'left',
+          cardImage: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'framed',
           imageSize: 84,
-          ctaActionText: '',
+          ctaActionText: 'VER PROTOCOLOS',
         },
         {
           id: 'est-cta-3',
@@ -5071,7 +6100,7 @@ export default function App() {
             description: 'Estímulo profundo de firmeza, efeito lifting natural e melhora da textura da pele.',
             price: 'Sob Avaliação',
             duration: '1h00',
-            imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-e2',
@@ -5079,7 +6108,7 @@ export default function App() {
             description: 'Suavização elegante de linhas de expressão preservando a naturalidade do rosto.',
             price: 'R$ 1.290',
             duration: '45min',
-            imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-e3',
@@ -5087,7 +6116,7 @@ export default function App() {
             description: 'Definição de contorno, volume sutil e revitalização profunda dos lábios.',
             price: 'R$ 1.450',
             duration: '50min',
-            imageUrl: 'https://images.unsplash.com/photo-1512290900672-1f04d6c01f0f?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
@@ -5204,6 +6233,7 @@ export default function App() {
     const filterCss = PHOTO_FILTERS.find(f => f.id === siteData.styling.photoFilter)?.css || 'none';
 
     return ((data: typeof INITIAL_DATA, theme: typeof siteTheme) => {
+      const mc = data.moduleColors || {};
       return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5264,18 +6294,28 @@ export default function App() {
       flex-direction: column;
       min-height: 100vh;
       justify-content: ${data.styling.wrapperAlignment || 'flex-start'};
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 35px -5px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.92), 0 18px 36px -6px rgba(0, 0, 0, 0.75), 0 0 40px -5px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 2px 6px rgba(0, 0, 0, 0.65);
     }
     @media (max-width: 400px) {
       .wrapper {
         padding-left: 12px;
         padding-right: 12px;
       }
+      .hero, .announcement {
+        width: calc(100% + 24px);
+        margin-left: -12px;
+        margin-right: -12px;
+      }
     }
     @media (max-width: 340px) {
       .wrapper {
         padding-left: 8px;
         padding-right: 8px;
+      }
+      .hero, .announcement {
+        width: calc(100% + 16px);
+        margin-left: -8px;
+        margin-right: -8px;
       }
     }
     ${data.styling.spotlightGlow ? `
@@ -5292,24 +6332,30 @@ export default function App() {
       z-index: 1;
     }` : ''}
     .announcement {
-      background: ${theme.accent};
-      color: #000;
+      background: ${mc.announcement?.bgColor || theme.accent};
+      color: ${mc.announcement?.textColor || '#000'};
       font-size: 11px;
       font-weight: 700;
       text-align: center;
       padding: 8px 12px;
-      border-radius: ${data.styling.borderRadius}px;
-      margin: 0 0 14px;
+      border-radius: 0;
+      width: calc(100% + 32px);
+      margin: 0 -16px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       text-decoration: none;
+      position: relative;
+      z-index: 3;
     }
     .hero {
       position: relative;
-      border-radius: ${data.styling.borderRadius + 8}px;
+      border-radius: 0;
       overflow: hidden;
+      width: calc(100% + 32px);
+      margin-left: -16px;
+      margin-right: -16px;
       height: ${data.styling.photoHeight || 380}px;
       min-height: ${data.styling.photoHeight || 380}px;
       flex-shrink: 0;
@@ -5342,17 +6388,18 @@ export default function App() {
       letter-spacing: 1.5px;
       margin-top: 4px;
       text-transform: uppercase;
+      color: ${mc.hero?.titleColor || theme.textMain};
     }
     .badge-sub {
       font-size: 10px;
       letter-spacing: 2.5px;
-      color: ${theme.accent};
+      color: ${mc.hero?.accentColor || theme.accent};
       font-weight: 700;
       text-transform: uppercase;
     }
     .tagline {
       font-size: 12.5px;
-      color: ${theme.textMuted};
+      color: ${mc.hero?.textColor || theme.textMuted};
       margin-top: 6px;
       line-height: 1.4;
     }
@@ -5381,13 +6428,13 @@ export default function App() {
     .cursive-banner {
       font-family: '${theme.fontScript}', cursive, serif;
       font-size: 26px;
-      color: ${theme.textMuted};
+      color: ${mc.hero?.headlineColor || theme.textMuted};
       text-align: center;
       margin: 12px 0 20px;
     }
     .cta-card {
-      background: ${theme.cardBg};
-      color: ${theme.cardText};
+      background: ${mc.actionCards?.bgColor || theme.cardBg};
+      color: ${mc.actionCards?.titleColor || theme.cardText};
       border: 1px solid ${data.styling.metallicBorders ? theme.cardBorder : 'transparent'};
       border-radius: ${data.styling.borderRadius}px;
       padding: 16px 18px;
@@ -5399,15 +6446,39 @@ export default function App() {
       box-shadow: ${theme.pillShadow};
       position: relative;
       overflow: hidden;
-      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: transform;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+      will-change: transform, box-shadow;
+      animation: ctaIdlePulse 3s ease-in-out infinite;
+    }
+    .cta-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, ${theme.accent} 0%, rgba(255, 255, 255, 0.14) 50%, color-mix(in srgb, ${theme.accent} 40%, transparent) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.72;
+      transition: opacity 0.35s ease;
+      z-index: 2;
+    }
+    .cta-card:hover::before {
+      opacity: 1;
     }
     .cta-card:hover {
       animation-play-state: paused;
-      transform: scale(1.03) translateY(-2px);
+      transform: scale(1.035) translateY(-3px) !important;
+      box-shadow: 0 18px 38px -6px rgba(0, 0, 0, 0.58), 0 8px 18px -4px rgba(0, 0, 0, 0.36), 0 0 24px 2px color-mix(in srgb, ${theme.accent} 22%, transparent), 0 0 0 1px rgba(255, 255, 255, 0.16);
     }
     .cta-card:active {
-      transform: scale(0.985);
+      animation-play-state: paused;
+      transform: scale(0.98) translateY(0px) !important;
+      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.42);
+      transition-duration: 0.1s;
     }
     .cta-badge {
       position: absolute;
@@ -5421,6 +6492,10 @@ export default function App() {
       background: ${theme.accent};
       color: #000;
       text-transform: uppercase;
+    }
+    @keyframes ctaIdlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.015); }
     }
     @keyframes ctaPulseGlow {
       0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 ${theme.glowColor}, ${theme.pillShadow}; }
@@ -5469,14 +6544,14 @@ export default function App() {
       font-weight: bold;
     }
     .cta-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-    .cta-sub { font-size: 11px; color: ${theme.cardSubtext}; margin-top: 3px; }
+    .cta-sub { font-size: 11px; color: ${mc.actionCards?.textColor || theme.cardSubtext}; margin-top: 3px; }
     .metrics-bar {
       display: flex;
       justify-content: space-around;
       align-items: center;
       gap: 8px;
       border: 1px solid ${theme.socialBorder};
-      background: ${theme.socialBg};
+      background: ${mc.metrics?.bgColor || theme.socialBg};
       border-radius: ${data.styling.borderRadius}px;
       padding: 14px 8px;
       text-align: center;
@@ -5489,18 +6564,18 @@ export default function App() {
     .metric-val {
       font-size: 18px;
       font-weight: 700;
-      color: ${theme.accent};
+      color: ${mc.metrics?.titleColor || theme.accent};
       font-family: '${data.styling.fontFamily}', serif;
     }
     .metric-lbl {
       font-size: 8.5px;
-      color: ${theme.textMuted};
+      color: ${mc.metrics?.textColor || theme.textMuted};
       letter-spacing: 1px;
       margin-top: 2px;
     }
     .process-card {
       border: 1px solid ${theme.socialBorder};
-      background: ${theme.socialBg};
+      background: ${mc.processSteps?.bgColor || theme.socialBg};
       border-radius: ${data.styling.borderRadius}px;
       padding: 14px 16px;
       margin-bottom: 10px;
@@ -5511,7 +6586,7 @@ export default function App() {
     .process-num {
       font-size: 26px;
       font-weight: bold;
-      color: ${theme.accent};
+      color: ${mc.processSteps?.headlineColor || theme.accent};
       font-family: '${data.styling.fontFamily}', serif;
       line-height: 1;
     }
@@ -5527,21 +6602,21 @@ export default function App() {
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-bottom: 6px;
-      background: ${theme.accent}20;
-      color: ${theme.accent};
-      border: 1px solid ${theme.accent}40;
+      background: ${mc.studentGrid?.titleColor ? `${mc.studentGrid.titleColor}20` : `${theme.accent}20`};
+      color: ${mc.studentGrid?.titleColor || theme.accent};
+      border: 1px solid ${mc.studentGrid?.titleColor ? `${mc.studentGrid.titleColor}40` : `${theme.accent}40`};
     }
     .gallery-title {
       font-size: 14px;
       text-transform: uppercase;
-      color: ${theme.accent};
+      color: ${mc.studentGrid?.titleColor || theme.accent};
       margin-bottom: 3px;
       font-family: '${data.styling.fontFamily}', serif;
       letter-spacing: 1px;
     }
     .gallery-sub {
       font-size: 11px;
-      color: ${theme.textMuted};
+      color: ${mc.studentGrid?.textColor || theme.textMuted};
       margin-bottom: 12px;
       line-height: 1.4;
     }
@@ -5656,7 +6731,7 @@ export default function App() {
       position: relative;
       border-radius: ${Math.round(data.styling.borderRadius / 1.3)}px;
       border: 1px solid ${theme.socialBorder};
-      background: ${data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : theme.socialBg};
+      background: ${mc.services?.bgColor || (data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : theme.socialBg)};
       overflow: hidden;
       transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform;
@@ -5692,10 +6767,33 @@ export default function App() {
     .service-cta:hover { transform: scale(1.05); }
     .footer {
       text-align: center;
-      padding-top: 24px;
+      padding: 24px 12px 16px;
       font-size: 11px;
-      color: ${theme.textMuted};
-      opacity: 0.8;
+      color: ${mc.footer?.textColor || theme.textMuted};
+      opacity: 0.92;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .footer-creator-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-decoration: none;
+      color: ${mc.footer?.accentColor || theme.accent};
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid ${theme.cardBorder};
+      transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    }
+    .footer-creator-link:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     }
     .whatsapp-float {
       position: fixed;
@@ -5761,9 +6859,33 @@ export default function App() {
       <a href="${options?.disableLinks ? 'javascript:void(0)' : '#booking'}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ''} title="Agenda">${CALENDAR_SVG_STRING}</a>
     </div>
 
+    ${data.highConversion?.enabled && data.highConversion?.urgencyTimer?.enabled ? `
+    <div style="margin: 8px 0 14px; padding: 12px 14px; border-radius: ${data.styling.borderRadius}px; background: ${mc.urgencyTimer?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; text-align: center;">
+      <div style="font-size: 10px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: ${mc.urgencyTimer?.titleColor || theme.accent};">
+        ${data.highConversion.urgencyTimer.headline}
+      </div>
+      <div style="font-size: 10px; margin-top: 3px; color: ${mc.urgencyTimer?.textColor || theme.textMuted};">
+        ${data.highConversion.urgencyTimer.subheadline}
+      </div>
+      <div style="font-size: 14px; font-weight: 900; font-family: monospace; margin-top: 4px; letter-spacing: 2px; color: ${mc.urgencyTimer?.titleColor || theme.accent};">
+        ${String(data.highConversion.urgencyTimer.minutes || 14).padStart(2, '0')}:${String(data.highConversion.urgencyTimer.seconds || 52).padStart(2, '0')} <span style="font-size: 9px; font-family: sans-serif; font-weight: normal; color: ${mc.urgencyTimer?.textColor || theme.textMuted};">(Restante)</span>
+      </div>
+    </div>` : ''}
+
     ${data.profile.cursivePhrase ? `<div class="cursive-banner">${data.profile.cursivePhrase}</div>` : ''}
 
     <div class="actions">
+      ${data.qualifierFunnel?.enabled ? `
+      <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá ${data.profile.name}! Quero realizar a Triagem Estratégica / Avaliação VIP.`)}`}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} class="cta-card ${data.qualifierFunnel.animation && data.qualifierFunnel.animation !== 'none' ? `anim-${data.qualifierFunnel.animation}` : ''}" style="background: ${mc.qualifierFunnel?.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`}; color: ${mc.qualifierFunnel?.titleColor || '#000000'}; border-color: ${theme.accent};">
+        <div class="cta-left">
+          <div class="cta-icon" style="background: rgba(0,0,0,0.14); color: ${mc.qualifierFunnel?.titleColor || '#000000'};">⚡</div>
+          <div>
+            <div class="cta-title" style="color: ${mc.qualifierFunnel?.titleColor || '#000000'};">${data.qualifierFunnel.triggerButtonLabel}</div>
+            <div class="cta-sub" style="color: ${mc.qualifierFunnel?.textColor || 'rgba(0,0,0,0.78)'};">${data.qualifierFunnel.triggerButtonSubtitle}</div>
+          </div>
+        </div>
+        <div style="color: ${mc.qualifierFunnel?.titleColor || '#000000'}; font-size: 16px;">›</div>
+      </a>` : ''}
       ${data.actionCards.map(c => {
         const animClass = c.animation && c.animation !== 'none' ? `anim-${c.animation}` : '';
         const rawHref = c.linkType === 'whatsapp'
@@ -5778,11 +6900,23 @@ export default function App() {
         } else if (c.variant === 'outline') {
           inlineStyle = `background: rgba(255,255,255,0.04); color: ${theme.textMain}; border: 1.5px solid ${theme.accent};`;
         } else if (c.variant === 'custom') {
-          inlineStyle = `background: ${c.customBg || theme.cardBg}; color: ${c.customText || theme.cardText};`;
+          inlineStyle = `background: ${c.customBg || mc.actionCards?.bgColor || theme.cardBg}; color: ${c.customText || mc.actionCards?.titleColor || theme.cardText};`;
+        } else if (mc.actionCards?.bgColor) {
+          inlineStyle = `background: ${mc.actionCards.bgColor};`;
         }
         if (c.bgImage) {
           inlineStyle += `background-image: linear-gradient(90deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 100%), url('${c.bgImage}'); background-size: cover; background-position: center; color: #ffffff;`;
         }
+        const resolvedTitleColor =
+          c.customTitleColor ||
+          (c.variant === 'custom' ? c.customText : '') ||
+          mc.actionCards?.titleColor ||
+          (c.bgImage ? '#ffffff' : c.variant === 'accent' ? '#000000' : c.variant === 'outline' ? theme.textMain : theme.cardText);
+        const resolvedSubColor =
+          c.customSubtitleColor ||
+          mc.actionCards?.textColor ||
+          (c.bgImage ? 'rgba(255,255,255,0.85)' : c.variant === 'accent' ? 'rgba(0,0,0,0.78)' : c.variant === 'outline' ? theme.textMuted : c.variant === 'custom' && c.customText ? `${c.customText}cc` : theme.cardSubtext);
+
         const hasSideImg = c.imagePosition && c.imagePosition !== 'none' && c.cardImage;
         const isImgLeft = c.imagePosition === 'left';
         const imgSize = c.imageSize || 88;
@@ -5811,8 +6945,8 @@ export default function App() {
       <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle} ${c.imageFitStyle === 'popout' ? 'overflow: visible; margin-top: 18px;' : ''} flex-direction: ${isImgLeft ? 'row-reverse' : 'row'};" onclick="${cardOnclick}">
         ${c.badgeText ? `<span class="cta-badge">${c.badgeText}</span>` : ''}
         <div style="flex: 1; text-align: ${isImgLeft ? 'right' : 'left'}; padding-${isImgLeft ? 'left' : 'right'}: 12px;">
-          <div class="cta-title" style="font-size: 13.5px;">${c.title}</div>
-          <div class="cta-sub" style="margin-top: 4px; ${c.bgImage || c.variant === 'accent' || c.variant === 'custom' ? 'color: currentColor; opacity: 0.85;' : ''}">${c.subtitle}</div>
+          <div class="cta-title" style="font-size: 13.5px; color: ${resolvedTitleColor};">${c.title}</div>
+          <div class="cta-sub" style="margin-top: 4px; color: ${resolvedSubColor};">${c.subtitle}</div>
           ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: rgba(0,0,0,0.82); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
         </div>
         <img src="${c.cardImage}" alt="${c.title}" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" />
@@ -5824,12 +6958,12 @@ export default function App() {
         <div class="cta-left">
           <div class="cta-icon">${iconHtml}</div>
           <div>
-            <div class="cta-title">${c.title}</div>
-            <div class="cta-sub" style="${c.variant === 'accent' || c.variant === 'custom' ? 'opacity: 0.82; color: currentColor;' : ''}">${c.subtitle}</div>
+            <div class="cta-title" style="color: ${resolvedTitleColor};">${c.title}</div>
+            <div class="cta-sub" style="color: ${resolvedSubColor};">${c.subtitle}</div>
             ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 3px 8px; border-radius: 5px; background: rgba(0,0,0,0.8); color: #fff; font-size: 9px; font-weight: 800; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
           </div>
         </div>
-        <div style="color: currentColor; opacity: 0.7; font-size: 16px;">›</div>
+        <div style="color: ${resolvedTitleColor}; opacity: 0.7; font-size: 16px;">›</div>
       </a>`;
       }).join('')}
     </div>
@@ -5852,15 +6986,15 @@ export default function App() {
 
     ${data.processSteps.enabled ? `
     <div style="margin: 24px 0;">
-      <h3 style="font-size: 14px; text-transform: uppercase; color: ${theme.accent}; margin-bottom: 12px;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.processSteps?.headlineColor || theme.accent}; margin-bottom: 12px;">
         ${data.processSteps.headline}
       </h3>
       ${data.processSteps.steps.map(st => `
       <div class="process-card">
         <div class="process-num">${st.number}</div>
         <div>
-          <div style="font-size: 12px; font-weight: bold;">${st.title}</div>
-          <div style="font-size: 11px; color: ${theme.textMuted}; margin-top: 3px;">${st.description}</div>
+          <div style="font-size: 12px; font-weight: bold; color: ${mc.processSteps?.titleColor || theme.textMain};">${st.title}</div>
+          <div style="font-size: 11px; color: ${mc.processSteps?.textColor || theme.textMuted}; margin-top: 3px;">${st.description}</div>
         </div>
       </div>`).join('')}
     </div>` : ''}
@@ -5873,7 +7007,7 @@ export default function App() {
           <h3 class="gallery-title">${data.studentGrid.headline}</h3>
           ${data.studentGrid.subtitle ? `<p class="gallery-sub">${data.studentGrid.subtitle}</p>` : ''}
         </div>
-        <span style="font-size:9px; color:${theme.textMuted}; font-family:monospace; background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:6px; border:1px solid ${theme.socialBorder};">
+        <span style="font-size:9px; color:${mc.studentGrid?.textColor || theme.textMuted}; font-family:monospace; background:${theme.socialBg}; padding:2px 8px; border-radius:6px; border:1px solid ${theme.socialBorder};">
           ${data.studentGrid.photos.length} fotos
         </span>
       </div>
@@ -5899,28 +7033,46 @@ export default function App() {
       </div>
     </div>` : ''}
 
-    ${data.locationCard.enabled ? `
-    <div class="cta-card" style="margin-top: 16px;">
-      <div class="cta-left">
-        <div class="cta-icon">📍</div>
-        <div>
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <div class="cta-title">${data.locationCard.headline}</div>
-            ${data.locationCard.showHours !== false && data.locationCard.openStatus ? `<span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:rgba(16,185,129,0.18); color:#10b981; border:1px solid rgba(16,185,129,0.35);">● ${data.locationCard.openStatus}</span>` : ''}
-          </div>
-          <div class="cta-sub">${data.locationCard.address}</div>
-          ${data.locationCard.showHours !== false && data.locationCard.hours ? `<div style="font-size:10px; margin-top:3px; opacity:0.85; font-weight:600;">🕒 ${data.locationCard.hours}</div>` : ''}
+    ${data.beforeAfter?.enabled ? `
+    <div style="margin: 24px 0;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.beforeAfter?.titleColor || theme.accent}; margin-bottom: 6px; font-family: '${data.styling.fontFamily}', serif;">
+        ${data.beforeAfter.headline}
+      </h3>
+      ${data.beforeAfter.subtitle ? `<p style="font-size: 11px; color: ${mc.beforeAfter?.textColor || theme.textMuted}; margin-bottom: 10px;">${data.beforeAfter.subtitle}</p>` : ''}
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
+          <img src="${data.beforeAfter.beforeUrl}" alt="Antes" style="width:100%; height:100%; object-fit:cover; display:block;" />
+          <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Antes</span>
+        </div>
+        <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
+          <img src="${data.beforeAfter.afterUrl}" alt="Depois" style="width:100%; height:100%; object-fit:cover; display:block;" />
+          <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Depois</span>
         </div>
       </div>
-      <a href="${options?.disableLinks ? 'javascript:void(0)' : data.locationCard.mapsUrl}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank"'} style="font-size: 10px; font-weight: bold; color: ${theme.accent}; text-decoration: underline;">Mapa</a>
+    </div>` : ''}
+
+    ${data.locationCard.enabled ? `
+    <div class="cta-card" style="margin-top: 16px; background: ${mc.locationCard?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; color: ${mc.locationCard?.titleColor || theme.textMain};">
+      <div class="cta-left">
+        <div class="cta-icon" style="color: ${mc.locationCard?.accentColor || theme.iconColor};">📍</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <div class="cta-title" style="color: ${mc.locationCard?.titleColor || theme.textMain};">${data.locationCard.headline}</div>
+            ${data.locationCard.showHours !== false && data.locationCard.openStatus ? `<span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:rgba(16,185,129,0.18); color:#10b981; border:1px solid rgba(16,185,129,0.35);">● ${data.locationCard.openStatus}</span>` : ''}
+          </div>
+          <div class="cta-sub" style="color: ${mc.locationCard?.textColor || theme.textMuted};">${data.locationCard.address}</div>
+          ${data.locationCard.showHours !== false && data.locationCard.hours ? `<div style="font-size:10px; margin-top:3px; opacity:0.9; font-weight:600; color: ${mc.locationCard?.textColor || theme.textMain};">🕒 ${data.locationCard.hours}</div>` : ''}
+        </div>
+      </div>
+      <a href="${options?.disableLinks ? 'javascript:void(0)' : data.locationCard.mapsUrl}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank"'} style="font-size: 10px; font-weight: bold; color: ${mc.locationCard?.accentColor || theme.accent}; text-decoration: underline;">Mapa</a>
     </div>` : ''}
 
     ${data.services?.enabled && data.services.items?.length > 0 ? `
     <div class="services-container" id="catalogo">
       <div style="margin-bottom: 12px;">
-        ${data.services.badge ? `<span class="gallery-badge">${data.services.badge}</span>` : ''}
-        <h3 class="gallery-title">${data.services.headline}</h3>
-        ${data.services.subtitle ? `<p class="gallery-sub">${data.services.subtitle}</p>` : ''}
+        ${data.services.badge ? `<span class="gallery-badge" style="color:${mc.services?.headlineColor || theme.accent}; border-color:${mc.services?.headlineColor ? `${mc.services.headlineColor}40` : `${theme.accent}40`}; background:${mc.services?.headlineColor ? `${mc.services.headlineColor}20` : `${theme.accent}20`};">${data.services.badge}</span>` : ''}
+        <h3 class="gallery-title" style="color:${mc.services?.headlineColor || theme.accent};">${data.services.headline}</h3>
+        ${data.services.subtitle ? `<p class="gallery-sub" style="color:${mc.services?.textColor || theme.textMuted};">${data.services.subtitle}</p>` : ''}
       </div>
       <div class="${data.services.layout === 'grid2' ? 'services-grid-2' : ''}" style="${data.services.layout !== 'grid2' ? 'display:flex; flex-direction:column; gap:10px;' : ''}">
         ${data.services.items.map(srv => {
@@ -5932,6 +7084,9 @@ export default function App() {
           const srvTargetAttr = options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"';
           const srvOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
           const btnText = srv.ctaLabel || 'Reservar';
+          const srvTitleColor = mc.services?.titleColor || theme.textMain;
+          const srvDescColor = mc.services?.textColor || theme.textMuted;
+          const srvPriceColor = mc.services?.headlineColor || theme.accent;
 
           if (data.services.layout === 'featured') {
             return `
@@ -5942,12 +7097,12 @@ export default function App() {
                 ${srv.duration ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:3px 8px; border-radius:999px;">⏱ ${srv.duration}</span>` : ''}
               </div>
               <div style="padding:12px 14px;">
-                <div style="font-size:13px; font-weight:700; color:${theme.textMain};">${srv.name}</div>
-                <div style="font-size:11px; color:${theme.textMuted}; margin-top:4px; line-height:1.4;">${srv.description}</div>
+                <div style="font-size:13px; font-weight:700; color:${srvTitleColor};">${srv.name}</div>
+                <div style="font-size:11px; color:${srvDescColor}; margin-top:4px; line-height:1.4;">${srv.description}</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid ${theme.socialBorder};">
                   <div>
-                    ${srv.oldPrice ? `<span style="font-size:10px; text-decoration:line-through; color:${theme.textMuted}; opacity:0.7; display:block;">${srv.oldPrice}</span>` : ''}
-                    <span style="font-size:14px; font-weight:800; color:${theme.accent};">${srv.price}</span>
+                    ${srv.oldPrice ? `<span style="font-size:10px; text-decoration:line-through; color:${srvDescColor}; opacity:0.7; display:block;">${srv.oldPrice}</span>` : ''}
+                    <span style="font-size:14px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
                   </div>
                   <a href="${srvHref}" ${srvTargetAttr} class="service-cta" onclick="${srvOnclick}">${btnText} ›</a>
                 </div>
@@ -5964,15 +7119,15 @@ export default function App() {
                   ${srv.badge ? `<span class="service-badge" style="position:absolute; top:6px; left:6px; font-size:7px;">${srv.badge}</span>` : ''}
                 </div>
                 <div style="padding:10px;">
-                  <div style="font-size:11.5px; font-weight:700; line-height:1.25;">${srv.name}</div>
-                  ${srv.duration ? `<div style="font-size:9px; color:${theme.textMuted}; margin-top:3px;">⏱ ${srv.duration}</div>` : ''}
-                  <div style="font-size:10px; color:${theme.textMuted}; margin-top:4px; line-height:1.35;">${srv.description}</div>
+                  <div style="font-size:11.5px; font-weight:700; line-height:1.25; color:${srvTitleColor};">${srv.name}</div>
+                  ${srv.duration ? `<div style="font-size:9px; color:${srvDescColor}; margin-top:3px;">⏱ ${srv.duration}</div>` : ''}
+                  <div style="font-size:10px; color:${srvDescColor}; margin-top:4px; line-height:1.35;">${srv.description}</div>
                 </div>
               </div>
               <div style="padding:0 10px 10px 10px;">
                 <div style="margin-bottom:6px;">
-                  ${srv.oldPrice ? `<span style="font-size:9px; text-decoration:line-through; color:${theme.textMuted}; margin-right:4px;">${srv.oldPrice}</span>` : ''}
-                  <span style="font-size:12.5px; font-weight:800; color:${theme.accent};">${srv.price}</span>
+                  ${srv.oldPrice ? `<span style="font-size:9px; text-decoration:line-through; color:${srvDescColor}; margin-right:4px;">${srv.oldPrice}</span>` : ''}
+                  <span style="font-size:12.5px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
                 </div>
                 <a href="${srvHref}" ${srvTargetAttr} class="service-cta" style="width:100%;" onclick="${srvOnclick}">${btnText}</a>
               </div>
@@ -5987,14 +7142,14 @@ export default function App() {
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 ${srv.badge ? `<span class="service-badge">${srv.badge}</span>` : ''}
-                ${srv.duration ? `<span style="font-size:9px; color:${theme.textMuted};">⏱ ${srv.duration}</span>` : ''}
+                ${srv.duration ? `<span style="font-size:9px; color:${srvDescColor};">⏱ ${srv.duration}</span>` : ''}
               </div>
-              <div style="font-size:12.5px; font-weight:700; margin-top:2px;">${srv.name}</div>
-              <div style="font-size:10.5px; color:${theme.textMuted}; margin-top:2px; line-height:1.35;">${srv.description}</div>
+              <div style="font-size:12.5px; font-weight:700; margin-top:2px; color:${srvTitleColor};">${srv.name}</div>
+              <div style="font-size:10.5px; color:${srvDescColor}; margin-top:2px; line-height:1.35;">${srv.description}</div>
               <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
                 <div>
-                  ${srv.oldPrice ? `<span style="font-size:9.5px; text-decoration:line-through; color:${theme.textMuted}; margin-right:5px;">${srv.oldPrice}</span>` : ''}
-                  <span style="font-size:13px; font-weight:800; color:${theme.accent};">${srv.price}</span>
+                  ${srv.oldPrice ? `<span style="font-size:9.5px; text-decoration:line-through; color:${srvDescColor}; margin-right:5px;">${srv.oldPrice}</span>` : ''}
+                  <span style="font-size:13px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
                 </div>
                 <a href="${srvHref}" ${srvTargetAttr} class="service-cta" onclick="${srvOnclick}">${btnText}</a>
               </div>
@@ -6004,8 +7159,66 @@ export default function App() {
       </div>
     </div>` : ''}
 
+    ${data.testimonials?.enabled && data.testimonials.items?.length > 0 ? `
+    <div style="margin: 24px 0;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.testimonials?.headlineColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
+        ${data.testimonials.headline}
+      </h3>
+      <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;">
+        ${data.testimonials.items.map(t => `
+        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: ${mc.testimonials?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder};">
+          <div style="color: #fbbf24; font-size: 12px; margin-bottom: 6px;">${'★'.repeat(t.rating || 5)}</div>
+          <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: ${mc.testimonials?.textColor || theme.textMuted};">"${t.text}"</p>
+          <div style="font-size: 10.5px; font-weight: 700; margin-top: 8px; color: ${mc.testimonials?.titleColor || theme.textMain};">
+            ${t.clientName} <span style="opacity: 0.65; font-weight: 400;">· ${t.city}</span>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${data.aboutMe?.enabled ? `
+    <div style="margin: 24px 0;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.aboutMe?.titleColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
+        ${data.aboutMe.headline}
+      </h3>
+      ${data.profile.aboutPhotoUrl ? `
+      <div style="width: 100%; height: 170px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
+        <img src="${data.profile.aboutPhotoUrl}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" />
+      </div>` : ''}
+      <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
+        ${data.aboutMe.paragraph}
+      </p>
+      ${data.aboutMe.closingPhrase ? `
+      <div style="text-align: center; font-size: 22px; font-style: italic; margin-top: 8px; font-family: '${theme.fontScript}', cursive, serif; color: ${mc.aboutMe?.titleColor || theme.accent};">
+        ${data.aboutMe.closingPhrase}
+      </div>` : ''}
+    </div>` : ''}
+
+    ${data.faq?.enabled && data.faq.items?.length > 0 ? `
+    <div style="margin: 24px 0;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.faq?.headlineColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
+        ${data.faq.headline}
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        ${data.faq.items.map(item => `
+        <details style="border-radius: 14px; padding: 12px 14px; background: ${mc.faq?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder};">
+          <summary style="font-size: 12px; font-weight: 600; cursor: pointer; color: ${mc.faq?.titleColor || theme.textMain};">${item.question}</summary>
+          <p style="font-size: 11px; line-height: 1.45; margin-top: 8px; color: ${mc.faq?.textColor || theme.textMuted};">${item.answer}</p>
+        </details>`).join('')}
+      </div>
+    </div>` : ''}
+
     <div class="footer">
-      © ${new Date().getFullYear()} ${data.profile.name}. Todos os direitos reservados.
+      <div>© ${new Date().getFullYear()} ${data.profile.name}. Todos os direitos reservados.</div>
+      ${(() => {
+        const creatorInfo = resolveCreatorFooterInfo(data);
+        const creatorHref = options?.disableLinks ? 'javascript:void(0)' : creatorInfo.href;
+        const creatorTarget = options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"';
+        return `<a href="${creatorHref}" ${creatorTarget} class="footer-creator-link" title="Criado por ${creatorInfo.brandName}">
+          <span>✨ Criado por <strong>${creatorInfo.brandName}</strong>${creatorInfo.ctaLabel ? ` · ${creatorInfo.ctaLabel}` : ''}</span>
+          <span style="font-size:11px; line-height:1;">↗</span>
+        </a>`;
+      })()}
     </div>
   </div>
 
@@ -6793,9 +8006,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Seg a Sex · 08:30 às 19:30',
         openStatus: 'CLÍNICA ABERTA · HORA MARCADA',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1512290900672-1f04d6c01f0f?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'es-s1', number: '01', title: 'Consulta de Avaliação 3D', description: 'Diagnóstico anatômico da pele, pontos de sustentação e colágeno.' },
@@ -6960,6 +8176,16 @@ COMO PUBLICAR NO SERVIDOR:
 
   // Ensure all 8 real niche microsites are automatically present in savedSites and editable in the Painel de Gestão
   useEffect(() => {
+    const estheticsPreset = RAW_READY_MADE_MODELS.find((m) => m.id === 'esthetics');
+    if (
+      estheticsPreset &&
+      data?.profile?.name?.toUpperCase().includes('FERNANDA MARCOLIN') &&
+      (data.profile.avatarUrl?.includes('1594824476967') ||
+        data.studentGrid?.photos?.some((p) => p.includes('1512290900672')))
+    ) {
+      setData(JSON.parse(JSON.stringify(estheticsPreset.realSiteData)));
+    }
+
     setSavedSites((prev) => {
       const existingIds = new Set(prev.map((s) => s.id));
       const todayStr = new Date().toISOString().split('T')[0];
@@ -6972,6 +8198,24 @@ COMO PUBLICAR NO SERVIDOR:
         if (s.id === 'site-1' && s.isLandingModel === undefined) {
           changed = true;
           return { ...s, isLandingModel: true };
+        }
+        if (
+          estheticsPreset &&
+          (s.id === 'real-niche-esthetics' ||
+            s.subdomain === 'drafernanda' ||
+            s.clientName?.toUpperCase().includes('FERNANDA MARCOLIN'))
+        ) {
+          const hasOldPhotos =
+            s.data?.profile?.avatarUrl?.includes('1594824476967') ||
+            s.data?.studentGrid?.photos?.some((p: string) => p.includes('1512290900672')) ||
+            (s.data?.studentGrid?.photos?.length || 0) < 6;
+          if (hasOldPhotos) {
+            changed = true;
+            return {
+              ...s,
+              data: JSON.parse(JSON.stringify(estheticsPreset.realSiteData)),
+            };
+          }
         }
         return s;
       });
@@ -7030,29 +8274,34 @@ COMO PUBLICAR NO SERVIDOR:
       const matchedPreset = RAW_READY_MADE_MODELS.find(
         (rm) => `real-niche-${rm.id}` === site.id || rm.subdomain === site.subdomain
       );
+      const isStaleEsthetics =
+        matchedPreset?.id === 'esthetics' &&
+        (site.data?.profile?.avatarUrl?.includes('1594824476967') ||
+          site.data?.studentGrid?.photos?.some((p: string) => p.includes('1512290900672')));
+      const resolvedSiteData = isStaleEsthetics && matchedPreset ? matchedPreset.realSiteData : site.data;
       return {
         id: site.id,
         code: matchedPreset?.code || `MOD-0${idx + 1}`,
         category: matchedPreset?.category || site.nicheCategory || 'Todos',
-        title: site.data?.profile?.title || matchedPreset?.title || site.nicheCategory,
-        personaName: site.clientName || site.data?.profile?.name || 'Cliente VIP',
-        personaRole: site.data?.profile?.title || matchedPreset?.personaRole || site.nicheCategory || 'Especialista',
-        accentHex: matchedPreset?.accentHex || THEMES[site.data?.theme || 'darkGold']?.accent || '#d4af37',
+        title: resolvedSiteData?.profile?.title || matchedPreset?.title || site.nicheCategory,
+        personaName: site.clientName || resolvedSiteData?.profile?.name || 'Cliente VIP',
+        personaRole: resolvedSiteData?.profile?.title || matchedPreset?.personaRole || site.nicheCategory || 'Especialista',
+        accentHex: matchedPreset?.accentHex || THEMES[resolvedSiteData?.theme || 'darkGold']?.accent || '#d4af37',
         subdomain: site.subdomain || 'cliente',
         nicheKitKey: matchedPreset?.nicheKitKey || site.nicheCategory || 'Personalizado',
-        themeKey: site.data?.theme || 'darkGold',
+        themeKey: resolvedSiteData?.theme || 'darkGold',
         conversionStat: matchedPreset?.conversionStat || '+41% agendamentos no WhatsApp',
         includedHighlights:
           matchedPreset?.includedHighlights ||
-          site.data?.profile?.tagline ||
+          resolvedSiteData?.profile?.tagline ||
           'Microsite real editável no Painel de Gestão.',
-        realSiteData: site.data,
-        realHtml: generateExportCode(site.data),
-        carouselHtml: generateExportCode(site.data, { disableLinks: true, isCarousel: true }),
+        realSiteData: resolvedSiteData,
+        realHtml: generateExportCode(resolvedSiteData),
+        carouselHtml: generateExportCode(resolvedSiteData, { disableLinks: true, isCarousel: true }),
         savedSiteId: site.id,
       };
     });
-  }, [savedSites]);
+  }, [savedSites, landingConfig]);
 
   const activeFilteredLandingModels =
     landingCategoryFilter === 'Todos'
@@ -7338,18 +8587,45 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">
+                  Link do Criador no Rodapé dos Microsites
+                </label>
+                <input
+                  type="text"
+                  value={landingConfig.creatorFooterUrl || ''}
+                  onChange={(e) => updateLandingConfig('creatorFooterUrl', e.target.value)}
+                  placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://luxebio.site'}
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">
+                  Frase de Chamada no Rodapé do Microsite
+                </label>
+                <input
+                  type="text"
+                  value={landingConfig.creatorFooterLabel ?? 'Quero um microsite assim'}
+                  onChange={(e) => updateLandingConfig('creatorFooterLabel', e.target.value)}
+                  placeholder="Quero um microsite assim"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="text-[11px] text-neutral-400 block mb-1">Preço Start</label>
+                <label className="text-[11px] text-neutral-400 block mb-1">Criação (10 Primeiros)</label>
                 <input
                   type="text"
                   value={landingConfig.priceEssential}
                   onChange={(e) => updateLandingConfig('priceEssential', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-[11px] text-neutral-400 block mb-1">Preço Pro VIP</label>
+                <label className="text-[11px] text-neutral-400 block mb-1">Criação Pro / VIP</label>
                 <input
                   type="text"
                   value={landingConfig.pricePro}
@@ -7358,7 +8634,7 @@ COMO PUBLICAR NO SERVIDOR:
                 />
               </div>
               <div>
-                <label className="text-[11px] text-neutral-400 block mb-1">Preço Agência/Escala</label>
+                <label className="text-[11px] text-neutral-400 block mb-1">Criação Tabela Cheia</label>
                 <input
                   type="text"
                   value={landingConfig.priceScale}
@@ -7487,8 +8763,10 @@ COMO PUBLICAR NO SERVIDOR:
           </div>
         </header>
 
-        {/* HERO SECTION — Split layout: Value Proposition Left + REAL Interactive Microsite Simulator Right */}
-        <section id="topo" className="relative pt-12 pb-20 lg:pt-16 lg:pb-24 border-b border-white/[0.06]">
+        {/* MAIN LANDING CONTENT — SEMANTIC & SEO COMPLIANT */}
+        <main id="conteudo-principal" className="w-full flex-1">
+          {/* HERO SECTION — Split layout: Value Proposition Left + REAL Interactive Microsite Simulator Right */}
+          <section id="topo" className="relative pt-12 pb-20 lg:pt-16 lg:pb-24 border-b border-white/[0.06]">
           <div
             className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px] opacity-20 blur-[130px]"
             style={{ background: `radial-gradient(circle, ${activeHeroModel.accentHex} 0%, transparent 70%)` }}
@@ -7497,7 +8775,17 @@ COMO PUBLICAR NO SERVIDOR:
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
               {/* Left Column: Editorial Headline + Niche Selector + CTAs */}
               <div className="lg:col-span-7 space-y-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 font-mono">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-300 text-xs font-bold font-mono shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    ⚡ OFERTA DE LANÇAMENTO: 10 Primeiros por R$ 79,90 (Restam 3 vagas!)
+                  </span>
+                  <span className="text-xs text-emerald-400 font-semibold font-mono">
+                    • 1º Mês Sem Mensalidade
+                  </span>
+                </div>
+
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400 font-mono">
                   Sua bio atrai visitas, mas não gera vendas? Nós resolvemos isso.
                 </p>
 
@@ -8148,113 +9436,201 @@ COMO PUBLICAR NO SERVIDOR:
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="max-w-3xl space-y-3">
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
-                INVESTIMENTO COM RETORNO IMEDIATO
+                🔥 LOTE PROMOCIONAL DE LANÇAMENTO · VAGAS LIMITADAS
               </span>
               <h2
                 className="font-serif font-bold text-white tracking-tight"
                 style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
               >
-                Planos pensados para pagar a si mesmos no primeiro cliente atendido.
+                Os 10 primeiros microsites sairão por apenas R$ 79,90 — e sem mensalidade no 1º mês!
               </h2>
               <p className="text-sm text-neutral-400 leading-relaxed">
-                Sem mensalidades abusivas nem contratos com multa. Você investe uma única vez e garante uma máquina de vendas trabalhando para você 24 horas por dia.
+                Condição especial de estreia: você garante a criação completa do seu biosite de luxo por taxa única de apenas <strong className="text-amber-300">R$ 79,90</strong> no primeiro mês (isento de mensalidade no 1º mês). A partir do 2º mês, você escolhe o plano de manutenção ideal para a rotina do seu negócio.
               </p>
             </div>
 
+            {/* Escassez e Contador Visual de Vagas dos 10 Primeiros */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/90 border border-amber-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 font-bold text-lg shrink-0">
+                  ⚡
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                    <span>Oferta de Lançamento dos 10 Primeiros</span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400 text-neutral-950 text-[10px] font-black uppercase tracking-wider">
+                      7 de 10 Vagas Preenchidas
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-300 mt-0.5">
+                    Taxa única de criação por apenas <strong className="text-amber-300 font-mono">R$ 79,90</strong> (de ~R$ 197~). Restam <strong className="text-emerald-400">apenas 3 vagas</strong> com este valor promocional!
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
+                <div className="w-32 bg-neutral-950 rounded-full h-2.5 overflow-hidden border border-white/10">
+                  <div className="bg-amber-400 h-2.5 rounded-full" style={{ width: '70%' }} />
+                </div>
+                <span className="text-xs font-mono font-bold text-amber-300 whitespace-nowrap">Restam 3 vagas</span>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch tabular-nums">
-              {/* Plan 1 */}
+              {/* Plan 1: Básico */}
               <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
-                  <div className="text-xs font-mono uppercase tracking-widest text-neutral-400">
-                    01 · PACOTE ESSENCIAL
+                  <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    <span>01 · PLANO BÁSICO</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-bold">1 ALTERAÇÃO/MÊS</span>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Presença Digital Elegante</h3>
-                  <div className="pt-2">
-                    <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceEssential}</span>
-                    <span className="text-xs text-neutral-400 ml-2">setup único</span>
+                  <h3 className="text-xl font-bold text-white">Presença Digital & Manutenção Básica</h3>
+                  <div className="pt-2 space-y-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="line-through text-neutral-500 text-sm font-mono">De R$ 197</span>
+                      <span className="text-3xl font-serif font-bold text-white">R$ 79,90</span>
+                      <span className="text-xs text-emerald-400 font-semibold">criação (10 primeiros)</span>
+                    </div>
+                    <div className="text-xs text-emerald-300 font-semibold font-mono">
+                      ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
+                    </div>
+                    <div className="text-xs text-amber-300 font-bold font-mono">
+                      Manutenção (a partir do 2º mês): R$ 29,90/mês
+                    </div>
                   </div>
                   <p className="text-xs text-neutral-400 leading-relaxed">
-                    Perfeito para quem quer eliminar o Linktree amador hoje mesmo e transmitir profissionalismo imediato.
+                    Perfeito para quem quer eliminar o Linktree amador hoje mesmo, garantir a vaga promocional de R$ 79,90 e ter 1 atualização mensal inclusa.
                   </p>
                   <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> 1 Modelo Premium adaptado com sua foto e identidade</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Até 4 Botões estratégicos direcionados para fechar vendas</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Endereço físico com rota em 1 toque no Google Maps e Waze</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Entrega expressa garantida em até {landingConfig.deliveryTime}</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Link rápido e seguro com certificado SSL incluso</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês:</strong> Cobrada apenas a Taxa de Criação de R$ 79,90 (R$ 0 de mensalidade)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ 29,90/mês com 1 alteração mensal inclusa</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais avulsas quando precisar: R$ 14,90 cada</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Localização com rota em 1 toque no Google Maps e Waze</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Hospedagem ultrarrápida e Certificado SSL oficial inclusos</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Desativação automática por atraso a partir do 7º dia</li>
                   </ul>
                 </div>
                 <a
                   href="#encomendar"
-                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: `Pacote Essencial (${landingConfig.priceEssential})` }))}
+                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: 'Plano Básico (R$ 29,90/mês · 1 alteração) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)' }))}
                   className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
                 >
-                  Garantir Pacote Essencial
+                  Garantir Vaga por R$ 79,90 (Plano Básico R$ 29,90/mês)
                 </a>
               </div>
 
-              {/* Plan 2: Featured */}
-              <div className="p-8 rounded-2xl bg-neutral-900 border-2 border-amber-400/70 flex flex-col justify-between space-y-6 shadow-2xl shadow-amber-500/10">
-                <div className="space-y-4">
+              {/* Plan 2: Pro (Mais Escolhido) */}
+              <div className="p-8 rounded-2xl bg-neutral-900 border-2 border-amber-400/80 flex flex-col justify-between space-y-6 shadow-2xl shadow-amber-500/15 relative overflow-hidden">
+                <div className="pointer-events-none absolute -top-8 -right-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
+                <div className="space-y-4 relative z-10">
                   <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-amber-400">
-                    <span>02 · PROFISSIONAL VIP</span>
-                    <span className="font-bold">MAIS ESCOLHIDO</span>
+                    <span>02 · PLANO PRO</span>
+                    <span className="px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold text-[10px]">MAIS ESCOLHIDO</span>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Microsite com Funil Anti-Curiosos & Catálogo</h3>
-                  <div className="pt-2">
-                    <span className="text-4xl font-serif font-bold text-amber-400">{landingConfig.pricePro}</span>
-                    <span className="text-xs text-neutral-300 ml-2">setup completo</span>
+                  <h3 className="text-xl font-bold text-white">Funil Anti-Curiosos & Catálogo Semanal</h3>
+                  <div className="pt-2 space-y-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="line-through text-neutral-500 text-sm font-mono">De R$ 297</span>
+                      <span className="text-4xl font-serif font-bold text-amber-400">R$ 79,90</span>
+                      <span className="text-xs text-emerald-300 font-semibold">criação (10 primeiros)</span>
+                    </div>
+                    <div className="text-xs text-emerald-300 font-semibold font-mono">
+                      ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
+                    </div>
+                    <div className="text-xs text-amber-300 font-bold font-mono">
+                      Manutenção (a partir do 2º mês): R$ 49,90/mês (4 alterações)
+                    </div>
                   </div>
                   <p className="text-xs text-neutral-300 leading-relaxed">
-                    A estrutura de vendas completa para clínicas, médicos, advogados e profissionais que desejam receber apenas clientes qualificados e cobrar mais caro.
+                    A estrutura mais vendida para clínicas, estúdios, especialistas e advogados que atualizam procedimentos, fotos e promoções toda semana.
                   </p>
                   <ul className="space-y-2.5 pt-3 border-t border-white/[0.1] text-xs text-neutral-200">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Tudo do Essencial com paleta de cores de luxo sob medida</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo (Quiz de triagem de clientes pré-WhatsApp)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Catálogo visual de procedimentos com fotos e valores</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Faixa de autoridade comprovada (+500 clientes, anos de atuação)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Rastreamento Meta Pixel para anúncios de alta conversão</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> QR Code de balcão em alta definição para recepção ou consultório</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas R$ 79,90 de criação (R$ 0 de mensalidade)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ 49,90/mês com 4 alterações mensais inclusas</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais excedentes: apenas R$ 14,90 cada</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo + Catálogo visual com fotos e preços</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Galeria inteligente adaptativa (fotos em retrato e paisagem sem cortes)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Rastreamento Meta Pixel + QR Code de balcão em alta definição</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Desativação automática por atraso a partir do 7º dia</li>
                   </ul>
                 </div>
                 <a
                   href="#encomendar"
-                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: `Profissional VIP (${landingConfig.pricePro})` }))}
-                  className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)' }))}
+                  className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer relative z-10"
                 >
-                  Quero o Profissional VIP (Mais Recomendado)
+                  Quero o Plano Pro por R$ 79,90 (Manutenção R$ 49,90/mês)
                 </a>
               </div>
 
-              {/* Plan 3 */}
+              {/* Plan 3: VIP Ilimitado */}
               <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
-                  <div className="text-xs font-mono uppercase tracking-widest text-neutral-400">
-                    03 · CLÍNICAS & ESCALA
+                  <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    <span>03 · PLANO VIP</span>
+                    <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold">ALTERAÇÕES ILIMITADAS</span>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Setup Concierge com Domínio Próprio</h3>
-                  <div className="pt-2">
-                    <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceScale}</span>
-                    <span className="text-xs text-neutral-400 ml-2">setup + assessoria</span>
+                  <h3 className="text-xl font-bold text-white">Setup Concierge & Atualizações Ilimitadas</h3>
+                  <div className="pt-2 space-y-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="line-through text-neutral-500 text-sm font-mono">De R$ 497</span>
+                      <span className="text-3xl font-serif font-bold text-white">R$ 79,90</span>
+                      <span className="text-xs text-emerald-400 font-semibold">criação (10 primeiros)</span>
+                    </div>
+                    <div className="text-xs text-emerald-300 font-semibold font-mono">
+                      ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
+                    </div>
+                    <div className="text-xs text-amber-300 font-bold font-mono">
+                      Manutenção (a partir do 2º mês): R$ 79,90/mês (ILIMITADO)
+                    </div>
                   </div>
                   <p className="text-xs text-neutral-400 leading-relaxed">
-                    Para clínicas médicas renomadas, escritórios de advocacia e mentores que exigem seu próprio domínio (.com.br) e assessoria prioritária.
+                    Para marcas consolidadas e especialistas que demandam suporte prioritário e liberdade total para atualizar campanhas quantas vezes quiserem no mês.
                   </p>
                   <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Tudo do Profissional VIP com acabamento sob medida</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Configuração completa do seu Domínio Próprio (.com.br)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Textos persuasivos criados por redator especializado</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário no WhatsApp</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Atualizações mensais de campanhas e novos serviços</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas R$ 79,90 de criação (R$ 0 de mensalidade)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ 79,90/mês com ALTERAÇÕES ILIMITADAS inclusas</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Zero custo de alteração extra — solicite quantas vezes precisar</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte completo para Domínio Próprio (.com.br)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário direto no WhatsApp</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Desativação automática por atraso a partir do 7º dia</li>
                   </ul>
                 </div>
                 <a
                   href="#encomendar"
-                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: `Clínicas & Escala (${landingConfig.priceScale})` }))}
+                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: 'Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)' }))}
                   className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
                 >
-                  Solicitar Pacote Concierge
+                  Quero o Plano VIP por R$ 79,90 (Manutenção R$ 79,90/mês)
                 </a>
+              </div>
+            </div>
+
+            {/* Faixa Explicativa Oficial das Taxas de Manutenção */}
+            <div className="p-5 rounded-2xl bg-neutral-900/80 border border-amber-400/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-neutral-950 border border-emerald-500/30">
+                <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block">🎉 10 Primeiros Microsites</span>
+                <span className="font-bold text-white text-sm block mt-0.5">R$ 79,90 (1º Mês)</span>
+                <span className="text-[11px] text-neutral-400 block">Só taxa de criação. Sem mensalidade no 1º mês!</span>
+              </div>
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Básico</span>
+                <span className="font-bold text-white text-sm block mt-0.5">R$ 29,90 /mês</span>
+                <span className="text-[11px] text-neutral-400 block">1 alteração mensal incluída</span>
+              </div>
+              <div className="p-3 rounded-xl bg-neutral-950 border border-amber-400/40">
+                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Pro (Destaque)</span>
+                <span className="font-bold text-amber-300 text-sm block mt-0.5">R$ 49,90 /mês</span>
+                <span className="text-[11px] text-neutral-400 block">4 alterações mensais incluídas</span>
+              </div>
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano VIP Total</span>
+                <span className="font-bold text-white text-sm block mt-0.5">R$ 79,90 /mês</span>
+                <span className="text-[11px] text-neutral-400 block">Alterações mensais ilimitadas</span>
+              </div>
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">Alteração Extra & Atraso</span>
+                <span className="font-bold text-emerald-300 text-sm block mt-0.5">R$ 14,90 /avulsa</span>
+                <span className="text-[11px] text-neutral-400 block">Desativação automática a partir do 7º dia de atraso</span>
               </div>
             </div>
           </div>
@@ -8334,14 +9710,14 @@ COMO PUBLICAR NO SERVIDOR:
                       onChange={(e) => setLandingOrderForm(p => ({ ...p, selectedPlan: e.target.value }))}
                       className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
                     >
-                      <option value={`Profissional VIP (${landingConfig.pricePro})`}>
-                        Profissional VIP ({landingConfig.pricePro}) — Mais Pedido
+                      <option value="Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)">
+                        Plano Pro (R$ 49,90/mês · 4 alterações) — Criação R$ 79,90 (Mais Escolhido)
                       </option>
-                      <option value={`Pacote Essencial (${landingConfig.priceEssential})`}>
-                        Pacote Essencial ({landingConfig.priceEssential})
+                      <option value="Plano Básico (R$ 29,90/mês · 1 alteração) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)">
+                        Plano Básico (R$ 29,90/mês · 1 alteração) — Criação R$ 79,90
                       </option>
-                      <option value={`Clínicas & Escala (${landingConfig.priceScale})`}>
-                        Clínicas & Escala ({landingConfig.priceScale})
+                      <option value="Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)">
+                        Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação R$ 79,90
                       </option>
                     </select>
                   </div>
@@ -8441,6 +9817,10 @@ COMO PUBLICAR NO SERVIDOR:
                   a: 'Perfeitamente. Nossos microsites utilizam código nativo ultraleve, abrindo instantaneamente em iPhones e Androids com qualquer velocidade de internet, sem travar nem desalinhar.',
                 },
                 {
+                  q: 'Como funciona a oferta de R$ 79,90 e os planos de manutenção?',
+                  a: 'Os 10 primeiros microsites têm taxa única de criação promocional de apenas R$ 79,90 no primeiro mês — e no 1º mês você NÃO paga nenhuma mensalidade! A partir do 2º mês, você escolhe seu plano de manutenção mensal: Plano Básico (R$ 29,90 com 1 alteração mensal), Plano Pro (R$ 49,90 com 4 alterações mensais) ou Plano VIP (R$ 79,90 com alterações ilimitadas). Alterações extras avulsas fora da franquia custam R$ 14,90 cada. Para manter a estabilidade dos servidores e segurança, a desativação por atraso no pagamento ocorre de forma automática a partir do 7º dia de atraso.',
+                },
+                {
                   q: 'Como coloco o link no meu Instagram e redes sociais?',
                   a: 'Assim que entregarmos seu link oficial, você recebe um tutorial simples de 15 segundos ensinando a colocar o link na bio do Instagram, TikTok, WhatsApp Business e Google Meu Negócio.',
                 },
@@ -8449,10 +9829,10 @@ COMO PUBLICAR NO SERVIDOR:
                   key={`faq-${idx}`}
                   className="p-6 rounded-2xl bg-neutral-900/50 border border-white/[0.07] space-y-2 hover:border-amber-400/30 transition-colors"
                 >
-                  <h4 className="text-base font-bold text-white flex items-center gap-2.5">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2.5">
                     <span className="text-amber-400 font-mono text-sm">0{idx + 1}.</span>
                     <span>{item.q}</span>
-                  </h4>
+                  </h3>
                   <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed pl-7">
                     {item.a}
                   </p>
@@ -8471,6 +9851,7 @@ COMO PUBLICAR NO SERVIDOR:
             </div>
           </div>
         </section>
+        </main>
 
         {/* FOOTER FOCADO EM AUTORIDADE E ACESSO DO ADMINISTRADOR */}
         <footer className="py-12 bg-[#060608] text-xs text-neutral-400">
@@ -9454,25 +10835,31 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 {data.announcement.enabled && (
-                  <div className="grid grid-cols-3 gap-2 pt-1">
-                    <div>
-                      <label className="text-[10px] text-neutral-400">Badge</label>
-                      <input
-                        type="text"
-                        value={data.announcement.badge}
-                        onChange={(e) => updateAnnounce('badge', e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
-                      />
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] text-neutral-400">Badge</label>
+                        <input
+                          type="text"
+                          value={data.announcement.badge}
+                          onChange={(e) => updateAnnounce('badge', e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-[10px] text-neutral-400">Mensagem</label>
+                        <input
+                          type="text"
+                          value={data.announcement.text}
+                          onChange={(e) => updateAnnounce('text', e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
+                        />
+                      </div>
                     </div>
-                    <div className="col-span-2">
-                      <label className="text-[10px] text-neutral-400">Mensagem</label>
-                      <input
-                        type="text"
-                        value={data.announcement.text}
-                        onChange={(e) => updateAnnounce('text', e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
-                      />
-                    </div>
+                    {renderModuleColorControls('announcement', 'Barra de Alerta', [
+                      { field: 'titleColor', label: 'Cor do Texto', fallback: '#000000' },
+                      { field: 'bgColor', label: 'Cor do Fundo', fallback: theme.accent },
+                    ])}
                   </div>
                 )}
               </div>
@@ -9584,6 +10971,13 @@ COMO PUBLICAR NO SERVIDOR:
                 />
               </div>
 
+              {renderModuleColorControls('hero', 'Cabeçalho / Hero & Bio', [
+                { field: 'headlineColor', label: 'Cargo / Especialidade', fallback: theme.accent },
+                { field: 'titleColor', label: 'Nome Principal', fallback: theme.textMain },
+                { field: 'textColor', label: 'Slogan / Bio', fallback: theme.textMuted },
+                { field: 'accentColor', label: 'Frase Cursiva', fallback: theme.textMuted },
+              ])}
+
               {/* Contatos */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -9604,6 +10998,67 @@ COMO PUBLICAR NO SERVIDOR:
                     className="w-full px-3 py-2 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-200"
                   />
                 </div>
+              </div>
+
+              {/* Assinatura / Link do Criador no Rodapé do Microsite */}
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    Link do Criador no Rodapé do Microsite
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const targetPhone = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
+                      const msg = encodeURIComponent(`Olá! Vi um microsite criado por ${landingConfig.agencyBrandName || 'LuxeBio Digital'} e quero encomendar o meu!`);
+                      updateLandingConfig('creatorFooterUrl', `https://wa.me/${targetPhone}?text=${msg}`);
+                      showToast('✅ Link do rodapé configurado para o seu WhatsApp comercial!');
+                    }}
+                    className="text-[10px] font-semibold text-amber-300 hover:text-amber-200 underline cursor-pointer"
+                  >
+                    Usar meu WhatsApp
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-1">Nome do Criador / Agência</label>
+                    <input
+                      type="text"
+                      value={landingConfig.agencyBrandName}
+                      onChange={(e) => updateLandingConfig('agencyBrandName', e.target.value)}
+                      placeholder="LuxeBio Digital"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-1">Chamada do Link (CTA)</label>
+                    <input
+                      type="text"
+                      value={landingConfig.creatorFooterLabel ?? 'Quero um microsite assim'}
+                      onChange={(e) => updateLandingConfig('creatorFooterLabel', e.target.value)}
+                      placeholder="Quero um microsite assim"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-100"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-neutral-400 block mb-1">
+                    URL de Destino ao Clicar no Rodapé (Sua Landing Page ou WhatsApp)
+                  </label>
+                  <input
+                    type="text"
+                    value={landingConfig.creatorFooterUrl || ''}
+                    onChange={(e) => updateLandingConfig('creatorFooterUrl', e.target.value)}
+                    placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://luxebio.site'}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-amber-300 font-mono"
+                  />
+                </div>
+                {renderModuleColorControls('footer', 'Rodapé do Microsite', [
+                  { field: 'textColor', label: 'Texto Direitos Autorais', fallback: theme.textMuted },
+                  { field: 'accentColor', label: 'Cor do Link do Criador', fallback: theme.accent },
+                  { field: 'bgColor', label: 'Fundo do Selo Criador', fallback: '#000000' },
+                ])}
               </div>
             </div>
           )}
@@ -9656,6 +11111,11 @@ COMO PUBLICAR NO SERVIDOR:
                         className="w-full px-2.5 py-1.5 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-200"
                       />
                     </div>
+                    {renderModuleColorControls('qualifierFunnel', 'Botão do Funil Qualificador', [
+                      { field: 'titleColor', label: 'Cor do Título', fallback: '#000000' },
+                      { field: 'textColor', label: 'Cor do Subtítulo', fallback: '#1f2937' },
+                      { field: 'bgColor', label: 'Fundo do Botão', fallback: theme.accent },
+                    ])}
                   </div>
 
                   <div className="space-y-3">
@@ -9828,6 +11288,12 @@ COMO PUBLICAR NO SERVIDOR:
                     </div>
                   </div>
                 )}
+                {data.metrics.enabled &&
+                  renderModuleColorControls('metrics', 'Métricas de Autoridade', [
+                    { field: 'accentColor', label: 'Cor dos Números (+500, 8...)', fallback: theme.accent },
+                    { field: 'textColor', label: 'Cor das Legendas', fallback: theme.textMuted },
+                    { field: 'bgColor', label: 'Cor do Fundo do Bloco', fallback: theme.socialBg },
+                  ])}
               </div>
 
               {/* Módulo: Como Funciona o Processo (Estilo Martina Bianchi / Psicologia) */}
@@ -9897,6 +11363,13 @@ COMO PUBLICAR NO SERVIDOR:
                         />
                       </div>
                     ))}
+                    {renderModuleColorControls('processSteps', 'Etapas do Processo', [
+                      { field: 'headlineColor', label: 'Título da Seção', fallback: theme.accent },
+                      { field: 'accentColor', label: 'Números (01, 02, 03)', fallback: theme.accent },
+                      { field: 'titleColor', label: 'Título de Cada Etapa', fallback: theme.textMain },
+                      { field: 'textColor', label: 'Descrição da Etapa', fallback: theme.textMuted },
+                      { field: 'bgColor', label: 'Fundo dos Cards', fallback: theme.socialBg },
+                    ])}
                   </div>
                 )}
               </div>
@@ -9959,6 +11432,12 @@ COMO PUBLICAR NO SERVIDOR:
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300"
                       />
                     </div>
+
+                    {renderModuleColorControls('studentGrid', 'Galeria de Fotos', [
+                      { field: 'accentColor', label: 'Cor do Selo (Badge)', fallback: theme.accent },
+                      { field: 'headlineColor', label: 'Cor do Título da Galeria', fallback: theme.accent },
+                      { field: 'textColor', label: 'Cor do Subtítulo', fallback: theme.textMuted },
+                    ])}
 
                     {/* Linha 2: Seletor de Layouts Visuais */}
                     <div className="space-y-1.5">
@@ -10305,6 +11784,9 @@ COMO PUBLICAR NO SERVIDOR:
                         />
                       </div>
                     </div>
+                    {renderModuleColorControls('beforeAfter', 'Antes & Depois', [
+                      { field: 'headlineColor', label: 'Cor do Título da Seção', fallback: theme.accent },
+                    ])}
                   </div>
                 )}
               </div>
@@ -10368,6 +11850,13 @@ COMO PUBLICAR NO SERVIDOR:
                         />
                       </div>
                     ))}
+                    {renderModuleColorControls('testimonials', 'Depoimentos', [
+                      { field: 'headlineColor', label: 'Título da Seção', fallback: theme.accent },
+                      { field: 'textColor', label: 'Texto do Depoimento', fallback: theme.textMuted },
+                      { field: 'titleColor', label: 'Nome do Cliente', fallback: theme.textMain },
+                      { field: 'accentColor', label: 'Cor das Estrelas', fallback: '#fbbf24' },
+                      { field: 'bgColor', label: 'Fundo dos Cards', fallback: theme.socialBg },
+                    ])}
                   </div>
                 )}
               </div>
@@ -10453,6 +11942,12 @@ COMO PUBLICAR NO SERVIDOR:
                         </div>
                       )}
                     </div>
+                    {renderModuleColorControls('locationCard', 'Card de Localização', [
+                      { field: 'titleColor', label: 'Título (Ex: Onde Estamos)', fallback: theme.textMain },
+                      { field: 'textColor', label: 'Cor do Endereço', fallback: theme.textMuted },
+                      { field: 'accentColor', label: 'Cor do Horário / Ícone', fallback: theme.textMain },
+                      { field: 'bgColor', label: 'Fundo do Card', fallback: theme.socialBg },
+                    ])}
                   </div>
                 )}
               </div>
@@ -10499,6 +11994,11 @@ COMO PUBLICAR NO SERVIDOR:
                       placeholder="Assinatura cursiva de fechamento"
                       className="w-full px-2.5 py-1.5 text-xs rounded bg-neutral-900 border border-neutral-800 text-neutral-300 italic"
                     />
+                    {renderModuleColorControls('aboutMe', 'Sobre Mim & Biografia', [
+                      { field: 'headlineColor', label: 'Título da Seção', fallback: theme.accent },
+                      { field: 'textColor', label: 'Cor do Parágrafo / Bio', fallback: theme.textMuted },
+                      { field: 'accentColor', label: 'Assinatura Cursiva', fallback: theme.accent },
+                    ])}
                   </div>
                 )}
               </div>
@@ -10546,6 +12046,12 @@ COMO PUBLICAR NO SERVIDOR:
                         />
                       </div>
                     ))}
+                    {renderModuleColorControls('faq', 'Dúvidas Frequentes (FAQ)', [
+                      { field: 'headlineColor', label: 'Título da Seção', fallback: theme.accent },
+                      { field: 'titleColor', label: 'Cor das Perguntas', fallback: theme.textMain },
+                      { field: 'textColor', label: 'Cor das Respostas', fallback: theme.textMuted },
+                      { field: 'bgColor', label: 'Fundo das Caixas', fallback: theme.socialBg },
+                    ])}
                   </div>
                 )}
               </div>
@@ -10682,6 +12188,14 @@ COMO PUBLICAR NO SERVIDOR:
                       })}
                     </div>
                   </div>
+
+                  {renderModuleColorControls('services', 'Catálogo de Serviços', [
+                    { field: 'headlineColor', label: 'Título da Seção', fallback: theme.accent },
+                    { field: 'titleColor', label: 'Nome do Serviço / Item', fallback: theme.textMain },
+                    { field: 'textColor', label: 'Descrição & Subtítulo', fallback: theme.textMuted },
+                    { field: 'accentColor', label: 'Cor do Preço & Destaque', fallback: theme.accent },
+                    { field: 'bgColor', label: 'Fundo dos Cards', fallback: theme.socialBg },
+                  ])}
                 </div>
               </div>
 
@@ -11003,6 +12517,12 @@ COMO PUBLICAR NO SERVIDOR:
                   </button>
                 </div>
               </div>
+
+              {renderModuleColorControls('actionCards', 'Todos os Botões (Padrão do Módulo)', [
+                { field: 'titleColor', label: 'Cor dos Títulos dos Botões', fallback: theme.cardText },
+                { field: 'textColor', label: 'Cor dos Subtítulos', fallback: theme.cardSubtext },
+                { field: 'bgColor', label: 'Fundo dos Botões', fallback: theme.cardBg },
+              ])}
 
               {/* Destaque Rápido do Botão de Triagem VIP */}
               {data.qualifierFunnel.enabled && (
@@ -11460,35 +12980,120 @@ COMO PUBLICAR NO SERVIDOR:
                         </div>
                       </div>
 
-                      {/* Custom Colors Picker if variant === 'custom' */}
-                      {card.variant === 'custom' && (
-                        <div className="grid grid-cols-2 gap-3 p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] text-neutral-300">Cor de Fundo:</span>
-                            <div className="flex items-center gap-1.5">
+                      {/* Always-available Font & Background Color Controls per Button */}
+                      <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                            <Palette className="w-3 h-3" /> Cores da Fonte deste Botão
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setData(p => ({
+                                  ...p,
+                                  actionCards: p.actionCards.map(c =>
+                                    c.id === card.id
+                                      ? { ...c, customTitleColor: '#ffffff', customSubtitleColor: '#e5e7eb' }
+                                      : c
+                                  ),
+                                }));
+                              }}
+                              className="px-1.5 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 text-[9px] font-semibold text-white border border-neutral-700 cursor-pointer"
+                            >
+                              ☀️ Fonte Clara
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setData(p => ({
+                                  ...p,
+                                  actionCards: p.actionCards.map(c =>
+                                    c.id === card.id
+                                      ? { ...c, customTitleColor: '#0f172a', customSubtitleColor: '#334155' }
+                                      : c
+                                  ),
+                                }));
+                              }}
+                              className="px-1.5 py-0.5 rounded bg-neutral-200 hover:bg-white text-[9px] font-semibold text-neutral-900 cursor-pointer"
+                            >
+                              🌙 Fonte Escura
+                            </button>
+                            {(card.customTitleColor || card.customSubtitleColor || card.variant === 'custom') && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setData(p => ({
+                                    ...p,
+                                    actionCards: p.actionCards.map(c =>
+                                      c.id === card.id
+                                        ? { ...c, customTitleColor: '', customSubtitleColor: '' }
+                                        : c
+                                    ),
+                                  }));
+                                }}
+                                className="px-1.5 py-0.5 rounded bg-red-500/15 hover:bg-red-500/25 text-[9px] font-semibold text-red-300 border border-red-500/30 cursor-pointer"
+                              >
+                                ↺ Padrão
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          <div className="flex items-center justify-between gap-1.5 bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800">
+                            <span className="text-[10px] text-neutral-300 truncate">Cor do Título</span>
+                            <div className="flex items-center gap-1 shrink-0">
                               <input
                                 type="color"
-                                value={card.customBg || '#e2b857'}
-                                onChange={(e) => updateThisCard('customBg', e.target.value)}
-                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0"
+                                value={toSafeHexColor(card.customTitleColor || card.customText, toSafeHexColor(theme.cardText, '#ffffff'))}
+                                onChange={(e) => updateThisCard('customTitleColor', e.target.value)}
+                                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
                               />
-                              <span className="text-[10px] font-mono text-neutral-400">{card.customBg || '#e2b857'}</span>
+                              <span className="text-[9px] font-mono text-neutral-400">
+                                {card.customTitleColor || 'Auto'}
+                              </span>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] text-neutral-300">Cor do Texto:</span>
-                            <div className="flex items-center gap-1.5">
+
+                          <div className="flex items-center justify-between gap-1.5 bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800">
+                            <span className="text-[10px] text-neutral-300 truncate">Cor Subtítulo</span>
+                            <div className="flex items-center gap-1 shrink-0">
                               <input
                                 type="color"
-                                value={card.customText || '#0f172a'}
-                                onChange={(e) => updateThisCard('customText', e.target.value)}
-                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0"
+                                value={toSafeHexColor(card.customSubtitleColor || card.customText, toSafeHexColor(theme.cardSubtext, '#cbd5e1'))}
+                                onChange={(e) => updateThisCard('customSubtitleColor', e.target.value)}
+                                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
                               />
-                              <span className="text-[10px] font-mono text-neutral-400">{card.customText || '#0f172a'}</span>
+                              <span className="text-[9px] font-mono text-neutral-400">
+                                {card.customSubtitleColor || 'Auto'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-1.5 bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800 col-span-2 sm:col-span-1">
+                            <span className="text-[10px] text-neutral-300 truncate">Cor de Fundo</span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <input
+                                type="color"
+                                value={toSafeHexColor(card.customBg, toSafeHexColor(theme.cardBg, '#1e293b'))}
+                                onChange={(e) => {
+                                  setData(p => ({
+                                    ...p,
+                                    actionCards: p.actionCards.map(c =>
+                                      c.id === card.id ? { ...c, variant: 'custom', customBg: e.target.value } : c
+                                    ),
+                                  }));
+                                }}
+                                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <span className="text-[9px] font-mono text-neutral-400">
+                                {card.variant === 'custom' ? card.customBg : 'Tema'}
+                              </span>
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
@@ -11622,6 +13227,12 @@ COMO PUBLICAR NO SERVIDOR:
                             className="w-full px-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-amber-300 font-bold font-mono"
                           />
                         </div>
+                        {renderModuleColorControls('urgencyTimer', 'Timer Regressivo de Urgência', [
+                          { field: 'headlineColor', label: 'Cor do Título', fallback: theme.accent },
+                          { field: 'textColor', label: 'Cor do Subtítulo', fallback: theme.textMuted },
+                          { field: 'accentColor', label: 'Cor do Relógio (14:52)', fallback: theme.accent },
+                          { field: 'bgColor', label: 'Fundo do Banner', fallback: theme.socialBg },
+                        ])}
                       </div>
                     )}
                   </div>
@@ -12589,6 +14200,181 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
 
               {/* ============================================================== */}
+              {/* 3.5 CENTRAL DE COMUNICADOS & DISPARO DE E-MAIL EM MASSA (ADM)  */}
+              {/* ============================================================== */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-neutral-950 via-neutral-900/90 to-neutral-950 border border-amber-500/30 space-y-3 shadow-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <Mail className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                          Central de E-mail em Massa (Manutenções & Comunicados Oficiais)
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                          {savedSites.filter(s => s.clientEmail && isValidClientEmail(s.clientEmail)).length} de {savedSites.length} clientes com e-mail ativo
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        Envie comunicados em massa para todos os clientes informando sobre manutenções programadas nos servidores, atualizações de DNS/SSL ou avisos relevantes.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => openBulkEmailModal('scheduled_maintenance', 'all')}
+                    className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center gap-2 shadow-md shadow-amber-500/10 cursor-pointer transition shrink-0"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Disparar E-mail em Massa</span>
+                  </button>
+                </div>
+
+                {/* Atalhos Rápidos de Modelos de Comunicado */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => openBulkEmailModal('scheduled_maintenance', 'all')}
+                    className="p-2.5 rounded-lg bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 hover:border-amber-500/40 text-left transition cursor-pointer group"
+                  >
+                    <span className="text-[10px] font-bold text-amber-300 group-hover:text-amber-200 flex items-center gap-1">
+                      🛠️ Manutenção Programada
+                    </span>
+                    <span className="text-[9.5px] text-neutral-400 block mt-0.5">
+                      Avisar janela de atualização de servidor e SSL
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openBulkEmailModal('maintenance_completed', 'all')}
+                    className="p-2.5 rounded-lg bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 hover:border-emerald-500/40 text-left transition cursor-pointer group"
+                  >
+                    <span className="text-[10px] font-bold text-emerald-300 group-hover:text-emerald-200 flex items-center gap-1">
+                      ✅ Manutenção Concluída
+                    </span>
+                    <span className="text-[9.5px] text-neutral-400 block mt-0.5">
+                      Confirmar estabilidade e melhorias aplicadas
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openBulkEmailModal('new_features', 'all')}
+                    className="p-2.5 rounded-lg bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 hover:border-amber-500/40 text-left transition cursor-pointer group"
+                  >
+                    <span className="text-[10px] font-bold text-amber-300 group-hover:text-amber-200 flex items-center gap-1">
+                      ✨ Novidades & Recursos
+                    </span>
+                    <span className="text-[9.5px] text-neutral-400 block mt-0.5">
+                      Divulgar novas funções liberadas nos microsites
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openBulkEmailModal('custom_announcement', 'all')}
+                    className="p-2.5 rounded-lg bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-600 text-left transition cursor-pointer group"
+                  >
+                    <span className="text-[10px] font-bold text-neutral-200 group-hover:text-white flex items-center gap-1">
+                      ✍️ Comunicado Livre
+                    </span>
+                    <span className="text-[9.5px] text-neutral-400 block mt-0.5">
+                      Escrever aviso personalizado para os clientes
+                    </span>
+                  </button>
+                </div>
+
+                {bulkEmailHistory.length > 0 && (
+                  <div className="pt-2 border-t border-neutral-800/80 flex items-center justify-between text-[10.5px] text-neutral-400 flex-wrap gap-2">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      Último disparo em massa: <strong className="text-neutral-200">{bulkEmailHistory[0].subject}</strong> ({bulkEmailHistory[0].recipientCount} destinatários em {bulkEmailHistory[0].sentAt})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openBulkEmailModal('scheduled_maintenance', 'all')}
+                      className="text-amber-400 hover:text-amber-300 font-semibold underline cursor-pointer"
+                    >
+                      Ver histórico ({bulkEmailHistory.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* ============================================================== */}
+              {/* 3.8 REGRAS DE MANUTENÇÃO, 1º MÊS & DESATIVAÇÃO AUTOMÁTICA (7º DIA) */}
+              {/* ============================================================== */}
+              <div className="p-4 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-3 shadow-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+                          Regras Automáticas de Manutenção, 1º Mês & Desativação no 7º Dia de Atraso
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
+                          <Power className="w-2.5 h-2.5" /> Suspensão Automática Ativa (&ge; 7 dias)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        A taxa de criação é cobrada exclusivamente no 1º mês (isento de mensalidade). A partir do 7º dia de atraso após o vencimento, o microsite é desativado automaticamente.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={runAutoOverdueSweepNow}
+                    className="px-3.5 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-200 font-bold text-[11px] flex items-center gap-1.5 border border-red-500/40 cursor-pointer transition shrink-0"
+                    title="Verificar todos os vencimentos agora e aplicar a regra de desativação automática a partir do 7º dia de atraso"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-red-400" />
+                    <span>Verificar Atrasos (&ge; 7º Dia)</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-[10.5px]">
+                  <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <span className="font-bold text-amber-300 block">🎨 1º Mês (Criação)</span>
+                    <span className="text-neutral-200 font-semibold block mt-0.5">Sem Mensalidade (R$ 0)</span>
+                    <span className="text-[9.5px] text-neutral-400 block">Cobra apenas taxa de criação</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
+                    <span className="font-bold text-emerald-300 block">🛠️ Básico • R$ 29,90/mês</span>
+                    <span className="text-neutral-200 font-semibold block mt-0.5">1 alteração mensal</span>
+                    <span className="text-[9.5px] text-neutral-400 block">Hospedagem + SSL inclusos</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
+                    <span className="font-bold text-emerald-300 block">⚡ Pro • R$ 49,90/mês</span>
+                    <span className="text-neutral-200 font-semibold block mt-0.5">4 alterações mensais</span>
+                    <span className="text-[9.5px] text-neutral-400 block">Hospedagem + SSL inclusos</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
+                    <span className="font-bold text-amber-300 block">👑 VIP • R$ 79,90/mês</span>
+                    <span className="text-neutral-200 font-semibold block mt-0.5">Alterações ilimitadas</span>
+                    <span className="text-[9.5px] text-neutral-400 block">Zero custo por edição</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
+                    <span className="font-bold text-neutral-200 block">➕ Alteração Adicional</span>
+                    <span className="text-amber-300 font-bold block mt-0.5">R$ 14,90 / extra</span>
+                    <span className="text-[9.5px] text-neutral-400 block">Acima da franquia mensal</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
+                    <span className="font-bold text-red-300 block">🛑 Atraso &ge; 7º Dia</span>
+                    <span className="text-neutral-100 font-semibold block mt-0.5">Desativação Automática</span>
+                    <span className="text-[9.5px] text-red-200/80 block">1º ao 6º dia: em tolerância</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ============================================================== */}
               {/* 4. CONTROLES PRINCIPAIS & SISTEMA DE BUSCA POR DATA DE VENCIMENTO */}
               {/* ============================================================== */}
               <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4">
@@ -12599,10 +14385,19 @@ COMO PUBLICAR NO SERVIDOR:
                       <Server className="w-4 h-4 text-amber-400" /> Painel de Gestão dos Microsites Criados
                     </h3>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Controle de mensalidades, busca por data de vencimento, taxas de conversão de WhatsApp e desativação.
+                      Controle de mensalidades, e-mails obrigatórios, envio de kit p/ WhatsApp com tutorial da Bio e desativação automática a partir do 7º dia de atraso.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => openBulkEmailModal('scheduled_maintenance', 'all')}
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 transition cursor-pointer shadow"
+                      title="Enviar e-mail em massa para todos os clientes sobre manutenções ou comunicados"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-amber-400" /> E-mail em Massa
+                    </button>
+
                     <button
                       type="button"
                       onClick={downloadAllSitesDirectoryZip}
@@ -12635,7 +14430,7 @@ COMO PUBLICAR NO SERVIDOR:
                       onClick={openSaveDialog}
                       className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Salvar Novo Microsite
+                      <Plus className="w-3.5 h-3.5" /> Cadastrar Novo Cliente
                     </button>
                   </div>
                 </div>
@@ -12647,7 +14442,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
-                      placeholder="Buscar por cliente, domínio ou nicho..."
+                      placeholder="Buscar por cliente, e-mail, domínio ou nicho..."
                       value={dashboardSearch}
                       onChange={(e) => setDashboardSearch(e.target.value)}
                       className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-amber-400"
@@ -12829,10 +14624,11 @@ COMO PUBLICAR NO SERVIDOR:
 
                   const filteredList = savedSites
                     .filter(site => {
-                      // 1. Text Search
+                      // 1. Text Search (inclui busca por e-mail também)
                       const matchesSearch =
                         !dashboardSearch ||
                         site.clientName.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
+                        (site.clientEmail || '').toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.subdomain.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.customDomain.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.nicheCategory.toLowerCase().includes(dashboardSearch.toLowerCase());
@@ -12987,42 +14783,125 @@ COMO PUBLICAR NO SERVIDOR:
                                     {site.clientPhone && (
                                       <span>· WA: {site.clientPhone}</span>
                                     )}
+                                    {editingEmailSiteId === site.id ? (
+                                      <span className="inline-flex items-center gap-1 bg-neutral-900 px-2 py-0.5 rounded border border-amber-500/50">
+                                        <Mail className="w-3 h-3 text-amber-400" />
+                                        <input
+                                          type="email"
+                                          value={tempEmailInput}
+                                          onChange={(e) => setTempEmailInput(e.target.value)}
+                                          placeholder="cliente@email.com"
+                                          className="bg-transparent text-[11px] text-amber-200 font-mono focus:outline-none w-44"
+                                          autoFocus
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (updateSiteClientEmail(site.id, tempEmailInput)) {
+                                              setEditingEmailSiteId(null);
+                                            }
+                                          }}
+                                          className="text-emerald-400 hover:text-emerald-300 font-bold text-[10px] px-1 cursor-pointer"
+                                        >
+                                          ✓
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingEmailSiteId(null)}
+                                          className="text-neutral-500 hover:text-neutral-300 text-[10px] px-1 cursor-pointer"
+                                        >
+                                          ✕
+                                        </button>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 text-neutral-300 font-mono text-[10.5px]">
+                                        <Mail className="w-3 h-3 text-amber-400" />
+                                        {site.clientEmail ? (
+                                          <span>{site.clientEmail}</span>
+                                        ) : (
+                                          <span className="text-red-400 font-sans font-semibold">Sem e-mail cadastrado</span>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingEmailSiteId(site.id);
+                                            setTempEmailInput(site.clientEmail || '');
+                                          }}
+                                          className="text-[9.5px] text-amber-400 hover:text-amber-300 underline ml-1 font-sans cursor-pointer"
+                                          title="Editar e-mail do cliente"
+                                        >
+                                          (editar)
+                                        </button>
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
 
                                 {/* Status & Due Urgency Badges */}
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  {/* Dynamic Due Date Urgency Badge */}
-                                  {site.status === 'disabled' ? (
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1">
-                                      <Power className="w-3 h-3" /> Desativado
-                                    </span>
-                                  ) : isOverdue ? (
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1 animate-pulse">
-                                      <AlertTriangle className="w-3 h-3 text-red-400" />
-                                      🚨 Atrasado há {Math.abs(daysDiff)} dia{Math.abs(daysDiff) > 1 ? 's' : ''}
-                                    </span>
-                                  ) : isDueToday ? (
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-400 text-neutral-950 border border-amber-300 flex items-center gap-1 shadow-sm">
-                                      <AlertCircle className="w-3 h-3 text-neutral-950" />
-                                      ⚡ VENCE HOJE
-                                    </span>
-                                  ) : daysDiff <= 3 ? (
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                                      <Clock className="w-3 h-3 text-amber-400" />
-                                      Vence em {daysDiff} dia{daysDiff > 1 ? 's' : ''}
-                                    </span>
-                                  ) : daysDiff <= 7 ? (
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                                      <CalendarClock className="w-3 h-3 text-amber-400" />
-                                      Vence em {daysDiff} dias
-                                    </span>
-                                  ) : (
-                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                                      <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                                      Em Dia (em {daysDiff} dias)
-                                    </span>
-                                  )}
+                                  {(() => {
+                                    const billingInfo = getSiteBillingSummary(site);
+                                    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+                                    const remainingDaysToAutoDisable = Math.max(0, AUTO_DISABLE_OVERDUE_DAYS - daysOverdue);
+
+                                    return (
+                                      <>
+                                        {/* Ciclo 1º Mês Badge */}
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleSiteFirstMonth(site.id)}
+                                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border cursor-pointer transition ${
+                                            billingInfo.isFirstMonth
+                                              ? 'bg-amber-400/20 text-amber-300 border-amber-400/50'
+                                              : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                                          }`}
+                                          title="Alternar entre 1º Mês (cobra apenas Taxa de Criação, sem mensalidade) e Ciclo Mensal Normal (cobra Taxa de Manutenção)"
+                                        >
+                                          <Sparkles className="w-3 h-3 text-amber-400" />
+                                          <span>
+                                            {billingInfo.isFirstMonth
+                                              ? `1º Mês: Só Criação (R$ ${billingInfo.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • R$ 0 Mensalidade)`
+                                              : `Ciclo Mensal (${billingInfo.plan.shortName})`}
+                                          </span>
+                                        </button>
+
+                                        {/* Dynamic Due Date & 7th-Day Auto-Deactivation Badge */}
+                                        {site.status === 'disabled' ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
+                                            <Power className="w-3 h-3 text-red-400" />
+                                            {daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS || site.autoDisabledByOverdue
+                                              ? `🛑 Desativado Automaticamente (${daysOverdue}d de atraso — Regra 7º Dia)`
+                                              : '🛑 Desativado'}
+                                          </span>
+                                        ) : isOverdue ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1 animate-pulse">
+                                            <AlertTriangle className="w-3 h-3 text-red-400" />
+                                            🚨 Atrasado há {daysOverdue}d • Desativa auto em {remainingDaysToAutoDisable}d (7º dia)
+                                          </span>
+                                        ) : isDueToday ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-400 text-neutral-950 border border-amber-300 flex items-center gap-1 shadow-sm">
+                                            <AlertCircle className="w-3 h-3 text-neutral-950" />
+                                            ⚡ VENCE HOJE
+                                          </span>
+                                        ) : daysDiff <= 3 ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                            <Clock className="w-3 h-3 text-amber-400" />
+                                            Vence em {daysDiff} dia{daysDiff > 1 ? 's' : ''}
+                                          </span>
+                                        ) : daysDiff <= 7 ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                            <CalendarClock className="w-3 h-3 text-amber-400" />
+                                            Vence em {daysDiff} dias
+                                          </span>
+                                        ) : (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                            <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                                            Em Dia (em {daysDiff} dias)
+                                          </span>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
 
                                   {/* Conversion Rate Badge */}
                                   <span
@@ -13041,116 +14920,227 @@ COMO PUBLICAR NO SERVIDOR:
                                 </div>
                               </div>
 
-                              {/* Data Row: Vencimento + Taxa de Conversão + Atualizações + Valor */}
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-800/80">
-                                <div>
-                                  <span className="text-[10px] text-neutral-400 block font-medium">Data de Vencimento</span>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <CalendarClock className={`w-3.5 h-3.5 ${isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-400' : 'text-emerald-400'}`} />
-                                    <span className={`font-mono font-bold ${isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-300' : 'text-neutral-200'}`}>
-                                      {formattedDueDate}
-                                    </span>
-                                    <span className="text-[10px] text-neutral-500">
-                                      ({isOverdue ? `há ${Math.abs(daysDiff)}d` : isDueToday ? 'hoje' : `em ${daysDiff}d`})
-                                    </span>
-                                  </div>
-                                </div>
+                              {/* Data Row: Vencimento (com Regra 7º Dia) + Plano de Manutenção + Alterações no Mês (+R$ 14,90 extra) + Valor & Total do Ciclo */}
+                              {(() => {
+                                const billing = getSiteBillingSummary(site);
+                                const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
 
-                                <div>
-                                  <span className="text-[10px] text-neutral-400 block font-medium">Taxa de Conversão WA</span>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span className="font-bold text-emerald-300 font-mono">
-                                      {rate}%
-                                    </span>
-                                    <span className="text-[9.5px] text-neutral-400">
-                                      ({clicks} WA / {views} views)
-                                    </span>
-                                  </div>
-                                </div>
+                                return (
+                                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs bg-neutral-900/60 p-3 rounded-lg border border-neutral-800/80">
+                                    {/* 1. Data de Vencimento & Regra Automática 7º Dia */}
+                                    <div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-neutral-400 block font-medium">Data de Vencimento</span>
+                                        {editingDueDateSiteId !== site.id && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingDueDateSiteId(site.id);
+                                              setTempDueDateInput(site.dueDate);
+                                            }}
+                                            className="text-[9.5px] text-amber-400 hover:text-amber-300 font-semibold underline cursor-pointer"
+                                            title="Alterar data de vencimento (se >= 7 dias de atraso, desativa automaticamente)"
+                                          >
+                                            Alterar data
+                                          </button>
+                                        )}
+                                      </div>
 
-                                <div>
-                                  <span className="text-[10px] text-neutral-400 block font-medium">Edições Este Mês</span>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-                                    <span className="font-bold text-neutral-200">
-                                      {site.updatesThisMonth} <span className="text-[10px] font-normal text-neutral-400">alterações</span>
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-neutral-400 block font-medium">Valor da Mensalidade</span>
-                                    {editingFeeSiteId !== site.id && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setEditingFeeSiteId(site.id);
-                                          setTempFeeInput(site.monthlyFee.toString());
-                                        }}
-                                        className="text-[9.5px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline flex items-center gap-0.5"
-                                        title="Alterar o valor da mensalidade deste microsite"
-                                      >
-                                        <Edit3 className="w-2.5 h-2.5" /> Alterar
-                                      </button>
-                                    )}
-                                  </div>
-                                  {editingFeeSiteId === site.id ? (
-                                    <div className="flex items-center gap-1 mt-1">
-                                      <span className="text-[10px] text-neutral-400 font-mono">R$</span>
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        value={tempFeeInput}
-                                        onChange={(e) => setTempFeeInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            const num = parseFloat(tempFeeInput);
-                                            if (!isNaN(num) && num >= 0) {
-                                              updateSiteMonthlyFee(site.id, num);
-                                            }
-                                            setEditingFeeSiteId(null);
-                                          } else if (e.key === 'Escape') {
-                                            setEditingFeeSiteId(null);
-                                          }
-                                        }}
-                                        className="w-20 px-1.5 py-0.5 text-xs bg-neutral-950 rounded border border-amber-500 text-amber-300 font-bold font-mono focus:outline-none"
-                                        autoFocus
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const num = parseFloat(tempFeeInput);
-                                          if (!isNaN(num) && num >= 0) {
-                                            updateSiteMonthlyFee(site.id, num);
-                                          }
-                                          setEditingFeeSiteId(null);
-                                        }}
-                                        className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-[10px] font-bold cursor-pointer transition"
-                                        title="Salvar novo valor"
-                                      >
-                                        ✓ Salvar
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditingFeeSiteId(null)}
-                                        className="px-1.5 py-0.5 rounded text-neutral-400 hover:text-neutral-200 text-[10px] cursor-pointer"
-                                        title="Cancelar"
-                                      >
-                                        ✕
-                                      </button>
+                                      {editingDueDateSiteId === site.id ? (
+                                        <div className="flex items-center gap-1 mt-1">
+                                          <input
+                                            type="date"
+                                            value={tempDueDateInput}
+                                            onChange={(e) => setTempDueDateInput(e.target.value)}
+                                            className="px-2 py-0.5 text-[11px] bg-neutral-950 rounded border border-amber-500 text-amber-200 font-mono focus:outline-none"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              updateSiteDueDate(site.id, tempDueDateInput);
+                                              setEditingDueDateSiteId(null);
+                                            }}
+                                            className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-[10px] font-bold cursor-pointer"
+                                          >
+                                            ✓
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingDueDateSiteId(null)}
+                                            className="px-1.5 py-0.5 rounded text-neutral-400 hover:text-neutral-200 text-[10px] cursor-pointer"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="mt-0.5 space-y-0.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <CalendarClock className={`w-3.5 h-3.5 ${site.status === 'disabled' || isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-400' : 'text-emerald-400'}`} />
+                                            <span className={`font-mono font-bold ${site.status === 'disabled' || isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-300' : 'text-neutral-200'}`}>
+                                              {formattedDueDate}
+                                            </span>
+                                            <span className="text-[10px] text-neutral-500">
+                                              ({daysDiff < 0 ? `há ${daysOverdue}d` : isDueToday ? 'hoje' : `em ${daysDiff}d`})
+                                            </span>
+                                          </div>
+                                          <span className="text-[9.5px] text-neutral-400 block">
+                                            {daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
+                                              ? `🛑 Suspenso auto (${daysOverdue}d >= 7º dia)`
+                                              : daysOverdue > 0
+                                              ? `⏳ Suspensão auto em ${AUTO_DISABLE_OVERDUE_DAYS - daysOverdue} dia(s)`
+                                              : '🛡️ Desativação auto no 7º dia de atraso'}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
-                                  ) : (
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                      <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-                                      <span className="font-bold text-emerald-300">
-                                        R$ {site.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês
-                                      </span>
+
+                                    {/* 2. Plano de Taxa de Manutenção (29,90 / 49,90 / 79,90) */}
+                                    <div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-neutral-400 block font-medium">Plano de Manutenção</span>
+                                        <span className="text-[9.5px] text-emerald-400 font-mono font-bold">
+                                          R$ {billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                                        </span>
+                                      </div>
+                                      <select
+                                        value={billing.planKey}
+                                        onChange={(e) => updateSiteMaintenancePlan(site.id, e.target.value as MaintenancePlanId)}
+                                        className="mt-1 w-full px-2 py-1 rounded bg-neutral-950 border border-neutral-800 text-[11px] text-neutral-200 font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
+                                      >
+                                        <option value="basic_1">R$ 29,90/mês — 1 alteração mensal</option>
+                                        <option value="pro_4">R$ 49,90/mês — 4 alterações mensais</option>
+                                        <option value="vip_unlimited">R$ 79,90/mês — Alterações ilimitadas</option>
+                                      </select>
                                     </div>
-                                  )}
-                                </div>
-                              </div>
+
+                                    {/* 3. Alterações no Mês & Cálculo Automático de Extras (R$ 14,90) */}
+                                    <div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-neutral-400 block font-medium">
+                                          Alterações no Mês (Franquia: {billing.includedUpdatesLabel})
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between gap-2 mt-1">
+                                        <div className="flex items-center gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => adjustSiteUpdatesCount(site.id, -1)}
+                                            className="w-5 h-5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold text-xs flex items-center justify-center cursor-pointer border border-neutral-700"
+                                            title="Diminuir contador de alterações do mês"
+                                          >
+                                            -
+                                          </button>
+                                          <span className="font-mono font-bold text-neutral-100 px-1">
+                                            {billing.updatesUsed}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => adjustSiteUpdatesCount(site.id, 1)}
+                                            className="w-5 h-5 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center justify-center cursor-pointer border border-neutral-700"
+                                            title="Registrar +1 alteração solicitada pelo cliente neste mês"
+                                          >
+                                            +
+                                          </button>
+                                        </div>
+
+                                        {billing.extraUpdatesCount > 0 ? (
+                                          <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold">
+                                            +{billing.extraUpdatesCount} extra (+R$ {billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] text-emerald-400 font-medium">
+                                            Dentro do plano
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* 4. Valor Cobrado no Ciclo (1º Mês Só Criação vs Mensalidade + Extras) */}
+                                    <div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-neutral-400 block font-medium">
+                                          {billing.isFirstMonth ? '1º Mês (Só Taxa de Criação)' : 'Total da Fatura no Mês'}
+                                        </span>
+                                        {editingFeeSiteId !== site.id && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingFeeSiteId(site.id);
+                                              setTempFeeInput(site.monthlyFee.toString());
+                                            }}
+                                            className="text-[9.5px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline flex items-center gap-0.5"
+                                            title="Alterar valor personalizado da taxa de manutenção"
+                                          >
+                                            <Edit3 className="w-2.5 h-2.5" /> Editar valor
+                                          </button>
+                                        )}
+                                      </div>
+                                      {editingFeeSiteId === site.id ? (
+                                        <div className="flex items-center gap-1 mt-1">
+                                          <span className="text-[10px] text-neutral-400 font-mono">R$</span>
+                                          <input
+                                            type="number"
+                                            step="0.01"
+                                            value={tempFeeInput}
+                                            onChange={(e) => setTempFeeInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                const num = parseFloat(tempFeeInput);
+                                                if (!isNaN(num) && num >= 0) {
+                                                  updateSiteMonthlyFee(site.id, num);
+                                                }
+                                                setEditingFeeSiteId(null);
+                                              } else if (e.key === 'Escape') {
+                                                setEditingFeeSiteId(null);
+                                              }
+                                            }}
+                                            className="w-20 px-1.5 py-0.5 text-xs bg-neutral-950 rounded border border-amber-500 text-amber-300 font-bold font-mono focus:outline-none"
+                                            autoFocus
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const num = parseFloat(tempFeeInput);
+                                              if (!isNaN(num) && num >= 0) {
+                                                updateSiteMonthlyFee(site.id, num);
+                                              }
+                                              setEditingFeeSiteId(null);
+                                            }}
+                                            className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-[10px] font-bold cursor-pointer transition"
+                                            title="Salvar novo valor"
+                                          >
+                                            ✓ Salvar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingFeeSiteId(null)}
+                                            className="px-1.5 py-0.5 rounded text-neutral-400 hover:text-neutral-200 text-[10px] cursor-pointer"
+                                            title="Cancelar"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="mt-0.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                                            <span className="font-bold text-emerald-300 font-mono">
+                                              R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            </span>
+                                          </div>
+                                          <span className="text-[9.5px] text-neutral-400 block">
+                                            {billing.isFirstMonth
+                                              ? `Criação R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • Mensalidade R$ 0,00`
+                                              : billing.extraUpdatesCount > 0
+                                              ? `Manut. R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} extras`
+                                              : `Manut. R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês`}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
 
                               {/* Action Buttons Row */}
                               <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -13208,6 +15198,17 @@ COMO PUBLICAR NO SERVIDOR:
                                   >
                                     <Globe className="w-3 h-3 text-amber-400" />
                                     Domínio & DNS
+                                  </button>
+
+                                  {/* NOVO BOTÃO: PROMPT DE ENVIO WHATSAPP COM DETALHES, VENCIMENTO, VALORES, LINKS REDES SOCIAIS E TUTORIAL BIO INSTAGRAM */}
+                                  <button
+                                    type="button"
+                                    onClick={() => openClientWaPromptModal(site, 'complete_kit')}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-[11px] flex items-center gap-1.5 cursor-pointer border border-emerald-300 shadow-sm shadow-emerald-500/20 transition"
+                                    title="Abrir prompt de mensagem WhatsApp com vencimento, valores, links p/ redes sociais e passo a passo de como colocar na Bio do Instagram"
+                                  >
+                                    <Send className="w-3 h-3 text-neutral-950" />
+                                    <span>📲 Enviar Links, Valores & Tutorial Bio</span>
                                   </button>
 
                                   <button
@@ -13444,7 +15445,8 @@ COMO PUBLICAR NO SERVIDOR:
               color: theme.textMain,
               fontFamily: `'${data.styling.fontFamily}', sans-serif`,
               justifyContent: data.styling.wrapperAlignment || 'flex-start',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.08)',
+              boxShadow:
+                '0 32px 64px -12px rgba(0, 0, 0, 0.92), 0 18px 36px -6px rgba(0, 0, 0, 0.75), 0 0 40px -5px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 2px 6px rgba(0, 0, 0, 0.65)',
             }}
           >
             {/* LUXURY SKELETON LOADING OVERLAY (Prevents flash of content on theme/kit transitions) */}
@@ -13551,7 +15553,10 @@ COMO PUBLICAR NO SERVIDOR:
             {data.announcement.enabled && (
               <div
                 className="relative z-20 py-2 px-3 text-center text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shrink-0"
-                style={{ backgroundColor: theme.accent, color: '#000' }}
+                style={{
+                  backgroundColor: data.moduleColors?.announcement?.bgColor || theme.accent,
+                  color: data.moduleColors?.announcement?.titleColor || data.moduleColors?.announcement?.textColor || '#000',
+                }}
                 onClick={() => setBookingModalOpen(true)}
               >
                 <span>{data.announcement.badge}:</span>
@@ -13594,17 +15599,23 @@ COMO PUBLICAR NO SERVIDOR:
               >
                 <span
                   className="text-[10px] uppercase font-bold tracking-[2.5px]"
-                  style={{ color: theme.accent }}
+                  style={{ color: data.moduleColors?.hero?.headlineColor || theme.accent }}
                 >
                   {data.profile.title}
                 </span>
                 <h2
                   className="text-2xl font-bold tracking-wide leading-tight mt-1"
-                  style={{ fontFamily: `'${data.styling.fontFamily}', serif` }}
+                  style={{
+                    fontFamily: `'${data.styling.fontFamily}', serif`,
+                    color: data.moduleColors?.hero?.titleColor || theme.textMain,
+                  }}
                 >
                   {data.profile.name}
                 </h2>
-                <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed" style={{ color: theme.textMuted }}>
+                <p
+                  className="text-xs mt-1.5 line-clamp-2 leading-relaxed"
+                  style={{ color: data.moduleColors?.hero?.textColor || theme.textMuted }}
+                >
                   {data.profile.tagline}
                 </p>
               </div>
@@ -13665,16 +15676,47 @@ COMO PUBLICAR NO SERVIDOR:
 
             {/* BANNER DE TIMER REGRESSIVO DE ESCASSEZ (SE HABILITADO NO MÓDULO DE ALTA CONVERSÃO) */}
             {data.highConversion?.enabled && data.highConversion?.urgencyTimer?.enabled && (
-              <div className="mx-5 my-2 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-center space-y-1 relative z-10 shadow-lg">
-                <div className="text-[10px] font-black tracking-wider text-amber-300 uppercase flex items-center justify-center gap-1">
-                  <CalendarClock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <div
+                className="mx-5 my-2 p-3 rounded-2xl border text-center space-y-1 relative z-10 shadow-lg"
+                style={{
+                  backgroundColor: data.moduleColors?.urgencyTimer?.bgColor || 'rgba(245, 158, 11, 0.15)',
+                  borderColor: `${data.moduleColors?.urgencyTimer?.accentColor || theme.accent}66`,
+                }}
+              >
+                <div
+                  className="text-[10px] font-black tracking-wider uppercase flex items-center justify-center gap-1"
+                  style={{
+                    color:
+                      data.moduleColors?.urgencyTimer?.headlineColor ||
+                      data.moduleColors?.urgencyTimer?.titleColor ||
+                      theme.accent,
+                  }}
+                >
+                  <CalendarClock className="w-3.5 h-3.5 animate-pulse" />
                   <span>{data.highConversion.urgencyTimer.headline}</span>
                 </div>
-                <p className="text-[9.5px] opacity-80" style={{ color: theme.textMuted }}>
+                <p
+                  className="text-[9.5px]"
+                  style={{ color: data.moduleColors?.urgencyTimer?.textColor || theme.textMuted }}
+                >
                   {data.highConversion.urgencyTimer.subheadline}
                 </p>
-                <div className="text-sm font-black font-mono text-amber-300 pt-0.5 tracking-widest">
-                  14:52 <span className="text-[9px] font-sans text-neutral-400 font-normal">(Restante)</span>
+                <div
+                  className="text-sm font-black font-mono pt-0.5 tracking-widest"
+                  style={{
+                    color:
+                      data.moduleColors?.urgencyTimer?.accentColor ||
+                      data.moduleColors?.urgencyTimer?.titleColor ||
+                      theme.accent,
+                  }}
+                >
+                  14:52{' '}
+                  <span
+                    className="text-[9px] font-sans font-normal opacity-80"
+                    style={{ color: data.moduleColors?.urgencyTimer?.textColor || theme.textMuted }}
+                  >
+                    (Restante)
+                  </span>
                 </div>
               </div>
             )}
@@ -13685,7 +15727,7 @@ COMO PUBLICAR NO SERVIDOR:
                 className="text-center px-4 py-2 text-2xl italic tracking-wide"
                 style={{
                   fontFamily: `'${theme.fontScript}', cursive, serif`,
-                  color: theme.textMuted,
+                  color: data.moduleColors?.hero?.accentColor || data.moduleColors?.hero?.textColor || theme.textMuted,
                 }}
               >
                 {data.profile.cursivePhrase}
@@ -13709,26 +15751,40 @@ COMO PUBLICAR NO SERVIDOR:
                   }`}
                   style={{
                     borderRadius: `${data.styling.borderRadius}px`,
-                    background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
-                    color: '#000',
+                    background:
+                      data.moduleColors?.qualifierFunnel?.bgColor ||
+                      `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+                    color: data.moduleColors?.qualifierFunnel?.titleColor || '#000',
                     boxShadow: '0 10px 25px -4px rgba(0,0,0,0.5)',
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-black/15 text-black flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                    <div
+                      className="w-10 h-10 rounded-full bg-black/15 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+                      style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || '#000' }}
+                    >
                       <Filter className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-[11px] font-black tracking-[1.5px] uppercase">
+                      <div
+                        className="text-[11px] font-black tracking-[1.5px] uppercase"
+                        style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || '#000' }}
+                      >
                         {data.qualifierFunnel.triggerButtonLabel}
                       </div>
-                      <div className="text-[9.5px] opacity-80 line-clamp-1 mt-0.5">
+                      <div
+                        className="text-[9.5px] line-clamp-1 mt-0.5"
+                        style={{ color: data.moduleColors?.qualifierFunnel?.textColor || 'rgba(0,0,0,0.8)' }}
+                      >
                         {data.qualifierFunnel.triggerButtonSubtitle}
                       </div>
                     </div>
                   </div>
                   <div className="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5">
-                    <ChevronRight className="w-4 h-4 text-black" />
+                    <ChevronRight
+                      className="w-4 h-4"
+                      style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || '#000' }}
+                    />
                   </div>
                 </button>
               )}
@@ -13747,33 +15803,42 @@ COMO PUBLICAR NO SERVIDOR:
                 const animClass =
                   card.animation && card.animation !== 'none' ? `anim-${card.animation}` : '';
 
-                let cardBgStyle = theme.cardBg;
-                let cardTextStyle = theme.cardText;
-                let cardSubtextStyle = theme.cardSubtext;
+                const modBtnColors = data.moduleColors?.actionCards || {};
+                let cardBgStyle = modBtnColors.bgColor || theme.cardBg;
+                let cardTextStyle = modBtnColors.titleColor || theme.cardText;
+                let cardSubtextStyle = modBtnColors.textColor || theme.cardSubtext;
                 let cardBorderStyle = data.styling.metallicBorders ? `1px solid ${theme.cardBorder}` : 'none';
                 let iconBgStyle = theme.iconBg;
-                let iconColorStyle = theme.iconColor;
+                let iconColorStyle = modBtnColors.accentColor || theme.iconColor;
 
                 if (card.variant === 'accent') {
-                  cardBgStyle = `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`;
-                  cardTextStyle = '#000000';
-                  cardSubtextStyle = 'rgba(0,0,0,0.75)';
+                  cardBgStyle = modBtnColors.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`;
+                  cardTextStyle = modBtnColors.titleColor || '#000000';
+                  cardSubtextStyle = modBtnColors.textColor || 'rgba(0,0,0,0.75)';
                   cardBorderStyle = `1px solid ${theme.accent}`;
                   iconBgStyle = 'rgba(0,0,0,0.14)';
-                  iconColorStyle = '#000000';
+                  iconColorStyle = modBtnColors.titleColor || '#000000';
                 } else if (card.variant === 'outline') {
-                  cardBgStyle = 'rgba(255,255,255,0.04)';
-                  cardTextStyle = theme.textMain;
-                  cardSubtextStyle = theme.textMuted;
+                  cardBgStyle = modBtnColors.bgColor || 'rgba(255,255,255,0.04)';
+                  cardTextStyle = modBtnColors.titleColor || theme.textMain;
+                  cardSubtextStyle = modBtnColors.textColor || theme.textMuted;
                   cardBorderStyle = `1.5px solid ${theme.accent}`;
                   iconBgStyle = theme.socialBg;
                   iconColorStyle = theme.accent;
                 } else if (card.variant === 'custom') {
-                  cardBgStyle = card.customBg || theme.cardBg;
-                  cardTextStyle = card.customText || theme.cardText;
-                  cardSubtextStyle = (card.customText || theme.cardText) + 'cc';
+                  cardBgStyle = card.customBg || modBtnColors.bgColor || theme.cardBg;
+                  cardTextStyle = card.customText || modBtnColors.titleColor || theme.cardText;
+                  cardSubtextStyle = (card.customText || modBtnColors.textColor || theme.cardText) + 'cc';
                   iconBgStyle = 'rgba(0,0,0,0.15)';
-                  iconColorStyle = card.customText || theme.cardText;
+                  iconColorStyle = card.customText || modBtnColors.titleColor || theme.cardText;
+                }
+
+                if (card.customTitleColor) {
+                  cardTextStyle = card.customTitleColor;
+                  iconColorStyle = card.customTitleColor;
+                }
+                if (card.customSubtitleColor) {
+                  cardSubtextStyle = card.customSubtitleColor;
                 }
 
                 const hasSideImage =
@@ -13821,7 +15886,7 @@ COMO PUBLICAR NO SERVIDOR:
                       }}
                       className={`cta-card w-full flex items-center justify-between ${
                         isImageLeft ? 'flex-row-reverse' : 'flex-row'
-                      } px-4 py-3.5 transition-all duration-300 ease-out transform hover:scale-[1.03] hover:-translate-y-0.5 active:scale-[0.985] cursor-pointer group relative ${
+                      } px-4 py-3.5 transition-all duration-300 ease-out transform hover:scale-[1.03] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer group relative ${
                         isPopout ? 'overflow-visible mt-4' : 'overflow-hidden'
                       } ${animClass}`}
                       style={{
@@ -13835,6 +15900,7 @@ COMO PUBLICAR NO SERVIDOR:
                         border: cardBorderStyle,
                         boxShadow: theme.pillShadow,
                         minHeight: `${Math.max(88, imgSize - 4)}px`,
+                        ['--theme-accent' as string]: theme.accent,
                       }}
                     >
                       {card.badgeText && (
@@ -13944,7 +16010,7 @@ COMO PUBLICAR NO SERVIDOR:
                         setQuizModalOpen(true);
                       }
                     }}
-                    className={`cta-card w-full flex items-center justify-between p-3.5 transition-all duration-300 ease-out transform hover:scale-[1.03] hover:-translate-y-0.5 active:scale-[0.985] cursor-pointer group relative overflow-hidden ${animClass}`}
+                    className={`cta-card w-full flex items-center justify-between p-3.5 transition-all duration-300 ease-out transform hover:scale-[1.03] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer group relative overflow-hidden ${animClass}`}
                     style={{
                       borderRadius: `${data.styling.borderRadius}px`,
                       backgroundImage: cardBackgroundImage,
@@ -13955,6 +16021,7 @@ COMO PUBLICAR NO SERVIDOR:
                       color: card.bgImage ? '#ffffff' : cardTextStyle,
                       border: cardBorderStyle,
                       boxShadow: theme.pillShadow,
+                      ['--theme-accent' as string]: theme.accent,
                     }}
                   >
                     {card.badgeText && (
@@ -14027,31 +16094,49 @@ COMO PUBLICAR NO SERVIDOR:
                   className="grid grid-cols-3 divide-x divide-neutral-800/20 py-3 text-center"
                   style={{
                     borderRadius: `${data.styling.borderRadius / 1.5}px`,
-                    background: theme.socialBg,
+                    background: data.moduleColors?.metrics?.bgColor || theme.socialBg,
                     border: `1px solid ${theme.socialBorder}`,
                   }}
                 >
                   <div>
-                    <div className="text-sm font-bold tabular-nums" style={{ color: theme.accent }}>
+                    <div
+                      className="text-sm font-bold tabular-nums"
+                      style={{ color: data.moduleColors?.metrics?.accentColor || data.moduleColors?.metrics?.titleColor || theme.accent }}
+                    >
                       {data.metrics.stat1Value}
                     </div>
-                    <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: theme.textMuted }}>
+                    <div
+                      className="text-[8px] uppercase tracking-wider mt-0.5"
+                      style={{ color: data.moduleColors?.metrics?.textColor || theme.textMuted }}
+                    >
                       {data.metrics.stat1Label}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-bold tabular-nums" style={{ color: theme.accent }}>
+                    <div
+                      className="text-sm font-bold tabular-nums"
+                      style={{ color: data.moduleColors?.metrics?.accentColor || data.moduleColors?.metrics?.titleColor || theme.accent }}
+                    >
                       {data.metrics.stat2Value}
                     </div>
-                    <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: theme.textMuted }}>
+                    <div
+                      className="text-[8px] uppercase tracking-wider mt-0.5"
+                      style={{ color: data.moduleColors?.metrics?.textColor || theme.textMuted }}
+                    >
                       {data.metrics.stat2Label}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm font-bold tabular-nums" style={{ color: theme.accent }}>
+                    <div
+                      className="text-sm font-bold tabular-nums"
+                      style={{ color: data.moduleColors?.metrics?.accentColor || data.moduleColors?.metrics?.titleColor || theme.accent }}
+                    >
                       {data.metrics.stat3Value}
                     </div>
-                    <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: theme.textMuted }}>
+                    <div
+                      className="text-[8px] uppercase tracking-wider mt-0.5"
+                      style={{ color: data.moduleColors?.metrics?.textColor || theme.textMuted }}
+                    >
                       {data.metrics.stat3Label}
                     </div>
                   </div>
@@ -14065,7 +16150,10 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
-                    style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                    style={{
+                      color: data.moduleColors?.processSteps?.headlineColor || theme.accent,
+                      fontFamily: `'${data.styling.fontFamily}', serif`,
+                    }}
                   >
                     {data.processSteps.headline}
                   </h3>
@@ -14077,19 +16165,32 @@ COMO PUBLICAR NO SERVIDOR:
                       key={st.id}
                       className="p-3 flex items-start gap-3 rounded-2xl"
                       style={{
-                        background: theme.socialBg,
-                        border: `1px solid ${theme.socialBorder}`
+                        background: data.moduleColors?.processSteps?.bgColor || theme.socialBg,
+                        border: `1px solid ${theme.socialBorder}`,
                       }}
                     >
                       <div
                         className="text-2xl font-bold leading-none tabular-nums"
-                        style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                        style={{
+                          color: data.moduleColors?.processSteps?.accentColor || theme.accent,
+                          fontFamily: `'${data.styling.fontFamily}', serif`,
+                        }}
                       >
                         {st.number}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold">{st.title}</div>
-                        <div className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>{st.description}</div>
+                        <div
+                          className="text-xs font-bold"
+                          style={{ color: data.moduleColors?.processSteps?.titleColor || theme.textMain }}
+                        >
+                          {st.title}
+                        </div>
+                        <div
+                          className="text-[10px] mt-0.5"
+                          style={{ color: data.moduleColors?.processSteps?.textColor || theme.textMuted }}
+                        >
+                          {st.description}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -14145,9 +16246,9 @@ COMO PUBLICAR NO SERVIDOR:
                         <span
                           className="inline-block px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider mb-1"
                           style={{
-                            background: `${theme.accent}18`,
-                            color: theme.accent,
-                            border: `1px solid ${theme.accent}40`,
+                            background: `${data.moduleColors?.studentGrid?.accentColor || theme.accent}18`,
+                            color: data.moduleColors?.studentGrid?.accentColor || theme.accent,
+                            border: `1px solid ${data.moduleColors?.studentGrid?.accentColor || theme.accent}40`,
                           }}
                         >
                           {data.studentGrid.badge}
@@ -14156,14 +16257,20 @@ COMO PUBLICAR NO SERVIDOR:
                       <div className="flex items-center gap-2">
                         <h3
                           className="text-sm font-semibold tracking-wider uppercase"
-                          style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                          style={{
+                            color: data.moduleColors?.studentGrid?.headlineColor || theme.accent,
+                            fontFamily: `'${data.styling.fontFamily}', serif`,
+                          }}
                         >
                           {data.studentGrid.headline}
                         </h3>
                         <div className="flex-1 h-px bg-neutral-800/30" />
                       </div>
                       {data.studentGrid.subtitle && (
-                        <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                        <p
+                          className="text-[10px] mt-0.5"
+                          style={{ color: data.moduleColors?.studentGrid?.textColor || theme.textMuted }}
+                        >
                           {data.studentGrid.subtitle}
                         </p>
                       )}
@@ -14372,7 +16479,10 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
-                    style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                    style={{
+                      color: data.moduleColors?.beforeAfter?.headlineColor || theme.accent,
+                      fontFamily: `'${data.styling.fontFamily}', serif`,
+                    }}
                   >
                     {data.beforeAfter.headline}
                   </h3>
@@ -14430,20 +16540,28 @@ COMO PUBLICAR NO SERVIDOR:
                   rel="noreferrer"
                   className="p-3.5 flex items-center justify-between rounded-2xl group transition-all duration-300 ease-out hover:scale-[1.025] active:scale-[0.985]"
                   style={{
-                    background: theme.socialBg,
-                    border: `1px solid ${theme.socialBorder}`
+                    background: data.moduleColors?.locationCard?.bgColor || theme.socialBg,
+                    border: `1px solid ${theme.socialBorder}`,
                   }}
                 >
                   <div className="flex items-center gap-3 min-w-0 pr-2">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: theme.iconBg, color: theme.iconColor }}
+                      style={{
+                        background: theme.iconBg,
+                        color: data.moduleColors?.locationCard?.accentColor || theme.iconColor,
+                      }}
                     >
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-bold uppercase truncate">{data.locationCard.headline}</span>
+                        <span
+                          className="text-xs font-bold uppercase truncate"
+                          style={{ color: data.moduleColors?.locationCard?.titleColor || theme.textMain }}
+                        >
+                          {data.locationCard.headline}
+                        </span>
                         {data.locationCard.showHours !== false && data.locationCard.openStatus && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -14451,18 +16569,35 @@ COMO PUBLICAR NO SERVIDOR:
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] mt-0.5 line-clamp-1" style={{ color: theme.textMuted }}>
+                      <div
+                        className="text-[10px] mt-0.5 line-clamp-1"
+                        style={{ color: data.moduleColors?.locationCard?.textColor || theme.textMuted }}
+                      >
                         {data.locationCard.address}
                       </div>
                       {data.locationCard.showHours !== false && data.locationCard.hours && (
-                        <div className="text-[9px] mt-1 font-semibold flex items-center gap-1 opacity-85" style={{ color: theme.textMain }}>
-                          <Clock className="w-2.5 h-2.5 shrink-0" style={{ color: theme.accent }} />
+                        <div
+                          className="text-[9px] mt-1 font-semibold flex items-center gap-1 opacity-90"
+                          style={{
+                            color:
+                              data.moduleColors?.locationCard?.accentColor ||
+                              data.moduleColors?.locationCard?.titleColor ||
+                              theme.textMain,
+                          }}
+                        >
+                          <Clock
+                            className="w-2.5 h-2.5 shrink-0"
+                            style={{ color: data.moduleColors?.locationCard?.accentColor || theme.accent }}
+                          />
                           <span className="truncate">{data.locationCard.hours}</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <Navigation className="w-4 h-4 text-amber-400 shrink-0 group-hover:translate-x-1 transition" />
+                  <Navigation
+                    className="w-4 h-4 shrink-0 group-hover:translate-x-1 transition"
+                    style={{ color: data.moduleColors?.locationCard?.accentColor || theme.accent }}
+                  />
                 </a>
               </div>
             )}
@@ -14470,6 +16605,13 @@ COMO PUBLICAR NO SERVIDOR:
             {/* CATALOG OF SERVICES */}
             {data.services.enabled && data.services.items.length > 0 && (() => {
               const srvLayout = data.services.layout || 'list';
+              const srvModColors = data.moduleColors?.services || {};
+              const srvHeadlineColor = srvModColors.headlineColor || theme.accent;
+              const srvTitleColor = srvModColors.titleColor || theme.textMain;
+              const srvTextColor = srvModColors.textColor || theme.textMuted;
+              const srvAccentColor = srvModColors.accentColor || theme.accent;
+              const srvCardBg = srvModColors.bgColor;
+
               const handleServiceAction = (srv: (typeof data.services.items)[0]) => {
                 recordWhatsappClick();
                 if (srv.actionType === 'whatsapp') {
@@ -14491,9 +16633,9 @@ COMO PUBLICAR NO SERVIDOR:
                       <span
                         className="inline-block px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider"
                         style={{
-                          backgroundColor: `${theme.accent}18`,
-                          color: theme.accent,
-                          border: `1px solid ${theme.accent}40`,
+                          backgroundColor: `${srvAccentColor}18`,
+                          color: srvAccentColor,
+                          border: `1px solid ${srvAccentColor}40`,
                         }}
                       >
                         {data.services.badge}
@@ -14502,14 +16644,14 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="flex items-center gap-2">
                       <h3
                         className="text-sm font-semibold tracking-wider uppercase"
-                        style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                        style={{ color: srvHeadlineColor, fontFamily: `'${data.styling.fontFamily}', serif` }}
                       >
                         {data.services.headline}
                       </h3>
                       <div className="flex-1 h-px bg-neutral-800/30" />
                     </div>
                     {data.services.subtitle && (
-                      <p className="text-[10px] leading-relaxed" style={{ color: theme.textMuted }}>
+                      <p className="text-[10px] leading-relaxed" style={{ color: srvTextColor }}>
                         {data.services.subtitle}
                       </p>
                     )}
@@ -14524,8 +16666,9 @@ COMO PUBLICAR NO SERVIDOR:
                           className="service-card overflow-hidden transition-all duration-300 ease-out transform hover:scale-[1.025] hover:-translate-y-0.5 active:scale-[0.985] hover:shadow-xl group"
                           style={{
                             borderRadius: `${Math.round(data.styling.borderRadius / 1.2)}px`,
-                            backgroundColor: data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg,
-                            border: srv.featured ? `1.5px solid ${theme.accent}` : `1px solid ${theme.socialBorder}`,
+                            backgroundColor:
+                              srvCardBg || (data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg),
+                            border: srv.featured ? `1.5px solid ${srvAccentColor}` : `1px solid ${theme.socialBorder}`,
                             boxShadow: srv.featured ? `0 8px 24px -4px ${theme.glowColor}` : 'none',
                             backdropFilter: data.styling.glassmorphism ? 'blur(12px)' : 'none',
                           }}
@@ -14541,7 +16684,7 @@ COMO PUBLICAR NO SERVIDOR:
                             {srv.badge && (
                               <span
                                 className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow z-20"
-                                style={{ backgroundColor: theme.accent, color: '#000' }}
+                                style={{ backgroundColor: srvAccentColor, color: '#000' }}
                               >
                                 {srv.badge}
                               </span>
@@ -14553,8 +16696,10 @@ COMO PUBLICAR NO SERVIDOR:
                             )}
                           </div>
                           <div className="p-3.5 space-y-2">
-                            <div className="text-xs font-bold leading-snug">{srv.name}</div>
-                            <div className="text-[10.5px] leading-relaxed" style={{ color: theme.textMuted }}>
+                            <div className="text-xs font-bold leading-snug" style={{ color: srvTitleColor }}>
+                              {srv.name}
+                            </div>
+                            <div className="text-[10.5px] leading-relaxed" style={{ color: srvTextColor }}>
                               {srv.description}
                             </div>
                             <div
@@ -14565,12 +16710,12 @@ COMO PUBLICAR NO SERVIDOR:
                                 {srv.oldPrice && (
                                   <span
                                     className="text-[9.5px] line-through block opacity-70"
-                                    style={{ color: theme.textMuted }}
+                                    style={{ color: srvTextColor }}
                                   >
                                     {srv.oldPrice}
                                   </span>
                                 )}
-                                <span className="text-sm font-extrabold tabular-nums" style={{ color: theme.accent }}>
+                                <span className="text-sm font-extrabold tabular-nums" style={{ color: srvAccentColor }}>
                                   {srv.price}
                                 </span>
                               </div>
@@ -14578,7 +16723,7 @@ COMO PUBLICAR NO SERVIDOR:
                                 type="button"
                                 onClick={() => handleServiceAction(srv)}
                                 className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full transition hover:scale-105 cursor-pointer shadow"
-                                style={{ backgroundColor: theme.accent, color: '#000' }}
+                                style={{ backgroundColor: srvAccentColor, color: '#000' }}
                               >
                                 {srv.ctaLabel || 'Reservar'} ›
                               </button>
@@ -14598,8 +16743,9 @@ COMO PUBLICAR NO SERVIDOR:
                           className="service-card overflow-hidden flex flex-col justify-between transition-all duration-300 ease-out transform hover:scale-[1.03] hover:-translate-y-0.5 active:scale-[0.985] hover:shadow-xl group"
                           style={{
                             borderRadius: `${Math.round(data.styling.borderRadius / 1.3)}px`,
-                            backgroundColor: data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg,
-                            border: srv.featured ? `1.5px solid ${theme.accent}` : `1px solid ${theme.socialBorder}`,
+                            backgroundColor:
+                              srvCardBg || (data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg),
+                            border: srv.featured ? `1.5px solid ${srvAccentColor}` : `1px solid ${theme.socialBorder}`,
                             backdropFilter: data.styling.glassmorphism ? 'blur(12px)' : 'none',
                           }}
                         >
@@ -14615,20 +16761,22 @@ COMO PUBLICAR NO SERVIDOR:
                               {srv.badge && (
                                 <span
                                   className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider shadow z-20"
-                                  style={{ backgroundColor: theme.accent, color: '#000' }}
+                                  style={{ backgroundColor: srvAccentColor, color: '#000' }}
                                 >
                                   {srv.badge}
                                 </span>
                               )}
                             </div>
                             <div className="p-2.5 space-y-1">
-                              <div className="text-[11px] font-bold leading-tight line-clamp-2">{srv.name}</div>
+                              <div className="text-[11px] font-bold leading-tight line-clamp-2" style={{ color: srvTitleColor }}>
+                                {srv.name}
+                              </div>
                               {srv.duration && (
-                                <div className="text-[8.5px] font-medium" style={{ color: theme.textMuted }}>
+                                <div className="text-[8.5px] font-medium" style={{ color: srvTextColor }}>
                                   ⏱ {srv.duration}
                                 </div>
                               )}
-                              <div className="text-[9.5px] leading-snug line-clamp-2" style={{ color: theme.textMuted }}>
+                              <div className="text-[9.5px] leading-snug line-clamp-2" style={{ color: srvTextColor }}>
                                 {srv.description}
                               </div>
                             </div>
@@ -14636,11 +16784,11 @@ COMO PUBLICAR NO SERVIDOR:
                           <div className="px-2.5 pb-2.5 pt-1 space-y-1.5">
                             <div className="flex items-baseline gap-1.5 flex-wrap">
                               {srv.oldPrice && (
-                                <span className="text-[8.5px] line-through opacity-70" style={{ color: theme.textMuted }}>
+                                <span className="text-[8.5px] line-through opacity-70" style={{ color: srvTextColor }}>
                                   {srv.oldPrice}
                                 </span>
                               )}
-                              <span className="text-xs font-extrabold tabular-nums" style={{ color: theme.accent }}>
+                              <span className="text-xs font-extrabold tabular-nums" style={{ color: srvAccentColor }}>
                                 {srv.price}
                               </span>
                             </div>
@@ -14648,7 +16796,7 @@ COMO PUBLICAR NO SERVIDOR:
                               type="button"
                               onClick={() => handleServiceAction(srv)}
                               className="w-full py-1.5 text-[9.5px] font-extrabold uppercase tracking-wider rounded-lg transition hover:scale-[1.02] cursor-pointer"
-                              style={{ backgroundColor: theme.accent, color: '#000' }}
+                              style={{ backgroundColor: srvAccentColor, color: '#000' }}
                             >
                               {srv.ctaLabel || 'Reservar'}
                             </button>
@@ -14667,8 +16815,9 @@ COMO PUBLICAR NO SERVIDOR:
                           className="service-card p-3 flex gap-3 items-center transition-all duration-300 ease-out transform hover:scale-[1.025] hover:-translate-y-0.5 active:scale-[0.985] hover:shadow-xl group"
                           style={{
                             borderRadius: `${Math.round(data.styling.borderRadius / 1.4)}px`,
-                            backgroundColor: data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : 'transparent',
-                            border: srv.featured ? `1.5px solid ${theme.accent}` : `1px solid ${theme.socialBorder}`,
+                            backgroundColor:
+                              srvCardBg || (data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : 'transparent'),
+                            border: srv.featured ? `1.5px solid ${srvAccentColor}` : `1px solid ${theme.socialBorder}`,
                             boxShadow: srv.featured ? `0 6px 18px -4px ${theme.glowColor}` : 'none',
                             backdropFilter: data.styling.glassmorphism ? 'blur(12px)' : 'none',
                           }}
@@ -14687,29 +16836,31 @@ COMO PUBLICAR NO SERVIDOR:
                               {srv.badge && (
                                 <span
                                   className="px-1.5 py-0.2 rounded-full text-[7.5px] font-black uppercase tracking-wider"
-                                  style={{ backgroundColor: theme.accent, color: '#000' }}
+                                  style={{ backgroundColor: srvAccentColor, color: '#000' }}
                                 >
                                   {srv.badge}
                                 </span>
                               )}
                               {srv.duration && (
-                                <span className="text-[9px] font-medium" style={{ color: theme.textMuted }}>
+                                <span className="text-[9px] font-medium" style={{ color: srvTextColor }}>
                                   ⏱ {srv.duration}
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs font-bold truncate">{srv.name}</div>
-                            <div className="text-[10px] leading-tight line-clamp-2 mt-0.5" style={{ color: theme.textMuted }}>
+                            <div className="text-xs font-bold truncate" style={{ color: srvTitleColor }}>
+                              {srv.name}
+                            </div>
+                            <div className="text-[10px] leading-tight line-clamp-2 mt-0.5" style={{ color: srvTextColor }}>
                               {srv.description}
                             </div>
                             <div className="flex items-center justify-between mt-2">
                               <div className="flex items-baseline gap-1.5">
                                 {srv.oldPrice && (
-                                  <span className="text-[9px] line-through opacity-70" style={{ color: theme.textMuted }}>
+                                  <span className="text-[9px] line-through opacity-70" style={{ color: srvTextColor }}>
                                     {srv.oldPrice}
                                   </span>
                                 )}
-                                <span className="text-xs font-extrabold tabular-nums" style={{ color: theme.accent }}>
+                                <span className="text-xs font-extrabold tabular-nums" style={{ color: srvAccentColor }}>
                                   {srv.price}
                                 </span>
                               </div>
@@ -14717,7 +16868,7 @@ COMO PUBLICAR NO SERVIDOR:
                                 type="button"
                                 onClick={() => handleServiceAction(srv)}
                                 className="px-2.5 py-1 text-[10px] font-bold rounded-full transition hover:scale-105 cursor-pointer"
-                                style={{ backgroundColor: theme.accent, color: '#000' }}
+                                style={{ backgroundColor: srvAccentColor, color: '#000' }}
                               >
                                 {srv.ctaLabel || 'Reservar'}
                               </button>
@@ -14737,7 +16888,10 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
-                    style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                    style={{
+                      color: data.moduleColors?.testimonials?.headlineColor || theme.accent,
+                      fontFamily: `'${data.styling.fontFamily}', serif`,
+                    }}
                   >
                     {data.testimonials.headline}
                   </h3>
@@ -14749,20 +16903,29 @@ COMO PUBLICAR NO SERVIDOR:
                       key={t.id}
                       className="p-3.5 rounded-2xl flex-shrink-0 w-[240px] space-y-2"
                       style={{
-                        background: theme.socialBg,
+                        background: data.moduleColors?.testimonials?.bgColor || theme.socialBg,
                         border: `1px solid ${theme.socialBorder}`,
                       }}
                     >
-                      <div className="flex text-amber-400">
+                      <div
+                        className="flex"
+                        style={{ color: data.moduleColors?.testimonials?.accentColor || '#fbbf24' }}
+                      >
                         {Array.from({ length: t.rating }).map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                          <Star key={i} className="w-3.5 h-3.5 fill-current" />
                         ))}
                       </div>
-                      <p className="text-[11px] leading-relaxed italic" style={{ color: theme.textMuted }}>
+                      <p
+                        className="text-[11px] leading-relaxed italic"
+                        style={{ color: data.moduleColors?.testimonials?.textColor || theme.textMuted }}
+                      >
                         "{t.text}"
                       </p>
-                      <div className="text-[10px] font-bold">
-                        {t.clientName} <span className="opacity-60 font-normal">· {t.city}</span>
+                      <div
+                        className="text-[10px] font-bold"
+                        style={{ color: data.moduleColors?.testimonials?.titleColor || theme.textMain }}
+                      >
+                        {t.clientName} <span className="opacity-65 font-normal">· {t.city}</span>
                       </div>
                     </div>
                   ))}
@@ -14776,7 +16939,10 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
-                    style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                    style={{
+                      color: data.moduleColors?.aboutMe?.headlineColor || theme.accent,
+                      fontFamily: `'${data.styling.fontFamily}', serif`,
+                    }}
                   >
                     {data.aboutMe.headline}
                   </h3>
@@ -14795,14 +16961,20 @@ COMO PUBLICAR NO SERVIDOR:
                   </div>
                 )}
 
-                <p className="text-xs leading-relaxed text-justify" style={{ color: theme.textMuted }}>
+                <p
+                  className="text-xs leading-relaxed text-justify"
+                  style={{ color: data.moduleColors?.aboutMe?.textColor || theme.textMuted }}
+                >
                   {data.aboutMe.paragraph}
                 </p>
 
                 {data.aboutMe.closingPhrase && (
                   <div
                     className="text-center text-xl italic pt-1"
-                    style={{ fontFamily: `'${theme.fontScript}', cursive, serif`, color: theme.accent }}
+                    style={{
+                      fontFamily: `'${theme.fontScript}', cursive, serif`,
+                      color: data.moduleColors?.aboutMe?.accentColor || theme.accent,
+                    }}
                   >
                     {data.aboutMe.closingPhrase}
                   </div>
@@ -14816,7 +16988,10 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
-                    style={{ color: theme.accent, fontFamily: `'${data.styling.fontFamily}', serif` }}
+                    style={{
+                      color: data.moduleColors?.faq?.headlineColor || theme.accent,
+                      fontFamily: `'${data.styling.fontFamily}', serif`,
+                    }}
                   >
                     {data.faq.headline}
                   </h3>
@@ -14831,7 +17006,7 @@ COMO PUBLICAR NO SERVIDOR:
                         key={item.id}
                         className="rounded-2xl overflow-hidden transition"
                         style={{
-                          background: theme.socialBg,
+                          background: data.moduleColors?.faq?.bgColor || theme.socialBg,
                           border: `1px solid ${theme.socialBorder}`,
                         }}
                       >
@@ -14839,15 +17014,19 @@ COMO PUBLICAR NO SERVIDOR:
                           type="button"
                           onClick={() => setActiveFaqId(isOpen ? null : item.id)}
                           className="w-full p-3 text-left flex items-center justify-between gap-2 text-xs font-semibold cursor-pointer"
+                          style={{ color: data.moduleColors?.faq?.titleColor || theme.textMain }}
                         >
                           <span>{item.question}</span>
                           <ChevronDown
                             className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                            style={{ color: theme.accent }}
+                            style={{ color: data.moduleColors?.faq?.accentColor || theme.accent }}
                           />
                         </button>
                         {isOpen && (
-                          <div className="px-3 pb-3 text-[11px] leading-relaxed" style={{ color: theme.textMuted }}>
+                          <div
+                            className="px-3 pb-3 text-[11px] leading-relaxed"
+                            style={{ color: data.moduleColors?.faq?.textColor || theme.textMuted }}
+                          >
                             {item.answer}
                           </div>
                         )}
@@ -14859,13 +17038,39 @@ COMO PUBLICAR NO SERVIDOR:
             )}
 
             {/* FOOTER */}
-            <div className="py-6 px-4 text-center relative z-10">
-              <p className="text-[10px] tracking-wider opacity-70" style={{ color: theme.textMuted }}>
+            <div className="pt-6 pb-8 px-4 text-center relative z-10 flex flex-col items-center gap-2.5">
+              <p
+                className="text-[10px] tracking-wider opacity-85"
+                style={{ color: data.moduleColors?.footer?.textColor || theme.textMuted }}
+              >
                 © {new Date().getFullYear()} {data.profile.name}. Todos os direitos reservados.
               </p>
-              <p className="text-[9px] mt-1 text-amber-400 font-mono">
-                Criado com LuxeBio Studio Pro
-              </p>
+              {(() => {
+                const creatorInfo = resolveCreatorFooterInfo(data);
+                return (
+                  <a
+                    href={creatorInfo.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 active:scale-95 shadow-sm cursor-pointer"
+                    style={{
+                      color:
+                        data.moduleColors?.footer?.accentColor ||
+                        data.moduleColors?.footer?.titleColor ||
+                        theme.accent,
+                      background: data.moduleColors?.footer?.bgColor || 'rgba(0, 0, 0, 0.35)',
+                      border: `1px solid ${theme.cardBorder}`,
+                    }}
+                    title={`Visitar página de ${creatorInfo.brandName}`}
+                  >
+                    <span>
+                      ✨ Criado por <strong>{creatorInfo.brandName}</strong>
+                      {creatorInfo.ctaLabel ? ` · ${creatorInfo.ctaLabel}` : ''}
+                    </span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                );
+              })()}
             </div>
 
             {/* MODAL DO FUNIL QUALIFICADOR / ANTI-CURIOSOS */}
@@ -15076,15 +17281,20 @@ COMO PUBLICAR NO SERVIDOR:
         </div>
       )}
 
-      {/* Save Microsite Modal */}
+      {/* Save Microsite Modal (Cadastro Obrigatório de E-mail + Planos de Manutenção 29,90/49,90/79,90 + 1º Mês Sem Mensalidade) */}
       {saveModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4 text-neutral-100 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4 text-neutral-100 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-3">
-              <h3 className="font-bold text-sm text-neutral-100 flex items-center gap-2">
-                <Save className="w-4 h-4 text-emerald-400" />
-                {editingSiteId ? 'Salvar Microsite no Painel' : 'Registrar Novo Microsite'}
-              </h3>
+              <div>
+                <h3 className="font-bold text-sm text-neutral-100 flex items-center gap-2">
+                  <Save className="w-4 h-4 text-emerald-400" />
+                  {editingSiteId ? 'Salvar / Editar Cadastro do Cliente' : 'Cadastrar Novo Cliente & Microsite'}
+                </h3>
+                <p className="text-[10.5px] text-neutral-400 mt-0.5">
+                  Cadastro com e-mail obrigatório, plano de manutenção e regra de 1º mês sem mensalidade.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setSaveModalOpen(false)}
@@ -15106,6 +17316,116 @@ COMO PUBLICAR NO SERVIDOR:
                 />
               </div>
 
+              {/* CAMPO DE E-MAIL OBRIGATÓRIO DO CLIENTE */}
+              <div>
+                <label className="text-[10px] font-bold text-amber-300 flex items-center justify-between mb-1">
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3 h-3 text-amber-400" /> E-mail do Cliente <span className="text-red-400">* (Obrigatório)</span>
+                  </span>
+                  <span className="text-[9.5px] font-normal text-neutral-400">Para comunicados de manutenção em massa</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="cliente@empresa.com.br"
+                  value={saveForm.clientEmail}
+                  onChange={(e) => {
+                    setSaveForm(f => ({ ...f, clientEmail: e.target.value }));
+                    if (saveEmailError) setSaveEmailError(null);
+                  }}
+                  className={`w-full px-3 py-2 rounded-xl bg-neutral-950 border font-mono text-xs ${
+                    saveEmailError
+                      ? 'border-red-500 text-red-200 focus:outline-none'
+                      : 'border-amber-500/40 text-amber-200 focus:border-amber-400 focus:outline-none'
+                  }`}
+                />
+                {saveEmailError && (
+                  <p className="text-[10.5px] text-red-400 font-semibold mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{saveEmailError}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* SELETOR DE PLANO DE TAXA DE MANUTENÇÃO (29,90 / 49,90 / 79,90 + 14,90 extra) */}
+              <div className="p-3 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                    Plano de Taxa de Manutenção Mensal
+                  </label>
+                  <span className="text-[9.5px] text-amber-300 font-semibold">
+                    Alteração extra avulsa: R$ 14,90
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {(['basic_1', 'pro_4', 'vip_unlimited'] as MaintenancePlanId[]).map((planKey) => {
+                    const p = MAINTENANCE_PLANS[planKey];
+                    const isSelected = saveForm.maintenancePlan === planKey;
+                    return (
+                      <button
+                        key={planKey}
+                        type="button"
+                        onClick={() =>
+                          setSaveForm((f) => ({
+                            ...f,
+                            maintenancePlan: planKey,
+                            monthlyFee: p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+                          }))
+                        }
+                        className={`p-2 rounded-lg border text-left transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200 shadow-sm'
+                            : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700'
+                        }`}
+                      >
+                        <div className="font-black text-xs text-emerald-300 font-mono">
+                          R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10px] font-bold text-neutral-100 mt-0.5">
+                          {p.maxUpdates === Infinity ? 'Ilimitadas' : `${p.maxUpdates} alt./mês`}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-1">Taxa de Criação (1º Mês R$)</label>
+                    <input
+                      type="text"
+                      placeholder="197,00"
+                      value={saveForm.creationFee}
+                      onChange={(e) => setSaveForm(f => ({ ...f, creationFee: e.target.value }))}
+                      className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-amber-300 font-bold font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-1">Taxa de Manutenção (R$/mês)</label>
+                    <input
+                      type="text"
+                      placeholder="49,90"
+                      value={saveForm.monthlyFee}
+                      onChange={(e) => setSaveForm(f => ({ ...f, monthlyFee: e.target.value }))}
+                      className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-emerald-300 font-bold font-mono"
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(saveForm.isFirstMonth)}
+                    onChange={(e) => setSaveForm(f => ({ ...f, isFirstMonth: e.target.checked }))}
+                    className="mt-0.5 rounded border-amber-400 text-amber-400 focus:ring-amber-400"
+                  />
+                  <span className="text-[10.5px] text-amber-200 leading-snug">
+                    <strong>Cliente no 1º Mês (Taxa de Criação):</strong> A taxa de criação só é cobrada no primeiro mês e <strong>nele não há mensalidade</strong> (a manutenção mensal começa a partir do 2º mês).
+                  </span>
+                </label>
+              </div>
+
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="text-[10px] text-neutral-400 block mb-1">WhatsApp do Cliente</label>
@@ -15119,28 +17439,16 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-neutral-400 block mb-1">Mensalidade (R$)</label>
-                  <input
-                    type="text"
-                    placeholder="149,90"
-                    value={saveForm.monthlyFee}
-                    onChange={(e) => setSaveForm(f => ({ ...f, monthlyFee: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-emerald-300 font-bold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] text-neutral-400 block mb-1">Subdomínio Grátis (.luxebio.site)</label>
-                <div className="flex items-center rounded-xl bg-neutral-950 border border-neutral-800 overflow-hidden">
-                  <input
-                    type="text"
-                    placeholder="meucliente"
-                    value={saveForm.subdomain}
-                    onChange={(e) => setSaveForm(f => ({ ...f, subdomain: e.target.value }))}
-                    className="flex-1 px-3 py-2 bg-transparent text-amber-300 font-mono text-xs focus:outline-none"
-                  />
-                  <span className="px-2.5 text-[10px] text-neutral-500 font-mono">.luxebio.site</span>
+                  <label className="text-[10px] text-neutral-400 block mb-1">Subdomínio (.luxebio.site)</label>
+                  <div className="flex items-center rounded-xl bg-neutral-950 border border-neutral-800 overflow-hidden">
+                    <input
+                      type="text"
+                      placeholder="meucliente"
+                      value={saveForm.subdomain}
+                      onChange={(e) => setSaveForm(f => ({ ...f, subdomain: e.target.value }))}
+                      className="flex-1 px-2.5 py-2 bg-transparent text-amber-300 font-mono text-xs focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -15153,6 +17461,13 @@ COMO PUBLICAR NO SERVIDOR:
                   onChange={(e) => setSaveForm(f => ({ ...f, customDomain: e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 font-mono"
                 />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-[10.5px] text-red-200 flex items-center gap-2">
+                <Power className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                <span>
+                  <strong>Regra Automática de Inadimplência:</strong> O microsite é desativado automaticamente a partir do <strong>7º dia de atraso</strong> após o vencimento.
+                </span>
               </div>
 
               <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 cursor-pointer">
@@ -15175,7 +17490,7 @@ COMO PUBLICAR NO SERVIDOR:
                 className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs shadow cursor-pointer transition flex items-center justify-center gap-1.5"
               >
                 <Save className="w-4 h-4" />
-                <span>{editingSiteId ? 'Salvar Alterações no Microsite Atual' : 'Salvar Microsite no Painel'}</span>
+                <span>{editingSiteId ? 'Salvar Alterações no Microsite Atual' : 'Cadastrar Cliente & Salvar no Painel'}</span>
               </button>
 
               {editingSiteId && (
@@ -16905,6 +19220,474 @@ COMO PUBLICAR NO SERVIDOR:
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: PROMPT DE ENVIO WHATSAPP PARA O CLIENTE (DETALHES, VENCIMENTO,     */}
+      {/* VALORES, LINKS PARA REDES SOCIAIS & PASSO A PASSO BIO DO INSTAGRAM)      */}
+      {/* ========================================================================= */}
+      {clientWaPromptSite && (() => {
+        const primaryDomain = (clientWaPromptSite.customDomain || '').trim() || `${clientWaPromptSite.subdomain || 'meusite'}.luxebio.site`;
+        const primaryUrl = `https://${primaryDomain}`;
+        const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
+        const billing = getSiteBillingSummary(clientWaPromptSite);
+        const daysDiff = getDaysUntilDue(clientWaPromptSite.dueDate);
+        const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl bg-neutral-900 border border-emerald-500/40 rounded-2xl p-5 space-y-4 text-neutral-100 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-neutral-800 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <Send className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-neutral-100">
+                      Prompt WhatsApp: Detalhes do Microsite, Valores, Links & Tutorial Bio Instagram
+                    </h3>
+                    <p className="text-[11px] text-neutral-400">
+                      Cliente: <strong className="text-amber-300">{clientWaPromptSite.clientName}</strong> · Domínio: <span className="font-mono text-emerald-400">{primaryUrl}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setClientWaPromptSite(null)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Resumo Rápido dos Dados do Microsite */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block">Data de Vencimento</span>
+                  <span className="font-bold font-mono text-amber-300 text-sm">{formatDueDateBr(clientWaPromptSite.dueDate)}</span>
+                  <span className="text-[9.5px] text-neutral-500 block">
+                    {daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
+                      ? `🛑 Desativado (${daysOverdue}d atraso)`
+                      : daysOverdue > 0
+                      ? `⚠️ ${daysOverdue}d atraso (Suspende no 7º)`
+                      : '🛡️ Suspensão auto no 7º dia'}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block">Plano de Manutenção</span>
+                  <span className="font-bold text-emerald-300 text-xs block">{billing.plan.shortName}</span>
+                  <span className="text-[9.5px] text-neutral-500 block">Extra: R$ 14,90/alt.</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block">Ciclo Atual</span>
+                  <span className="font-bold text-amber-300 text-xs block">
+                    {billing.isFirstMonth ? '1º Mês (Só Criação)' : `${billing.updatesUsed} alt. no mês`}
+                  </span>
+                  <span className="text-[9.5px] text-neutral-500 block">
+                    {billing.isFirstMonth ? 'Sem mensalidade no 1º mês' : `Franquia: ${billing.includedUpdatesLabel}`}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-emerald-500/30">
+                  <span className="text-[10px] text-neutral-400 block">Valor Total no Ciclo</span>
+                  <span className="font-black font-mono text-emerald-400 text-sm">
+                    R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                  <span className="text-[9.5px] text-neutral-500 block">
+                    {billing.extraUpdatesCount > 0 ? `Inclui +${billing.extraUpdatesCount} extra` : 'Valor fechado'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Links Prontos para Copiar Individualmente */}
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2 text-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
+                  Links Diretos para as Redes Sociais do Cliente:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-neutral-900 border border-neutral-800">
+                    <div className="truncate">
+                      <span className="text-[9.5px] text-neutral-400 block">Link Principal (Bio Instagram / TikTok / WA):</span>
+                      <span className="font-mono text-emerald-300 text-[11px] font-bold">{primaryUrl}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await safeCopyText(primaryUrl);
+                        showToast('📋 Link principal copiado!');
+                      }}
+                      className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-[10px] font-bold shrink-0 cursor-pointer"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-neutral-900 border border-neutral-800">
+                    <div className="truncate">
+                      <span className="text-[9.5px] text-neutral-400 block">Link Rastreado UTM (Bio do Instagram):</span>
+                      <span className="font-mono text-amber-300 text-[11px]">{instagramBioTrackedUrl}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await safeCopyText(instagramBioTrackedUrl);
+                        showToast('📋 Link rastreado para Bio do Instagram copiado!');
+                      }}
+                      className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-[10px] font-bold shrink-0 cursor-pointer"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seletor de Modelo de Prompt WhatsApp */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                    Escolha o Formato do Prompt de Mensagem:
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[
+                      { id: 'complete_kit', label: '📦 Kit Completo (Vencimento + Valores + Links + Tutorial Bio)' },
+                      { id: 'onboarding_bio', label: '🎉 Entrega Inicial + Tutorial Bio Instagram' },
+                      { id: 'renewal_details', label: '💳 Resumo de Renovação + Links & Bio' },
+                    ].map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => {
+                          const tId = tpl.id as 'complete_kit' | 'onboarding_bio' | 'renewal_details';
+                          setClientWaPromptTemplate(tId);
+                          setClientWaPromptText(buildClientWhatsappPromptText(clientWaPromptSite, tId));
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer border ${
+                          clientWaPromptTemplate === tpl.id
+                            ? 'bg-emerald-500 text-neutral-950 border-emerald-400 shadow'
+                            : 'bg-neutral-950 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                        }`}
+                      >
+                        {tpl.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* WhatsApp Destinatário + Textarea Editável do Prompt */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] text-neutral-400 block mb-1">
+                      WhatsApp do Cliente (com DDD, ex: 5511999999999)
+                    </label>
+                    <input
+                      type="text"
+                      value={clientWaPromptPhone}
+                      onChange={(e) => setClientWaPromptPhone(e.target.value)}
+                      placeholder="5511999999999"
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100 font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClientWaPromptText(buildClientWhatsappPromptText(clientWaPromptSite, clientWaPromptTemplate));
+                        showToast('🔄 Texto do prompt restaurado com os dados atualizados do microsite!');
+                      }}
+                      className="w-full py-2 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs border border-neutral-700 cursor-pointer transition"
+                    >
+                      Restaurar Texto Padrão
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-neutral-400 flex items-center justify-between mb-1">
+                    <span>Mensagem Pronta para Envio (Editável antes de enviar):</span>
+                    <span className="text-emerald-400 font-semibold">Inclui passo a passo da Bio do Instagram + Links + Vencimento</span>
+                  </label>
+                  <textarea
+                    rows={12}
+                    value={clientWaPromptText}
+                    onChange={(e) => setClientWaPromptText(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs font-mono leading-relaxed focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Botões de Ação do Modal WhatsApp */}
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2 border-t border-neutral-800">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await safeCopyText(clientWaPromptText);
+                    if (ok) {
+                      setCopiedClientWaPrompt(true);
+                      setTimeout(() => setCopiedClientWaPrompt(false), 2500);
+                      showToast(`📋 Mensagem completa copiada para a área de transferência!`);
+                    }
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 border border-amber-500/30 cursor-pointer transition"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{copiedClientWaPrompt ? '✓ Mensagem Copiada!' : 'Copiar Mensagem Completa'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cleanPhone = (clientWaPromptPhone || '').replace(/\D/g, '');
+                    const waUrl = cleanPhone
+                      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(clientWaPromptText)}`
+                      : `https://api.whatsapp.com/send?text=${encodeURIComponent(clientWaPromptText)}`;
+                    window.open(waUrl, '_blank');
+                    showToast(`📲 Abrindo WhatsApp para enviar detalhes e tutorial da Bio para ${clientWaPromptSite.clientName}!`);
+                  }}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer transition"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Enviar Agora via WhatsApp para {clientWaPromptSite.clientName}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ========================================================================= */}
+      {/* MODAL: DISPARO DE E-MAIL EM MASSA PARA TODOS OS CLIENTES (ADMINISTRAÇÃO) */}
+      {/* ========================================================================= */}
+      {bulkEmailModalOpen && (() => {
+        const sitesWithValidEmail = savedSites.filter((s) => s.clientEmail && isValidClientEmail(s.clientEmail));
+        const sitesWithoutEmail = savedSites.filter((s) => !s.clientEmail || !isValidClientEmail(s.clientEmail));
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="w-full max-w-3xl bg-neutral-900 border border-amber-500/40 rounded-2xl p-5 space-y-4 text-neutral-100 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-neutral-800 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-neutral-100">
+                      Central de Disparo de E-mail em Massa — Comunicados & Manutenções
+                    </h3>
+                    <p className="text-[11px] text-neutral-400">
+                      Envie avisos técnicos de manutenção programada, atualizações de servidor/SSL e comunicados para todos os clientes cadastrados.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBulkEmailModalOpen(false)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Seletor de Categoria / Modelo de E-mail em Massa */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
+                  1. Escolha o Assunto / Modelo de Comunicado:
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'scheduled_maintenance', label: '🛠️ Manutenção Programada' },
+                    { id: 'maintenance_completed', label: '✅ Manutenção Concluída' },
+                    { id: 'new_features', label: '✨ Novidades & Recursos' },
+                    { id: 'custom_announcement', label: '✍️ Comunicado Livre' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        const cId = cat.id as 'scheduled_maintenance' | 'maintenance_completed' | 'new_features' | 'custom_announcement';
+                        setBulkEmailCategory(cId);
+                        const tpl = buildBulkEmailTemplate(cId);
+                        setBulkEmailSubject(tpl.subject);
+                        setBulkEmailBody(tpl.body);
+                      }}
+                      className={`p-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                        bulkEmailCategory === cat.id
+                          ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow'
+                          : 'bg-neutral-950 text-neutral-300 border-neutral-800 hover:border-neutral-700'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seleção de Público-Alvo e Lista de Destinatários */}
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300">
+                    2. Destinatários Selecionados ({bulkEmailSelectedIds.length} de {sitesWithValidEmail.length} clientes com e-mail):
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[
+                      { id: 'all', label: `Todos (${sitesWithValidEmail.length})` },
+                      { id: 'active', label: 'Somente Em Dia' },
+                      { id: 'overdue', label: 'Somente Vencidos / Atrasados' },
+                    ].map((aud) => (
+                      <button
+                        key={aud.id}
+                        type="button"
+                        onClick={() => handleSelectBulkEmailAudience(aud.id as 'all' | 'active' | 'overdue')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer border transition ${
+                          bulkEmailAudience === aud.id
+                            ? 'bg-emerald-500 text-neutral-950 border-emerald-400'
+                            : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                        }`}
+                      >
+                        {aud.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="max-h-36 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                  {sitesWithValidEmail.map((s) => {
+                    const isChecked = bulkEmailSelectedIds.includes(s.id);
+                    return (
+                      <label
+                        key={s.id}
+                        className={`flex items-center justify-between gap-2 p-2 rounded-lg border cursor-pointer transition ${
+                          isChecked
+                            ? 'bg-neutral-900 border-emerald-500/40 text-neutral-100'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              setBulkEmailAudience('custom');
+                              setBulkEmailSelectedIds((prev) =>
+                                prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id]
+                              );
+                            }}
+                            className="rounded border-neutral-700 text-emerald-500 focus:ring-0"
+                          />
+                          <div className="truncate">
+                            <span className="font-bold text-[11px] block truncate">{s.clientName}</span>
+                            <span className="font-mono text-[10px] text-amber-300 block truncate">{s.clientEmail}</span>
+                          </div>
+                        </div>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 shrink-0">
+                          {s.status === 'active' ? '🟢 Ativo' : s.status === 'overdue' ? '🟡 Vencido' : '🛑 Suspenso'}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {sitesWithoutEmail.length > 0 && (
+                  <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[10.5px] text-red-300 flex items-center justify-between gap-2">
+                    <span>
+                      ⚠️ {sitesWithoutEmail.length} cliente(s) antigo(s) sem e-mail cadastrado ({sitesWithoutEmail.map(x => x.clientName).join(', ')}). Edite no card do cliente para incluí-lo.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Campos de Assunto e Corpo do E-mail */}
+              <div className="space-y-2.5 text-xs">
+                <div>
+                  <label className="text-[10px] text-neutral-400 block mb-1 font-semibold">
+                    Assunto do E-mail em Massa:
+                  </label>
+                  <input
+                    type="text"
+                    value={bulkEmailSubject}
+                    onChange={(e) => setBulkEmailSubject(e.target.value)}
+                    placeholder="Ex: [Aviso Importante] Manutenção Programada e Atualização de Segurança"
+                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100 font-semibold text-xs focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[10px] text-neutral-400 font-semibold">
+                      Mensagem do Comunicado:
+                    </label>
+                    <span className="text-[9.5px] text-amber-300 font-mono">
+                      Variáveis automáticas: {'{{nome_cliente}}'}, {'{{dominio}}'}, {'{{vencimento}}'}, {'{{valor}}'}
+                    </span>
+                  </div>
+                  <textarea
+                    rows={8}
+                    value={bulkEmailBody}
+                    onChange={(e) => setBulkEmailBody(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs font-mono leading-relaxed focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Botões de Disparo em Massa */}
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2 border-t border-neutral-800">
+                <button
+                  type="button"
+                  onClick={openMailtoBulkEmail}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs flex items-center justify-center gap-2 border border-neutral-700 cursor-pointer transition"
+                  title="Abrir no seu aplicativo de e-mail padrão (Gmail / Outlook) com todos os clientes em Cópia Oculta (BCC)"
+                >
+                  <Mail className="w-4 h-4 text-amber-400" />
+                  <span>Abrir no Gmail/App (BCC)</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={bulkEmailSending || bulkEmailSelectedIds.length === 0}
+                  onClick={handleSendBulkEmail}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer transition"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>
+                    {bulkEmailSending
+                      ? 'Disparando Comunicados em Massa...'
+                      : `Disparar E-mail em Massa para ${bulkEmailSelectedIds.length} Cliente(s)`}
+                  </span>
+                </button>
+              </div>
+
+              {/* Histórico Recente de Disparos em Massa */}
+              {bulkEmailHistory.length > 0 && (
+                <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                    Histórico de Disparos Realizados ({bulkEmailHistory.length}):
+                  </span>
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                    {bulkEmailHistory.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-2 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-between gap-2 text-[10.5px]"
+                      >
+                        <div className="truncate">
+                          <span className="font-bold text-neutral-200">{item.subject}</span>
+                          <span className="text-neutral-400 block text-[9.5px]">
+                            Enviado em {item.sentAt} · Destinatários: {item.recipientCount} ({item.recipientsList.slice(0, 3).join(', ')}{item.recipientsList.length > 3 ? '...' : ''})
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[9.5px] shrink-0">
+                          {item.protocol}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
