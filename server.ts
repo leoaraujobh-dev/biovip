@@ -4,6 +4,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import generateMicrositeHandler from './api/generate-microsite.ts';
 import optimizeCopyHandler from './api/optimize-copy.ts';
+import {
+  testAsaasConnection,
+  createAsaasPayment,
+  checkAsaasPaymentStatus,
+} from './api/asaas.ts';
 
 dotenv.config();
 
@@ -12,6 +17,79 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '10mb' }));
+
+// Express API routes for Asaas Gateway
+app.post('/api/asaas/test-connection', async (req, res) => {
+  try {
+    const { apiKey, environment } = req.body || {};
+    const result = await testAsaasConnection(apiKey, environment);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Erro ao testar conexão Asaas.' });
+  }
+});
+
+app.post('/api/asaas/create-payment', async (req, res) => {
+  try {
+    const {
+      apiKey,
+      environment,
+      customerName,
+      customerEmail,
+      customerPhone,
+      customerCpfCnpj,
+      billingType,
+      value,
+      dueDate,
+      description,
+      externalReference,
+    } = req.body || {};
+
+    if (!customerEmail || !value) {
+      return res.status(400).json({
+        success: false,
+        error: 'E-mail do cliente e valor são obrigatórios para gerar cobrança Asaas.',
+      });
+    }
+
+    const result = await createAsaasPayment(apiKey, environment, {
+      customerName: customerName || 'Cliente LuxeBio',
+      customerEmail,
+      customerPhone,
+      customerCpfCnpj,
+      billingType: billingType || 'PIX',
+      value: Number(value),
+      dueDate: dueDate || '',
+      description: description || 'Manutenção Mensal Microsite LuxeBio',
+      externalReference: externalReference || '',
+    });
+
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Falha ao processar cobrança Asaas.' });
+  }
+});
+
+app.get('/api/asaas/payment/:id/status', async (req, res) => {
+  try {
+    const paymentId = req.params.id;
+    const apiKey = (req.query.apiKey as string) || '';
+    const environment = (req.query.environment as 'sandbox' | 'production') || 'sandbox';
+
+    const result = await checkAsaasPaymentStatus(apiKey, environment, paymentId);
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Erro ao consultar status no Asaas.' });
+  }
+});
+
+// Asaas Webhook Listener
+app.post('/api/asaas/webhook', (req, res) => {
+  const eventData = req.body || {};
+  console.log('🔔 [Asaas Webhook Received]:', eventData?.event, eventData?.payment?.id);
+  // Returns 200 OK as required by Asaas webhook specifications
+  return res.status(200).json({ received: true, event: eventData?.event });
+});
 
 // Express API route for AI Microsite Generation (shared with Vercel /api/generate-microsite)
 app.post('/api/generate-microsite', async (req, res) => {

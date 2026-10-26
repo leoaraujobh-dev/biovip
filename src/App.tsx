@@ -74,7 +74,11 @@ import {
   Pause,
   Share2,
   LogOut,
-  Mail
+  Mail,
+  KeyRound,
+  EyeOff,
+  ShieldAlert,
+  History
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import {
@@ -882,8 +886,8 @@ const INITIAL_DATA = {
     title: 'ADVOCACIA ESTRATÉGICA',
     tagline: 'Defesa de direitos com atendimento personalizado e humanizado.',
     cursivePhrase: 'Compromisso, ética e segurança para você.',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
-    aboutPhotoUrl: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=600',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900',
+    aboutPhotoUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
     whatsapp: '5511999999999',
     instagram: 'dramarinaalmeida',
     location: 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP',
@@ -915,7 +919,7 @@ const INITIAL_DATA = {
       customText: '#0f172a',
       bgImage: '',
       imagePosition: 'right',
-      cardImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+      cardImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=500',
       imageFitStyle: 'popout',
       imageSize: 96,
       ctaActionText: 'AGENDAR AGORA'
@@ -936,7 +940,7 @@ const INITIAL_DATA = {
       customText: '#0f172a',
       bgImage: '',
       imagePosition: 'left',
-      cardImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400',
+      cardImage: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=500',
       imageFitStyle: 'framed',
       imageSize: 84,
       ctaActionText: 'BAIXE AGORA'
@@ -1033,19 +1037,19 @@ const INITIAL_DATA = {
   },
   studentGrid: {
     enabled: true,
-    headline: 'Galeria de Fotos & Resultados',
-    subtitle: 'Transformações reais geradas pelo método e registros de alto padrão',
-    badge: 'PORTFÓLIO REAL',
+    headline: 'Portfólio & Estrutura de Atendimento',
+    subtitle: 'Registros reais do nosso padrão de entrega e excelência jurídica',
+    badge: 'ESTRUTURA VIP',
     layout: 'smart_masonry' as 'grid3' | 'grid2' | 'mosaic' | 'carousel' | 'smart_masonry' | 'masonry',
     aspectRatio: 'auto' as 'auto' | 'square' | 'portrait' | 'landscape',
     enableLightbox: true,
     photos: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=600',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=600',
-      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700',
     ]
   },
   locationCard: {
@@ -1077,7 +1081,7 @@ const INITIAL_DATA = {
         actionType: 'booking',
         customUrl: '',
         featured: true,
-        imageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=300'
+        imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=500'
       },
       {
         id: 'srv-2',
@@ -1091,7 +1095,7 @@ const INITIAL_DATA = {
         actionType: 'booking',
         customUrl: '',
         featured: false,
-        imageUrl: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=300'
+        imageUrl: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=500'
       }
     ] as Array<{
       id: string;
@@ -1236,11 +1240,17 @@ const INITIAL_DATA = {
     }
   },
   saasSettings: {
-    pixKey: 'contato@luxebio.com.br',
-    pixName: 'LuxeBio Studio SaaS',
+    pixKey: 'contato@biovip.com.br',
+    pixName: 'BioVip Studio SaaS',
     pixCity: 'São Paulo - SP',
     autoReminderMsg: 'Olá {cliente}! Lembrete da mensalidade do seu microsite no valor de R$ {valor}. Vencimento: {vencimento}.\n\n🔑 Chave PIX: {pix}\nFavorecido: {nome_pix}',
-    defaultMonthlyFee: 149.90
+    defaultMonthlyFee: 149.90,
+    asaas: {
+      apiKey: '',
+      environment: 'sandbox' as 'sandbox' | 'production',
+      preferredMethod: 'PIX' as 'PIX' | 'BOLETO' | 'CREDIT_CARD',
+      enabled: true,
+    }
   }
 };
 
@@ -1324,6 +1334,8 @@ export const MAINTENANCE_PLANS: Record<
 };
 
 // Saved Microsite SaaS Data Structure
+export type CustomerDelinquencyStatus = 'pago' | 'pendente' | 'atrasado_d3' | 'suspenso_d7' | 'active' | 'overdue' | 'disabled';
+
 export interface SavedMicrosite {
   id: string;
   clientName: string;
@@ -1336,7 +1348,10 @@ export interface SavedMicrosite {
   maintenancePlan?: MaintenancePlanId;
   creationFee?: number; // Taxa de criação cobrada exclusivamente no 1º mês
   isFirstMonth?: boolean; // No 1º mês cobra apenas a taxa de criação e NÃO há mensalidade
-  status: 'active' | 'overdue' | 'disabled';
+  status: CustomerDelinquencyStatus;
+  daysOverdue?: number; // Número de dias em atraso (0 se em dia)
+  edicoesBloqueadas?: boolean; // True quando atrasado >= 3 dias (ou bloqueado por inadimplência)
+  linkStatus?: 'ativo' | 'manutencao'; // Estado público do link ('ativo' | 'manutencao')
   autoDisabledByOverdue?: boolean; // True quando desativado automaticamente a partir do 7º dia de atraso
   manualOverrideUntil?: string; // Permite exceção manual temporária pelo admin
   updatesThisMonth: number;
@@ -1358,6 +1373,151 @@ export interface SavedMicrosite {
   isLandingModel?: boolean;
   data: typeof INITIAL_DATA;
 }
+
+/**
+ * Gerador da Tela Neutra de Manutenção (Modo Suspenso D+7 ou Alternar Suspensão)
+ * Visual: Fundo escuro luxuoso, tipografia serifada, sem qualquer menção pejorativa a dívida ou atraso.
+ */
+export const getSuspendedPageHtml = (customer: Partial<SavedMicrosite> & { clientName?: string; clientPhone?: string; subdomain?: string; customDomain?: string; data?: typeof INITIAL_DATA }): string => {
+  const displayName =
+    customer?.data?.profile?.name ||
+    customer?.clientName ||
+    'Atendimento Exclusivo';
+  const rawPhone =
+    customer?.clientPhone ||
+    customer?.data?.profile?.whatsapp ||
+    '';
+  const cleanPhone = rawPhone.replace(/\D/g, '');
+  const whatsappHref = cleanPhone
+    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Olá! Acesse o link da bio de ${displayName} e gostaria de falar com a equipe.`)}`
+    : `https://wa.me/?text=${encodeURIComponent(`Olá! Gostaria de atendimento com a equipe de ${displayName}.`)}`;
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${displayName} — Perfil em Atualização Técnica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background-color: #09090b;
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 50% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+      color: #fafaf9;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .luxury-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(18, 18, 22, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.22);
+      border-radius: 24px;
+      padding: 48px 32px;
+      text-align: center;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(16px);
+    }
+    .brand-tag {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #d4af37;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(212, 175, 55, 0.28);
+      background: rgba(212, 175, 55, 0.07);
+      margin-bottom: 24px;
+    }
+    .divider {
+      width: 48px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #d4af37, transparent);
+      margin: 0 auto 24px auto;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1.2;
+      color: #fafaf9;
+      letter-spacing: 0.01em;
+      margin-bottom: 14px;
+    }
+    .profile-subtitle {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #a1a1aa;
+      margin-bottom: 20px;
+    }
+    p.message {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #d4d4d8;
+      margin-bottom: 34px;
+      font-weight: 400;
+    }
+    .wa-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px 24px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: #f4f4f5;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      transition: all 0.25s ease;
+    }
+    .wa-btn:hover {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: rgba(212, 175, 55, 0.65);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .wa-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #d4af37;
+      box-shadow: 0 0 10px #d4af37;
+    }
+  </style>
+</head>
+<body>
+  <main class="luxury-card">
+    <span class="brand-tag">${displayName}</span>
+    <h1>Perfil em Atualização Técnica</h1>
+    <div class="divider"></div>
+    <p class="message">
+      Estamos atualizando nossos serviços e catálogo para melhor atendê-lo. Em breve no ar.
+    </p>
+    <a href="${whatsappHref}" target="_blank" rel="noopener noreferrer" class="wa-btn">
+      <span class="wa-dot"></span>
+      <span>Falar com nossa equipe no WhatsApp</span>
+    </a>
+  </main>
+</body>
+</html>`;
+};
 
 export const getSiteBillingSummary = (site: SavedMicrosite) => {
   const planKey: MaintenancePlanId =
@@ -1407,7 +1567,10 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     maintenancePlan: 'pro_4',
     creationFee: 197.00,
     isFirstMonth: false,
-    status: 'active',
+    status: 'pago',
+    daysOverdue: 0,
+    edicoesBloqueadas: false,
+    linkStatus: 'ativo',
     updatesThisMonth: 2,
     lastUpdated: '2026-10-21',
     domainType: 'custom',
@@ -1418,7 +1581,7 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     whatsappClicks: 52,
     pageViews: 240,
     trafficSources: { instagram: 110, tiktok: 45, googleMaps: 60, paidAds: 15, direct: 10 },
-    isLandingModel: true,
+    isLandingModel: false,
     data: {
       ...INITIAL_DATA,
       theme: 'barberVintage',
@@ -1427,7 +1590,75 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         name: 'DON CORLEONE BARBER',
         title: 'BARBEARIA CLÁSSICA & VISAGISMO MASCULINO',
         tagline: 'Cerveja artesanal gelada, toalha quente e precisão na navalha.',
-      }
+        cursivePhrase: 'Tradição, excelência e estilo em cada detalhe.',
+        avatarUrl: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
+      },
+      actionCards: [
+        {
+          ...INITIAL_DATA.actionCards[0],
+          id: 'barber-s1-cta1',
+          title: 'AGENDAR MEU HORÁRIO AGORA',
+          subtitle: 'Escolha seu barbeiro, serviço e horário em 30 segundos.',
+          icon: 'Scissors',
+          badgeText: 'SEM FILA',
+          customBg: '#d97706',
+          customText: '#000000',
+          cardImage: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=500',
+        },
+        {
+          ...INITIAL_DATA.actionCards[1],
+          id: 'barber-s1-cta2',
+          title: 'CLUBE DE ASSINATURA VIP',
+          subtitle: 'Corte e barba ilimitados o mês inteiro a partir de R$ 149,90.',
+          icon: 'Star',
+          badgeText: 'MAIS ASSINADO',
+          customBg: '#211c18',
+          customText: '#f5efe6',
+          cardImage: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=500',
+        },
+      ],
+      services: {
+        ...INITIAL_DATA.services,
+        headline: 'Menu de Serviços & Grooming',
+        items: [
+          {
+            id: 'srv-dc-1',
+            name: 'Combo Gentleman (Corte + Barboterapia)',
+            description: 'Toalha quente, massagem facial com ozônio e bebida cortesia.',
+            price: 'R$ 110',
+            duration: '1h15',
+            featured: true,
+            badge: 'MAIS PROCURADO',
+            ctaLabel: 'Reservar no WhatsApp',
+            actionType: 'whatsapp',
+            imageUrl: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=500',
+          },
+          {
+            id: 'srv-dc-2',
+            name: 'Corte Degradê / Fade Navalhado',
+            description: 'Acabamento de alta precisão, lavagem especial e pomada matte.',
+            price: 'R$ 70',
+            duration: '45min',
+            featured: false,
+            badge: 'CLÁSSICO',
+            ctaLabel: 'Reservar no WhatsApp',
+            actionType: 'whatsapp',
+            imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=500',
+          },
+        ],
+      },
+      studentGrid: {
+        ...INITIAL_DATA.studentGrid,
+        photos: [
+          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=700',
+        ],
+      },
     }
   },
   {
@@ -1485,7 +1716,65 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ...INITIAL_DATA.profile,
         name: 'LARISSA ALMEIDA NAILS',
         title: 'NAIL DESIGNER & ALONGAMENTO DE LUXO',
-      }
+        tagline: 'Especialista em Fibra de Vidro Slim, Gel Moldado e Naturalidade Europeia.',
+        cursivePhrase: 'Elegância e sofisticação na ponta dos seus dedos.',
+        avatarUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
+      },
+      actionCards: [
+        {
+          ...INITIAL_DATA.actionCards[0],
+          id: 'nails-s3-cta1',
+          title: 'AGENDAR MEU HORÁRIO NO STUDIO',
+          subtitle: 'Alongamento em Fibra, Banho de Gel e Esmaltação Premium.',
+          icon: 'Calendar',
+          badgeText: 'VAGAS LIMITADAS',
+          customBg: '#d4af37',
+          customText: '#000000',
+          cardImage: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500',
+        },
+      ],
+      services: {
+        ...INITIAL_DATA.services,
+        headline: 'Menu de Alongamentos & Nail Care',
+        items: [
+          {
+            id: 'srv-la-1',
+            name: 'Alongamento em Fibra de Vidro Slim',
+            description: 'Curvatura natural, resistência extrema e acabamento ultrafino.',
+            price: 'R$ 240',
+            duration: '2h00',
+            featured: true,
+            badge: 'MAIS PROCURADO',
+            ctaLabel: 'Reservar no WhatsApp',
+            actionType: 'whatsapp',
+            imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500',
+          },
+          {
+            id: 'srv-la-2',
+            name: 'Banho de Gel & Blindagem Diamante',
+            description: 'Proteção estrutural para o crescimento saudável das unhas naturais.',
+            price: 'R$ 160',
+            duration: '1h30',
+            featured: false,
+            badge: 'EXCLUSIVO',
+            ctaLabel: 'Reservar no WhatsApp',
+            actionType: 'whatsapp',
+            imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=500',
+          },
+        ],
+      },
+      studentGrid: {
+        ...INITIAL_DATA.studentGrid,
+        photos: [
+          'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=700',
+        ],
+      },
     }
   }
 ];
@@ -1596,7 +1885,39 @@ export default function App() {
     return Math.round(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Regra Oficial: Desativação por atraso automática a partir do 7º dia de atraso (daysDiff <= -7)
+  const isSiteSuspendedStatus = (site: SavedMicrosite): boolean => {
+    return (
+      site.linkStatus === 'manutencao' ||
+      site.status === 'suspenso_d7' ||
+      site.status === 'disabled'
+    );
+  };
+
+  const isSiteOverdueStatus = (site: SavedMicrosite, daysDiffVal?: number): boolean => {
+    const d = typeof daysDiffVal === 'number' ? daysDiffVal : getDaysUntilDue(site.dueDate);
+    return (
+      !isSiteSuspendedStatus(site) &&
+      (d < 0 || site.status === 'overdue' || site.status === 'atrasado_d3' || site.status === 'pendente')
+    );
+  };
+
+  const isSiteEditsLocked = (site: SavedMicrosite, daysOverdueVal?: number): boolean => {
+    if (typeof site.edicoesBloqueadas === 'boolean') return site.edicoesBloqueadas;
+    const dOverdue =
+      typeof daysOverdueVal === 'number'
+        ? daysOverdueVal
+        : typeof site.daysOverdue === 'number'
+        ? site.daysOverdue
+        : Math.max(0, -getDaysUntilDue(site.dueDate));
+    return (
+      dOverdue >= 3 ||
+      site.status === 'atrasado_d3' ||
+      site.status === 'suspenso_d7' ||
+      site.status === 'disabled'
+    );
+  };
+
+  // Regra Oficial: Régua de Cobrança e Gestão de Inadimplência com Suspensão Progressiva (D+3 Bloqueio de Edições / D+7 Modo Manutenção)
   const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
     normalized: SavedMicrosite[];
     changed: boolean;
@@ -1611,44 +1932,111 @@ export default function App() {
       const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
       const hasActiveManualOverride = Boolean(site.manualOverrideUntil && site.manualOverrideUntil >= todayStr);
 
-      // A partir do 7º dia de atraso (daysOverdue >= 7, ou seja daysDiff <= -7): desativação automática
+      // Estágio D+7 (daysOverdue >= 7): Suspensão Temporária Automática -> status 'suspenso_d7', edicoesBloqueadas: true, linkStatus: 'manutencao'
       if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS && !hasActiveManualOverride) {
-        if (site.status !== 'disabled' || !site.autoDisabledByOverdue) {
+        if (
+          site.status !== 'suspenso_d7' ||
+          !site.autoDisabledByOverdue ||
+          site.daysOverdue !== daysOverdue ||
+          site.edicoesBloqueadas !== true ||
+          site.linkStatus !== 'manutencao'
+        ) {
           changed = true;
-          if (site.status !== 'disabled') {
+          if (site.status !== 'suspenso_d7' && site.status !== 'disabled') {
             newlyAutoDisabled.push(`${site.clientName} (${daysOverdue} dias em atraso)`);
           }
           return {
             ...site,
-            status: 'disabled' as const,
+            status: 'suspenso_d7' as const,
+            daysOverdue,
+            edicoesBloqueadas: true,
+            linkStatus: 'manutencao' as const,
             autoDisabledByOverdue: true,
           };
         }
         return site;
       }
 
-      // Entre 1 e 6 dias de atraso: status 'overdue' (em tolerância até o 6º dia)
-      if (daysOverdue > 0 && daysOverdue < AUTO_DISABLE_OVERDUE_DAYS) {
-        if (site.status === 'active' || (site.status === 'disabled' && site.autoDisabledByOverdue)) {
+      // Estágio D+3 a D+6 (daysOverdue >= 3 e < 7): Atraso Leve -> status 'atrasado_d3', edicoesBloqueadas: true, link continua 'ativo' (salvo suspensão manual)
+      if (daysOverdue >= 3 && daysOverdue < AUTO_DISABLE_OVERDUE_DAYS) {
+        const targetLinkStatus: 'ativo' | 'manutencao' =
+          site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
+        if (
+          site.status !== 'atrasado_d3' ||
+          site.daysOverdue !== daysOverdue ||
+          site.edicoesBloqueadas !== true ||
+          site.linkStatus !== targetLinkStatus ||
+          site.autoDisabledByOverdue
+        ) {
           changed = true;
           return {
             ...site,
-            status: 'overdue' as const,
+            status: 'atrasado_d3' as const,
+            daysOverdue,
+            edicoesBloqueadas: true,
+            linkStatus: targetLinkStatus,
             autoDisabledByOverdue: false,
           };
         }
         return site;
       }
 
-      // Em dia (daysDiff >= 0): se estava desativado automaticamente por atraso ou como overdue, reativa automaticamente
-      if (daysDiff >= 0 && (site.status === 'overdue' || (site.status === 'disabled' && site.autoDisabledByOverdue))) {
-        changed = true;
-        return {
-          ...site,
-          status: 'active' as const,
-          autoDisabledByOverdue: false,
-          manualOverrideUntil: undefined,
-        };
+      // Entre 1 e 2 dias de atraso ou vencendo hoje (D-0): status 'pendente', edicoesBloqueadas: false
+      if (daysOverdue > 0 && daysOverdue < 3) {
+        const targetLinkStatus: 'ativo' | 'manutencao' =
+          site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
+        if (
+          site.status !== 'pendente' ||
+          site.daysOverdue !== daysOverdue ||
+          site.edicoesBloqueadas !== false ||
+          site.linkStatus !== targetLinkStatus ||
+          site.autoDisabledByOverdue
+        ) {
+          changed = true;
+          return {
+            ...site,
+            status: 'pendente' as const,
+            daysOverdue,
+            edicoesBloqueadas: false,
+            linkStatus: targetLinkStatus,
+            autoDisabledByOverdue: false,
+          };
+        }
+        return site;
+      }
+
+      // Em dia (daysDiff >= 0)
+      if (daysDiff >= 0) {
+        const expectedStatus: CustomerDelinquencyStatus =
+          site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue
+            ? site.status
+            : daysDiff === 0
+            ? 'pendente'
+            : 'pago';
+        const expectedLinkStatus: 'ativo' | 'manutencao' =
+          site.autoDisabledByOverdue ? 'ativo' : (site.linkStatus || 'ativo');
+        const expectedEdicoes =
+          site.autoDisabledByOverdue ? false : Boolean(site.edicoesBloqueadas && site.linkStatus === 'manutencao');
+
+        if (
+          site.daysOverdue !== 0 ||
+          site.status === 'overdue' ||
+          site.status === 'atrasado_d3' ||
+          site.status === 'active' ||
+          ((site.status === 'disabled' || site.status === 'suspenso_d7') && site.autoDisabledByOverdue) ||
+          site.linkStatus !== expectedLinkStatus
+        ) {
+          changed = true;
+          return {
+            ...site,
+            status: expectedStatus,
+            daysOverdue: 0,
+            edicoesBloqueadas: expectedEdicoes,
+            linkStatus: expectedLinkStatus,
+            autoDisabledByOverdue: false,
+            manualOverrideUntil: undefined,
+          };
+        }
       }
 
       return site;
@@ -1664,7 +2052,14 @@ export default function App() {
       const raw = localStorage.getItem('luxebio_saved_sites_v1');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) baseList = parsed;
+        if (Array.isArray(parsed)) baseList = parsed;
+      }
+      const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+      if (deletedRaw) {
+        const deletedIds = JSON.parse(deletedRaw);
+        if (Array.isArray(deletedIds) && deletedIds.length > 0) {
+          baseList = baseList.filter(s => !deletedIds.includes(s.id));
+        }
       }
     } catch {}
     const { normalized } = enforceAutoSevenDayOverdueRule(baseList);
@@ -1937,9 +2332,63 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxIndex, data.studentGrid?.photos]);
 
-  // PIX & Billing Modal State
+  // PIX & Billing Modal State + Régua de Cobrança Inteligente (D-3, D-0, D+3, D+7)
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [pixModalSite, setPixModalSite] = useState<SavedMicrosite | null>(null);
+  const [pixBillingStage, setPixBillingStage] = useState<'d_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7'>('d_0');
+  const [pixCustomCode, setPixCustomCode] = useState<string>('');
+  const [pixWhatsappMessage, setPixWhatsappMessage] = useState<string>('');
+  const [suspendedPreviewSite, setSuspendedPreviewSite] = useState<SavedMicrosite | null>(null);
+
+  const buildReguaCobrancaMessage = (
+    site: SavedMicrosite,
+    stage: 'd_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7',
+    overridePix?: string
+  ): string => {
+    const nome = site.clientName || 'Cliente';
+    const slug = site.subdomain || site.clientName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const parts = (site.dueDate || '').split('-');
+    const vencimento = parts.length === 3 && parts[0].length === 4 ? `${parts[2]}/${parts[1]}/${parts[0]}` : (site.dueDate || '—');
+    const pix = (overridePix ?? pixCustomCode ?? data.saasSettings?.pixKey ?? 'contato@biovip.com.br').trim() || (data.saasSettings?.pixKey || 'contato@biovip.com.br');
+    const billing = getSiteBillingSummary(site);
+    const valor = billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+    const currentBaseDomain = (landingConfig?.baseDomain || 'biovip.com.br').toLowerCase().trim();
+    const siteDomainDisplay = site.customDomain || `${slug}.${currentBaseDomain}`;
+
+    const templates: Record<'d_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7', string> = {
+      d_minus_3: `Olá, ${nome}! Tudo bem? Passando para avisar que a manutenção do seu Bio Site (${siteDomainDisplay}) vence em 3 dias (${vencimento}). Segue sua chave Pix Copia e Cola: ${pix}. Qualquer dúvida estou à disposição!`,
+      d_0: `Olá, ${nome}! Hoje é o vencimento da renovação mensal do seu Bio Site. Assim que efetuar o Pix (${pix}), confirme por aqui para renovarmos sua cota mensal de alterações automaticamente!`,
+      d_plus_3: `Olá, ${nome}, tudo bem? Constatamos que a mensalidade do seu link da bio ainda não foi compensada. Seu site continua 100% ativo para seus clientes, porém para solicitar novas alterações de fotos, serviços ou preços este mês, precisamos regularizar a fatura pendente. Segue a chave Pix: ${pix}.`,
+      d_plus_7: `Olá, ${nome}, tudo bem? Como não tivemos retorno sobre a mensalidade pendente, nosso sistema pausou temporariamente o link da sua bio para manutenção de rotina. Para reativar seu Bio Site em menos de 5 minutos, basta efetuar o Pix de R$ ${valor}: ${pix}. Aguardo seu comprovante para reativação imediata!`,
+    };
+
+    return templates[stage] || templates.d_0;
+  };
+
+  const openPixBillingModal = (
+    site: SavedMicrosite,
+    forcedStage?: 'd_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7'
+  ) => {
+    const daysDiff = getDaysUntilDue(site.dueDate);
+    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+    const defaultPix = data.saasSettings?.pixKey || 'contato@biovip.com.br';
+    const autoStage: 'd_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7' =
+      forcedStage ||
+      (isSiteSuspendedStatus(site) || daysOverdue >= 7
+        ? 'd_plus_7'
+        : daysOverdue >= 1 || site.status === 'atrasado_d3'
+        ? 'd_plus_3'
+        : daysDiff === 0
+        ? 'd_0'
+        : 'd_minus_3');
+
+    setPixModalSite(site);
+    setPixCustomCode(defaultPix);
+    setPixBillingStage(autoStage);
+    setPixWhatsappMessage(buildReguaCobrancaMessage(site, autoStage, defaultPix));
+    setPixModalOpen(true);
+  };
 
   // Tracking & Reset Analytics State
   const [sessionAnalytics, setSessionAnalytics] = useState<{
@@ -1968,6 +2417,7 @@ export default function App() {
   const [resetTrackingModalOpen, setResetTrackingModalOpen] = useState(false);
   const [resetModalTarget, setResetModalTarget] = useState<'current' | 'all' | SavedMicrosite | null>(null);
   const [resetAlsoClearPixelIds, setResetAlsoClearPixelIds] = useState(false);
+  const [deleteModalSite, setDeleteModalSite] = useState<SavedMicrosite | null>(null);
 
   // =========================================================================
   // LANDING PAGE COMERCIAL & SUBDOMÍNIO DO CRIADOR (SEM LOGIN)
@@ -1983,11 +2433,15 @@ export default function App() {
     priceScale: string;
     creatorFooterUrl?: string;
     creatorFooterLabel?: string;
+    checkoutPortalName?: string;
+    checkoutUrlBasic?: string;
+    checkoutUrlPro?: string;
+    checkoutUrlVip?: string;
   }>(() => {
     const defaults = {
       creatorSubdomain: 'criador',
-      baseDomain: 'luxebio.site',
-      agencyBrandName: 'LuxeBio Digital',
+      baseDomain: 'biovip.com.br',
+      agencyBrandName: 'BioVip Digital',
       agencyWhatsapp: '5511999999999',
       deliveryTime: '24 horas',
       priceEssential: 'R$ 79,90',
@@ -1995,10 +2449,23 @@ export default function App() {
       priceScale: 'R$ 79,90',
       creatorFooterUrl: '',
       creatorFooterLabel: 'Quero um microsite assim',
+      checkoutPortalName: 'Kiwify',
+      checkoutUrlBasic: '',
+      checkoutUrlPro: '',
+      checkoutUrlVip: '',
     };
     try {
       const saved = localStorage.getItem('luxebio_landing_config_v1');
-      if (saved) return { ...defaults, ...JSON.parse(saved) };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!parsed.baseDomain || parsed.baseDomain === 'luxebio.site') {
+          parsed.baseDomain = 'biovip.com.br';
+        }
+        if (!parsed.agencyBrandName || parsed.agencyBrandName === 'LuxeBio Digital') {
+          parsed.agencyBrandName = 'BioVip Digital';
+        }
+        return { ...defaults, ...parsed };
+      }
     } catch {}
     return defaults;
   });
@@ -2018,7 +2485,7 @@ export default function App() {
     const brandName = (
       profileAny.creatorName ||
       landingConfig.agencyBrandName ||
-      'LuxeBio Digital'
+      'BioVip Digital'
     ).trim();
     const ctaLabel = (
       profileAny.creatorCtaLabel ||
@@ -2036,8 +2503,7 @@ export default function App() {
       href = /^https?:\/\//i.test(rawCustomUrl) ? rawCustomUrl : `https://${rawCustomUrl}`;
     } else if (
       landingConfig.baseDomain &&
-      landingConfig.baseDomain.trim() &&
-      landingConfig.baseDomain.trim().toLowerCase() !== 'luxebio.site'
+      landingConfig.baseDomain.trim()
     ) {
       const cleanDomain = landingConfig.baseDomain.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
       href = `https://${cleanDomain}`;
@@ -2086,6 +2552,24 @@ export default function App() {
   };
 
   const [appSurface, setAppSurface] = useState<'landing' | 'studio'>(() => detectCreatorSurface());
+  const [isClientsFullscreen, setIsClientsFullscreen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const search = new URLSearchParams(window.location.search);
+    return search.get('view') === 'clients' || search.get('gestao') === 'true' || window.location.hash === '#gestao';
+  });
+  const [clientsFilterTerm, setClientsFilterTerm] = useState<string>('');
+  const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'active' | 'overdue' | 'suspended' | 'disabled'>('all');
+  const [asaasStatusTesting, setAsaasStatusTesting] = useState<boolean>(false);
+  const [asaasTestResult, setAsaasTestResult] = useState<{ success: boolean; message: string; balance?: number } | null>(null);
+  const [asaasGeneratingSiteId, setAsaasGeneratingSiteId] = useState<string | null>(null);
+  const [asaasPaymentData, setAsaasPaymentData] = useState<{
+    paymentId: string;
+    invoiceUrl?: string;
+    bankSlipUrl?: string;
+    pixQrCode?: string;
+    pixPayload?: string;
+    status: string;
+  } | null>(null);
   const [subdomainModalOpen, setSubdomainModalOpen] = useState(false);
   const [copiedSubdomainLink, setCopiedSubdomainLink] = useState(false);
   const [landingCategoryFilter, setLandingCategoryFilter] = useState<string>('Todos');
@@ -2104,13 +2588,31 @@ export default function App() {
     clientWhatsapp: '',
     instagramOrMaps: '',
     selectedModel: 'Advocacia & Consultoria Executiva',
-    selectedPlan: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação R$ 79,90 (Promoção 10 Primeiros)',
+    selectedPlan: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
     customNotes: '',
   });
   const [landingOrderError, setLandingOrderError] = useState<string | null>(null);
   const [landingOrderSuccess, setLandingOrderSuccess] = useState(false);
   const [landingShareCopiedId, setLandingShareCopiedId] = useState<string | null>(null);
   const [landingQrModalModelId, setLandingQrModalModelId] = useState<string | null>(null);
+
+  // =========================================================================
+  // CONFIRMAÇÃO DE COMPRA & REDIRECIONAMENTO PARA PORTAL EXTERNO DE PAGAMENTO
+  // =========================================================================
+  const [paymentConfirmPlan, setPaymentConfirmPlan] = useState<{
+    id: 'basic' | 'pro' | 'vip';
+    name: string;
+    price: string;
+    periodLabel: string;
+    maintenanceInfo: string;
+    fullPlanLabel: string;
+  } | null>(null);
+  const [paymentClientEmail, setPaymentClientEmail] = useState<string>('');
+  const [paymentConfirmChecked, setPaymentConfirmChecked] = useState<boolean>(false);
+  const [paymentEmailTouched, setPaymentEmailTouched] = useState<boolean>(false);
+  const [paymentPortalRedirecting, setPaymentPortalRedirecting] = useState<boolean>(false);
+  const [paymentPortalFallbackNotice, setPaymentPortalFallbackNotice] = useState<string | null>(null);
+  const paymentEmailInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // =========================================================================
   // FIREBASE AUTHENTICATION & FIRESTORE SYNC FOR ADMIN STUDIO PROTECTION
@@ -2120,10 +2622,92 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
+  // 2FA Security & Master PIN Layer
+  const DEFAULT_ADMIN_PIN = '849201';
+  const MAX_PIN_ATTEMPTS = 5;
+  const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 min
+  const INACTIVITY_LOCK_MS = 20 * 60 * 1000; // 20 min
+
+  const [adminPinUnlocked, setAdminPinUnlocked] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('luxebio_admin_pin_session') === 'unlocked';
+    } catch {
+      return false;
+    }
+  });
+  const [adminPinInput, setAdminPinInput] = useState<string>('');
+  const [adminPinError, setAdminPinError] = useState<string | null>(null);
+  const [showPinText, setShowPinText] = useState<boolean>(false);
+  const [pinAttemptsLeft, setPinAttemptsLeft] = useState<number>(() => {
+    try {
+      const attempts = Number(localStorage.getItem('luxebio_pin_failed_attempts') || '0');
+      return Math.max(0, MAX_PIN_ATTEMPTS - attempts);
+    } catch {
+      return MAX_PIN_ATTEMPTS;
+    }
+  });
+  const [lockoutRemainingSec, setLockoutRemainingSec] = useState<number>(() => {
+    try {
+      const until = Number(localStorage.getItem('luxebio_pin_lockout_until') || '0');
+      const now = Date.now();
+      return until > now ? Math.ceil((until - now) / 1000) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [securityModalOpen, setSecurityModalOpen] = useState<boolean>(false);
+  const [securityModalTab, setSecurityModalTab] = useState<'pin' | 'audit'>('pin');
+  const [changePinCurrent, setChangePinCurrent] = useState<string>('');
+  const [changePinNew, setChangePinNew] = useState<string>('');
+  const [changePinConfirm, setChangePinConfirm] = useState<string>('');
+  const [changePinError, setChangePinError] = useState<string | null>(null);
+  const [auditLogs, setAuditLogs] = useState<Array<{
+    timestamp: string;
+    event: string;
+    status: 'success' | 'failed' | 'warning' | 'lockout';
+    device: string;
+  }>>(() => {
+    try {
+      const raw = localStorage.getItem('luxebio_admin_audit_logs_v1');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+  });
+
+  const hashPinCode = async (pin: string): Promise<string> => {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(`luxebio_admin_salt_2026_${pin.trim()}`);
+      const hashBuf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hashBuf))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    } catch {
+      return `hash_fallback_${pin.trim()}`;
+    }
+  };
+
+  const recordAuditLog = (event: string, status: 'success' | 'failed' | 'warning' | 'lockout') => {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      event,
+      status,
+      device: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('Mobile') ? 'Dispositivo Móvel' : 'Desktop / Navegador') : 'Sistema',
+    };
+    setAuditLogs(prev => {
+      const updated = [entry, ...prev.slice(0, 49)];
+      try {
+        localStorage.setItem('luxebio_admin_audit_logs_v1', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
   const isAuthorizedAdmin = Boolean(
     adminUser &&
     adminUser.email &&
-    adminUser.email.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()
+    adminUser.email.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase() &&
+    (adminUser.emailVerified === true || adminUser.providerData?.some(p => p.providerId === 'google.com'))
   );
 
   useEffect(() => {
@@ -2134,12 +2718,61 @@ export default function App() {
         setAuthError(
           `A conta "${user.email}" não possui permissão de Administrador. Faça login com ${ADMIN_OWNER_EMAIL}.`
         );
-      } else {
+        recordAuditLog(`Tentativa de acesso não autorizada: ${user.email}`, 'failed');
+      } else if (user) {
         setAuthError(null);
+        recordAuditLog(`Login Google Firebase bem-sucedido: ${user.email}`, 'success');
       }
     });
     return () => unsubscribe();
   }, []);
+
+  // Lockout Countdown Timer
+  useEffect(() => {
+    if (lockoutRemainingSec <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutRemainingSec(prev => {
+        if (prev <= 1) {
+          try {
+            localStorage.removeItem('luxebio_pin_lockout_until');
+            localStorage.removeItem('luxebio_pin_failed_attempts');
+          } catch {}
+          setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
+          setAdminPinError(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutRemainingSec]);
+
+  // Inactivity Auto-Lock Timer (20 minutes)
+  useEffect(() => {
+    if (!adminPinUnlocked) return;
+    let lastActivity = Date.now();
+    const updateActivity = () => {
+      lastActivity = Date.now();
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach(evt => window.addEventListener(evt, updateActivity, { passive: true }));
+
+    const checkInterval = setInterval(() => {
+      if (Date.now() - lastActivity > INACTIVITY_LOCK_MS) {
+        setAdminPinUnlocked(false);
+        try {
+          sessionStorage.removeItem('luxebio_admin_pin_session');
+        } catch {}
+        recordAuditLog('Auto-Lock por Inatividade (20min)', 'warning');
+      }
+    }, 30000);
+
+    return () => {
+      activityEvents.forEach(evt => window.removeEventListener(evt, updateActivity));
+      clearInterval(checkInterval);
+    };
+  }, [adminPinUnlocked]);
 
   const handleAdminGoogleLogin = async () => {
     setIsLoggingIn(true);
@@ -2152,20 +2785,125 @@ export default function App() {
         setAuthError(
           `Acesso negado para "${result.user.email}". Somente o administrador (${ADMIN_OWNER_EMAIL}) pode acessar o Criador.`
         );
+        recordAuditLog(`Tentativa de acesso negada: ${result.user.email}`, 'failed');
       }
     } catch (err: any) {
       if (err?.code !== 'auth/popup-closed-by-user') {
         setAuthError(err?.message || 'Erro ao autenticar com o Google via Firebase.');
+        recordAuditLog(`Erro autenticação Firebase: ${err?.message || 'Falha'}`, 'failed');
       }
     } finally {
       setIsLoggingIn(false);
     }
   };
 
+  const handleVerifyAdminPin = async () => {
+    if (lockoutRemainingSec > 0) return;
+    const cleanPin = adminPinInput.trim();
+    if (cleanPin.length !== 6 || !/^\d{6}$/.test(cleanPin)) {
+      setAdminPinError('O PIN deve conter exatamente 6 dígitos numéricos.');
+      return;
+    }
+
+    const currentHash = await hashPinCode(cleanPin);
+    const storedHash = localStorage.getItem('luxebio_admin_pin_hash_v1');
+    const defaultHash = await hashPinCode(DEFAULT_ADMIN_PIN);
+    const targetHash = storedHash || defaultHash;
+
+    if (currentHash === targetHash) {
+      setAdminPinUnlocked(true);
+      setAdminPinError(null);
+      setAdminPinInput('');
+      setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
+      try {
+        sessionStorage.setItem('luxebio_admin_pin_session', 'unlocked');
+        localStorage.removeItem('luxebio_pin_failed_attempts');
+        localStorage.removeItem('luxebio_pin_lockout_until');
+      } catch {}
+      recordAuditLog('Autenticação 2FA / PIN Mestre Realizada com Sucesso', 'success');
+      showToast('🛡️ Acesso concedido! Painel de Administrador desbloqueado.');
+    } else {
+      const currentFailed = Number(localStorage.getItem('luxebio_pin_failed_attempts') || '0') + 1;
+      const left = Math.max(0, MAX_PIN_ATTEMPTS - currentFailed);
+      setPinAttemptsLeft(left);
+      try {
+        localStorage.setItem('luxebio_pin_failed_attempts', currentFailed.toString());
+      } catch {}
+
+      if (left <= 0) {
+        const lockoutTime = Date.now() + LOCKOUT_DURATION_MS;
+        try {
+          localStorage.setItem('luxebio_pin_lockout_until', lockoutTime.toString());
+        } catch {}
+        setLockoutRemainingSec(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+        setAdminPinError(`Bloqueio de segurança temporário de 5 minutos ativado devido a ${MAX_PIN_ATTEMPTS} tentativas incorretas.`);
+        recordAuditLog(`Bloqueio de Segurança Ativado (${MAX_PIN_ATTEMPTS} tentativas falhas)`, 'lockout');
+      } else {
+        setAdminPinError(`PIN de segurança incorreto. Você tem mais ${left} ${left === 1 ? 'tentativa restante' : 'tentativas restantes'}.`);
+        recordAuditLog(`Tentativa de PIN incorreta (${left} restantes)`, 'failed');
+      }
+    }
+  };
+
+  const handleLockAdminPanel = () => {
+    setAdminPinUnlocked(false);
+    try {
+      sessionStorage.removeItem('luxebio_admin_pin_session');
+    } catch {}
+    recordAuditLog('Painel Bloqueado Manualmente pelo Administrador', 'warning');
+    showToast('🔒 Painel bloqueado! Insira seu PIN mestre para retomar o acesso.');
+  };
+
+  const handleChangeAdminPin = async () => {
+    setChangePinError(null);
+    if (!/^\d{6}$/.test(changePinCurrent)) {
+      setChangePinError('Digite o PIN atual de 6 dígitos.');
+      return;
+    }
+    if (!/^\d{6}$/.test(changePinNew)) {
+      setChangePinError('O novo PIN deve conter exatamente 6 números.');
+      return;
+    }
+    if (changePinNew !== changePinConfirm) {
+      setChangePinError('A confirmação do novo PIN não confere.');
+      return;
+    }
+    if (changePinNew === changePinCurrent) {
+      setChangePinError('O novo PIN deve ser diferente do atual.');
+      return;
+    }
+
+    const currentHash = await hashPinCode(changePinCurrent);
+    const storedHash = localStorage.getItem('luxebio_admin_pin_hash_v1');
+    const defaultHash = await hashPinCode(DEFAULT_ADMIN_PIN);
+    const targetHash = storedHash || defaultHash;
+
+    if (currentHash !== targetHash) {
+      setChangePinError('O PIN atual informado está incorreto.');
+      return;
+    }
+
+    const newHash = await hashPinCode(changePinNew);
+    try {
+      localStorage.setItem('luxebio_admin_pin_hash_v1', newHash);
+    } catch {}
+    setSecurityModalOpen(false);
+    setChangePinCurrent('');
+    setChangePinNew('');
+    setChangePinConfirm('');
+    recordAuditLog('PIN Mestre de 6 Dígitos Alterado com Sucesso', 'success');
+    showToast('🔑 PIN Mestre de Segurança atualizado com sucesso!');
+  };
+
   const handleAdminLogout = async () => {
     try {
+      setAdminPinUnlocked(false);
+      try {
+        sessionStorage.removeItem('luxebio_admin_pin_session');
+      } catch {}
       await signOut(firebaseAuth);
       setAuthError(null);
+      recordAuditLog('Logout do Administrador Realizado', 'warning');
     } catch (err: any) {
       console.error('Logout error:', err);
     }
@@ -2231,16 +2969,28 @@ export default function App() {
           }
         });
         if (remoteModels.length > 0) {
+          let deletedIds: string[] = [];
+          try {
+            const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+            if (deletedRaw) {
+              const parsedDel = JSON.parse(deletedRaw);
+              if (Array.isArray(parsedDel)) deletedIds = parsedDel;
+            }
+          } catch {}
           setSavedSites((prev) => {
             const byId = new Map(prev.map((s) => [s.id, s]));
             remoteModels.forEach((rm) => {
+              if (deletedIds.includes(rm.id)) return;
               const existing = byId.get(rm.id);
-              const isStaleEsthetics =
-                (rm.id === 'real-niche-esthetics' || rm.subdomain === 'drafernanda') &&
-                (rm.data?.profile?.avatarUrl?.includes('1594824476967') ||
-                  rm.data?.studentGrid?.photos?.some((p: string) => p.includes('1512290900672')));
-              if (isStaleEsthetics && existing) {
-                byId.set(rm.id, { ...rm, data: existing.data, isLandingModel: true });
+              const isRemoteStale =
+                (rm.data?.studentGrid?.photos?.length || 0) < 6 ||
+                rm.data?.profile?.avatarUrl?.includes('1594824476967') ||
+                rm.data?.profile?.avatarUrl?.includes('1544005313') ||
+                rm.data?.profile?.avatarUrl?.includes('1580489944761') ||
+                ((rm.id === 'site-1' || rm.subdomain === 'doncorleone') &&
+                  rm.data?.profile?.avatarUrl?.includes('1573496359142'));
+              if (isRemoteStale && existing) {
+                byId.set(rm.id, { ...rm, data: existing.data, isLandingModel: existing.isLandingModel ?? true });
               } else {
                 byId.set(rm.id, existing ? { ...existing, ...rm, isLandingModel: true } : rm);
               }
@@ -3813,27 +4563,27 @@ export default function App() {
     if (cat === 'maintenance_completed') {
       return {
         subject: `[Atualização Concluída] Seu Microsite está ainda mais rápido e seguro 🚀`,
-        body: `Olá, {{nome_cliente}}!\n\nComunicamos que a manutenção e atualização de infraestrutura nos servidores do seu Microsite ({{dominio}}) foi concluída com 100% de sucesso!\n\n✅ MELHORIAS APLICADAS NA SUA PÁGINA:\n• Carregamento instantâneo de fotos e portfólio (orientação inteligente retrato/paisagem)\n• Renovação automática do Certificado de Segurança SSL (HTTPS)\n• Otimização do redirecionamento rápido para o seu WhatsApp comercial\n\nSeu link oficial (https://{{dominio}}) está 100% online e operando em velocidade máxima para converter visitantes do seu Instagram.\n\nAtenciosamente,\nAdministração — LuxeBio Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nComunicamos que a manutenção e atualização de infraestrutura nos servidores do seu Microsite ({{dominio}}) foi concluída com 100% de sucesso!\n\n✅ MELHORIAS APLICADAS NA SUA PÁGINA:\n• Carregamento instantâneo de fotos e portfólio (orientação inteligente retrato/paisagem)\n• Renovação automática do Certificado de Segurança SSL (HTTPS)\n• Otimização do redirecionamento rápido para o seu WhatsApp comercial\n\nSeu link oficial (https://{{dominio}}) está 100% online e operando em velocidade máxima para converter visitantes do seu Instagram.\n\nAtenciosamente,\nAdministração — BioVip Studio Pro`,
       };
     }
 
     if (cat === 'new_features') {
       return {
         subject: `[Novidades Liberadas] Novos recursos disponíveis para o seu Microsite Profissional ✨`,
-        body: `Olá, {{nome_cliente}}!\n\nTemos ótimas notícias! Liberamos novas atualizações e ferramentas de conversão para os clientes da nossa plataforma:\n\n🚀 O QUE HÁ DE NOVO:\n1. Galeria Inteligente Adaptativa: Suas fotos em formato vertical (retrato) e horizontal (paisagem) agora se ajustam automaticamente sem cortes.\n2. Rastreamento Avançado da Bio do Instagram: Acompanhe quantos cliques vieram diretamente do seu perfil.\n3. Catálogo e Agendamento Otimizado para WhatsApp.\n\nCaso deseje atualizar fotos, preços ou textos do seu microsite ({{dominio}}), basta responder a este comunicado ou nos chamar no WhatsApp de suporte!\n\nAtenciosamente,\nEquipe LuxeBio Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nTemos ótimas notícias! Liberamos novas atualizações e ferramentas de conversão para os clientes da nossa plataforma:\n\n🚀 O QUE HÁ DE NOVO:\n1. Galeria Inteligente Adaptativa: Suas fotos em formato vertical (retrato) e horizontal (paisagem) agora se ajustam automaticamente sem cortes.\n2. Rastreamento Avançado da Bio do Instagram: Acompanhe quantos cliques vieram diretamente do seu perfil.\n3. Catálogo e Agendamento Otimizado para WhatsApp.\n\nCaso deseje atualizar fotos, preços ou textos do seu microsite ({{dominio}}), basta responder a este comunicado ou nos chamar no WhatsApp de suporte!\n\nAtenciosamente,\nEquipe BioVip Studio Pro`,
       };
     }
 
     if (cat === 'billing_notice') {
       return {
         subject: `[Informativo Financeiro] Lembrete de Assinatura e Manutenção do Microsite`,
-        body: `Olá, {{nome_cliente}}!\n\nEste é um informativo administrativo referente à manutenção mensal, hospedagem premium e suporte contínuo do seu Microsite Profissional ({{dominio}}).\n\n📋 RESUMO DOS DADOS DE ASSINATURA:\n• Valor Mensal Vigente: R$ {{valor}}\n• Data de Vencimento Cadastrada: {{vencimento}}\n• Chave PIX Oficial p/ Renovação: ${pixKey} (${pixName})\n\nManter sua assinatura em dia garante que o link na Bio do seu Instagram e no Google Meu Negócio permaneça ativo 24h por dia com certificado SSL e suporte prioritário.\n\nCaso já tenha efetuado o pagamento do ciclo atual, por favor desconsidere este aviso.\n\nAtenciosamente,\nDepartamento Financeiro — LuxeBio Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nEste é um informativo administrativo referente à manutenção mensal, hospedagem premium e suporte contínuo do seu Microsite Profissional ({{dominio}}).\n\n📋 RESUMO DOS DADOS DE ASSINATURA:\n• Valor Mensal Vigente: R$ {{valor}}\n• Data de Vencimento Cadastrada: {{vencimento}}\n• Chave PIX Oficial p/ Renovação: ${pixKey} (${pixName})\n\nManter sua assinatura em dia garante que o link na Bio do seu Instagram e no Google Meu Negócio permaneça ativo 24h por dia com certificado SSL e suporte prioritário.\n\nCaso já tenha efetuado o pagamento do ciclo atual, por favor desconsidere este aviso.\n\nAtenciosamente,\nDepartamento Financeiro — BioVip Studio Pro`,
       };
     }
 
     return {
-      subject: `[Comunicado Oficial] Aviso Importante aos Clientes — LuxeBio Studio`,
-      body: `Olá, {{nome_cliente}}!\n\nEntramos em contato para informar sobre uma atualização importante referente ao seu Microsite ({{dominio}}):\n\n[Escreva aqui os detalhes do aviso, manutenção ou comunicado relevante para todos os clientes...]\n\nQualquer dúvida ou solicitação, nossa equipe está pronta para atender você.\n\nAtenciosamente,\nAdministração — LuxeBio Studio Pro`,
+      subject: `[Comunicado Oficial] Aviso Importante aos Clientes — BioVip Studio`,
+      body: `Olá, {{nome_cliente}}!\n\nEntramos em contato para informar sobre uma atualização importante referente ao seu Microsite ({{dominio}}):\n\n[Escreva aqui os detalhes do aviso, manutenção ou comunicado relevante para todos os clientes...]\n\nQualquer dúvida ou solicitação, nossa equipe está pronta para atender você.\n\nAtenciosamente,\nAdministração — BioVip Studio Pro`,
     };
   };
 
@@ -3897,7 +4647,7 @@ export default function App() {
         id: s.id,
         clientName: s.clientName,
         email: (s.clientEmail || '').trim(),
-        domain: s.customDomain || `${s.subdomain}.luxebio.site`,
+        domain: s.customDomain || `${s.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`,
       }));
 
       let protocol = `MAIL-${Date.now().toString(36).toUpperCase()}`;
@@ -3955,7 +4705,7 @@ export default function App() {
     const bccList = targetSites.map(s => (s.clientEmail || '').trim()).join(',');
     const cleanBody = bulkEmailBody
       .replace(/\{\{nome_cliente\}\}/g, 'Cliente Parceiro(a)')
-      .replace(/\{\{dominio\}\}/g, 'seu Microsite LuxeBio')
+      .replace(/\{\{dominio\}\}/g, 'seu Microsite BioVip')
       .replace(/\{\{vencimento\}\}/g, 'conforme seu plano')
       .replace(/\{\{valor\}\}/g, (data.saasSettings?.defaultMonthlyFee || 149.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
 
@@ -4105,12 +4855,133 @@ export default function App() {
     setSaveModalOpen(true);
   };
 
-  const loadSiteForEditing = (site: SavedMicrosite) => {
+  const loadSiteForEditing = (site: SavedMicrosite, forceEdit = false) => {
+    const daysDiff = getDaysUntilDue(site.dueDate);
+    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+    const editsLocked = isSiteEditsLocked(site, daysOverdue);
+
+    if (editsLocked && !forceEdit) {
+      showToast(
+        `🔒 Edições bloqueadas para "${site.clientName}" por inadimplência (${daysOverdue > 0 ? `${daysOverdue}d de atraso` : 'fatura pendente'}). Regularize o Pix ou libere manualmente na linha do cliente.`
+      );
+      openPixBillingModal(site, isSiteSuspendedStatus(site) || daysOverdue >= 7 ? 'd_plus_7' : 'd_plus_3');
+      return;
+    }
+
     triggerSimulatorSkeleton(420);
     setData(JSON.parse(JSON.stringify(site.data)));
     setEditingSiteId(site.id);
+    setIsClientsFullscreen(false);
+    setAppSurface('studio');
     setActiveTab('styling');
     showToast(`✏️ Microsite "${site.clientName}" carregado no estúdio de edição!`);
+  };
+
+  const handleTestAsaasConnection = async () => {
+    setAsaasStatusTesting(true);
+    setAsaasTestResult(null);
+    try {
+      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
+      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const res = await fetch('/api/asaas/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, environment }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setAsaasTestResult({
+          success: true,
+          message: `Conexão Asaas OK (${environment.toUpperCase()})! Saldo: R$ ${(json.balance ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+          balance: json.balance,
+        });
+        showToast('✅ Conexão com o Asaas estabelecida com sucesso!');
+      } else {
+        setAsaasTestResult({
+          success: false,
+          message: json.error || 'Falha ao conectar com o Asaas.',
+        });
+        showToast(`⚠️ Erro Asaas: ${json.error || 'Falha de autenticação'}`);
+      }
+    } catch (err: any) {
+      setAsaasTestResult({
+        success: false,
+        message: err?.message || 'Erro de rede ao conectar à API do Asaas.',
+      });
+      showToast('⚠️ Erro ao contatar servidor.');
+    } finally {
+      setAsaasStatusTesting(false);
+    }
+  };
+
+  const handleGenerateAsaasInvoice = async (site: SavedMicrosite) => {
+    setAsaasGeneratingSiteId(site.id);
+    try {
+      const billing = getSiteBillingSummary(site);
+      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
+      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+
+      const res = await fetch('/api/asaas/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey,
+          environment,
+          customerName: site.clientName,
+          customerEmail: site.clientEmail || `${site.subdomain}@${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`,
+          customerPhone: site.clientPhone || site.data?.profile?.whatsapp,
+          value: billing.totalDueThisMonth,
+          dueDate: site.dueDate,
+          description: `Manutenção Mensal Microsite - ${site.clientName} (${site.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()})`,
+          billingType: 'PIX',
+          externalReference: site.id,
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setAsaasPaymentData({
+          paymentId: json.paymentId,
+          invoiceUrl: json.invoiceUrl,
+          bankSlipUrl: json.bankSlipUrl,
+          pixQrCode: json.pix?.encodedImage,
+          pixPayload: json.pix?.payload,
+          status: json.status,
+        });
+
+        // Atualiza a chave Pix do modal com o código Pix Copia e Cola dinâmico do Asaas
+        if (json.pix?.payload) {
+          setPixCustomCode(json.pix.payload);
+          setPixWhatsappMessage(buildReguaCobrancaMessage(site, pixBillingStage, json.pix.payload));
+        }
+
+        showToast('⚡ Fatura Oficial Asaas com PIX gerada com sucesso!');
+      } else {
+        showToast(`⚠️ Falha Asaas: ${json.error || 'Erro ao gerar cobrança'}`);
+      }
+    } catch (err: any) {
+      showToast(`⚠️ Erro de comunicação com Asaas: ${err?.message || 'Falha de rede'}`);
+    } finally {
+      setAsaasGeneratingSiteId(null);
+    }
+  };
+
+  const checkAsaasStatusAndConfirm = async (siteId: string, paymentId: string) => {
+    try {
+      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
+      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const res = await fetch(`/api/asaas/payment/${paymentId}/status?apiKey=${encodeURIComponent(apiKey)}&environment=${environment}`);
+      const result = await res.json();
+      if (result.isPaid) {
+        extendDueDate(siteId);
+        setPixModalOpen(false);
+        showToast('🎉 Pagamento CONFIRMADO pelo Asaas! Mensalidade renovada (+30 dias) e edições liberadas!');
+      } else {
+        showToast(`ℹ️ Status no Asaas: ${result.status} (Ainda não compensado)`);
+      }
+    } catch (err: any) {
+      showToast('⚠️ Erro ao verificar status no Asaas.');
+    }
   };
 
   const toggleSiteLandingModel = (siteId: string) => {
@@ -4155,7 +5026,7 @@ export default function App() {
       });
       if (newlyAutoDisabled.length > 0) {
         showToast(
-          `🛑 Desativação automática por atraso (>= ${AUTO_DISABLE_OVERDUE_DAYS} dias): ${newlyAutoDisabled.join(', ')}`
+          `🛑 Suspensão automática D+7 (Modo Manutenção ativado): ${newlyAutoDisabled.join(', ')}`
         );
       }
     }
@@ -4164,11 +5035,11 @@ export default function App() {
   const runAutoOverdueSweepNow = () => {
     const { normalized, changed, newlyAutoDisabled } = enforceAutoSevenDayOverdueRule(savedSites);
     const totalAutoDisabled = normalized.filter(
-      (s) => s.status === 'disabled' && (s.autoDisabledByOverdue || Math.abs(Math.min(0, getDaysUntilDue(s.dueDate))) >= AUTO_DISABLE_OVERDUE_DAYS)
+      (s) => isSiteSuspendedStatus(s) && (s.autoDisabledByOverdue || Math.abs(Math.min(0, getDaysUntilDue(s.dueDate))) >= AUTO_DISABLE_OVERDUE_DAYS)
     ).length;
-    const inGracePeriod = normalized.filter((s) => {
+    const totalBlockedD3 = normalized.filter((s) => {
       const d = getDaysUntilDue(s.dueDate);
-      return d < 0 && Math.abs(d) < AUTO_DISABLE_OVERDUE_DAYS && s.status !== 'disabled';
+      return d <= -3 && Math.abs(d) < AUTO_DISABLE_OVERDUE_DAYS;
     }).length;
 
     if (changed) {
@@ -4180,10 +5051,10 @@ export default function App() {
     }
 
     if (newlyAutoDisabled.length > 0) {
-      showToast(`🛑 Varredura concluída: ${newlyAutoDisabled.length} site(s) desativado(s) automaticamente por atingir >= 7 dias de atraso!`);
+      showToast(`🛑 Varredura concluída: ${newlyAutoDisabled.length} site(s) colocados em Modo Manutenção por atingir >= 7 dias de atraso!`);
     } else {
       showToast(
-        `✅ Varredura automática (Regra 7º Dia): ${totalAutoDisabled} desativado(s) por atraso >= 7 dias · ${inGracePeriod} em tolerância (1 a 6 dias).`
+        `✅ Régua Progressiva: ${totalAutoDisabled} em Modo Manutenção (D+7) · ${totalBlockedD3} com Edições Bloqueadas (D+3).`
       );
     }
   };
@@ -4199,18 +5070,27 @@ export default function App() {
     let updatedTarget: SavedMicrosite | null = null;
     const updated = savedSites.map((s) => {
       if (s.id !== siteId) return s;
-      // Aplica automaticamente a regra do 7º dia de atraso ao alterar o vencimento
+      // Aplica automaticamente a Régua Progressiva (Pago -> Pendente -> Atrasado D+3 -> Suspenso D+7)
       const nextStatus: SavedMicrosite['status'] =
         daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
-          ? 'disabled'
-          : daysOverdue > 0
-          ? 'overdue'
-          : 'active';
+          ? 'suspenso_d7'
+          : daysOverdue >= 3
+          ? 'atrasado_d3'
+          : daysOverdue > 0 || daysDiff === 0
+          ? 'pendente'
+          : 'pago';
+
+      const nextEdicoesBloqueadas = daysOverdue >= 3;
+      const nextLinkStatus: 'ativo' | 'manutencao' =
+        daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS ? 'manutencao' : 'ativo';
 
       updatedTarget = {
         ...s,
         dueDate: newDueDateStr,
         status: nextStatus,
+        daysOverdue,
+        edicoesBloqueadas: nextEdicoesBloqueadas,
+        linkStatus: nextLinkStatus,
         autoDisabledByOverdue: daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS,
         manualOverrideUntil: undefined,
       };
@@ -4226,40 +5106,99 @@ export default function App() {
       const targetObj = updatedTarget as SavedMicrosite;
       if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS) {
         showToast(
-          `🛑 Vencimento de "${targetObj.clientName}" alterado (${daysOverdue} dias de atraso): Microsite DESATIVADO AUTOMATICAMENTE pela regra do 7º dia!`
+          `🛑 "${targetObj.clientName}" (${daysOverdue}d de atraso — D+7): Página em Modo Manutenção e Edições Bloqueadas!`
+        );
+      } else if (daysOverdue >= 3) {
+        showToast(
+          `🔒 "${targetObj.clientName}" (${daysOverdue}d de atraso — D+3): Link continua ativo, porém Edições Bloqueadas!`
         );
       } else if (daysOverdue > 0) {
         showToast(
-          `🟡 Vencimento de "${targetObj.clientName}" alterado (${daysOverdue}d de atraso): Desativação automática em ${AUTO_DISABLE_OVERDUE_DAYS - daysOverdue} dia(s) (no 7º dia).`
+          `🟡 "${targetObj.clientName}" (${daysOverdue}d de atraso): Status Pendente. Bloqueio de edições em ${3 - daysOverdue}d.`
         );
       } else {
-        showToast(`📅 Data de vencimento de "${targetObj.clientName}" atualizada para ${formatDueDateBr(newDueDateStr)} (Status: Ativo)!`);
+        showToast(`📅 Vencimento de "${targetObj.clientName}" atualizado para ${formatDueDateBr(newDueDateStr)} (Status: Em Dia / Edições Liberadas)!`);
+      }
+    }
+  };
+
+  // Botão "Alternar Suspensão": Permite colocar a página em "Modo Manutenção" ou "Reativar"
+  const toggleSiteSuspensionMode = (siteId: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    let targetSite: SavedMicrosite | null = null;
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      const currentlyInMaintenance = isSiteSuspendedStatus(s);
+      const nextLinkStatus: 'ativo' | 'manutencao' = currentlyInMaintenance ? 'ativo' : 'manutencao';
+      const daysDiff = getDaysUntilDue(s.dueDate);
+      const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+
+      const nextStatus: CustomerDelinquencyStatus =
+        nextLinkStatus === 'manutencao'
+          ? 'suspenso_d7'
+          : daysOverdue >= 3
+          ? 'atrasado_d3'
+          : daysOverdue > 0 || daysDiff === 0
+          ? 'pendente'
+          : 'pago';
+
+      targetSite = {
+        ...s,
+        status: nextStatus,
+        daysOverdue,
+        linkStatus: nextLinkStatus,
+        edicoesBloqueadas: nextLinkStatus === 'manutencao' ? true : daysOverdue >= 3,
+        autoDisabledByOverdue: nextLinkStatus === 'manutencao' ? Boolean(s.autoDisabledByOverdue) : false,
+        manualOverrideUntil: nextLinkStatus === 'ativo' ? todayStr : undefined,
+      };
+      return targetSite;
+    });
+    setSavedSites(updated);
+    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    if (targetSite) {
+      const t = targetSite as SavedMicrosite;
+      syncSiteToFirestore(t);
+      if (t.linkStatus === 'manutencao') {
+        showToast(`🛠️ "${t.clientName}" colocado em MODO MANUTENÇÃO (Tela Neutra de Atualização Técnica ativa)!`);
+      } else {
+        showToast(`🟢 "${t.clientName}" REATIVADO com sucesso! Link público 100% no ar.`);
       }
     }
   };
 
   const toggleSiteActiveStatus = (siteId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    toggleSiteSuspensionMode(siteId);
+  };
+
+  const toggleSiteEditsLock = (siteId: string) => {
+    let targetSite: SavedMicrosite | null = null;
     const updated = savedSites.map(s => {
       if (s.id !== siteId) return s;
-      const newStatus: SavedMicrosite['status'] = s.status === 'disabled' ? 'active' : 'disabled';
-      return {
+      const daysDiff = getDaysUntilDue(s.dueDate);
+      const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+      const currentlyLocked = isSiteEditsLocked(s, daysOverdue);
+      const nextLocked = !currentlyLocked;
+      targetSite = {
         ...s,
-        status: newStatus,
-        autoDisabledByOverdue: newStatus === 'disabled' ? Boolean(s.autoDisabledByOverdue) : false,
-        // Se o admin reativar manualmente um site com >= 7 dias de atraso, concede exceção manual hoje
-        manualOverrideUntil: newStatus === 'active' ? todayStr : undefined,
+        edicoesBloqueadas: nextLocked,
       };
+      return targetSite;
     });
     setSavedSites(updated);
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
-    const target = updated.find(s => s.id === siteId);
-    if (target) syncSiteToFirestore(target);
-    if (target?.status === 'disabled') {
-      showToast(`🛑 Microsite "${target.clientName}" foi DESATIVADO por atraso de pagamento!`);
-    } else if (target) {
-      showToast(`🟢 Microsite "${target.clientName}" foi REATIVADO manualmente com sucesso!`);
+    if (targetSite) {
+      const t = targetSite as SavedMicrosite;
+      syncSiteToFirestore(t);
+      if (t.edicoesBloqueadas) {
+        showToast(`🔒 Edições de "${t.clientName}" foram BLOQUEADAS por inadimplência.`);
+      } else {
+        showToast(`🔓 Edições de "${t.clientName}" foram LIBERADAS manualmente!`);
+      }
     }
+  };
+
+  const openSuspendedPagePreview = (site: SavedMicrosite) => {
+    setSuspendedPreviewSite(site);
   };
 
   const extendDueDate = (siteId: string) => {
@@ -4268,11 +5207,14 @@ export default function App() {
       const currentDue = new Date(s.dueDate > new Date().toISOString().split('T')[0] ? s.dueDate : new Date());
       currentDue.setDate(currentDue.getDate() + 30);
       const newDueDateStr = currentDue.toISOString().split('T')[0];
-      // Ao confirmar o pagamento do 1º mês (criação), o próximo ciclo passa a ser manutenção mensal normal e zera o contador de alterações do mês
+      // Ao confirmar o pagamento: status 'pago', daysOverdue 0, edicoesBloqueadas false, linkStatus 'ativo'
       return {
         ...s,
         dueDate: newDueDateStr,
-        status: 'active' as const,
+        status: 'pago' as const,
+        daysOverdue: 0,
+        edicoesBloqueadas: false,
+        linkStatus: 'ativo' as const,
         autoDisabledByOverdue: false,
         manualOverrideUntil: undefined,
         isFirstMonth: false,
@@ -4283,7 +5225,7 @@ export default function App() {
     try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
-    showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Site reativado, vencimento estendido para ${formatDueDateBr(target?.dueDate || '')} e franquia renovada.`);
+    showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Link reativado, edições liberadas e vencimento estendido para ${formatDueDateBr(target?.dueDate || '')}.`);
   };
 
   const updateSiteMonthlyFee = (siteId: string, newFee: number) => {
@@ -4351,6 +5293,17 @@ export default function App() {
   };
 
   const adjustSiteUpdatesCount = (siteId: string, delta: number) => {
+    const existing = savedSites.find(s => s.id === siteId);
+    if (existing && delta > 0) {
+      const daysDiff = getDaysUntilDue(existing.dueDate);
+      const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+      if (isSiteEditsLocked(existing, daysOverdue)) {
+        showToast(`🔒 Edições bloqueadas para "${existing.clientName}" por inadimplência (D+3). Regularize a fatura para registrar novas edições!`);
+        openPixBillingModal(existing, isSiteSuspendedStatus(existing) || daysOverdue >= 7 ? 'd_plus_7' : 'd_plus_3');
+        return;
+      }
+    }
+
     let targetSite: SavedMicrosite | null = null;
     const updated = savedSites.map(s => {
       if (s.id !== siteId) return s;
@@ -4371,13 +5324,26 @@ export default function App() {
     }
   };
 
-  const deleteSavedSite = async (siteId: string) => {
+  const deleteSavedSite = (siteId: string) => {
     const target = savedSites.find(s => s.id === siteId);
-    if (!confirm(`Tem certeza que deseja excluir o microsite de "${target?.clientName}"?`)) return;
+    if (!target) return;
+    setDeleteModalSite(target);
+  };
+
+  const executeDeleteSavedSite = async (siteId: string) => {
+    const target = savedSites.find(s => s.id === siteId);
     const filtered = savedSites.filter(s => s.id !== siteId);
     setSavedSites(filtered);
     if (editingSiteId === siteId) setEditingSiteId(null);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(filtered)); } catch {}
+    setDeleteModalSite(null);
+    try {
+      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(filtered));
+      const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+      const prevDeleted: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+      if (!prevDeleted.includes(siteId)) {
+        localStorage.setItem('luxebio_deleted_site_ids_v1', JSON.stringify([...prevDeleted, siteId]));
+      }
+    } catch {}
     if (firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
       try {
         await deleteDoc(doc(firebaseDb, 'admin_sites', siteId));
@@ -4386,7 +5352,7 @@ export default function App() {
         handleFirestoreError(err, OperationType.DELETE, `admin_sites/${siteId}`);
       }
     }
-    showToast(`🗑️ Microsite removido do Painel.`);
+    showToast(`🗑️ Microsite de "${target?.clientName || 'Cliente'}" excluído com sucesso!`);
   };
   
   // Interactive Mobile Preview Controls
@@ -4538,36 +5504,36 @@ export default function App() {
   const loadGalleryPreset = (presetKey: 'beauty' | 'barber' | 'health' | 'exec') => {
     const presets: Record<string, string[]> = {
       beauty: [
-        'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700',
       ],
       barber: [
-        'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1517832606589-715753d4f323?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=700',
       ],
       health: [
-        'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=700',
       ],
       exec: [
-        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700',
       ],
     };
     if (presets[presetKey]) {
@@ -5137,6 +6103,7 @@ export default function App() {
       headline: string;
       items: typeof INITIAL_DATA.services.items;
     };
+    galleryPhotos: string[];
   }> = {
     'Barbearia & Grooming': {
       category: 'Barbearia & Grooming',
@@ -5155,7 +6122,7 @@ export default function App() {
         cursivePhrase: 'Tradição, excelência e estilo em cada detalhe.',
         location: 'Av. Paulista, 1450 · Estacionamento VIP no Local',
         avatarUrl: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=600',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+8.500',
@@ -5182,7 +6149,7 @@ export default function App() {
           customText: '#000000',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'RESERVAR HORÁRIO',
@@ -5239,7 +6206,7 @@ export default function App() {
             description: 'Toalha quente, massagem facial com ozônio e bebida cortesia.',
             price: 'R$ 110',
             duration: '1h15',
-            imageUrl: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-b2',
@@ -5247,7 +6214,7 @@ export default function App() {
             description: 'Acabamento de alta precisão, lavagem especial e pomada matte.',
             price: 'R$ 70',
             duration: '45min',
-            imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-b3',
@@ -5255,10 +6222,18 @@ export default function App() {
             description: 'Alinhamento geométrico, esfoliação e hidratação profunda.',
             price: 'R$ 60',
             duration: '40min',
-            imageUrl: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Beleza & Unhas': {
@@ -5277,8 +6252,8 @@ export default function App() {
         tagline: 'Especialista em Fibra de Vidro Slim, Gel Moldado e Naturalidade Europeia com durabilidade impecável.',
         cursivePhrase: 'Elegância e sofisticação na ponta dos seus dedos.',
         location: 'Studio Privé · Jardins, São Paulo - SP',
-        avatarUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
+        avatarUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+3.200',
@@ -5305,7 +6280,7 @@ export default function App() {
           customText: '#000000',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'GARANTIR HORÁRIO',
@@ -5362,7 +6337,7 @@ export default function App() {
             description: 'Curvatura natural, resistência extrema e acabamento ultrafino.',
             price: 'R$ 240',
             duration: '2h00',
-            imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-n2',
@@ -5370,7 +6345,7 @@ export default function App() {
             description: 'Proteção estrutural para o crescimento saudável das unhas naturais.',
             price: 'R$ 160',
             duration: '1h30',
-            imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-n3',
@@ -5378,10 +6353,18 @@ export default function App() {
             description: 'Nivelamento perfeito do crescimento com esmaltação em gel de alto brilho.',
             price: 'R$ 150',
             duration: '1h30',
-            imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Beleza & Alta Conversão': {
@@ -5401,7 +6384,7 @@ export default function App() {
         cursivePhrase: 'Seu olhar transmite o seu verdadeiro poder.',
         location: 'Edifício Prime Beauty · Sala 804',
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+4.500',
@@ -5428,7 +6411,7 @@ export default function App() {
           customText: '#ffffff',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'AGENDAR AGORA',
@@ -5485,7 +6468,7 @@ export default function App() {
             description: 'Preenchimento artístico que imita o caimento natural dos fios.',
             price: 'R$ 690',
             duration: '2h00',
-            imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-l2',
@@ -5493,7 +6476,7 @@ export default function App() {
             description: 'Efeito delineado marcante com leveza e retenção de até 35 dias.',
             price: 'R$ 230',
             duration: '1h45',
-            imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-l3',
@@ -5501,10 +6484,18 @@ export default function App() {
             description: 'Alinhamento e nutrição dos fios para sobrancelhas encorpadas e modernas.',
             price: 'R$ 180',
             duration: '1h00',
-            imageUrl: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Jurídico & Executivo': {
@@ -5524,7 +6515,7 @@ export default function App() {
         cursivePhrase: 'Compromisso, ética e segurança jurídica para você.',
         location: 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP',
         avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=600',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+650',
@@ -5551,7 +6542,7 @@ export default function App() {
           customText: '#0f172a',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'SOLICITAR HORÁRIO',
@@ -5572,7 +6563,7 @@ export default function App() {
           customText: '#0f172a',
           bgImage: '',
           imagePosition: 'left',
-          cardImage: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'framed',
           imageSize: 84,
           ctaActionText: 'CONSULTAR ÁREAS',
@@ -5608,7 +6599,7 @@ export default function App() {
             description: 'Diagnóstico completo do caso com plano de ação preventivo ou contencioso.',
             price: 'R$ 450',
             duration: '1h30',
-            imageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-j2',
@@ -5616,7 +6607,7 @@ export default function App() {
             description: 'Estruturação de Holding Familiar, testamentos e proteção de ativos.',
             price: 'Sob Consulta',
             duration: 'Personalizado',
-            imageUrl: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-j3',
@@ -5624,10 +6615,18 @@ export default function App() {
             description: 'Cálculo e projeção do melhor benefício de aposentadoria com parecer técnico.',
             price: 'R$ 890',
             duration: '5 dias',
-            imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Mentoria & Cursos': {
@@ -5646,8 +6645,8 @@ export default function App() {
         tagline: 'Ajudo especialistas e empresárias a multiplicarem seu faturamento com posicionamento de alto valor no digital.',
         cursivePhrase: 'Posicionamento de elite atrai clientes de elite.',
         location: 'Atendimento Global Online & Imersões em São Paulo',
-        avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
+        avatarUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+1.800',
@@ -5674,7 +6673,7 @@ export default function App() {
           customText: '#261b14',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'FAZER APLICAÇÃO',
@@ -5695,7 +6694,7 @@ export default function App() {
           customText: '#261b14',
           bgImage: '',
           imagePosition: 'left',
-          cardImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'framed',
           imageSize: 84,
           ctaActionText: 'BAIXE AGORA',
@@ -5731,7 +6730,7 @@ export default function App() {
             description: 'Reestruturação completa de oferta, funil de vendas e posicionamento premium.',
             price: 'R$ 5.000',
             duration: '3 Meses',
-            imageUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-m2',
@@ -5739,7 +6738,7 @@ export default function App() {
             description: '+60 aulas práticas com scripts de vendas, narrativa de stories e estética.',
             price: 'R$ 997',
             duration: 'Acesso 1 Ano',
-            imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-m3',
@@ -5747,10 +6746,18 @@ export default function App() {
             description: 'Encontro intensivo individual com entrega de plano de ação imediato.',
             price: 'R$ 890',
             duration: '2h00',
-            imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Saúde & Psicologia': {
@@ -5769,8 +6776,8 @@ export default function App() {
         tagline: 'Psicoterapia individual focada em ansiedade, autoestima, esgotamento profissional e relacionamentos saudáveis.',
         cursivePhrase: 'Cuidar da sua saúde emocional é um ato de coragem.',
         location: 'Consultório em Pinheiros - SP & Atendimento Online Global',
-        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=600',
+        avatarUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+2.400',
@@ -5797,7 +6804,7 @@ export default function App() {
           customText: '#ffffff',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'VER HORÁRIOS',
@@ -5854,7 +6861,7 @@ export default function App() {
             description: 'Sessões semanais com escuta qualificada e espaço seguro de acolhimento.',
             price: 'R$ 250',
             duration: '50min',
-            imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-p2',
@@ -5862,7 +6869,7 @@ export default function App() {
             description: 'Acompanhamento focado em tomada de decisões, burnout e metas de vida.',
             price: 'R$ 280',
             duration: '50min',
-            imageUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1516534775068-ba3e7458af70?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-p3',
@@ -5870,10 +6877,18 @@ export default function App() {
             description: 'Encontros para empresas e equipes sobre prevenção de ansiedade e equilíbrio.',
             price: 'Sob Consulta',
             duration: '1h30',
-            imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1516534775068-ba3e7458af70?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Moda & Juventude': {
@@ -5892,8 +6907,8 @@ export default function App() {
         tagline: 'Peças selecionadas de alfaiataria moderna e looks versáteis para mulheres que amam se vestir com poder.',
         cursivePhrase: 'Vista-se da sua melhor versão todos os dias.',
         location: 'Showroom Moema - SP · Enviamos para todo o Brasil',
-        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=900',
-        aboutPhotoUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=600',
+        avatarUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=900',
+        aboutPhotoUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=700',
       },
       metrics: {
         stat1Value: '+12 mil',
@@ -5920,7 +6935,7 @@ export default function App() {
           customText: '#ffffff',
           bgImage: '',
           imagePosition: 'right',
-          cardImage: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=400',
+          cardImage: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'popout',
           imageSize: 92,
           ctaActionText: 'VER CATÁLOGO',
@@ -5977,7 +6992,7 @@ export default function App() {
             description: 'Blazer estruturado com corte italiano + calça pantalona de caimento impecável.',
             price: 'R$ 489',
             duration: 'P, M e G',
-            imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-f2',
@@ -5985,7 +7000,7 @@ export default function App() {
             description: 'Tecido acetinado de toque macio, ideal para eventos, jantares e celebrações.',
             price: 'R$ 359',
             duration: 'Pronta-Entrega',
-            imageUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-f3',
@@ -5993,10 +7008,18 @@ export default function App() {
             description: 'Descubra sua cartela de cores e monte um guarda-roupa inteligente.',
             price: 'R$ 590',
             duration: '2h30',
-            imageUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=300',
+            imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=700',
+      ],
     },
 
     'Consultoria & Estética': {
@@ -6064,7 +7087,7 @@ export default function App() {
           customText: '#26221c',
           bgImage: '',
           imagePosition: 'left',
-          cardImage: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=500',
+          cardImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=500',
           imageFitStyle: 'framed',
           imageSize: 84,
           ctaActionText: 'VER PROTOCOLOS',
@@ -6108,7 +7131,7 @@ export default function App() {
             description: 'Suavização elegante de linhas de expressão preservando a naturalidade do rosto.',
             price: 'R$ 1.290',
             duration: '45min',
-            imageUrl: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=500',
+            imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=500',
           },
           {
             id: 'srv-e3',
@@ -6116,10 +7139,18 @@ export default function App() {
             description: 'Definição de contorno, volume sutil e revitalização profunda dos lábios.',
             price: 'R$ 1.450',
             duration: '50min',
-            imageUrl: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=500',
+            imageUrl: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=500',
           },
         ],
       },
+      galleryPhotos: [
+        'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=700',
+      ],
     },
   };
 
@@ -6175,6 +7206,11 @@ export default function App() {
         enabled: true,
         headline: kit.services.headline,
         items: kit.services.items,
+      },
+      studentGrid: {
+        ...p.studentGrid,
+        enabled: true,
+        photos: kit.galleryPhotos,
       },
     }));
   };
@@ -7346,7 +8382,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const slug = data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'luxebio-page';
+    const slug = data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'biovip-page';
     link.download = `${slug}.html`;
     document.body.appendChild(link);
     link.click();
@@ -7482,7 +8518,7 @@ location /${slug}/ {
 
   const generateReadmeHosting = (slug: string, clientName: string) => {
     return `===================================================================
-PACOTE DE HOSPEDAGEM EM PASTA INDEPENDENTE - LUXEBIO STUDIO
+PACOTE DE HOSPEDAGEM EM PASTA INDEPENDENTE - BIOVIP STUDIO
 Cliente: ${clientName}
 Diretório Dedicado: /${slug}/ (e também disponível na raiz /)
 Data de Geração: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
@@ -7587,7 +8623,16 @@ OPÇÃO 3: Subdomínio Dedicado (ex: ${slug}.seusite.com.br)
           'microsite';
       }
 
-      const htmlContent = generateExportCode(siteData);
+      const isTargetSuspended =
+        target && 'subdomain' in target
+          ? isSiteSuspendedStatus(target)
+          : currentEditingSite
+          ? isSiteSuspendedStatus(currentEditingSite)
+          : false;
+
+      const htmlContent = isTargetSuspended
+        ? getSuspendedPageHtml(target && 'subdomain' in target ? target : (currentEditingSite || { clientName, data: siteData }))
+        : generateExportCode(siteData);
       const vercelJsonContent = generateVercelJson(slug);
       const manifestContent = generateManifestJson(siteData, slug);
       const robotsContent = generateRobotsTxt(slug);
@@ -7654,7 +8699,7 @@ OPÇÃO 3: Subdomínio Dedicado (ex: ${slug}.seusite.com.br)
       serverRoot.file(
         'README-ESTRUTURA-SERVIDOR.txt',
         `===================================================================
-PACOTE DE HOSPEDAGEM MULTI-CLIENTES - LUXEBIO STUDIO
+PACOTE DE HOSPEDAGEM MULTI-CLIENTES - BIOVIP STUDIO
 Total de Microsites: ${savedSites.length}
 Data de Exportação: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
 ===================================================================
@@ -7715,7 +8760,10 @@ COMO PUBLICAR NO SERVIDOR:
         const slug = site.subdomain || site.clientName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const siteFolder = serverRoot.folder(slug);
         if (siteFolder) {
-          siteFolder.file('index.html', generateExportCode(site.data));
+          const siteHtml = isSiteSuspendedStatus(site)
+            ? getSuspendedPageHtml(site)
+            : generateExportCode(site.data);
+          siteFolder.file('index.html', siteHtml);
           siteFolder.file('vercel.json', generateVercelJson(slug));
           siteFolder.file('manifest.json', generateManifestJson(site.data, slug));
           siteFolder.file('robots.txt', generateRobotsTxt(slug));
@@ -7901,9 +8949,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Seg a Sex · 09:00 às 19:00',
         openStatus: 'PLANTÃO JURÍDICO ATIVO',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'law-s1', number: '01', title: 'Triagem Sigilosa no WhatsApp', description: 'Relate sua demanda para análise preliminar da equipe jurídica.' },
@@ -7936,9 +8987,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Ter a Sáb · 09:00 às 20:00',
         openStatus: 'AGENDA DA SEMANA ABERTA',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'nl-s1', number: '01', title: 'Escolha do Procedimento', description: 'Selecione Fibra de Vidro Slim, Banho de Gel ou Manutenção.' },
@@ -7971,9 +9025,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Seg a Sáb · 09:00 às 19:30',
         openStatus: 'HORÁRIOS VIP DISPONÍVEIS',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'ls-s1', number: '01', title: 'Mapeamento Facial & Visagismo', description: 'Analisamos a simetria do seu rosto antes de qualquer procedimento.' },
@@ -8007,10 +9064,10 @@ COMO PUBLICAR NO SERVIDOR:
         openStatus: 'CLÍNICA ABERTA · HORA MARCADA',
         galleryPhotos: [
           'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=700',
           'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=700',
           'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=700',
           'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=700',
-          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700',
           'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
@@ -8044,9 +9101,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Ter a Sáb · 09:00 às 21:00',
         openStatus: 'SEM FILA · AGENDE ONLINE',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'bb-s1', number: '01', title: 'Escolha seu Combo ou Corte', description: 'Selecione Corte Navalhado, Barboterapia com Ozônio ou Combo Gentleman.' },
@@ -8079,9 +9139,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Atendimento Global Online · Seg a Sex',
         openStatus: 'APLICAÇÕES ABERTAS · TURMA VIP',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'mt-s1', number: '01', title: 'Preenchimento da Aplicação', description: 'Avaliamos seu momento atual de faturamento e estrutura comercial.' },
@@ -8114,9 +9177,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Seg a Sex · 08:00 às 20:00 (Com Hora Marcada)',
         openStatus: 'ONLINE GLOBAL & PRESENCIAL SP',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1516534775068-ba3e7458af70?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'ps-s1', number: '01', title: 'Primeiro Contato no WhatsApp', description: 'Alinhamos sua disponibilidade de horário e modalidade (online ou presencial).' },
@@ -8149,9 +9215,12 @@ COMO PUBLICAR NO SERVIDOR:
         openHours: 'Seg a Sáb · 10:00 às 20:00 · Envio Expresso 24h',
         openStatus: 'COLEÇÃO NOVA NO AR',
         galleryPhotos: [
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=600',
+          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&q=80&w=700',
+          'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=700',
         ],
         processSteps: [
           { id: 'md-s1', number: '01', title: 'Escolha seus Looks no Catálogo', description: 'Veja caimento, tamanhos disponíveis e valores da nova coleção.' },
@@ -8174,19 +9243,58 @@ COMO PUBLICAR NO SERVIDOR:
     carouselHtml: generateExportCode(m.realSiteData, { disableLinks: true, isCarousel: true }),
   }));
 
-  // Ensure all 8 real niche microsites are automatically present in savedSites and editable in the Painel de Gestão
-  useEffect(() => {
-    const estheticsPreset = RAW_READY_MADE_MODELS.find((m) => m.id === 'esthetics');
+  // Helper to check if a saved site's images are outdated/mismatched relative to its niche preset
+  const isModelSiteImagesStale = (site: SavedMicrosite, matchedPreset?: (typeof RAW_READY_MADE_MODELS)[number]): boolean => {
+    if (!site?.data) return true;
+    // Check if site-1 (Don Corleone Barber) or site-3 (Larissa Nails) still has the default lawyer avatar
     if (
-      estheticsPreset &&
-      data?.profile?.name?.toUpperCase().includes('FERNANDA MARCOLIN') &&
-      (data.profile.avatarUrl?.includes('1594824476967') ||
-        data.studentGrid?.photos?.some((p) => p.includes('1512290900672')))
+      (site.id === 'site-1' || site.subdomain === 'doncorleone' || site.nicheCategory === 'Barbearia & Grooming') &&
+      site.data.profile?.avatarUrl?.includes('1573496359142')
     ) {
-      setData(JSON.parse(JSON.stringify(estheticsPreset.realSiteData)));
+      return true;
+    }
+    if (
+      (site.id === 'site-3' || site.subdomain === 'larissanails' || site.nicheCategory === 'Beleza & Unhas') &&
+      (site.data.profile?.avatarUrl?.includes('1573496359142') || site.data.profile?.avatarUrl?.includes('1522337360788'))
+    ) {
+      return true;
+    }
+    if (!matchedPreset) return false;
+    const currentPhotos = site.data.studentGrid?.photos || [];
+    if (currentPhotos.length < 6) return true;
+    if (site.data.profile?.avatarUrl !== matchedPreset.realSiteData.profile.avatarUrl) return true;
+    if (site.data.profile?.aboutPhotoUrl !== matchedPreset.realSiteData.profile.aboutPhotoUrl) return true;
+    const expectedFirstGallery = matchedPreset.realSiteData.studentGrid?.photos?.[0];
+    if (expectedFirstGallery && currentPhotos[0] !== expectedFirstGallery) return true;
+    return false;
+  };
+
+  // Ensure all 8 real niche microsites are automatically present in savedSites and have 100% niche-accurate images
+  useEffect(() => {
+    const matchedCurrentPreset = RAW_READY_MADE_MODELS.find(
+      (m) => m.personaName.toUpperCase() === data?.profile?.name?.toUpperCase()
+    );
+    if (
+      matchedCurrentPreset &&
+      ((data?.studentGrid?.photos?.length || 0) < 6 ||
+        data?.studentGrid?.photos?.some((p) => p.includes('1517841905240') || p.includes('1507003211169')) ||
+        data?.profile?.avatarUrl?.includes('1594824476967') ||
+        data?.profile?.avatarUrl?.includes('1544005313') ||
+        data?.profile?.avatarUrl?.includes('1580489944761'))
+    ) {
+      setData(JSON.parse(JSON.stringify(matchedCurrentPreset.realSiteData)));
     }
 
     setSavedSites((prev) => {
+      let deletedIds: string[] = [];
+      try {
+        const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+        if (deletedRaw) {
+          const parsedDel = JSON.parse(deletedRaw);
+          if (Array.isArray(parsedDel)) deletedIds = parsedDel;
+        }
+      } catch {}
+
       const existingIds = new Set(prev.map((s) => s.id));
       const todayStr = new Date().toISOString().split('T')[0];
       const nextMonth = new Date();
@@ -8195,34 +9303,54 @@ COMO PUBLICAR NO SERVIDOR:
 
       let changed = false;
       const updated = prev.map((s) => {
-        if (s.id === 'site-1' && s.isLandingModel === undefined) {
-          changed = true;
-          return { ...s, isLandingModel: true };
-        }
-        if (
-          estheticsPreset &&
-          (s.id === 'real-niche-esthetics' ||
-            s.subdomain === 'drafernanda' ||
-            s.clientName?.toUpperCase().includes('FERNANDA MARCOLIN'))
-        ) {
-          const hasOldPhotos =
-            s.data?.profile?.avatarUrl?.includes('1594824476967') ||
-            s.data?.studentGrid?.photos?.some((p: string) => p.includes('1512290900672')) ||
-            (s.data?.studentGrid?.photos?.length || 0) < 6;
-          if (hasOldPhotos) {
+        // Fix site-1 (Don Corleone Barber) if it had lawyer images from old INITIAL_SAVED_SITES
+        if (s.id === 'site-1' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
+          const defaultSite1 = INITIAL_SAVED_SITES.find((is) => is.id === 'site-1');
+          if (defaultSite1) {
             changed = true;
             return {
               ...s,
-              data: JSON.parse(JSON.stringify(estheticsPreset.realSiteData)),
+              isLandingModel: false,
+              data: JSON.parse(JSON.stringify(defaultSite1.data)),
             };
           }
+        }
+        // Fix site-2 (Dra. Marina Advocacia) if it had random street portraits in studentGrid
+        if (s.id === 'site-2' && s.data?.studentGrid?.photos?.some((p: string) => p.includes('1517841905240'))) {
+          changed = true;
+          return {
+            ...s,
+            data: JSON.parse(JSON.stringify(INITIAL_DATA)),
+          };
+        }
+        // Fix site-3 (Larissa Almeida Nails) if it had lawyer images from old INITIAL_SAVED_SITES
+        if (s.id === 'site-3' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
+          const defaultSite3 = INITIAL_SAVED_SITES.find((is) => is.id === 'site-3');
+          if (defaultSite3) {
+            changed = true;
+            return {
+              ...s,
+              data: JSON.parse(JSON.stringify(defaultSite3.data)),
+            };
+          }
+        }
+
+        const matchedPreset = RAW_READY_MADE_MODELS.find(
+          (rm) => `real-niche-${rm.id}` === s.id || rm.subdomain === s.subdomain
+        );
+        if (matchedPreset && isModelSiteImagesStale(s, matchedPreset)) {
+          changed = true;
+          return {
+            ...s,
+            data: JSON.parse(JSON.stringify(matchedPreset.realSiteData)),
+          };
         }
         return s;
       });
 
       RAW_READY_MADE_MODELS.forEach((m, idx) => {
         const nicheId = `real-niche-${m.id}`;
-        if (!existingIds.has(nicheId)) {
+        if (!existingIds.has(nicheId) && !deletedIds.includes(nicheId)) {
           changed = true;
           updated.push({
             id: nicheId,
@@ -8274,11 +9402,8 @@ COMO PUBLICAR NO SERVIDOR:
       const matchedPreset = RAW_READY_MADE_MODELS.find(
         (rm) => `real-niche-${rm.id}` === site.id || rm.subdomain === site.subdomain
       );
-      const isStaleEsthetics =
-        matchedPreset?.id === 'esthetics' &&
-        (site.data?.profile?.avatarUrl?.includes('1594824476967') ||
-          site.data?.studentGrid?.photos?.some((p: string) => p.includes('1512290900672')));
-      const resolvedSiteData = isStaleEsthetics && matchedPreset ? matchedPreset.realSiteData : site.data;
+      const useFreshPreset = matchedPreset && isModelSiteImagesStale(site, matchedPreset);
+      const resolvedSiteData = useFreshPreset && matchedPreset ? matchedPreset.realSiteData : site.data;
       return {
         id: site.id,
         code: matchedPreset?.code || `MOD-0${idx + 1}`,
@@ -8401,11 +9526,125 @@ COMO PUBLICAR NO SERVIDOR:
       const merged = [...customOnes, ...seededSites];
       try {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(merged));
+        const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+        if (deletedRaw) {
+          const parsedDel: string[] = JSON.parse(deletedRaw) || [];
+          const remainingDel = parsedDel.filter((id) => !id.startsWith('real-niche-'));
+          localStorage.setItem('luxebio_deleted_site_ids_v1', JSON.stringify(remainingDel));
+        }
       } catch {}
       seededSites.forEach((s) => syncSiteToFirestore(s));
       return merged;
     });
     showToast('✅ Os 8 Microsites Reais (1 de cada nicho) foram restaurados e marcados como Modelos da Landing Page!');
+  };
+
+  const getPlanCheckoutDetails = (planId: 'basic' | 'pro' | 'vip') => {
+    if (planId === 'basic') {
+      return {
+        id: 'basic' as const,
+        name: 'Plano Básico',
+        price: landingConfig.priceEssential || 'R$ 79,90',
+        periodLabel: '/1º mês (criação)',
+        maintenanceInfo: 'Manutenção a partir do 2º mês: R$ 29,90/mês (1 alteração inclusa)',
+        fullPlanLabel: 'Plano Básico (R$ 29,90/mês · 1 alteração) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
+      };
+    }
+    if (planId === 'vip') {
+      return {
+        id: 'vip' as const,
+        name: 'Plano VIP',
+        price: landingConfig.priceScale || 'R$ 79,90',
+        periodLabel: '/1º mês (criação)',
+        maintenanceInfo: 'Manutenção a partir do 2º mês: R$ 79,90/mês (Alterações ilimitadas)',
+        fullPlanLabel: 'Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
+      };
+    }
+    return {
+      id: 'pro' as const,
+      name: 'Plano Pro',
+      price: landingConfig.pricePro || 'R$ 79,90',
+      periodLabel: '/1º mês (criação)',
+      maintenanceInfo: 'Manutenção a partir do 2º mês: R$ 49,90/mês (4 alterações inclusas)',
+      fullPlanLabel: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
+    };
+  };
+
+  const openPaymentConfirmation = (planId: 'basic' | 'pro' | 'vip') => {
+    const planDetails = getPlanCheckoutDetails(planId);
+    setLandingOrderForm((prev) => ({
+      ...prev,
+      selectedPlan: planDetails.fullPlanLabel,
+    }));
+    setPaymentConfirmPlan(planDetails);
+    setPaymentConfirmChecked(false);
+    setPaymentEmailTouched(false);
+    setPaymentPortalRedirecting(false);
+    setPaymentPortalFallbackNotice(null);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setTimeout(() => {
+      paymentEmailInputRef.current?.focus();
+    }, 120);
+  };
+
+  const isClientPaymentEmailValid = (rawEmail: string) => {
+    const clean = rawEmail.trim().toLowerCase();
+    if (!clean) return false;
+    if (clean === 'leoaraujobh@gmail.com') return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean);
+  };
+
+  const buildExternalPaymentUrl = (planId: 'basic' | 'pro' | 'vip', clientEmail: string) => {
+    const rawPortalUrl = (
+      planId === 'basic'
+        ? landingConfig.checkoutUrlBasic || landingConfig.checkoutUrlPro || landingConfig.checkoutUrlVip || ''
+        : planId === 'vip'
+        ? landingConfig.checkoutUrlVip || landingConfig.checkoutUrlPro || landingConfig.checkoutUrlBasic || ''
+        : landingConfig.checkoutUrlPro || landingConfig.checkoutUrlBasic || landingConfig.checkoutUrlVip || ''
+    ).trim();
+
+    if (!rawPortalUrl) return '';
+
+    const normalizedUrl = /^https?:\/\//i.test(rawPortalUrl)
+      ? rawPortalUrl
+      : `https://${rawPortalUrl}`;
+
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const params = new URLSearchParams();
+    params.set('email', clientEmail.trim());
+    if (landingOrderForm.clientName.trim()) {
+      params.set('name', landingOrderForm.clientName.trim());
+    }
+    if (landingOrderForm.clientWhatsapp.trim()) {
+      params.set('phone', landingOrderForm.clientWhatsapp.replace(/\D/g, ''));
+    }
+    return `${normalizedUrl}${separator}${params.toString()}`;
+  };
+
+  const handleProceedToExternalPayment = () => {
+    if (!paymentConfirmPlan) return;
+    setPaymentEmailTouched(true);
+    const cleanEmail = paymentClientEmail.trim();
+    if (!isClientPaymentEmailValid(cleanEmail) || !paymentConfirmChecked) {
+      return;
+    }
+
+    const externalUrl = buildExternalPaymentUrl(paymentConfirmPlan.id, cleanEmail);
+    setPaymentPortalRedirecting(true);
+
+    if (externalUrl) {
+      window.location.href = externalUrl;
+      return;
+    }
+
+    // Caso o administrador ainda não tenha colado o link do portal externo nas configurações,
+    // exibe o aviso de integração pronta com os parâmetros pré-preenchidos e opção de prosseguir
+    setPaymentPortalFallbackNotice(
+      `E-mail "${cleanEmail}" confirmado para o ${paymentConfirmPlan.name}! O redirecionamento enviará automaticamente ?email=${encodeURIComponent(cleanEmail)} assim que você colar o link do seu portal de pagamento (Kiwify, Asaas, Mercado Pago, Stripe) em "Configurar Domínio & Checkout".`
+    );
+    setPaymentPortalRedirecting(false);
   };
 
   const handleLandingOrderSubmit = (e: React.FormEvent) => {
@@ -8421,38 +9660,21 @@ COMO PUBLICAR NO SERVIDOR:
       return;
     }
     setLandingOrderError(null);
-    setLandingOrderSuccess(true);
 
-    const targetAgencyPhone = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
-    const formattedMessage = [
-      `Olá! Vim pela página oficial da *${landingConfig.agencyBrandName}* e quero encomendar meu Microsite Pronto.`,
-      ``,
-      `*1. Nome / Profissão:* ${cleanName}`,
-      `*2. WhatsApp de Contato:* ${landingOrderForm.clientWhatsapp.trim()}`,
-      `*3. Modelo Escolhido:* ${landingOrderForm.selectedModel}`,
-      `*4. Pacote Desejado:* ${landingOrderForm.selectedPlan}`,
-      landingOrderForm.instagramOrMaps.trim()
-        ? `*5. Instagram / Google Maps:* ${landingOrderForm.instagramOrMaps.trim()}`
-        : null,
-      landingOrderForm.customNotes.trim()
-        ? `*6. Observações:* ${landingOrderForm.customNotes.trim()}`
-        : null,
-      ``,
-      `Aguardo orientações para envio das fotos e ativação em até ${landingConfig.deliveryTime}!`,
-    ]
-      .filter(Boolean)
-      .join('\n');
+    const lowerPlan = landingOrderForm.selectedPlan.toLowerCase();
+    const resolvedPlanId: 'basic' | 'pro' | 'vip' = lowerPlan.includes('básico') || lowerPlan.includes('basico')
+      ? 'basic'
+      : lowerPlan.includes('vip')
+      ? 'vip'
+      : 'pro';
 
-    const encodedMsg = encodeURIComponent(formattedMessage);
-    const waUrl = `https://wa.me/${targetAgencyPhone}?text=${encodedMsg}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
-    setTimeout(() => setLandingOrderSuccess(false), 5000);
+    openPaymentConfirmation(resolvedPlanId);
   };
 
   const renderSubdomainConfigModal = () => {
     if (!subdomainModalOpen) return null;
     const cleanSub = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
-    const cleanDomain = (landingConfig.baseDomain || 'luxebio.site').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const cleanDomain = (landingConfig.baseDomain || 'biovip.com.br').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
     const fullSubdomainUrl = `https://${cleanSub}.${cleanDomain}`;
     const localCreatorUrl = typeof window !== 'undefined' ? `${window.location.origin}/${cleanSub}` : `/${cleanSub}`;
 
@@ -8466,10 +9688,10 @@ COMO PUBLICAR NO SERVIDOR:
               </span>
               <h3 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
                 <Globe className="w-5 h-5 text-amber-400" />
-                Subdomínio do Criador & Configuração da Vitrine
+                Subdomínio, Vitrine & Portal de Pagamento Externo
               </h3>
               <p className="text-xs text-neutral-400 mt-1">
-                O domínio principal exibe sua Landing Page de vendas. O subdomínio abre diretamente o seu Criador LuxeBio Studio sem pedir senha.
+                Configure seu domínio, dados da página de vendas e os links do portal externo de pagamento (Kiwify, Asaas, Mercado Pago, Stripe, etc.).
               </p>
             </div>
             <button
@@ -8560,6 +9782,72 @@ COMO PUBLICAR NO SERVIDOR:
             </p>
           </div>
 
+          {/* Integração do Portal Externo de Pagamento */}
+          <div className="pt-2 border-t border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-400 block">
+                Integração do Portal Externo de Pagamento (Checkout)
+              </span>
+              <span className="text-[10px] font-mono text-neutral-400">
+                Envia ?email=cliente automaticamente
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">
+                  Nome do Portal Exibido na Confirmação
+                </label>
+                <input
+                  type="text"
+                  value={landingConfig.checkoutPortalName ?? 'Kiwify'}
+                  onChange={(e) => updateLandingConfig('checkoutPortalName', e.target.value)}
+                  placeholder="Ex: Kiwify, Asaas, Mercado Pago, Stripe"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-emerald-300 font-semibold focus:border-emerald-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">
+                  Link de Pagamento — Plano Básico
+                </label>
+                <input
+                  type="text"
+                  value={landingConfig.checkoutUrlBasic || ''}
+                  onChange={(e) => updateLandingConfig('checkoutUrlBasic', e.target.value)}
+                  placeholder="https://pay.kiwify.com.br/seu-link-basico"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-emerald-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">
+                  Link de Pagamento — Plano Pro (Mais Escolhido)
+                </label>
+                <input
+                  type="text"
+                  value={landingConfig.checkoutUrlPro || ''}
+                  onChange={(e) => updateLandingConfig('checkoutUrlPro', e.target.value)}
+                  placeholder="https://pay.kiwify.com.br/seu-link-pro"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-emerald-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">
+                  Link de Pagamento — Plano VIP
+                </label>
+                <input
+                  type="text"
+                  value={landingConfig.checkoutUrlVip || ''}
+                  onChange={(e) => updateLandingConfig('checkoutUrlVip', e.target.value)}
+                  placeholder="https://pay.kiwify.com.br/seu-link-vip"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-emerald-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Configurações Comerciais da Landing Page */}
           <div className="pt-2 border-t border-neutral-800 space-y-3">
             <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400 block">
@@ -8596,7 +9884,7 @@ COMO PUBLICAR NO SERVIDOR:
                   type="text"
                   value={landingConfig.creatorFooterUrl || ''}
                   onChange={(e) => updateLandingConfig('creatorFooterUrl', e.target.value)}
-                  placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://luxebio.site'}
+                  placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://biovip.com.br'}
                   className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
                 />
               </div>
@@ -8668,7 +9956,7 @@ COMO PUBLICAR NO SERVIDOR:
                 type="button"
                 onClick={() => {
                   setSubdomainModalOpen(false);
-                  showToast('✅ Configurações de subdomínio e vitrine salvas!');
+                  showToast('✅ Configurações de subdomínio e checkout salvas!');
                 }}
                 className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 text-xs font-bold cursor-pointer transition"
               >
@@ -8682,10 +9970,1048 @@ COMO PUBLICAR NO SERVIDOR:
   };
 
   // =========================================================================
+  // TELA CHEIA DE GESTÃO DE CLIENTES & ASSINATURAS SAAS (SEM BARRA E SEM PREVIEW)
+  // =========================================================================
+  const renderClientsFullscreenView = () => {
+    const totalContractedRevenue = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
+    const activeRevenue = savedSites.reduce((acc, s) => {
+      const days = getDaysUntilDue(s.dueDate);
+      return acc + (s.status === 'active' && days >= 0 ? (s.monthlyFee || 0) : 0);
+    }, 0);
+    const goal = revenueGoal > 0 ? revenueGoal : 5000;
+    const progressPercent = Math.min(100, Math.round((activeRevenue / goal) * 100));
+
+    const inDayCount = savedSites.filter(s => {
+      const days = getDaysUntilDue(s.dueDate);
+      return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0;
+    }).length;
+    const overdueCount = savedSites.filter(s => {
+      const days = getDaysUntilDue(s.dueDate);
+      return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days < 0;
+    }).length;
+    const suspendedCount = savedSites.filter(s => isSiteSuspendedStatus(s)).length;
+    const disabledCount = savedSites.filter(s => s.status === 'disabled').length;
+
+    const filteredSites = savedSites.filter(s => {
+      if (clientsFilterTerm.trim()) {
+        const query = clientsFilterTerm.trim().toLowerCase();
+        const matchName = (s.clientName || '').toLowerCase().includes(query);
+        const matchSubdomain = (s.subdomain || '').toLowerCase().includes(query);
+        const matchDomain = (s.customDomain || '').toLowerCase().includes(query);
+        const matchCategory = (s.nicheCategory || '').toLowerCase().includes(query);
+        const matchEmail = (s.clientEmail || '').toLowerCase().includes(query);
+        const matchPhone = (s.clientPhone || '').replace(/\D/g, '').includes(query.replace(/\D/g, ''));
+        if (!matchName && !matchSubdomain && !matchDomain && !matchCategory && !matchEmail && !matchPhone) {
+          return false;
+        }
+      }
+
+      if (clientsStatusFilter === 'active') {
+        const days = getDaysUntilDue(s.dueDate);
+        return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0;
+      }
+      if (clientsStatusFilter === 'overdue') {
+        const days = getDaysUntilDue(s.dueDate);
+        return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days < 0;
+      }
+      if (clientsStatusFilter === 'suspended') {
+        return isSiteSuspendedStatus(s);
+      }
+      if (clientsStatusFilter === 'disabled') {
+        return s.status === 'disabled';
+      }
+      return true;
+    });
+
+    const isAsaasConfigured = Boolean(data.saasSettings?.asaas?.apiKey?.trim());
+    const asaasEnv = data.saasSettings?.asaas?.environment || 'sandbox';
+
+    return (
+      <div className="flex-1 h-full w-full overflow-y-auto bg-[#09090b] text-[#fafaf9] flex flex-col relative selection:bg-amber-400 selection:text-neutral-950">
+        {/* Ambient Top Glow */}
+        <div
+          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[360px] opacity-20 blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* 1. DEDICATED FULLSCREEN TOP BAR (SEM A BARRA DO STUDIO E SEM OS MÓDULOS) */}
+        <header className="w-full border-b border-white/[0.08] bg-[#09090b]/90 backdrop-blur-xl sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+              <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-serif font-bold text-base sm:text-lg text-white tracking-tight">
+                  Gestão de Clientes & Assinaturas SaaS
+                </h1>
+                <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-amber-400/10 text-amber-300 border border-amber-400/30 flex items-center gap-1">
+                  <Maximize2 className="w-3 h-3 text-amber-400" /> TELA CHEIA (SEM PREVIEW)
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-0.5">
+                Painel Executivo BioVip · {savedSites.length} microsites cadastrados · {adminUser?.email || 'Admin'}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons: Voltar ao Editor com Destaque Máximo */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsClientsFullscreen(false)}
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer transition"
+              title="Sair da tela cheia e voltar para o editor do microsite"
+            >
+              <ArrowLeft className="w-4 h-4 text-neutral-950" />
+              <span>← Voltar ao Studio / Editor</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                startNewDraftMicrosite();
+                setIsClientsFullscreen(false);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-500/30 cursor-pointer transition shadow-sm"
+              title="Iniciar criação de um novo microsite no modo rascunho"
+            >
+              <Plus className="w-3.5 h-3.5 text-emerald-400" />
+              <span>+ Novo Microsite</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openPublicSalesLanding}
+              className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white font-medium text-xs flex items-center gap-1.5 border border-neutral-800 transition cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+              <span>Vitrine de Vendas</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const url = `${window.location.origin}${window.location.pathname}?view=clients`;
+                  window.open(url, '_blank');
+                }
+              }}
+              className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-amber-300 border border-neutral-800 transition cursor-pointer"
+              title="Abrir esta tela de gestão em uma nova aba independente"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+
+            {/* Central de Segurança & PIN Mestre */}
+            <button
+              type="button"
+              onClick={() => {
+                setSecurityModalTab('pin');
+                setSecurityModalOpen(true);
+              }}
+              className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
+              title="Central de Segurança: Alterar PIN Mestre e Histórico de Acessos"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+              <span>Segurança & PIN</span>
+            </button>
+
+            {/* Bloqueio Imediato do Painel */}
+            <button
+              type="button"
+              onClick={handleLockAdminPanel}
+              className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-red-500/15 text-neutral-300 hover:text-red-300 font-semibold text-xs flex items-center gap-1.5 border border-neutral-800 hover:border-red-500/30 transition cursor-pointer"
+              title="Bloquear o painel agora (exigirá o PIN mestre de 6 dígitos para reabrir)"
+            >
+              <Lock className="w-3.5 h-3.5 text-red-400" />
+              <span>Bloquear</span>
+            </button>
+          </div>
+        </header>
+
+        {/* 2. BODY CONTENT (FULL VIEWPORT WIDTH) */}
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-6 space-y-6">
+          {/* BARRA DE PROGRESSO & MRR */}
+          <div className="p-5 rounded-2xl bg-neutral-900/90 border border-emerald-500/30 shadow-xl relative overflow-hidden space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <span>Faturamento Mensal Recorrente (MRR)</span>
+                    {activeRevenue >= goal && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400 text-neutral-950 flex items-center gap-1 shadow-sm">
+                        <Sparkles className="w-3 h-3" /> Meta Batida!
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-xs text-neutral-400">
+                    Acompanhamento em tempo real das mensalidades de microsites ativas e da régua de cobrança.
+                  </p>
+                </div>
+              </div>
+
+              {/* Goal edit button */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const promptVal = window.prompt('Defina a nova meta mensal de faturamento (R$):', goal.toString());
+                    if (promptVal) {
+                      const num = parseFloat(promptVal.replace(',', '.'));
+                      if (!isNaN(num) && num > 0) {
+                        setRevenueGoal(num);
+                        try { localStorage.setItem('luxebio_revenue_goal_v1', num.toString()); } catch {}
+                        showToast(`Meta mensal atualizada para R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}!`);
+                      }
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-amber-300 text-xs font-mono font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Target className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Meta: R$ {goal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  <Edit3 className="w-3 h-3 text-neutral-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Cards Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">MRR em Dia</div>
+                <div className="text-lg sm:text-2xl font-black text-emerald-400 font-mono mt-0.5">
+                  R$ {activeRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <div className="text-[10px] text-emerald-400/80 font-medium mt-0.5">
+                  {progressPercent}% da meta mensal
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">Total Contratado</div>
+                <div className="text-lg sm:text-2xl font-black text-neutral-100 font-mono mt-0.5">
+                  R$ {totalContractedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <div className="text-[10px] text-neutral-400 mt-0.5">
+                  {savedSites.length} contratos ativos
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">Clientes Em Dia</div>
+                <div className="text-lg sm:text-2xl font-black text-emerald-300 font-mono mt-0.5">
+                  {inDayCount}
+                </div>
+                <div className="text-[10px] text-neutral-400 mt-0.5">
+                  Edições liberadas
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">Atrasados (D+3)</div>
+                <div className="text-lg sm:text-2xl font-black text-orange-400 font-mono mt-0.5">
+                  {overdueCount}
+                </div>
+                <div className="text-[10px] text-orange-400/80 font-medium mt-0.5">
+                  Edições bloqueadas
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 col-span-2 sm:col-span-1">
+                <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">Suspensos (D+7)</div>
+                <div className="text-lg sm:text-2xl font-black text-red-400 font-mono mt-0.5">
+                  {suspendedCount}
+                </div>
+                <div className="text-[10px] text-red-400/80 font-medium mt-0.5">
+                  Tela Manutenção Ativa
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-1 pt-1">
+              <div className="w-full h-2.5 rounded-full bg-neutral-950 overflow-hidden border border-neutral-800 flex">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-neutral-400 font-mono">
+                <span>R$ {activeRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span>Meta: R$ {goal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ASAAS PAYMENT GATEWAY INTEGRATION BANNER */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/90 border border-amber-500/30 space-y-3.5 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5 text-amber-400">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-400">
+                      Gateway de Pagamentos Asaas (Cobranças Pix, Boletos & Baixa Automática)
+                    </h3>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                        isAsaasConfigured
+                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                          : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      }`}
+                    >
+                      {isAsaasConfigured
+                        ? `🟢 Conectado (${asaasEnv.toUpperCase()})`
+                        : '🟡 Token Asaas não configurado'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-400 mt-0.5">
+                    Gere cobranças com QR Code Pix oficial do Asaas e receba confirmações instantâneas de pagamento com renovação automática de faturas.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
+                <button
+                  type="button"
+                  disabled={asaasStatusTesting}
+                  onClick={handleTestAsaasConnection}
+                  className="px-3.5 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-amber-300 font-semibold text-xs border border-amber-500/40 flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${asaasStatusTesting ? 'animate-spin text-amber-400' : ''}`} />
+                  <span>{asaasStatusTesting ? 'Testando Conexão...' : 'Testar Conexão Asaas'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Asaas Config Inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 text-xs">
+              <div className="sm:col-span-6">
+                <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                  Token de Acesso da API Asaas (access_token)
+                </label>
+                <input
+                  type="password"
+                  value={data.saasSettings?.asaas?.apiKey || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setData(p => ({
+                      ...p,
+                      saasSettings: {
+                        ...p.saasSettings,
+                        asaas: {
+                          ...(p.saasSettings?.asaas || { environment: 'sandbox', preferredMethod: 'PIX', enabled: true }),
+                          apiKey: val,
+                        },
+                      },
+                    }));
+                  }}
+                  placeholder="$aact_YTU5YTE0M2M6N2I4..."
+                  className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                  Ambiente Asaas
+                </label>
+                <select
+                  value={asaasEnv}
+                  onChange={(e) => {
+                    const val = e.target.value as 'sandbox' | 'production';
+                    setData(p => ({
+                      ...p,
+                      saasSettings: {
+                        ...p.saasSettings,
+                        asaas: {
+                          ...(p.saasSettings?.asaas || { apiKey: '', preferredMethod: 'PIX', enabled: true }),
+                          environment: val,
+                        },
+                      },
+                    }));
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="sandbox">🧪 Sandbox (Ambiente de Testes)</option>
+                  <option value="production">🚀 Produção (Conta Real Asaas)</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                  URL do Webhook de Baixa
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/asaas/webhook`}
+                    className="w-full px-2.5 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-400 font-mono text-[11px] select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/asaas/webhook`;
+                      await safeCopyText(url);
+                      showToast('📋 URL do Webhook do Asaas copiada!');
+                    }}
+                    className="p-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-amber-300 border border-neutral-800 cursor-pointer"
+                    title="Copiar URL do Webhook para colar no painel Asaas"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {asaasTestResult && (
+              <div
+                className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                  asaasTestResult.success
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-red-500/10 border-red-500/30 text-red-300'
+                }`}
+              >
+                <span>{asaasTestResult.message}</span>
+                <button
+                  type="button"
+                  onClick={() => setAsaasTestResult(null)}
+                  className="text-neutral-400 hover:text-white text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 3. SEARCH & STATUS FILTERS BAR */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-neutral-900/80 p-3.5 rounded-2xl border border-neutral-800">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={clientsFilterTerm}
+                onChange={(e) => setClientsFilterTerm(e.target.value)}
+                placeholder="Pesquisar por cliente, nicho, subdomínio ou e-mail..."
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+              />
+              {clientsFilterTerm && (
+                <button
+                  type="button"
+                  onClick={() => setClientsFilterTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-200 text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              {[
+                { id: 'all' as const, label: `Todos (${savedSites.length})` },
+                { id: 'active' as const, label: `🟢 Em Dia (${inDayCount})` },
+                { id: 'overdue' as const, label: `🔒 Atrasados D+3 (${overdueCount})` },
+                { id: 'suspended' as const, label: `🛑 Suspensos D+7 (${suspendedCount})` },
+                { id: 'disabled' as const, label: `⚪ Desativados (${disabledCount})` },
+              ].map((f) => {
+                const active = clientsStatusFilter === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setClientsStatusFilter(f.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition border ${
+                      active
+                        ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-500/20'
+                        : 'bg-neutral-950 text-neutral-400 hover:text-neutral-200 border-neutral-800'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. CLIENTS CARDS / GRID (FULL WIDTH) */}
+          {filteredSites.length === 0 ? (
+            <div className="p-12 text-center rounded-2xl bg-neutral-900/40 border border-neutral-800 space-y-3">
+              <Users className="w-10 h-10 text-neutral-600 mx-auto" />
+              <h3 className="text-base font-bold text-neutral-300">Nenhum microsite encontrado com este filtro.</h3>
+              <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                Tente alterar o termo de pesquisa ou selecionar a aba "Todos" para visualizar todos os clientes.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setClientsFilterTerm('');
+                  setClientsStatusFilter('all');
+                }}
+                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-bold cursor-pointer transition"
+              >
+                Limpar Filtros
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+              {filteredSites.map((site) => {
+                const billing = getSiteBillingSummary(site);
+                const daysDiff = getDaysUntilDue(site.dueDate);
+                const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (site.daysOverdue || 0);
+                const isEditsBlocked = isSiteEditsLocked(site, daysOverdue);
+                const isSuspended = isSiteSuspendedStatus(site);
+                const clicks = site.whatsappClicks || 0;
+                const views = site.pageViews || 100;
+                const rate = ((clicks / views) * 100).toFixed(1);
+                const domain = site.customDomain || `${site.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
+
+                return (
+                  <div
+                    key={site.id}
+                    className={`rounded-2xl p-5 bg-neutral-900/90 border transition-all duration-200 shadow-xl flex flex-col justify-between space-y-4 ${
+                      isSuspended
+                        ? 'border-red-500/50 hover:border-red-400 bg-red-950/10'
+                        : isEditsBlocked
+                        ? 'border-orange-500/50 hover:border-orange-400 bg-orange-950/10'
+                        : 'border-neutral-800 hover:border-amber-500/40 hover:bg-neutral-900'
+                    }`}
+                  >
+                    {/* Header */}
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-serif font-bold text-base text-white tracking-tight">
+                              {site.clientName}
+                            </h3>
+                            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-medium bg-neutral-800 text-neutral-300 border border-neutral-700">
+                              {site.nicheCategory}
+                            </span>
+                          </div>
+                          <a
+                            href={`https://${domain}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-mono text-amber-400/90 hover:text-amber-300 flex items-center gap-1 mt-1 group"
+                          >
+                            <span>https://{domain}</span>
+                            <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 transition" />
+                          </a>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="shrink-0">
+                          {isSuspended ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3 text-red-400" />
+                              <span>Suspenso D+7 ({daysOverdue}d)</span>
+                            </span>
+                          ) : isEditsBlocked ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-500/20 text-orange-300 border border-orange-500/40 flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-orange-400" />
+                              <span>Atrasado D+3 ({daysOverdue}d)</span>
+                            </span>
+                          ) : site.status === 'disabled' ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400 border border-neutral-700">
+                              Desativado
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              <span>Em Dia (0d)</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Client Details Row */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+                        <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
+                          <span className="text-[10px] text-neutral-400 block font-medium">Vencimento</span>
+                          <span className="font-mono font-bold text-neutral-200 block mt-0.5">
+                            {formatDueDateBr(site.dueDate)}
+                          </span>
+                          <span className={`text-[9.5px] block font-semibold ${daysOverdue > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {daysOverdue > 0 ? `${daysOverdue}d de atraso` : 'Em dia'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
+                          <span className="text-[10px] text-neutral-400 block font-medium">Fatura Atual</span>
+                          <span className="font-mono font-bold text-emerald-400 block mt-0.5">
+                            R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                          <span className="text-[9.5px] text-neutral-400 block truncate">
+                            {billing.isFirstMonth ? '1º Mês Criação' : `Manut. R$ ${site.monthlyFee.toFixed(2)}`}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
+                          <span className="text-[10px] text-neutral-400 block font-medium">Edições Mês</span>
+                          <span className="font-mono font-bold text-neutral-200 block mt-0.5">
+                            {billing.updatesUsed} usadas
+                          </span>
+                          <span className={`text-[9.5px] block font-semibold ${isEditsBlocked ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {isEditsBlocked ? '🔒 Bloqueadas' : '🔓 Liberadas'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
+                          <span className="text-[10px] text-neutral-400 block font-medium">Conversão WA</span>
+                          <span className="font-mono font-bold text-amber-300 block mt-0.5">
+                            {rate}%
+                          </span>
+                          <span className="text-[9.5px] text-neutral-400 block">
+                            {clicks} cliques
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ACTION BUTTONS (MUITO CLARAS E FÁCEIS DE CLICAR) */}
+                    <div className="pt-2 border-t border-neutral-800/80 space-y-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {/* 1. BOTÃO EDITAR MICROSITE (VOLTA AO EDITOR COM O MICROSITE CARREGADO) */}
+                        <button
+                          type="button"
+                          onClick={() => loadSiteForEditing(site, true)}
+                          className="flex-1 py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer transition"
+                          title="Voltar para a tela de edição carregando este microsite"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-neutral-950" />
+                          <span>Editar Microsite</span>
+                        </button>
+
+                        {/* 2. RÉGUA DE COBRANÇA WHATSAPP */}
+                        <button
+                          type="button"
+                          onClick={() => openPixBillingModal(site)}
+                          className="py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer transition"
+                          title="Abrir Régua de Cobrança WhatsApp (D-3, D-0, D+3, D+7) com wa.me"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-neutral-950" />
+                          <span>Régua WhatsApp</span>
+                        </button>
+
+                        {/* 3. GERAR COBRANÇA ASAAS / PIX */}
+                        <button
+                          type="button"
+                          onClick={() => openPixBillingModal(site)}
+                          className="py-2 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 cursor-pointer transition"
+                          title="Gerar Cobrança Oficial no Asaas / PIX e confirmar baixa"
+                        >
+                          <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Fatura Asaas & PIX</span>
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                        {/* Alternar Suspensão */}
+                        <button
+                          type="button"
+                          onClick={() => toggleSiteSuspensionMode(site.id)}
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 border transition cursor-pointer ${
+                            isSuspended
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                              : 'bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500/20'
+                          }`}
+                          title="Alternar entre site ativo e Tela Neutra de Manutenção"
+                        >
+                          <Power className="w-3 h-3" />
+                          <span>{isSuspended ? 'Reativar Site' : 'Modo Manutenção'}</span>
+                        </button>
+
+                        {/* Tela Manutenção Preview */}
+                        <button
+                          type="button"
+                          onClick={() => openSuspendedPagePreview(site)}
+                          className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium flex items-center gap-1 border border-neutral-700 transition cursor-pointer"
+                          title="Ver como o público vê o site em modo de manutenção neutra"
+                        >
+                          <Eye className="w-3 h-3 text-amber-400" />
+                          <span>Ver Manutenção</span>
+                        </button>
+
+                        {/* Domínio & DNS */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPublishSiteId(site.id);
+                            setPublishModalOpen(true);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium flex items-center gap-1 border border-neutral-700 transition cursor-pointer"
+                        >
+                          <Globe className="w-3 h-3 text-amber-400" />
+                          <span>Domínio</span>
+                        </button>
+
+                        {/* Relatório PDF */}
+                        <button
+                          type="button"
+                          onClick={() => setSinglePdfSiteId(site.id)}
+                          className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[11px] font-medium flex items-center gap-1 border border-neutral-700 transition cursor-pointer"
+                        >
+                          <FileText className="w-3 h-3 text-amber-400" />
+                          <span>PDF</span>
+                        </button>
+
+                        {/* Excluir */}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModalSite(site)}
+                          className="px-2 py-1.5 rounded-lg bg-neutral-800 hover:bg-red-500/20 text-neutral-400 hover:text-red-300 text-[11px] font-medium flex items-center gap-1 border border-neutral-700 hover:border-red-500/30 transition cursor-pointer ml-auto"
+                          title="Excluir microsite"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
   // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing')
   // =========================================================================
   if (appSurface === 'landing') {
+    if (paymentConfirmPlan) {
+      const portalName = (landingConfig.checkoutPortalName || 'Kiwify').trim();
+      const trimmedClientEmail = paymentClientEmail.trim();
+      const emailValid = isClientPaymentEmailValid(trimmedClientEmail);
+      const isForbiddenOwnerEmail = trimmedClientEmail.toLowerCase() === 'leoaraujobh@gmail.com';
+      const canProceedToPayment = emailValid && paymentConfirmChecked;
+
+      return (
+        <div className="min-h-screen w-full bg-[#09090b] text-[#fafaf9] font-sans flex flex-col selection:bg-amber-400 selection:text-neutral-950 relative overflow-x-hidden">
+          {/* Ambient Luxury Gold Glow matching the Main Landing Page */}
+          <div
+            className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[780px] h-[420px] opacity-25 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, transparent 70%)',
+            }}
+          />
+
+          {/* Top Bar matching Main Landing Page */}
+          <header className="w-full border-b border-white/[0.08] bg-[#09090b]/85 backdrop-blur-xl sticky top-0 z-30">
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setPaymentConfirmPlan(null)}
+                className="flex items-center gap-3 text-left cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
+                  <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+                </div>
+                <div>
+                  <span className="font-serif font-black tracking-[0.2em] text-base text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-amber-500 block leading-none">
+                    BIOVIP
+                  </span>
+                  <span className="text-[9.5px] font-mono uppercase tracking-[0.18em] text-amber-400/90 block mt-1">
+                    Microsites de Alta Conversão · Checkout Oficial
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentConfirmPlan(null);
+                  setTimeout(() => {
+                    const el = document.getElementById('investimento');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }, 60);
+                }}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-neutral-300 hover:text-amber-300 cursor-pointer transition"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+                <span>Voltar para planos</span>
+              </button>
+            </div>
+          </header>
+
+          <div className="flex-1 flex flex-col items-center justify-start py-8 sm:py-12 px-4 sm:px-6 relative z-10">
+            <div className="w-full max-w-[580px]">
+              {/* Top Link: Voltar para planos */}
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentConfirmPlan(null);
+                  setTimeout(() => {
+                    const el = document.getElementById('investimento');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }, 60);
+                }}
+                className="inline-flex items-center gap-2 text-xs font-medium text-neutral-400 hover:text-amber-400 mb-5 cursor-pointer transition"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Voltar para planos</span>
+              </button>
+
+              {/* Main Confirmation Card (Landing Page Dark + Gold Luxury Theme) */}
+              <div className="w-full rounded-3xl overflow-hidden bg-neutral-900/95 border-2 border-amber-400/60 shadow-2xl shadow-amber-500/10 backdrop-blur-xl">
+                {/* Dark Obsidian & Gold Header */}
+                <div className="bg-neutral-950 border-b border-white/[0.08] px-6 sm:px-8 py-6 text-white relative overflow-hidden">
+                  <div
+                    className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-20 blur-2xl"
+                    style={{
+                      background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, transparent 70%)',
+                    }}
+                  />
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-amber-400 block">
+                    CONFIRMAÇÃO DE COMPRA
+                  </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
+                    <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight">
+                      {paymentConfirmPlan.name}
+                    </h1>
+                    <div className="flex items-center gap-1.5">
+                      {(['basic', 'pro', 'vip'] as const).map((pid) => {
+                        const active = paymentConfirmPlan.id === pid;
+                        const label = pid === 'basic' ? 'Básico' : pid === 'pro' ? 'Pro' : 'VIP';
+                        return (
+                          <button
+                            key={pid}
+                            type="button"
+                            onClick={() => setPaymentConfirmPlan(getPlanCheckoutDetails(pid))}
+                            className={`px-3 py-1 rounded-lg text-[11px] font-mono uppercase tracking-wider font-bold transition cursor-pointer ${
+                              active
+                                ? 'bg-amber-400 text-neutral-950 shadow-md shadow-amber-500/20'
+                                : 'bg-white/[0.06] text-neutral-300 hover:bg-white/[0.12] hover:text-white border border-white/[0.08]'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-serif font-bold text-amber-400 tracking-tight">
+                      {paymentConfirmPlan.price}
+                    </span>
+                    <span className="text-xs font-mono uppercase tracking-wider text-neutral-400">
+                      {paymentConfirmPlan.periodLabel}
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono text-emerald-400 mt-1.5">
+                    {paymentConfirmPlan.maintenanceInfo}
+                  </p>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 sm:p-7 space-y-4">
+                  {/* Box 1: Client Email Input (Mandatory) */}
+                  <div className="rounded-2xl bg-neutral-950/90 border border-white/[0.08] p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <ShieldCheck className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm sm:text-[15px] font-bold text-white">
+                          Informe o e-mail da sua conta {landingConfig.agencyBrandName}
+                        </h2>
+                        <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                          O plano comprado agora será ativado automaticamente nesta conta após a aprovação do pagamento.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`mt-4 bg-neutral-900 rounded-xl px-4 py-3 border-2 transition ${
+                        paymentEmailTouched && !emailValid
+                          ? 'border-red-500/90 ring-2 ring-red-500/20'
+                          : 'border-amber-400/80 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-400/20'
+                      }`}
+                    >
+                      <label
+                        htmlFor="client-checkout-email-input"
+                        className="block text-[10px] font-mono uppercase tracking-widest text-amber-400/90 mb-1"
+                      >
+                        E-mail da sua conta
+                      </label>
+                      <input
+                        id="client-checkout-email-input"
+                        ref={paymentEmailInputRef}
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={paymentClientEmail}
+                        onChange={(e) => {
+                          setPaymentClientEmail(e.target.value);
+                          setPaymentPortalFallbackNotice(null);
+                        }}
+                        onBlur={() => setPaymentEmailTouched(true)}
+                        placeholder="digiteseuemail@exemplo.com"
+                        className="w-full text-base sm:text-lg font-extrabold text-white placeholder:text-neutral-600 placeholder:font-normal focus:outline-none bg-transparent"
+                      />
+                    </div>
+
+                    {paymentEmailTouched && !emailValid && (
+                      <p className="text-[11px] font-semibold text-red-400 mt-2">
+                        {isForbiddenOwnerEmail
+                          ? 'Por favor, insira o seu próprio e-mail de cliente para ativar o seu plano.'
+                          : 'Digite um endereço de e-mail válido para vincular e ativar sua compra.'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Box 2: Attention Box */}
+                  <div className="rounded-2xl bg-neutral-950/90 border border-amber-400/25 p-4 sm:p-5 space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                      <h3 className="text-sm sm:text-[15px] font-bold text-white">
+                        Atenção: compre com EXATAMENTE este e-mail
+                      </h3>
+                    </div>
+
+                    <ul className="space-y-2.5 text-xs text-neutral-300 pl-1">
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <span>
+                          Na página de pagamento da {portalName}, confirme que o e-mail preenchido é{' '}
+                          <strong className="inline-block px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 font-mono font-bold text-amber-300 break-all">
+                            {emailValid ? trimmedClientEmail : 'seu e-mail informado acima'}
+                          </strong>
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <span>
+                          Se você comprar com OUTRO e-mail, seu plano NÃO será ativado automaticamente.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <span>
+                          Nós já enviamos este e-mail pré-preenchido pra {portalName}, é só confirmar.
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Box 3: Mandatory Confirmation Checkbox */}
+                  <div className="rounded-2xl bg-neutral-950/90 border border-white/[0.08] hover:border-amber-400/40 transition p-4 sm:p-5">
+                    <label className="flex items-start gap-3 cursor-pointer select-none text-xs text-neutral-300 leading-relaxed">
+                      <input
+                        type="checkbox"
+                        checked={paymentConfirmChecked}
+                        onChange={(e) => setPaymentConfirmChecked(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-white/20 bg-neutral-900 text-amber-400 focus:ring-amber-400 shrink-0 cursor-pointer accent-amber-400"
+                      />
+                      <span>
+                        Eu entendo que a compra deve ser feita com o e-mail{' '}
+                        <strong className="inline-block px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 font-mono font-bold text-amber-300 break-all">
+                          {emailValid ? trimmedClientEmail : 'informado acima'}
+                        </strong>{' '}
+                        e que, se eu usar outro e-mail, terei que contatar o suporte manualmente para ativar o plano.
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Fallback Notice when Portal URL is not yet configured by owner */}
+                  {paymentPortalFallbackNotice && (
+                    <div className="rounded-2xl bg-amber-400/10 border border-amber-400/40 p-4 text-xs text-amber-100 space-y-3">
+                      <p className="leading-relaxed">{paymentPortalFallbackNotice}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSubdomainModalOpen(true)}
+                          className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs cursor-pointer transition"
+                        >
+                          Configurar Link do Portal Agora
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetAgencyPhone = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
+                            const msg = encodeURIComponent(
+                              `Olá! Confirmei a compra do *${paymentConfirmPlan.name}* (${paymentConfirmPlan.price}) com o e-mail de ativação: *${trimmedClientEmail}*.`
+                            );
+                            window.location.href = `https://wa.me/${targetAgencyPhone}?text=${msg}`;
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] text-white font-semibold text-xs cursor-pointer transition"
+                        >
+                          Finalizar via Atendimento WhatsApp ↗
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons Row */}
+                  <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentClientEmail('');
+                        setPaymentConfirmChecked(false);
+                        setPaymentEmailTouched(false);
+                        setPaymentPortalFallbackNotice(null);
+                        setTimeout(() => {
+                          paymentEmailInputRef.current?.focus();
+                        }, 50);
+                      }}
+                      className="px-4 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-neutral-200 hover:text-white font-semibold text-xs border border-white/[0.1] transition cursor-pointer text-center"
+                    >
+                      Ainda não é meu e-mail / quero trocar de conta
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={!canProceedToPayment || paymentPortalRedirecting}
+                      onClick={handleProceedToExternalPayment}
+                      className={`px-6 py-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
+                        canProceedToPayment
+                          ? 'bg-amber-400 hover:bg-amber-300 text-neutral-950 cursor-pointer shadow-xl shadow-amber-500/20'
+                          : 'bg-neutral-800 text-neutral-500 border border-white/[0.06] cursor-not-allowed'
+                      }`}
+                    >
+                      <span>
+                        {paymentPortalRedirecting ? 'Redirecionando...' : 'Ir para pagamento seguro'}
+                      </span>
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Bottom Helper Text */}
+                  <p className="text-[11px] text-neutral-400 text-center pt-1">
+                    {!emailValid
+                      ? 'Digite seu e-mail acima e marque a confirmação para liberar o botão de pagamento.'
+                      : !paymentConfirmChecked
+                      ? 'Marque a confirmação acima para liberar o botão de pagamento.'
+                      : 'Confirmação concluída! Clique em "Ir para pagamento seguro" para prosseguir.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Security Note */}
+              <p className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 text-center mt-6">
+                Pagamento 100% seguro processado pela {portalName} · SSL / Criptografia
+              </p>
+            </div>
+          </div>
+
+          {renderSubdomainConfigModal()}
+        </div>
+      );
+    }
+
     const activeHeroModel =
+
       DYNAMIC_LANDING_MODELS.find(m => m.id === landingHeroModelId) ||
       DYNAMIC_LANDING_MODELS[0] ||
       READY_MADE_MODELS[0];
@@ -8711,24 +11037,31 @@ COMO PUBLICAR NO SERVIDOR:
     const filteredModels = activeFilteredLandingModels.length > 0 ? activeFilteredLandingModels : DYNAMIC_LANDING_MODELS;
 
     const cleanSub = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
-    const cleanDomain = (landingConfig.baseDomain || 'luxebio.site').toLowerCase();
+    const cleanDomain = (landingConfig.baseDomain || 'biovip.com.br').toLowerCase();
 
     return (
       <div className="min-h-screen w-full bg-[#09090b] text-[#fafaf9] font-sans selection:bg-amber-400 selection:text-neutral-950 overflow-x-hidden">
         {/* TOP BAR CONTRACT: 1 Single Header Bar, 3 Zones (Brand Left, 4 Nav Links Center, 1 Primary CTA Right) */}
         <header className="sticky top-0 z-50 h-16 border-b border-white/[0.07] bg-[#09090b]/85 backdrop-blur-md">
           <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-            {/* Zone 1: Brand Left */}
-            <a href="#topo" className="flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-serif font-black text-base">
-                L
+            {/* Zone 1: Brand Left - Official BioVip Luxury Logo with GIF Animation */}
+            <a href="#topo" className="flex items-center gap-3 group" title="BioVip - Microsites de Alta Conversão">
+              <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
+                <img 
+                  src="/biovip-logo.gif" 
+                  alt="BioVip Logo Animado" 
+                  className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = '/biovip-logo.svg';
+                  }}
+                />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold tracking-wider text-white">
-                  {landingConfig.agencyBrandName.toUpperCase()}
+                <span className="text-base font-serif font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-amber-500 group-hover:from-white group-hover:via-amber-200 group-hover:to-amber-400 transition-colors">
+                  BIOVIP
                 </span>
-                <span className="text-[10px] text-neutral-400 tracking-wide">
-                  Microsites de Alta Conversão · Mais Clientes e Vendas no WhatsApp
+                <span className="text-[9.5px] font-mono uppercase tracking-[0.18em] text-neutral-400 group-hover:text-amber-400/90 transition-colors">
+                  Microsites de Alta Conversão
                 </span>
               </div>
             </a>
@@ -8798,7 +11131,7 @@ COMO PUBLICAR NO SERVIDOR:
 
                 <p className="text-base sm:text-lg text-neutral-300 max-w-2xl leading-relaxed font-normal">
                   Links genéricos e amadores fazem você perder pacientes e clientes todos os dias. Com um{' '}
-                  <strong className="text-white font-semibold">Microsite LuxeBio de Alta Conversão</strong>, você causa impacto visual de luxo, elimina curiosos com triagem automática e recebe contatos prontos para comprar — entregue 100% pronto e personalizado em até 24 horas.
+                  <strong className="text-white font-semibold">Microsite BioVip de Alta Conversão</strong>, você causa impacto visual de luxo, elimina curiosos com triagem automática e recebe contatos prontos para comprar — entregue 100% pronto e personalizado em até 24 horas.
                 </p>
 
                 {/* Interactive Niche Selector Strip in Hero */}
@@ -8931,18 +11264,18 @@ COMO PUBLICAR NO SERVIDOR:
         {/* SECTION 1: CARROSSEL CONTÍNUO AUTOMÁTICO ESTILO TOQY (PAUSA AO PASSAR O MOUSE) */}
         <section id="catalogo" className="py-20 lg:py-28 border-b border-white/[0.06] overflow-hidden bg-[#070709]">
           <style>{`
-            @keyframes luxebioContinuousMarquee {
+            @keyframes biovipContinuousMarquee {
               0% { transform: translate3d(0, 0, 0); }
               100% { transform: translate3d(-50%, 0, 0); }
             }
-            .luxebio-marquee-track {
+            .biovip-marquee-track {
               display: flex;
               width: max-content;
-              animation: luxebioContinuousMarquee ${Math.max(28, filteredModels.length * 6)}s linear infinite;
+              animation: biovipContinuousMarquee ${Math.max(28, filteredModels.length * 6)}s linear infinite;
               will-change: transform;
             }
-            .luxebio-marquee-wrapper:hover .luxebio-marquee-track,
-            .luxebio-marquee-track.is-paused {
+            .biovip-marquee-wrapper:hover .biovip-marquee-track,
+            .biovip-marquee-track.is-paused {
               animation-play-state: paused !important;
             }
           `}</style>
@@ -9013,7 +11346,7 @@ COMO PUBLICAR NO SERVIDOR:
 
           {/* FAIXA CONTÍNUA DE CELULARES LADO A LADO (PAUSA IMEDIATAMENTE NO HOVER) */}
           <div
-            className="luxebio-marquee-wrapper relative w-full overflow-hidden py-4 select-none"
+            className="biovip-marquee-wrapper relative w-full overflow-hidden py-4 select-none"
             onMouseEnter={() => setLandingCarouselHovered(true)}
             onMouseLeave={() => setLandingCarouselHovered(false)}
             onTouchStart={() => setLandingCarouselHovered(true)}
@@ -9024,7 +11357,7 @@ COMO PUBLICAR NO SERVIDOR:
             <div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:w-20 bg-gradient-to-l from-[#070709] to-transparent z-20" />
 
             <div
-              className={`luxebio-marquee-track gap-7 px-4 ${
+              className={`biovip-marquee-track gap-7 px-4 ${
                 !landingCarouselAutoPlay || landingCarouselHovered || Boolean(landingPreviewModalId) || Boolean(landingQrModalModelId)
                   ? 'is-paused'
                   : ''
@@ -9509,13 +11842,13 @@ COMO PUBLICAR NO SERVIDOR:
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
                   </ul>
                 </div>
-                <a
-                  href="#encomendar"
-                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: 'Plano Básico (R$ 29,90/mês · 1 alteração) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)' }))}
+                <button
+                  type="button"
+                  onClick={() => openPaymentConfirmation('basic')}
                   className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
                 >
                   Garantir Vaga por R$ 79,90 (Plano Básico R$ 29,90/mês)
-                </a>
+                </button>
               </div>
 
               {/* Plan 2: Pro (Mais Escolhido) */}
@@ -9553,13 +11886,13 @@ COMO PUBLICAR NO SERVIDOR:
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
                   </ul>
                 </div>
-                <a
-                  href="#encomendar"
-                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)' }))}
+                <button
+                  type="button"
+                  onClick={() => openPaymentConfirmation('pro')}
                   className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer relative z-10"
                 >
                   Quero o Plano Pro por R$ 79,90 (Manutenção R$ 49,90/mês)
-                </a>
+                </button>
               </div>
 
               {/* Plan 3: VIP Ilimitado */}
@@ -9595,13 +11928,13 @@ COMO PUBLICAR NO SERVIDOR:
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
                   </ul>
                 </div>
-                <a
-                  href="#encomendar"
-                  onClick={() => setLandingOrderForm(p => ({ ...p, selectedPlan: 'Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)' }))}
+                <button
+                  type="button"
+                  onClick={() => openPaymentConfirmation('vip')}
                   className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
                 >
                   Quero o Plano VIP por R$ 79,90 (Manutenção R$ 79,90/mês)
-                </a>
+                </button>
               </div>
             </div>
 
@@ -9856,13 +12189,18 @@ COMO PUBLICAR NO SERVIDOR:
         {/* FOOTER FOCADO EM AUTORIDADE E ACESSO DO ADMINISTRADOR */}
         <footer className="py-12 bg-[#060608] text-xs text-neutral-400">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <div className="font-bold text-white tracking-wider">
-                {landingConfig.agencyBrandName.toUpperCase()}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-amber-400/30 p-1 flex items-center justify-center overflow-hidden shrink-0">
+                <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
               </div>
-              <p className="text-[11px] text-neutral-400">
-                O fim dos links amadores. Transforme seguidores em clientes de alto valor no WhatsApp.
-              </p>
+              <div className="space-y-0.5">
+                <div className="font-serif font-black tracking-widest text-sm text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500">
+                  BIOVIP
+                </div>
+                <p className="text-[11px] text-neutral-400">
+                  O fim dos links amadores. Microsites de alta conversão para o WhatsApp.
+                </p>
+              </div>
             </div>
 
             {/* Owner Direct Subdomain Bar */}
@@ -9994,12 +12332,12 @@ COMO PUBLICAR NO SERVIDOR:
         <div className="relative z-10 w-full max-w-md rounded-3xl bg-neutral-900/95 border border-white/[0.1] p-7 sm:p-8 shadow-2xl space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-serif font-black text-lg shadow-lg shadow-amber-500/20">
-                L
+              <div className="w-11 h-11 rounded-xl bg-neutral-950 p-1 border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+                <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
               </div>
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block">
-                  Firebase Security Gate
+                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block font-bold">
+                  BioVip Security Gate
                 </span>
                 <h1 className="text-base font-bold text-white">
                   Acesso Restrito ao Criador
@@ -10013,7 +12351,7 @@ COMO PUBLICAR NO SERVIDOR:
 
           <div className="space-y-2 text-xs text-neutral-300 leading-relaxed bg-neutral-950/80 p-4 rounded-2xl border border-white/[0.06]">
             <p>
-              O <strong className="text-white">LuxeBio Studio & Painel de Gestão</strong> é protegido pelo <strong className="text-amber-300">Google Firebase Authentication</strong>.
+              O <strong className="text-white">BioVip Studio & Painel de Gestão</strong> é protegido pelo <strong className="text-amber-300">Google Firebase Authentication</strong>.
             </p>
             <p className="text-[11px] text-neutral-400 font-mono">
               Administrador autorizado: <span className="text-emerald-400">{ADMIN_OWNER_EMAIL}</span>
@@ -10065,23 +12403,211 @@ COMO PUBLICAR NO SERVIDOR:
     );
   }
 
+  // =========================================================================
+  // SEGUNDO FATOR DE AUTENTICAÇÃO (2FA) / MASTER SECURITY PIN GATE
+  // =========================================================================
+  if (!adminPinUnlocked) {
+    return (
+      <div className="min-h-screen w-screen bg-[#09090b] text-neutral-100 flex items-center justify-center p-4 font-sans relative overflow-hidden select-none">
+        {/* Ambient Glow */}
+        <div
+          className="pointer-events-none fixed inset-0 opacity-25"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 30%, rgba(212, 175, 55, 0.22), transparent 60%)',
+          }}
+        />
+        <div className="relative z-10 w-full max-w-md rounded-3xl bg-neutral-900/95 border border-white/[0.1] p-6 sm:p-8 shadow-2xl space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-neutral-950 p-1 border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+                <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block font-semibold">
+                  Autenticação em 2 Etapas (2FA)
+                </span>
+                <h1 className="text-base font-bold text-white">
+                  PIN Mestre de Segurança
+                </h1>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-400">
+              <KeyRound className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Admin badge */}
+          <div className="flex items-center justify-between bg-neutral-950/80 p-3 rounded-2xl border border-white/[0.06] text-xs">
+            <div className="flex items-center gap-2 truncate">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="text-neutral-300 truncate">
+                Conectado como <strong className="text-white">{adminUser?.email}</strong>
+              </span>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
+              Google 1FA ✓
+            </span>
+          </div>
+
+          {/* Lockout Banner */}
+          {lockoutRemainingSec > 0 ? (
+            <div className="p-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-200 space-y-2 text-xs">
+              <div className="flex items-center gap-2 font-bold text-red-300">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Bloqueio de Segurança Ativo</span>
+              </div>
+              <p className="text-neutral-300 leading-relaxed">
+                Múltiplas tentativas incorretas foram registradas. Por segurança, o sistema bloqueou novas tentativas temporariamente.
+              </p>
+              <div className="flex items-center justify-between pt-1 font-mono text-sm font-bold text-red-400">
+                <span>Tempo restante:</span>
+                <span>
+                  {Math.floor(lockoutRemainingSec / 60)
+                    .toString()
+                    .padStart(2, '0')}:
+                  {(lockoutRemainingSec % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-xs text-neutral-300 leading-relaxed">
+                Digite o <strong className="text-amber-300">PIN de 6 dígitos</strong> para autorizar o acesso ao Studio de Criação e ao Painel de Gestão Financeira.
+              </p>
+
+              {/* 6-Digit PIN input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="text-neutral-400 font-medium">PIN de Segurança (6 dígitos):</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPinText(!showPinText)}
+                    className="text-[11px] text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer"
+                  >
+                    {showPinText ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <span>{showPinText ? 'Ocultar' : 'Mostrar'}</span>
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showPinText ? 'text' : 'password'}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    autoFocus
+                    value={adminPinInput}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setAdminPinInput(val);
+                      if (adminPinError) setAdminPinError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && adminPinInput.length === 6) {
+                        handleVerifyAdminPin();
+                      }
+                    }}
+                    placeholder="••••••"
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono font-bold py-3.5 px-4 rounded-2xl bg-neutral-950 border border-neutral-800 text-amber-300 focus:border-amber-400 focus:outline-none placeholder:text-neutral-700 shadow-inner"
+                  />
+                </div>
+
+                {/* Dots visualization */}
+                <div className="flex justify-center gap-2 pt-1">
+                  {[0, 1, 2, 3, 4, 5].map((idx) => {
+                    const isFilled = adminPinInput.length > idx;
+                    return (
+                      <span
+                        key={idx}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-150 ${
+                          isFilled
+                            ? 'bg-amber-400 shadow-sm shadow-amber-400/50 scale-110'
+                            : 'bg-neutral-800 border border-white/10'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {adminPinError && (
+                <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-xs text-red-300 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <span>{adminPinError}</span>
+                </div>
+              )}
+
+              {/* Status and attempts counter */}
+              <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-1">
+                <span>
+                  Tentativas restantes:{' '}
+                  <strong className={pinAttemptsLeft <= 2 ? 'text-red-400' : 'text-neutral-200'}>
+                    {pinAttemptsLeft} de {MAX_PIN_ATTEMPTS}
+                  </strong>
+                </span>
+                <span className="text-neutral-500 font-mono">PIN padrão: {DEFAULT_ADMIN_PIN}</span>
+              </div>
+
+              {/* Unlock Action Button */}
+              <button
+                type="button"
+                disabled={adminPinInput.length !== 6 || lockoutRemainingSec > 0}
+                onClick={handleVerifyAdminPin}
+                className="w-full py-3.5 px-5 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-950 font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-500/20 transition cursor-pointer"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Desbloquear Painel de Administrador</span>
+              </button>
+            </div>
+          )}
+
+          {/* Footer secondary actions */}
+          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
+            <button
+              type="button"
+              onClick={handleAdminLogout}
+              className="text-neutral-400 hover:text-red-300 flex items-center gap-1.5 cursor-pointer transition"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair da Conta Google</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openPublicSalesLanding}
+              className="text-neutral-400 hover:text-amber-300 flex items-center gap-1.5 cursor-pointer transition"
+            >
+              <span>Vitrine Pública</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[100dvh] min-h-screen w-full max-w-full overflow-hidden bg-neutral-950 text-neutral-100 font-sans">
-      {renderSubdomainConfigModal()}
-      {/* ============================================================== */}
-      {/* LEFT COLUMN: BUILDER SAAS PRO CONTROLS                         */}
-      {/* ============================================================== */}
-      <aside className={`w-full lg:w-[620px] xl:w-[680px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
+      {isClientsFullscreen ? (
+        renderClientsFullscreenView()
+      ) : (
+        <>
+          {/* ============================================================== */}
+          {/* LEFT COLUMN: BUILDER SAAS PRO CONTROLS                         */}
+          {/* ============================================================== */}
+          <aside className={`w-full lg:w-[620px] xl:w-[680px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
         {/* Header */}
         <header className="px-5 py-3.5 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 bg-neutral-950/70">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-serif font-black text-lg shadow-lg shadow-amber-500/20">
-              L
+            <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+              <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-semibold text-neutral-100 text-sm tracking-wider">
-                  LUXEBIO STUDIO <span className="text-amber-400 font-bold">SAAS ENGINE</span>
+                <h1 className="font-serif font-black text-neutral-100 text-sm tracking-wider">
+                  BIOVIP STUDIO <span className="text-amber-400 font-bold font-mono">SAAS ENGINE</span>
                 </h1>
                 {currentEditingSite ? (() => {
                   const hasUnsavedChanges = JSON.stringify(currentEditingSite.data) !== JSON.stringify(data);
@@ -10137,6 +12663,31 @@ COMO PUBLICAR NO SERVIDOR:
             >
               <Globe className="w-3.5 h-3.5 text-amber-400" />
               <span>{landingConfig.creatorSubdomain}.</span>
+            </button>
+
+            {/* Central de Segurança & PIN Mestre */}
+            <button
+              type="button"
+              onClick={() => {
+                setSecurityModalTab('pin');
+                setSecurityModalOpen(true);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
+              title="Central de Segurança: Alterar PIN Mestre e Histórico de Acessos"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+              <span>Segurança</span>
+            </button>
+
+            {/* Botão de Bloquear Painel Imediatamente */}
+            <button
+              type="button"
+              onClick={handleLockAdminPanel}
+              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/15 text-neutral-300 hover:text-red-300 font-semibold text-xs flex items-center gap-1 border border-neutral-800 hover:border-red-500/30 transition cursor-pointer"
+              title="Bloquear o painel agora (exigirá o PIN de 6 dígitos)"
+            >
+              <Lock className="w-3.5 h-3.5 text-red-400" />
+              <span>Bloquear</span>
             </button>
 
             {/* Botão de Logout do Firebase Admin */}
@@ -10222,6 +12773,16 @@ COMO PUBLICAR NO SERVIDOR:
               <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 {savedSites.length}
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsClientsFullscreen(true)}
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 hover:from-amber-400 hover:to-amber-300 text-amber-300 hover:text-neutral-950 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 hover:border-amber-300 shadow-md transition cursor-pointer group"
+              title="Abrir a tela de Gestão de Clientes em tela cheia (sem a barra do estúdio e sem o preview lateral)"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-amber-400 group-hover:text-neutral-950 transition" />
+              <span>Gestão em Tela Cheia</span>
             </button>
 
             <button
@@ -13848,6 +16409,31 @@ COMO PUBLICAR NO SERVIDOR:
           {/* TAB 8: PAINEL DE GESTÃO SAAS DOS MICROSITES */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
+              {/* BANNER PARA EXPANDIR GESTÃO EM TELA CHEIA */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
+                    <Maximize2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">
+                      Visualização Executiva em Tela Cheia
+                    </span>
+                    <span className="text-[11px] text-neutral-400">
+                      Gerencie todos os clientes em tela cheia, sem a barra de ferramentas do estúdio e sem o preview lateral.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsClientsFullscreen(true)}
+                  className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center gap-2 shadow-md shadow-amber-500/20 cursor-pointer transition shrink-0 self-start sm:self-center"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span>Expandir para Tela Cheia ⛶</span>
+                </button>
+              </div>
+
               {/* ============================================================== */}
               {/* 1. BARRA DE PROGRESSO VISUAL DO FATURAMENTO MENSAL (MRR / META) */}
               {/* ============================================================== */}
@@ -14530,7 +17116,7 @@ COMO PUBLICAR NO SERVIDOR:
 
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {(() => {
-                      const overdueCount = savedSites.filter(s => s.status !== 'disabled' && (s.status === 'overdue' || getDaysUntilDue(s.dueDate) < 0)).length;
+                      const overdueCount = savedSites.filter(s => !isSiteSuspendedStatus(s) && isSiteOverdueStatus(s)).length;
                       const todayCount = savedSites.filter(s => getDaysUntilDue(s.dueDate) === 0).length;
                       const next7DaysCount = savedSites.filter(s => {
                         const d = getDaysUntilDue(s.dueDate);
@@ -14589,15 +17175,15 @@ COMO PUBLICAR NO SERVIDOR:
                   </div>
                 </div>
 
-                {/* FILTROS POR STATUS DE CLIENTE */}
+                {/* FILTROS POR STATUS DE CLIENTE (RÉGUA PROGRESSIVA) */}
                 <div className="flex items-center gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800 shrink-0 overflow-x-auto max-w-full">
                   <span className="text-[10px] text-neutral-500 font-semibold px-2">Status:</span>
                   {[
                     { id: 'all', label: 'Todos' },
                     { id: 'landing', label: '⭐ Modelos na Landing' },
-                    { id: 'active', label: '🟢 Em dia' },
-                    { id: 'overdue', label: '🟡 Vencidos' },
-                    { id: 'disabled', label: '🛑 Desativados' },
+                    { id: 'active', label: '🟢 Pago / Em dia' },
+                    { id: 'overdue', label: '🟡 Pendente / Atrasado D+3' },
+                    { id: 'disabled', label: '🛑 Suspenso D+7 (Manutenção)' },
                   ].map(f => (
                     <button
                       key={f.id}
@@ -14633,13 +17219,15 @@ COMO PUBLICAR NO SERVIDOR:
                         site.customDomain.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
                         site.nicheCategory.toLowerCase().includes(dashboardSearch.toLowerCase());
 
-                      // 2. Status Filter
+                      // 2. Status Filter (compatível com 'pago' | 'pendente' | 'atrasado_d3' | 'suspenso_d7' e legados)
+                      const suspended = isSiteSuspendedStatus(site);
+                      const overdue = isSiteOverdueStatus(site);
                       const matchesStatus =
                         dashboardStatusFilter === 'all' ||
                         (dashboardStatusFilter === 'landing' && Boolean(site.isLandingModel)) ||
-                        (dashboardStatusFilter === 'active' && site.status === 'active') ||
-                        (dashboardStatusFilter === 'overdue' && site.status === 'overdue') ||
-                        (dashboardStatusFilter === 'disabled' && site.status === 'disabled');
+                        (dashboardStatusFilter === 'active' && !suspended && !overdue) ||
+                        (dashboardStatusFilter === 'overdue' && overdue) ||
+                        (dashboardStatusFilter === 'disabled' && suspended);
 
                       // 3. Exact Date Filter (if set)
                       const matchesExactDate = !dashboardDueDateExact || site.dueDate === dashboardDueDateExact;
@@ -14658,7 +17246,7 @@ COMO PUBLICAR NO SERVIDOR:
                       } else if (dashboardDueDateFilter === 'this_month') {
                         matchesDueDate = (site.dueDate || '').startsWith(currentMonthPrefix);
                       } else if (dashboardDueDateFilter === 'overdue') {
-                        matchesDueDate = days < 0 && site.status !== 'disabled';
+                        matchesDueDate = days < 0 && !suspended;
                       }
 
                       return matchesSearch && matchesStatus && matchesDueDate;
@@ -14684,7 +17272,7 @@ COMO PUBLICAR NO SERVIDOR:
                       return 0;
                     });
 
-                  const filteredTotalFee = filteredList.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
+                  const filteredTotalFee = filteredList.reduce((acc, s) => acc + (!isSiteSuspendedStatus(s) ? (s.monthlyFee || 0) : 0), 0);
 
                   return (
                     <div className="space-y-3">
@@ -14723,7 +17311,11 @@ COMO PUBLICAR NO SERVIDOR:
                       ) : (
                         filteredList.map(site => {
                           const daysDiff = getDaysUntilDue(site.dueDate);
-                          const isOverdue = daysDiff < 0 && site.status !== 'disabled';
+                          const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (site.daysOverdue || 0);
+                          const isSuspended = isSiteSuspendedStatus(site);
+                          const isOverdue = !isSuspended && (daysDiff < 0 || site.status === 'overdue' || site.status === 'atrasado_d3');
+                          const isEditsBlocked = isSiteEditsLocked(site, daysOverdue);
+                          const linkStatus: 'ativo' | 'manutencao' = isSuspended ? 'manutencao' : (site.linkStatus || 'ativo');
                           const isDueToday = daysDiff === 0;
                           const isDueSoon = daysDiff > 0 && daysDiff <= 7;
                           const currentFullDomain = site.customDomain || `${site.subdomain}.luxebio.site`;
@@ -14741,9 +17333,9 @@ COMO PUBLICAR NO SERVIDOR:
                             <div
                               key={site.id}
                               className={`p-4 rounded-xl border transition space-y-3 relative ${
-                                site.status === 'disabled'
-                                  ? 'bg-neutral-950/40 border-red-900/40 opacity-75'
-                                  : isOverdue || site.status === 'overdue'
+                                isSuspended
+                                  ? 'bg-neutral-950/60 border-red-900/50 opacity-85'
+                                  : isOverdue
                                   ? 'bg-red-500/5 border-red-500/40 shadow-sm shadow-red-500/10'
                                   : isDueToday
                                   ? 'bg-amber-500/10 border-amber-400 shadow-sm shadow-amber-500/20'
@@ -14837,15 +17429,52 @@ COMO PUBLICAR NO SERVIDOR:
                                   </div>
                                 </div>
 
-                                {/* Status & Due Urgency Badges */}
+                                {/* Status, Edit-Lock Badge & Due Urgency Badges */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                   {(() => {
                                     const billingInfo = getSiteBillingSummary(site);
-                                    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
                                     const remainingDaysToAutoDisable = Math.max(0, AUTO_DISABLE_OVERDUE_DAYS - daysOverdue);
 
                                     return (
                                       <>
+                                        {/* BADGE VISUAL DE EDIÇÕES LIBERADAS / BLOQUEADAS POR INADIMPLÊNCIA */}
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleSiteEditsLock(site.id)}
+                                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border cursor-pointer transition ${
+                                            isEditsBlocked
+                                              ? 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
+                                              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+                                          }`}
+                                          title={
+                                            isEditsBlocked
+                                              ? 'Edições bloqueadas por inadimplência (Atraso >= 3 dias). Clique para liberar manualmente se necessário.'
+                                              : 'Edições liberadas para este assinante. Clique para bloquear manualmente.'
+                                          }
+                                        >
+                                          <Lock className={`w-3 h-3 ${isEditsBlocked ? 'text-red-400' : 'text-emerald-400'}`} />
+                                          <span>
+                                            {isEditsBlocked
+                                              ? '🔒 Edições Bloqueadas (Inadimplência)'
+                                              : '🔓 Edições Liberadas'}
+                                          </span>
+                                        </button>
+
+                                        {/* BADGE DE STATUS DO LINK PÚBLICO (ATIVO vs MODO MANUTENÇÃO) */}
+                                        <span
+                                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
+                                            linkStatus === 'manutencao'
+                                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                              : 'bg-neutral-900 text-emerald-300 border-emerald-500/30'
+                                          }`}
+                                          title={`Status do link público: ${linkStatus === 'manutencao' ? 'Modo Manutenção (Tela Neutra)' : 'Ativo'}`}
+                                        >
+                                          <Globe className={`w-3 h-3 ${linkStatus === 'manutencao' ? 'text-amber-400' : 'text-emerald-400'}`} />
+                                          <span>
+                                            {linkStatus === 'manutencao' ? '🛠️ Link: Modo Manutenção' : '🟢 Link: Ativo'}
+                                          </span>
+                                        </span>
+
                                         {/* Ciclo 1º Mês Badge */}
                                         <button
                                           type="button"
@@ -14865,28 +17494,33 @@ COMO PUBLICAR NO SERVIDOR:
                                           </span>
                                         </button>
 
-                                        {/* Dynamic Due Date & 7th-Day Auto-Deactivation Badge */}
-                                        {site.status === 'disabled' ? (
+                                        {/* Dynamic Progressive Delinquency Badge (Pago / Pendente / Atrasado D+3 / Suspenso D+7) */}
+                                        {isSuspended ? (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
                                             <Power className="w-3 h-3 text-red-400" />
                                             {daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS || site.autoDisabledByOverdue
-                                              ? `🛑 Desativado Automaticamente (${daysOverdue}d de atraso — Regra 7º Dia)`
-                                              : '🛑 Desativado'}
+                                              ? `🛑 Suspenso D+7 (${daysOverdue}d de atraso)`
+                                              : '🛠️ Suspenso (Modo Manutenção)'}
                                           </span>
-                                        ) : isOverdue ? (
+                                        ) : daysOverdue >= 3 || site.status === 'atrasado_d3' ? (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1 animate-pulse">
                                             <AlertTriangle className="w-3 h-3 text-red-400" />
-                                            🚨 Atrasado há {daysOverdue}d • Desativa auto em {remainingDaysToAutoDisable}d (7º dia)
+                                            🚨 Atrasado D+3 ({daysOverdue}d) • Suspende em {remainingDaysToAutoDisable}d
+                                          </span>
+                                        ) : isOverdue ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                            <AlertTriangle className="w-3 h-3 text-amber-400" />
+                                            🟡 Pendente ({daysOverdue}d atraso) • Bloqueia edições em {Math.max(0, 3 - daysOverdue)}d
                                           </span>
                                         ) : isDueToday ? (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-400 text-neutral-950 border border-amber-300 flex items-center gap-1 shadow-sm">
                                             <AlertCircle className="w-3 h-3 text-neutral-950" />
-                                            ⚡ VENCE HOJE
+                                            ⚡ VENCE HOJE (D-0)
                                           </span>
                                         ) : daysDiff <= 3 ? (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
                                             <Clock className="w-3 h-3 text-amber-400" />
-                                            Vence em {daysDiff} dia{daysDiff > 1 ? 's' : ''}
+                                            D-3 • Vence em {daysDiff} dia{daysDiff > 1 ? 's' : ''}
                                           </span>
                                         ) : daysDiff <= 7 ? (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
@@ -14896,7 +17530,7 @@ COMO PUBLICAR NO SERVIDOR:
                                         ) : (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                                             <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                                            Em Dia (em {daysDiff} dias)
+                                            Pago / Em Dia (em {daysDiff} dias)
                                           </span>
                                         )}
                                       </>
@@ -14923,11 +17557,10 @@ COMO PUBLICAR NO SERVIDOR:
                               {/* Data Row: Vencimento (com Regra 7º Dia) + Plano de Manutenção + Alterações no Mês (+R$ 14,90 extra) + Valor & Total do Ciclo */}
                               {(() => {
                                 const billing = getSiteBillingSummary(site);
-                                const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
 
                                 return (
                                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs bg-neutral-900/60 p-3 rounded-lg border border-neutral-800/80">
-                                    {/* 1. Data de Vencimento & Regra Automática 7º Dia */}
+                                    {/* 1. Data de Vencimento & Régua Progressiva D+3 / D+7 */}
                                     <div>
                                       <div className="flex items-center justify-between">
                                         <span className="text-[10px] text-neutral-400 block font-medium">Data de Vencimento</span>
@@ -14939,7 +17572,7 @@ COMO PUBLICAR NO SERVIDOR:
                                               setTempDueDateInput(site.dueDate);
                                             }}
                                             className="text-[9.5px] text-amber-400 hover:text-amber-300 font-semibold underline cursor-pointer"
-                                            title="Alterar data de vencimento (se >= 7 dias de atraso, desativa automaticamente)"
+                                            title="Alterar data de vencimento (aplica automaticamente a Régua D+3 e D+7)"
                                           >
                                             Alterar data
                                           </button>
@@ -14975,8 +17608,8 @@ COMO PUBLICAR NO SERVIDOR:
                                       ) : (
                                         <div className="mt-0.5 space-y-0.5">
                                           <div className="flex items-center gap-1.5">
-                                            <CalendarClock className={`w-3.5 h-3.5 ${site.status === 'disabled' || isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-400' : 'text-emerald-400'}`} />
-                                            <span className={`font-mono font-bold ${site.status === 'disabled' || isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-300' : 'text-neutral-200'}`}>
+                                            <CalendarClock className={`w-3.5 h-3.5 ${isSuspended || isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-400' : 'text-emerald-400'}`} />
+                                            <span className={`font-mono font-bold ${isSuspended || isOverdue ? 'text-red-400' : isDueToday ? 'text-amber-300' : 'text-neutral-200'}`}>
                                               {formattedDueDate}
                                             </span>
                                             <span className="text-[10px] text-neutral-500">
@@ -14985,10 +17618,12 @@ COMO PUBLICAR NO SERVIDOR:
                                           </div>
                                           <span className="text-[9.5px] text-neutral-400 block">
                                             {daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
-                                              ? `🛑 Suspenso auto (${daysOverdue}d >= 7º dia)`
+                                              ? `🛑 D+7: Modo Manutenção ativo (${daysOverdue}d atraso)`
+                                              : daysOverdue >= 3
+                                              ? `🔒 D+3: Edições bloqueadas · Suspende em ${AUTO_DISABLE_OVERDUE_DAYS - daysOverdue}d`
                                               : daysOverdue > 0
-                                              ? `⏳ Suspensão auto em ${AUTO_DISABLE_OVERDUE_DAYS - daysOverdue} dia(s)`
-                                              : '🛡️ Desativação auto no 7º dia de atraso'}
+                                              ? `⏳ Atraso leve (${daysOverdue}d) · Bloqueia edições no 3º dia`
+                                              : '🛡️ Régua ativa: D+3 bloqueia edições · D+7 manutenção'}
                                           </span>
                                         </div>
                                       )}
@@ -15043,7 +17678,11 @@ COMO PUBLICAR NO SERVIDOR:
                                           </button>
                                         </div>
 
-                                        {billing.extraUpdatesCount > 0 ? (
+                                        {isEditsBlocked ? (
+                                          <span className="px-1.5 py-0.5 rounded bg-red-500/15 border border-red-500/40 text-red-300 font-mono text-[10px] font-bold">
+                                            🔒 Bloqueadas
+                                          </span>
+                                        ) : billing.extraUpdatesCount > 0 ? (
                                           <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold">
                                             +{billing.extraUpdatesCount} extra (+R$ {billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                                           </span>
@@ -15148,10 +17787,15 @@ COMO PUBLICAR NO SERVIDOR:
                                   <button
                                     type="button"
                                     onClick={() => loadSiteForEditing(site)}
-                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-neutral-700"
+                                    className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border transition ${
+                                      isEditsBlocked
+                                        ? 'bg-red-500/10 hover:bg-red-500/20 text-red-300 border-red-500/30'
+                                        : 'bg-neutral-800 hover:bg-neutral-700 text-amber-300 border-neutral-700'
+                                    }`}
+                                    title={isEditsBlocked ? 'Edições bloqueadas por inadimplência (D+3). Clique para abrir a regularização Pix.' : 'Carregar microsite no estúdio de edição'}
                                   >
-                                    <Edit3 className="w-3 h-3" />
-                                    Editar Microsite
+                                    {isEditsBlocked ? <Lock className="w-3 h-3 text-red-400" /> : <Edit3 className="w-3 h-3" />}
+                                    <span>{isEditsBlocked ? 'Edição Bloqueada (D+3)' : 'Editar Microsite'}</span>
                                   </button>
 
                                   <button
@@ -15213,31 +17857,38 @@ COMO PUBLICAR NO SERVIDOR:
 
                                   <button
                                     type="button"
-                                    onClick={() => sendWhatsappBillingReminder(site)}
+                                    onClick={() => openPixBillingModal(site)}
                                     className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border transition ${
-                                      isOverdue
+                                      isSuspended || isOverdue
                                         ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/40 animate-pulse'
                                         : isDueToday
                                         ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40'
                                         : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
                                     }`}
-                                    title="Enviar mensagem de cobrança formatada via WhatsApp com Chave PIX"
+                                    title="Abrir Modal de Cobrança com Régua Inteligente (D-3, D-0, D+3, D+7) e Disparo WhatsApp"
                                   >
                                     <MessageCircle className="w-3 h-3 text-emerald-400" />
-                                    <span>💬 Cobrança WhatsApp</span>
+                                    <span>💬 Régua de Cobrança WhatsApp</span>
                                   </button>
 
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      setPixModalSite(site);
-                                      setPixModalOpen(true);
-                                    }}
+                                    onClick={() => openPixBillingModal(site)}
                                     className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition"
-                                    title="Gerar QR Code PIX e confirmar baixa automática do pagamento"
+                                    title="Gerar Fatura PIX com Régua de Cobrança (D-3, D-0, D+3, D+7) e confirmar baixa automática"
                                   >
                                     <DollarSign className="w-3 h-3 text-amber-400" />
-                                    <span>⚡ Baixa PIX</span>
+                                    <span>⚡ Fatura PIX & Baixa</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => openSuspendedPagePreview(site)}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-200 font-medium text-[11px] flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition"
+                                    title="Visualizar a Tela Neutra de Manutenção (Modo Suspenso D+7) gerada para este cliente"
+                                  >
+                                    <Eye className="w-3 h-3 text-amber-400" />
+                                    <span>Tela Manutenção</span>
                                   </button>
 
                                   <button
@@ -15272,28 +17923,35 @@ COMO PUBLICAR NO SERVIDOR:
                                 </div>
 
                                 <div className="flex items-center gap-1.5">
-                                  {/* Botão de Desativação por Atraso de Pagamento */}
+                                  {/* Botão "Alternar Suspensão": Permite colocar a página em "Modo Manutenção" ou "Reativar" */}
                                   <button
                                     type="button"
-                                    onClick={() => toggleSiteActiveStatus(site.id)}
-                                    title={site.status === 'disabled' ? 'Reativar microsite' : 'Desativar microsite por atraso de pagamento'}
+                                    onClick={() => toggleSiteSuspensionMode(site.id)}
+                                    title={
+                                      isSuspended
+                                        ? 'Reativar microsite (tirar do Modo Manutenção e liberar acesso normal)'
+                                        : 'Alternar Suspensão: Colocar página em Modo Manutenção (Tela Neutra de Atualização Técnica)'
+                                    }
                                     className={`px-3 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1.5 cursor-pointer transition ${
-                                      site.status === 'disabled'
-                                        ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950'
+                                      isSuspended
+                                        ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950 shadow-sm shadow-emerald-500/20'
                                         : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40'
                                     }`}
                                   >
                                     <Power className="w-3 h-3" />
-                                    <span>{site.status === 'disabled' ? 'Reativar Site' : 'Desativar por Atraso'}</span>
+                                    <span>
+                                      {isSuspended ? 'Alternar Suspensão: Reativar' : 'Alternar Suspensão: Modo Manutenção'}
+                                    </span>
                                   </button>
 
                                   <button
                                     type="button"
                                     onClick={() => deleteSavedSite(site.id)}
-                                    className="p-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/20 text-neutral-500 hover:text-red-400 cursor-pointer"
-                                    title="Excluir microsite"
+                                    className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/20 text-neutral-400 hover:text-red-300 border border-neutral-800 hover:border-red-500/40 flex items-center gap-1 text-[11px] font-medium cursor-pointer transition"
+                                    title="Excluir microsite permanentemente"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                    <span>Excluir</span>
                                   </button>
                                 </div>
                               </div>
@@ -17272,6 +19930,10 @@ COMO PUBLICAR NO SERVIDOR:
           </div>
         </div>
       </main>
+        </>
+      )}
+
+      {renderSubdomainConfigModal()}
 
       {/* Toast Notification Banner */}
       {toastMsg && (
@@ -17611,7 +20273,7 @@ COMO PUBLICAR NO SERVIDOR:
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      Opção 1: Subdomínio Oficial LuxeBio (Ativação Imediata)
+                      Opção 1: Subdomínio Oficial BioVip (Ativação Imediata)
                     </span>
                     <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
                       ● PRONTO PARA USO
@@ -17630,13 +20292,13 @@ COMO PUBLICAR NO SERVIDOR:
                       className="flex-1 px-1.5 py-2 bg-transparent text-amber-300 font-mono text-xs font-bold focus:outline-none"
                     />
                     <span className="px-3 text-xs text-neutral-400 font-mono border-l border-neutral-800 bg-neutral-950/60 py-2">
-                      .luxebio.site
+                      .{ (landingConfig.baseDomain || 'biovip.com.br').toLowerCase() }
                     </span>
                     <button
                       type="button"
                       onClick={() =>
                         copyDnsValue(
-                          `https://${targetSite.subdomain || 'meusite'}.luxebio.site`,
+                          `https://${targetSite.subdomain || 'meusite'}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`,
                           'subdomain-url',
                           'Link do subdomínio'
                         )
@@ -18148,7 +20810,7 @@ COMO PUBLICAR NO SERVIDOR:
                     setDnsTesting(true);
                     setTimeout(() => {
                       setDnsTesting(false);
-                      const targetDomainDisplay = cleanDomToSave || `${targetSite.subdomain || 'meusite'}.luxebio.site`;
+                      const targetDomainDisplay = cleanDomToSave || `${targetSite.subdomain || 'meusite'}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
                       setDnsCheckStatus({
                         checkedDomain: targetDomainDisplay,
                         aRecordOk: true,
@@ -18771,77 +21433,420 @@ COMO PUBLICAR NO SERVIDOR:
         </div>
       )}
 
-      {/* MODAL DE BAIXA PIX / LIQUIDAÇÃO DE MENSALIDADE */}
-      {pixModalOpen && pixModalSite && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-neutral-900 border border-emerald-500/40 rounded-2xl p-6 space-y-4 text-neutral-100 shadow-2xl">
-            <div className="flex justify-between items-center border-b border-neutral-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
-                  <CreditCard className="w-4 h-4" />
+      {/* MODAL DE COBRANÇA COM RÉGUA INTELIGENTE (WHATSAPP DISPATCHER) & FATURA PIX */}
+      {pixModalOpen && pixModalSite && (() => {
+        const billing = getSiteBillingSummary(pixModalSite);
+        const daysDiff = getDaysUntilDue(pixModalSite.dueDate);
+        const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (pixModalSite.daysOverdue || 0);
+        const editsBlocked = isSiteEditsLocked(pixModalSite, daysOverdue);
+        const isSuspended = isSiteSuspendedStatus(pixModalSite);
+        const activePixKey = (pixCustomCode || data.saasSettings?.pixKey || 'contato@luxebio.com.br').trim();
+        const currentWaMessage =
+          pixWhatsappMessage || buildReguaCobrancaMessage(pixModalSite, pixBillingStage, activePixKey);
+        const cleanClientPhone = (pixModalSite.clientPhone || pixModalSite.data?.profile?.whatsapp || '').replace(/\D/g, '');
+        const waDispatchHref = cleanClientPhone
+          ? `https://wa.me/${cleanClientPhone}?text=${encodeURIComponent(currentWaMessage)}`
+          : `https://wa.me/?text=${encodeURIComponent(currentWaMessage)}`;
+
+        const stageOptions: Array<{
+          id: 'd_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7';
+          shortLabel: string;
+          fullLabel: string;
+          badgeColor: string;
+        }> = [
+          {
+            id: 'd_minus_3',
+            shortLabel: 'D-3 · Preventivo',
+            fullLabel: 'D-3 (Lembrete Preventivo - 3 dias antes)',
+            badgeColor: 'border-sky-500/40 bg-sky-500/15 text-sky-300',
+          },
+          {
+            id: 'd_0',
+            shortLabel: 'D-0 · Vencimento',
+            fullLabel: 'D-0 (Dia do Vencimento)',
+            badgeColor: 'border-amber-500/40 bg-amber-500/15 text-amber-300',
+          },
+          {
+            id: 'd_plus_3',
+            shortLabel: 'D+3 · Bloqueio Edições',
+            fullLabel: 'D+3 (Atraso Leve - Bloqueio de Edições)',
+            badgeColor: 'border-orange-500/40 bg-orange-500/15 text-orange-300',
+          },
+          {
+            id: 'd_plus_7',
+            shortLabel: 'D+7 · Suspensão Rotina',
+            fullLabel: 'D+7 (Suspensão Temporária de Rotina)',
+            badgeColor: 'border-red-500/40 bg-red-500/15 text-red-300',
+          },
+        ];
+
+        const handleSelectStage = (newStage: 'd_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7') => {
+          setPixBillingStage(newStage);
+          setPixWhatsappMessage(buildReguaCobrancaMessage(pixModalSite, newStage, activePixKey));
+        };
+
+        const handlePixCodeChange = (newPixVal: string) => {
+          setPixCustomCode(newPixVal);
+          setPixWhatsappMessage(buildReguaCobrancaMessage(pixModalSite, pixBillingStage, newPixVal));
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl bg-neutral-900 border border-amber-500/40 rounded-2xl p-6 space-y-4 text-neutral-100 shadow-2xl my-auto">
+              {/* Header */}
+              <div className="flex justify-between items-start border-b border-neutral-800 pb-3.5 gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold shrink-0">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-neutral-100 flex items-center gap-2 flex-wrap">
+                      <span>Régua de Cobrança & Fatura PIX — {pixModalSite.clientName}</span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${
+                          isSuspended
+                            ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                            : editsBlocked
+                            ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
+                            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                        }`}
+                      >
+                        {isSuspended
+                          ? `🛑 Suspenso D+7 (${daysOverdue}d atraso)`
+                          : editsBlocked
+                          ? `🔒 Atrasado D+3 (${daysOverdue}d atraso)`
+                          : daysOverdue > 0
+                          ? `🟡 Pendente (${daysOverdue}d atraso)`
+                          : '🟢 Em Dia'}
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      Domínio: <strong className="text-amber-300 font-mono">{pixModalSite.customDomain || `${pixModalSite.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`}</strong> · Vencimento:{' '}
+                      <strong className="text-neutral-200">{formatDueDateBr(pixModalSite.dueDate)}</strong> · Valor:{' '}
+                      <strong className="text-emerald-400">R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-sm text-neutral-100">
-                    Liquidação PIX — {pixModalSite.clientName}
-                  </h3>
-                  <p className="text-[10px] text-neutral-400">Mensalidade: R$ {pixModalSite.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <button
+                  type="button"
+                  onClick={() => setPixModalOpen(false)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 1. SELETOR DE ESTÁGIO DA COBRANÇA (WHATSAPP DISPATCHER) */}
+              <div className="space-y-2 bg-neutral-950 p-4 rounded-xl border border-neutral-800">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Estágio da Cobrança (Régua Inteligente WhatsApp)</span>
+                  </label>
+                  <span className="text-[10px] text-neutral-400">
+                    Atualiza a mensagem e o link wa.me instantaneamente
+                  </span>
                 </div>
+
+                {/* Dropdown Selector */}
+                <select
+                  value={pixBillingStage}
+                  onChange={(e) => handleSelectStage(e.target.value as 'd_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7')}
+                  className="w-full px-3 py-2.5 rounded-xl bg-neutral-900 border border-amber-500/40 text-xs font-bold text-amber-200 focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  {stageOptions.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.fullLabel}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Quick Stage Pills */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+                  {stageOptions.map((st) => {
+                    const active = pixBillingStage === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => handleSelectStage(st.id)}
+                        className={`px-2.5 py-2 rounded-lg text-[10.5px] font-bold border transition cursor-pointer text-center ${
+                          active
+                            ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-500/20'
+                            : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border-neutral-800'
+                        }`}
+                      >
+                        {st.shortLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. CHAVE PIX / COPIA E COLA + TEXTAREA DA MENSAGEM WHATSAPP */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-neutral-950 p-4 rounded-xl border border-neutral-800">
+                <div className="sm:col-span-8 space-y-2.5">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                        Chave Pix / Código Pix Copia e Cola ({'{pix}'})
+                      </label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await safeCopyText(activePixKey);
+                          showToast('🔑 Chave PIX copiada para a área de transferência!');
+                        }}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold underline cursor-pointer"
+                      >
+                        Copiar Pix
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={pixCustomCode}
+                      onChange={(e) => handlePixCodeChange(e.target.value)}
+                      placeholder="Chave Pix ou código Pix Copia e Cola..."
+                      className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                        Mensagem Pré-Formatada para Disparo no WhatsApp
+                      </label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await safeCopyText(currentWaMessage);
+                          showToast('📋 Mensagem da régua de cobrança copiada!');
+                        }}
+                        className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold underline cursor-pointer flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" /> Copiar texto
+                      </button>
+                    </div>
+                    <textarea
+                      rows={5}
+                      value={currentWaMessage}
+                      onChange={(e) => setPixWhatsappMessage(e.target.value)}
+                      className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 leading-relaxed focus:outline-none focus:border-emerald-400 resize-y"
+                    />
+                  </div>
+                </div>
+
+                {/* Coluna Lateral: Resumo & QR Code */}
+                <div className="sm:col-span-4 flex flex-col justify-between bg-neutral-900/90 p-3.5 rounded-xl border border-neutral-800 space-y-3">
+                  <div className="space-y-1.5 text-[11px]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400">Favorecido:</span>
+                      <span className="font-semibold text-neutral-200 truncate max-w-[110px]">
+                        {data.saasSettings?.pixName || 'LuxeBio Studio'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400">Fatura Atual:</span>
+                      <span className="font-bold text-emerald-400 font-mono">
+                        R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400">Edições:</span>
+                      <span className={`font-bold text-[10px] ${editsBlocked ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {editsBlocked ? '🔒 Bloqueadas' : '🔓 Liberadas'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-400">Status Link:</span>
+                      <span className={`font-bold text-[10px] ${isSuspended ? 'text-amber-300' : 'text-emerald-400'}`}>
+                        {isSuspended ? '🛠️ Manutenção' : '🟢 Ativo'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center space-y-2 py-1">
+                    {asaasPaymentData?.pixQrCode ? (
+                      <div className="p-2 bg-white rounded-xl shadow">
+                        <img
+                          src={`data:image/png;base64,${asaasPaymentData.pixQrCode}`}
+                          alt="QR Code Asaas"
+                          className="w-24 h-24 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-2.5 bg-white rounded-xl shadow">
+                        <div className="w-24 h-24 bg-neutral-950 flex items-center justify-center text-white text-[9px] font-mono text-center p-2 rounded">
+                          [QR CODE PIX R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}]
+                        </div>
+                      </div>
+                    )}
+                    <span className="text-[10px] text-neutral-400 font-mono">
+                      {asaasPaymentData?.pixQrCode ? '⚡ QR Code Asaas Ativo' : 'PIX Copia e Cola'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2.5 BARRA DE COBRANÇA OFICIAL ASAAS */}
+              <div className="p-3 bg-neutral-950 rounded-xl border border-amber-500/30 flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="text-[11px] font-bold text-white block">
+                      Gateway Asaas Automático
+                    </span>
+                    <span className="text-[10px] text-neutral-400">
+                      {asaasPaymentData
+                        ? `Cobrança Asaas ID: ${asaasPaymentData.paymentId} · Status: ${asaasPaymentData.status}`
+                        : 'Gera QR Code Pix dinâmico no Asaas e verifica baixa automaticamente'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={Boolean(asaasGeneratingSiteId)}
+                    onClick={() => handleGenerateAsaasInvoice(pixModalSite)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
+                  >
+                    <CreditCard className={`w-3.5 h-3.5 ${asaasGeneratingSiteId ? 'animate-spin' : ''}`} />
+                    <span>{asaasGeneratingSiteId ? 'Gerando no Asaas...' : '⚡ Gerar Fatura no Asaas'}</span>
+                  </button>
+
+                  {asaasPaymentData?.invoiceUrl && (
+                    <a
+                      href={asaasPaymentData.invoiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 text-xs font-semibold border border-neutral-700 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3 text-amber-400" />
+                      <span>Fatura Asaas</span>
+                    </a>
+                  )}
+
+                  {asaasPaymentData && (
+                    <button
+                      type="button"
+                      onClick={() => checkAsaasStatusAndConfirm(pixModalSite.id, asaasPaymentData.paymentId)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs border border-emerald-500/40 flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3 text-emerald-400" />
+                      <span>Verificar Baixa</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* 3. BOTÕES DE DISPARO WHATSAPP (wa.me) E LIQUIDAÇÃO PIX */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <a
+                  href={waDispatchHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    showToast(`📲 Abrindo WhatsApp de "${pixModalSite.clientName}" com a mensagem ${pixBillingStage.toUpperCase()}!`);
+                  }}
+                  className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer no-underline"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Disparar Cobrança no WhatsApp (wa.me)</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    extendDueDate(pixModalSite.id);
+                    setPixModalOpen(false);
+                  }}
+                  className="w-full py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Confirmar Pagamento PIX (+30d & Liberar)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* MODAL DE PRÉ-VISUALIZAÇÃO DA TELA NEUTRA DE MANUTENÇÃO (MODO SUSPENSO D+7) */}
+      {suspendedPreviewSite && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-neutral-900 border border-amber-500/40 rounded-2xl p-5 space-y-4 text-neutral-100 shadow-2xl my-auto">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3 gap-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 block">
+                  Modo Manutenção (Suspensão Elegante D+7)
+                </span>
+                <h3 className="text-sm font-bold text-white">
+                  Tela Neutra de Manutenção — {suspendedPreviewSite.clientName}
+                </h3>
+                <p className="text-[11px] text-neutral-400">
+                  Exibida automaticamente quando o link entra em manutenção no 7º dia de atraso, sem qualquer menção pejorativa a dívida.
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setPixModalOpen(false)}
-                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+                onClick={() => setSuspendedPreviewSite(null)}
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs bg-neutral-950 p-4 rounded-xl border border-neutral-800">
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-neutral-400">Chave PIX do Gestor:</span>
-                <span className="font-mono font-bold text-amber-300">{data.saasSettings?.pixKey || 'contato@luxebio.com.br'}</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-neutral-400">Favorecido:</span>
-                <span className="font-semibold text-neutral-200">{data.saasSettings?.pixName || 'LuxeBio Studio SaaS'}</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-neutral-400">Valor a Receber:</span>
-                <span className="font-bold text-emerald-400 text-sm">R$ {pixModalSite.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-              </div>
+            <div className="rounded-xl overflow-hidden border border-neutral-800 bg-[#09090b] h-[440px]">
+              <iframe
+                title={`Modo Manutenção - ${suspendedPreviewSite.clientName}`}
+                srcDoc={getSuspendedPageHtml(suspendedPreviewSite)}
+                className="w-full h-full border-0"
+              />
+            </div>
 
-              {/* QR CODE SIMULATION */}
-              <div className="pt-2 flex flex-col items-center justify-center space-y-2">
-                <div className="p-3 bg-white rounded-xl shadow-lg">
-                  <div className="w-32 h-32 bg-neutral-950 flex items-center justify-center text-white text-[10px] font-mono text-center p-2 rounded">
-                    [QR CODE PIX R$ {pixModalSite.monthlyFee}]
-                  </div>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  await safeCopyText(getSuspendedPageHtml(suspendedPreviewSite));
+                  showToast('📋 Código HTML da Tela Neutra de Manutenção copiado!');
+                }}
+                className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-bold flex items-center gap-1.5 border border-neutral-700 cursor-pointer transition"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copiar HTML de Manutenção</span>
+              </button>
+
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={async () => {
-                    await safeCopyText(data.saasSettings?.pixKey || 'contato@luxebio.com.br');
-                    showToast('🔑 Chave PIX copiada para a área de transferência!');
+                  onClick={() => {
+                    toggleSiteSuspensionMode(suspendedPreviewSite.id);
+                    setSuspendedPreviewSite(null);
                   }}
-                  className="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-amber-300 rounded text-[10px] font-bold cursor-pointer border border-neutral-700"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition ${
+                    isSiteSuspendedStatus(suspendedPreviewSite)
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950'
+                      : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40'
+                  }`}
                 >
-                  Copiar Chave PIX
+                  <Power className="w-3.5 h-3.5" />
+                  <span>
+                    {isSiteSuspendedStatus(suspendedPreviewSite)
+                      ? 'Reativar Link Público Agora'
+                      : 'Ativar Modo Manutenção neste Cliente'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuspendedPreviewSite(null)}
+                  className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold cursor-pointer"
+                >
+                  Fechar
                 </button>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                extendDueDate(pixModalSite.id);
-                setPixModalOpen(false);
-                showToast(`✅ Baixa efetuada! Vencimento de "${pixModalSite.clientName}" estendido em +30 dias.`);
-              }}
-              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition cursor-pointer"
-            >
-              <Check className="w-4 h-4" />
-              <span>Confirmar Pagamento PIX (+30 dias & Reativar)</span>
-            </button>
           </div>
         </div>
       )}
@@ -18929,7 +21934,7 @@ COMO PUBLICAR NO SERVIDOR:
         };
         const liveUrl = targetSite.customDomain 
           ? `https://${targetSite.customDomain}` 
-          : `https://${targetSite.subdomain || 'meusite'}.luxebio.site`;
+          : `https://${targetSite.subdomain || 'meusite'}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(liveUrl)}`;
 
         return (
@@ -19215,6 +22220,70 @@ COMO PUBLICAR NO SERVIDOR:
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Sim, Zerar Rastreamento (0)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE MICROSITE */}
+      {deleteModalSite && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-neutral-900 border border-red-500/40 rounded-2xl p-6 space-y-4 text-neutral-100 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-bold">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-neutral-100">
+                    Excluir Microsite Permanentemente
+                  </h3>
+                  <p className="text-[11px] text-neutral-400">
+                    Cliente: <strong className="text-white">{deleteModalSite.clientName}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeleteModalSite(null)}
+                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-neutral-950 rounded-xl border border-neutral-800 space-y-2 text-xs text-neutral-300 leading-relaxed">
+              <p>
+                Tem certeza que deseja apagar o microsite de{' '}
+                <strong className="text-amber-300">{deleteModalSite.clientName}</strong> (
+                <span className="font-mono text-[11px] text-neutral-400">
+                  /public_html/{deleteModalSite.subdomain}/
+                </span>
+                )?
+              </p>
+              <p className="text-[11px] text-red-300/90 flex items-start gap-1.5 pt-1">
+                <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                <span>Esta ação removerá o microsite do seu Painel de Clientes e da nuvem.</span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setDeleteModalSite(null)}
+                className="flex-1 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs cursor-pointer transition border border-neutral-700"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => executeDeleteSavedSite(deleteModalSite.id)}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 cursor-pointer transition"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Sim, Excluir Microsite</span>
               </button>
             </div>
           </div>
@@ -19688,6 +22757,265 @@ COMO PUBLICAR NO SERVIDOR:
           </div>
         );
       })()}
+
+      {/* ================================================================= */}
+      {/* MODAL DE SEGURANÇA & PIN MESTRE / AUDITORIA (2FA)                 */}
+      {/* ================================================================= */}
+      {securityModalOpen && (
+        <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-5 my-auto text-neutral-100">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-white">
+                    Central de Segurança & PIN Mestre
+                  </h3>
+                  <p className="text-xs text-neutral-400">
+                    Proteção 2FA · Administrador: <span className="text-amber-300 font-mono">{adminUser?.email}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSecurityModalOpen(false)}
+                className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Sub-tabs: Alterar PIN vs Auditoria */}
+            <div className="flex items-center gap-2 border-b border-neutral-800/80 pb-2">
+              <button
+                type="button"
+                onClick={() => setSecurityModalTab('pin')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                  securityModalTab === 'pin'
+                    ? 'bg-amber-400 text-neutral-950 border-amber-300'
+                    : 'bg-neutral-950 text-neutral-400 hover:text-white border-neutral-800'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Alterar PIN de 6 Dígitos</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSecurityModalTab('audit')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                  securityModalTab === 'audit'
+                    ? 'bg-amber-400 text-neutral-950 border-amber-300'
+                    : 'bg-neutral-950 text-neutral-400 hover:text-white border-neutral-800'
+                }`}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>Logs de Auditoria ({auditLogs.length})</span>
+              </button>
+            </div>
+
+            {/* TAB 1: ALTERAR PIN */}
+            {securityModalTab === 'pin' && (
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-2xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-300 space-y-1.5">
+                  <p className="leading-relaxed">
+                    Defina um <strong className="text-white">código de 6 dígitos numéricos</strong> exclusivo. O PIN é armazenado em formato criptográfico <strong className="text-amber-300 font-mono">SHA-256</strong> com salt exclusivo.
+                  </p>
+                  <p className="text-[11px] text-neutral-400">
+                    PIN padrão inicial do sistema: <code className="text-amber-300 font-mono font-bold">849201</code>
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-neutral-400 font-medium block mb-1">
+                      PIN Atual (6 dígitos):
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={6}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={changePinCurrent}
+                      onChange={(e) => {
+                        setChangePinCurrent(e.target.value.replace(/\D/g, '').slice(0, 6));
+                        setChangePinError(null);
+                      }}
+                      placeholder="Ex: 849201"
+                      className="w-full tracking-widest text-base font-mono py-2.5 px-3 rounded-xl bg-neutral-950 border border-neutral-800 text-amber-300 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-neutral-400 font-medium block mb-1">
+                        Novo PIN (6 dígitos):
+                      </label>
+                      <input
+                        type="password"
+                        maxLength={6}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={changePinNew}
+                        onChange={(e) => {
+                          setChangePinNew(e.target.value.replace(/\D/g, '').slice(0, 6));
+                          setChangePinError(null);
+                        }}
+                        placeholder="••••••"
+                        className="w-full tracking-widest text-base font-mono py-2.5 px-3 rounded-xl bg-neutral-950 border border-neutral-800 text-white focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-neutral-400 font-medium block mb-1">
+                        Confirmar Novo PIN:
+                      </label>
+                      <input
+                        type="password"
+                        maxLength={6}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={changePinConfirm}
+                        onChange={(e) => {
+                          setChangePinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6));
+                          setChangePinError(null);
+                        }}
+                        placeholder="••••••"
+                        className="w-full tracking-widest text-base font-mono py-2.5 px-3 rounded-xl bg-neutral-950 border border-neutral-800 text-white focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {changePinError && (
+                  <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-xs text-red-300 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <span>{changePinError}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2 border-t border-neutral-800">
+                  <button
+                    type="button"
+                    onClick={handleChangeAdminPin}
+                    className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer transition"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Salvar Novo PIN Mestre</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSecurityModalOpen(false);
+                      handleLockAdminPanel();
+                    }}
+                    className="w-full sm:w-auto px-4 py-3 rounded-xl bg-neutral-950 hover:bg-red-500/15 text-red-400 font-bold text-xs flex items-center justify-center gap-1.5 border border-neutral-800 hover:border-red-500/30 cursor-pointer transition"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Bloquear Painel Agora</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: AUDITORIA & LOGS */}
+            {securityModalTab === 'audit' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-neutral-400">
+                  <span>Registro das últimas 50 atividades e tentativas de autenticação:</span>
+                  {auditLogs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuditLogs([]);
+                        try { localStorage.removeItem('luxebio_admin_audit_logs_v1'); } catch {}
+                        showToast('🧹 Histórico de auditoria limpo.');
+                      }}
+                      className="text-[11px] text-neutral-400 hover:text-red-400 cursor-pointer underline"
+                    >
+                      Limpar registros
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {auditLogs.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-neutral-500 bg-neutral-950 rounded-2xl border border-neutral-800">
+                      Nenhum evento registrado ainda nesta sessão.
+                    </div>
+                  ) : (
+                    auditLogs.map((log, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl bg-neutral-950 border border-neutral-800/80 flex items-start justify-between gap-3 text-xs"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                log.status === 'success'
+                                  ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50'
+                                  : log.status === 'lockout'
+                                  ? 'bg-red-500 animate-ping'
+                                  : log.status === 'failed'
+                                  ? 'bg-red-400'
+                                  : 'bg-amber-400'
+                              }`}
+                            />
+                            <span className="font-semibold text-white">{log.event}</span>
+                          </div>
+                          <div className="text-[10px] text-neutral-500 font-mono">
+                            {new Date(log.timestamp).toLocaleString('pt-BR')} · {log.device}
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2 py-0.5 rounded text-[9.5px] font-bold font-mono uppercase shrink-0 border ${
+                            log.status === 'success'
+                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                              : log.status === 'lockout'
+                              ? 'bg-red-500/15 text-red-300 border-red-500/30'
+                              : log.status === 'failed'
+                              ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                              : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                          }`}
+                        >
+                          {log.status === 'success'
+                            ? 'Sucesso'
+                            : log.status === 'lockout'
+                            ? 'Bloqueio'
+                            : log.status === 'failed'
+                            ? 'Falha'
+                            : 'Alerta'}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-neutral-800 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const text = auditLogs.map(l => `[${l.timestamp}] (${l.status.toUpperCase()}) ${l.event} - ${l.device}`).join('\n');
+                      await safeCopyText(text);
+                      showToast('📋 Logs de auditoria copiados para a área de transferência!');
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Copiar Relatório de Auditoria</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
