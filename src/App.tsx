@@ -1251,7 +1251,8 @@ const INITIAL_DATA = {
       'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700',
       'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700',
       'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700',
-    ]
+    ],
+    captions: [] as string[],
   },
   locationCard: {
     enabled: true,
@@ -1450,7 +1451,7 @@ const INITIAL_DATA = {
       apiKey: '',
       environment: 'sandbox' as 'sandbox' | 'production',
       preferredMethod: 'PIX' as 'PIX' | 'BOLETO' | 'CREDIT_CARD',
-      enabled: true,
+      enabled: false,
     }
   }
 };
@@ -1554,6 +1555,18 @@ export function formatPlanUpdatesLabel(maxUpdates: number, short = false): strin
     return `${maxUpdates} alt./mês`;
   }
   return `${maxUpdates} ${maxUpdates === 1 ? 'alteração mensal' : 'alterações mensais'}`;
+}
+
+export function formatCreationPriceDisplay(raw?: string | number | null, fallback = 'R$ 79,90'): string {
+  if (raw === undefined || raw === null) return fallback;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return fallback;
+  if (/^R\$\s*/i.test(trimmed)) return trimmed.replace(/^r\$\s*/i, 'R$ ');
+  const numeric = parseBrlCurrency(trimmed, -1);
+  if (numeric > 0) {
+    return `R$ ${numeric.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return trimmed;
 }
 
 export function syncMaintenancePlansFromConfig(cfg?: {
@@ -1839,6 +1852,7 @@ export const getUnderConstructionPageHtml = (
   agencyConfig?: {
     agencyBrandName?: string;
     agencyWhatsapp?: string;
+    agencyEmail?: string;
     baseDomain?: string;
   }
 ): string => {
@@ -1847,7 +1861,8 @@ export const getUnderConstructionPageHtml = (
     customer?.clientName ||
     'Cliente VIP';
   const brandName = agencyConfig?.agencyBrandName || 'BioVip';
-  const rawAgencyPhone = agencyConfig?.agencyWhatsapp || '5511999999999';
+  const agencyEmail = agencyConfig?.agencyEmail || 'contato@biovip.com.br';
+  const rawAgencyPhone = agencyConfig?.agencyWhatsapp || '5531991390202';
   const cleanAgencyPhone = formatWhatsAppPhone(rawAgencyPhone);
   const baseDomain = (agencyConfig?.baseDomain || 'biovip.com.br').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const subdomain = customer?.subdomain || 'meusite';
@@ -2235,7 +2250,7 @@ export const getUnderConstructionPageHtml = (
     </main>
 
     <footer>
-      ${brandName} · Tecnologia em Microsites de Alta Conversão
+      ${brandName} · Tecnologia em Microsites de Alta Conversão · <a href="mailto:${agencyEmail}" style="color: #d4af37; text-decoration: none;">${agencyEmail}</a>
     </footer>
   </div>
 
@@ -3525,6 +3540,7 @@ export default function App() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
+  const [newGalleryCaption, setNewGalleryCaption] = useState('');
   const [editingFeeSiteId, setEditingFeeSiteId] = useState<string | null>(null);
   const [tempFeeInput, setTempFeeInput] = useState<string>('');
   const [photoOrientations, setPhotoOrientations] = useState<Record<string, {
@@ -3674,6 +3690,7 @@ export default function App() {
     baseDomain: string;
     agencyBrandName: string;
     agencyWhatsapp: string;
+    agencyEmail?: string;
     deliveryTime: string;
     priceEssential: string;
     pricePro: string;
@@ -3690,12 +3707,17 @@ export default function App() {
     checkoutUrlBasic?: string;
     checkoutUrlPro?: string;
     checkoutUrlVip?: string;
+    asaasApiKey?: string;
+    asaasEnvironment?: 'sandbox' | 'production';
+    asaasWebhookToken?: string;
+    asaasEnabled?: boolean;
   }>(() => {
     const defaults = {
       creatorSubdomain: 'criador',
       baseDomain: 'biovip.com.br',
       agencyBrandName: 'BioVip Digital',
-      agencyWhatsapp: '5511999999999',
+      agencyWhatsapp: '5531991390202',
+      agencyEmail: 'contato@biovip.com.br',
       deliveryTime: '24 horas',
       priceEssential: 'R$ 79,90',
       pricePro: 'R$ 79,90',
@@ -3708,10 +3730,14 @@ export default function App() {
       updatesVip: 'Ilimitadas',
       creatorFooterUrl: '',
       creatorFooterLabel: 'Quero um microsite assim',
-      checkoutPortalName: 'Kiwify',
+      checkoutPortalName: 'WhatsApp VIP',
       checkoutUrlBasic: '',
       checkoutUrlPro: '',
       checkoutUrlVip: '',
+      asaasApiKey: '',
+      asaasEnvironment: 'sandbox' as 'sandbox' | 'production',
+      asaasWebhookToken: '',
+      asaasEnabled: false,
     };
     try {
       const saved = localStorage.getItem('luxebio_landing_config_v1');
@@ -3723,7 +3749,16 @@ export default function App() {
         if (!parsed.agencyBrandName || parsed.agencyBrandName === 'LuxeBio Digital') {
           parsed.agencyBrandName = 'BioVip Digital';
         }
-        const merged = { ...defaults, ...parsed };
+        if (!parsed.agencyEmail) {
+          parsed.agencyEmail = 'contato@biovip.com.br';
+        }
+        if (!parsed.agencyWhatsapp || parsed.agencyWhatsapp === '5511999999999' || String(parsed.agencyWhatsapp).includes('99999999')) {
+          parsed.agencyWhatsapp = '5531991390202';
+        }
+        if (parsed.asaasEnabled === undefined) {
+          parsed.asaasEnabled = false;
+        }
+        const merged = { ...defaults, ...parsed, agencyWhatsapp: parsed.agencyWhatsapp || '5531991390202', asaasEnabled: false };
         syncMaintenancePlansFromConfig(merged);
         return merged;
       }
@@ -3734,15 +3769,150 @@ export default function App() {
 
   syncMaintenancePlansFromConfig(landingConfig);
 
+  const persistLandingConfigEverywhere = (updated: typeof landingConfig) => {
+    syncMaintenancePlansFromConfig(updated);
+    try {
+      localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
+    } catch {}
+    // Persist on backend server so all subdomains (criador.biovip.com.br & biovip.com.br) stay in sync
+    fetch('/api/landing-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: updated }),
+    }).catch(() => {});
+    // Also persist to Firestore public_models/biovip_landing_config when admin is authenticated
+    if (firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
+      const publicCopy = { ...updated };
+      delete publicCopy.asaasApiKey;
+      setDoc(doc(firebaseDb, 'public_models', 'biovip_landing_config'), {
+        id: 'biovip_landing_config',
+        ownerId: firebaseAuth.currentUser.uid,
+        clientName: 'Configuração Oficial Landing Page BioVip',
+        nicheCategory: 'Config',
+        subdomain: 'config',
+        customDomain: '',
+        isLandingModel: true,
+        sitePayload: serializeSafeFirestorePayload({ landingConfig: publicCopy }),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+    }
+  };
+
   const updateLandingConfig = (key: string, val: string) => {
     setLandingConfig(prev => {
       const updated = { ...prev, [key]: val };
-      syncMaintenancePlansFromConfig(updated);
+      persistLandingConfigEverywhere(updated);
+      return updated;
+    });
+  };
+
+  // Sync landingConfig from server & across browser tabs so changes to plan prices/updates reflect immediately on the Landing Page
+  useEffect(() => {
+    const fetchServerLandingConfig = () => {
+      fetch('/api/landing-config')
+        .then(r => r.json())
+        .then(json => {
+          if (json?.success && json?.config && typeof json.config === 'object') {
+            setLandingConfig(prev => {
+              const merged = {
+                ...prev,
+                ...json.config,
+                agencyWhatsapp:
+                  !json.config.agencyWhatsapp || json.config.agencyWhatsapp === '5511999999999'
+                    ? prev.agencyWhatsapp || '5531991390202'
+                    : json.config.agencyWhatsapp,
+              };
+              syncMaintenancePlansFromConfig(merged);
+              try {
+                localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchServerLandingConfig();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'luxebio_landing_config_v1' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setLandingConfig(prev => {
+            const merged = { ...prev, ...parsed };
+            syncMaintenancePlansFromConfig(merged);
+            return merged;
+          });
+        } catch {}
+      }
+    };
+
+    const handleFocus = () => {
+      fetchServerLandingConfig();
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  const getActiveAsaasApiKey = (): string => {
+    return (landingConfig.asaasApiKey || data.saasSettings?.asaas?.apiKey || '').trim();
+  };
+
+  const getActiveAsaasEnv = (): 'sandbox' | 'production' => {
+    const env = landingConfig.asaasEnvironment || data.saasSettings?.asaas?.environment;
+    return env === 'production' ? 'production' : 'sandbox';
+  };
+
+  const updateAsaasSettings = (patch: {
+    apiKey?: string;
+    environment?: 'sandbox' | 'production';
+    webhookToken?: string;
+  }) => {
+    setLandingConfig(prev => {
+      const updated = {
+        ...prev,
+        ...(patch.apiKey !== undefined ? { asaasApiKey: patch.apiKey } : {}),
+        ...(patch.environment !== undefined ? { asaasEnvironment: patch.environment } : {}),
+        ...(patch.webhookToken !== undefined ? { asaasWebhookToken: patch.webhookToken } : {}),
+      };
       try {
         localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
       } catch {}
       return updated;
     });
+
+    setData(p => ({
+      ...p,
+      saasSettings: {
+        ...p.saasSettings,
+        asaas: {
+          ...(p.saasSettings?.asaas || { apiKey: '', environment: 'sandbox', preferredMethod: 'PIX', enabled: true }),
+          ...(patch.apiKey !== undefined ? { apiKey: patch.apiKey } : {}),
+          ...(patch.environment !== undefined ? { environment: patch.environment } : {}),
+        },
+      },
+    }));
+  };
+
+  const formatCpfCnpjInput = (raw: string): string => {
+    const digits = raw.replace(/\D/g, '').slice(0, 14);
+    if (digits.length <= 11) {
+      return digits
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
   };
 
   const resolveCreatorFooterInfo = (siteData?: typeof INITIAL_DATA) => {
@@ -3775,7 +3945,7 @@ export default function App() {
     } else if (typeof window !== 'undefined' && window.location?.origin) {
       href = window.location.origin;
     } else {
-      const targetAgencyPhone = (landingConfig.agencyWhatsapp || '5511999999999').replace(/\D/g, '');
+      const targetAgencyPhone = (landingConfig.agencyWhatsapp || '5531991390202').replace(/\D/g, '');
       const msg = encodeURIComponent(`Olá! Vi um microsite criado por ${brandName} e quero encomendar o meu!`);
       href = `https://wa.me/${targetAgencyPhone}?text=${msg}`;
     }
@@ -3883,6 +4053,7 @@ export default function App() {
     paymentId?: string;
     pixPayload?: string;
     pixQrCode?: string;
+    invoiceUrl?: string;
     status?: string;
     error?: string;
   } | null>(null);
@@ -3896,6 +4067,8 @@ export default function App() {
   const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'active' | 'overdue' | 'suspended' | 'disabled' | 'construction' | 'model'>('all');
   const [asaasStatusTesting, setAsaasStatusTesting] = useState<boolean>(false);
   const [asaasTestResult, setAsaasTestResult] = useState<{ success: boolean; message: string; balance?: number } | null>(null);
+  const [asaasServerConfigured, setAsaasServerConfigured] = useState<boolean>(false);
+  const [asaasGuideOpen, setAsaasGuideOpen] = useState<boolean>(false);
   const [asaasGeneratingSiteId, setAsaasGeneratingSiteId] = useState<string | null>(null);
   const [asaasPaymentData, setAsaasPaymentData] = useState<{
     paymentId: string;
@@ -3905,6 +4078,22 @@ export default function App() {
     pixPayload?: string;
     status: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!landingConfig.asaasEnabled) return;
+    fetch('/api/asaas/config-status')
+      .then(r => r.json())
+      .then(json => {
+        if (json?.serverKeyConfigured) {
+          setAsaasServerConfigured(true);
+          const srvEnv = json.environment === 'production' ? 'production' : 'sandbox';
+          if (!getActiveAsaasApiKey()) {
+            updateAsaasSettings({ environment: srvEnv });
+          }
+        }
+      })
+      .catch(() => {});
+  }, [landingConfig.asaasEnabled]);
   const [subdomainModalOpen, setSubdomainModalOpen] = useState(false);
   const [copiedSubdomainLink, setCopiedSubdomainLink] = useState(false);
   const [landingCategoryFilter, setLandingCategoryFilter] = useState<string>('Todos');
@@ -3921,6 +4110,7 @@ export default function App() {
   const [landingOrderForm, setLandingOrderForm] = useState({
     clientName: '',
     clientWhatsapp: '',
+    clientCpfCnpj: '',
     instagramOrMaps: '',
     selectedModel: 'Advocacia & Consultoria Executiva',
     selectedPlan: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
@@ -4439,6 +4629,24 @@ export default function App() {
               parsedPayload = JSON.parse(raw.sitePayload) || {};
             } catch {}
           }
+          if (raw.id === 'biovip_landing_config' && parsedPayload.landingConfig) {
+            setLandingConfig(prev => {
+              const merged = {
+                ...prev,
+                ...parsedPayload.landingConfig,
+                agencyWhatsapp:
+                  !parsedPayload.landingConfig.agencyWhatsapp || parsedPayload.landingConfig.agencyWhatsapp === '5511999999999'
+                    ? prev.agencyWhatsapp || '5531991390202'
+                    : parsedPayload.landingConfig.agencyWhatsapp,
+              };
+              syncMaintenancePlansFromConfig(merged);
+              try {
+                localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+            return;
+          }
           const siteData = parsedPayload.data || raw.data;
           if (siteData) {
             remoteModels.push({
@@ -4926,15 +5134,15 @@ export default function App() {
     const isFashion = /moda|loja|boutique|roupa|look|acess[oó]rio|joia|semijoia/.test(nicheRaw);
 
     if (isBeautyLashNail) {
-      const hasLash = /c[ií]lio|lash/.test(nicheRaw);
-      const hasNail = /unha|nail|fibra|gel|manicure/.test(nicheRaw);
+      const hasLash = /c[ií]lio|lash|volume\s+ingl[eê]s|volume\s+brasileiro|efeito\s+fox|fox\s+eyes|fio\s+a\s+fio/.test(nicheRaw);
+      const hasNail = /\b(?:unha|unhas|nail|fibra|gel|manicure)\b/.test(nicheRaw);
       const specialtyTitle =
         hasLash && hasNail
           ? 'EXTENSÃO DE CÍLIOS & NAIL DESIGNER DE ALTO PADRÃO'
           : hasLash
-          ? 'ESPECIALISTA EM EXTENSÃO DE CÍLIOS & LASH DESIGN'
+          ? (aiForm.businessNiche || 'ESPECIALISTA EM EXTENSÃO DE CÍLIOS & LASH DESIGN').toUpperCase()
           : hasNail
-          ? 'NAIL DESIGNER & ALONGAMENTO DE LUXO'
+          ? (aiForm.businessNiche || 'NAIL DESIGNER & ALONGAMENTO DE LUXO').toUpperCase()
           : (aiForm.businessNiche || 'BELEZA, ESTÉTICA & AUTOESTIMA').toUpperCase();
 
       const preferredBeautyTheme =
@@ -4945,6 +5153,120 @@ export default function App() {
           : aiForm.visualStyle === 'vibrant_glam'
           ? 'velvetGlamour'
           : 'roseGoldQuartz';
+
+      const clientBeautyServices =
+        hasLash && !hasNail
+          ? [
+              {
+                id: 'srv-1',
+                name: 'Extensão de Cílios — Volume Brasileiro / Volume Inglês',
+                description: 'Volume na medida certa para realçar sua beleza com olhar delicado, elegante, confortável e duradouro.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '1h45',
+                badge: 'MAIS PEDIDO',
+                ctaLabel: 'Agendar',
+                actionType: 'booking' as const,
+                featured: true,
+                imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+              },
+              {
+                id: 'srv-2',
+                name: 'Extensão de Cílios — Efeito Fox (Fox Eyes) / Fio a Fio',
+                description: 'Mapeamento alongado e personalizado para um olhar marcante, sofisticado e irresistível sem perder a delicadeza.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '2h00',
+                badge: 'DESTAQUE VIP',
+                ctaLabel: 'Agendar',
+                actionType: 'booking' as const,
+                featured: true,
+                imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=300',
+              },
+              {
+                id: 'srv-3',
+                name: 'Manutenção de Extensão de Cílios & Higienização',
+                description: 'Higienização profunda e reposição estratégica dos fios para manter seu olhar sempre impecável.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '1h15',
+                badge: 'MANUTENÇÃO',
+                ctaLabel: 'Reservar',
+                actionType: 'booking' as const,
+                featured: false,
+                imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+              },
+            ]
+          : hasNail && !hasLash
+          ? [
+              {
+                id: 'srv-1',
+                name: 'Alongamento em Fibra de Vidro Slim',
+                description: 'Unhas resistentes, curvatura natural impecável e acabamento espelhado de longa duração.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '2h00',
+                badge: 'NAIL LUXURY',
+                ctaLabel: 'Agendar',
+                actionType: 'booking' as const,
+                featured: true,
+                imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=300',
+              },
+              {
+                id: 'srv-2',
+                name: 'Banho de Gel & Esmaltação em Gel',
+                description: 'Brilho intenso, proteção para suas unhas naturais e durabilidade por semanas sem descascar.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '1h30',
+                badge: 'ALTA DURABILIDADE',
+                ctaLabel: 'Agendar',
+                actionType: 'booking' as const,
+                featured: true,
+                imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=300',
+              },
+              {
+                id: 'srv-3',
+                name: 'Manutenção de Alongamento & Cuticulagem',
+                description: 'Nivelamento estrutural e renovação completa para manter suas unhas sempre impecáveis.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '1h30',
+                badge: 'RETORNO VIP',
+                ctaLabel: 'Reservar',
+                actionType: 'booking' as const,
+                featured: false,
+                imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+              },
+            ]
+          : [
+              {
+                id: 'srv-1',
+                name: 'Extensão de Cílios (Volume Brasileiro / Fox Eyes / Fio a Fio)',
+                description: 'Mapeamento personalizado para destacar seu olhar com leveza, conforto e alta retenção.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '1h45',
+                badge: 'MAIS PEDIDO',
+                ctaLabel: 'Agendar',
+                actionType: 'booking' as const,
+                featured: true,
+                imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+              },
+              {
+                id: 'srv-2',
+                name: 'Alongamento em Fibra de Vidro / Banho de Gel Slim',
+                description: 'Unhas resistentes, curvatura natural impecável e acabamento espelhado de longa duração.',
+                price: 'Sob Consulta',
+                oldPrice: '',
+                duration: '2h00',
+                badge: 'NAIL LUXURY',
+                ctaLabel: 'Agendar',
+                actionType: 'booking' as const,
+                featured: true,
+                imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=300',
+              },
+            ];
 
       return {
         theme: preferredBeautyTheme,
@@ -5051,7 +5373,7 @@ export default function App() {
           ...INITIAL_DATA.studentGrid,
           enabled: true,
           headline: 'Portfólio & Transformações Reais',
-          subtitle: 'Confira resultados impecáveis de nossas clientes no studio',
+          subtitle: 'Confira os trabalhos mais curtidos de nossas clientes no studio',
           photos: [
             'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
             'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
@@ -5060,6 +5382,7 @@ export default function App() {
             'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600',
             'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=600',
           ],
+          captions: [],
         },
         locationCard: {
           enabled: true,
@@ -5076,52 +5399,12 @@ export default function App() {
           enabled: true,
           headline: 'Menu de Procedimentos Exclusivos',
           subtitle: 'Materiais hipoalergênicos de primeira linha com retenção e acabamento de luxo',
-          items: [
-            {
-              id: 'srv-1',
-              name: 'Extensão de Cílios (Volume Brasileiro / Fox Eyes / Fio a Fio)',
-              description: 'Mapeamento personalizado para destacar seu olhar com leveza, conforto e alta retenção.',
-              price: 'R$ 180',
-              oldPrice: 'R$ 220',
-              duration: '1h45',
-              badge: 'MAIS PEDIDO',
-              ctaLabel: 'Agendar',
-              actionType: 'booking' as const,
-              featured: true,
-              imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
-            },
-            {
-              id: 'srv-2',
-              name: 'Alongamento em Fibra de Vidro / Banho de Gel Slim',
-              description: 'Unhas resistentes, curvatura natural impecável e acabamento espelhado de longa duração.',
-              price: 'R$ 190',
-              oldPrice: 'R$ 230',
-              duration: '2h00',
-              badge: 'NAIL LUXURY',
-              ctaLabel: 'Agendar',
-              actionType: 'booking' as const,
-              featured: true,
-              imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=300',
-            },
-            {
-              id: 'srv-3',
-              name: 'Combo VIP: Extensão de Cílios + Nail Design Completo',
-              description: 'Transformação completa em uma sessão especial com condição exclusiva.',
-              price: 'R$ 330',
-              oldPrice: 'R$ 410',
-              duration: '3h15',
-              badge: 'COMBO ESPECIAL',
-              ctaLabel: 'Reservar Combo',
-              actionType: 'booking' as const,
-              featured: false,
-              imageUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=300',
-            },
-          ],
+          items: clientBeautyServices,
         },
         aboutMe: {
           enabled: true,
           headline: `Sobre ${rawName}`,
-          paragraph: `Referência em ${aiForm.businessNiche || 'Extensão de Cílios e Nail Design'}, nosso studio nasceu com a missão de entregar um atendimento acolhedor, técnico e altamente personalizado. Utilizamos apenas materiais de excelência para garantir saúde, durabilidade e um acabamento sofisticado que valoriza sua beleza única.`,
+          paragraph: `Referência em ${aiForm.businessNiche || (hasLash && !hasNail ? 'Extensão de Cílios' : hasNail && !hasLash ? 'Nail Design' : 'Beleza e Estética')}, nosso studio nasceu com a missão de entregar um atendimento acolhedor, técnico e altamente personalizado. Utilizamos apenas materiais de excelência para garantir saúde, durabilidade e um acabamento sofisticado que valoriza sua beleza única.`,
           closingPhrase: 'Beleza, autocuidado e excelência em cada atendimento.',
         },
       };
@@ -5243,6 +5526,17 @@ export default function App() {
       .trim();
     const cleanMaps = (aiForm.googleMaps || '').trim();
 
+    const finalGalleryPhotos =
+      Array.isArray(generated?.studentGrid?.photos) && generated.studentGrid.photos.length > 0
+        ? generated.studentGrid.photos
+        : INITIAL_DATA.studentGrid.photos;
+
+    const finalGalleryCaptions = finalGalleryPhotos.map((_: string, idx: number) =>
+      Array.isArray(generated?.studentGrid?.captions)
+        ? String(generated.studentGrid.captions[idx] || '')
+        : ''
+    );
+
     setData((prev) => ({
       ...INITIAL_DATA,
       theme: safeTheme,
@@ -5281,10 +5575,8 @@ export default function App() {
       studentGrid: {
         ...INITIAL_DATA.studentGrid,
         ...(generated?.studentGrid || {}),
-        photos:
-          Array.isArray(generated?.studentGrid?.photos) && generated.studentGrid.photos.length > 0
-            ? generated.studentGrid.photos
-            : INITIAL_DATA.studentGrid.photos,
+        photos: finalGalleryPhotos,
+        captions: finalGalleryCaptions,
       },
       locationCard: {
         ...INITIAL_DATA.locationCard,
@@ -5356,15 +5648,14 @@ export default function App() {
 
     const totalRealPhotos =
       (extractedMeta?.instagramPhotosCount || 0) + (extractedMeta?.mapsPhotosCount || 0);
+    const servicesCount = extractedMeta?.servicesExtractedCount || normalizedServices.length;
     const sourcesFound: string[] = [];
     if (extractedMeta?.instagramFound) sourcesFound.push('Instagram');
     if (extractedMeta?.mapsFound) sourcesFound.push('Google Meu Negócio');
 
     if (sourcesFound.length > 0) {
       showToast(
-        `✨ Microsite criado com dados reais do ${sourcesFound.join(' + ')}${
-          totalRealPhotos > 0 ? ` (${totalRealPhotos} foto(s) importada(s))` : ''
-        }!`
+        `✨ Microsite criado com ${totalRealPhotos} foto(s) mais curtida(s) e ${servicesCount} serviço(s) extraído(s) do cliente!`
       );
     } else {
       showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
@@ -5684,7 +5975,7 @@ export default function App() {
     </table>
 
     <div class="footer">
-      <div>BioVip Studio SaaS Engine — Plataforma de Gestão de Microsites & Landing Pages</div>
+      <div>BioVip Studio SaaS Engine — Contato Oficial: contato@biovip.com.br</div>
       <div>Documento Executivo de Relatório Mensal</div>
     </div>
   </div>
@@ -5890,7 +6181,7 @@ export default function App() {
     </p>
 
     <div class="footer">
-      <div>BioVip Studio SaaS Engine — Relatório Individual do Cliente</div>
+      <div>BioVip Studio SaaS Engine — Contato & Suporte: contato@biovip.com.br</div>
       <div>Página 1 de 1</div>
     </div>
   </div>
@@ -6183,34 +6474,34 @@ export default function App() {
     if (cat === 'scheduled_maintenance') {
       return {
         subject: `[Comunicado Importante] Manutenção Programada de Servidores & DNS — BioVip Studio`,
-        body: `Olá, {{nome_cliente}}!\n\nInformamos que realizaremos uma manutenção preventiva programada em nossa infraestrutura de servidores, CDN e certificados SSL para garantir ainda mais velocidade e estabilidade ao seu Microsite ({{dominio}}).\n\n📅 DETALHES DA JANELA DE MANUTENÇÃO:\n• Data Programada: ${todayBr} (Madrugada, das 02:00h às 03:30h)\n• Impacto Estimado: Nenhum impacto nos seus dados ou agendamentos (possível oscilação de apenas alguns segundos durante a atualização de cache SSL).\n• O que será atualizado: Otimização de carregamento de imagens em alta definição, blindagem de segurança DNS e velocidade dos botões de WhatsApp.\n\nVocê não precisa realizar nenhuma ação no seu link da Bio do Instagram ou redes sociais — tudo continuará funcionando automaticamente.\n\nEm caso de dúvidas, nossa equipe de suporte está à disposição pelo WhatsApp.\n\nAtenciosamente,\nEquipe de Administração & Infraestrutura — BioVip Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nInformamos que realizaremos uma manutenção preventiva programada em nossa infraestrutura de servidores, CDN e certificados SSL para garantir ainda mais velocidade e estabilidade ao seu Microsite ({{dominio}}).\n\n📅 DETALHES DA JANELA DE MANUTENÇÃO:\n• Data Programada: ${todayBr} (Madrugada, das 02:00h às 03:30h)\n• Impacto Estimado: Nenhum impacto nos seus dados ou agendamentos (possível oscilação de apenas alguns segundos durante a atualização de cache SSL).\n• O que será atualizado: Otimização de carregamento de imagens em alta definição, blindagem de segurança DNS e velocidade dos botões de WhatsApp.\n\nVocê não precisa realizar nenhuma ação no seu link da Bio do Instagram ou redes sociais — tudo continuará funcionando automaticamente.\n\nEm caso de dúvidas, nossa equipe de suporte está à disposição pelo WhatsApp ou pelo e-mail contato@biovip.com.br.\n\nAtenciosamente,\nEquipe de Administração & Infraestrutura — BioVip Studio Pro\ncontato@biovip.com.br`,
       };
     }
 
     if (cat === 'maintenance_completed') {
       return {
         subject: `[Atualização Concluída] Seu Microsite está ainda mais rápido e seguro 🚀`,
-        body: `Olá, {{nome_cliente}}!\n\nComunicamos que a manutenção e atualização de infraestrutura nos servidores do seu Microsite ({{dominio}}) foi concluída com 100% de sucesso!\n\n✅ MELHORIAS APLICADAS NA SUA PÁGINA:\n• Carregamento instantâneo de fotos e portfólio (orientação inteligente retrato/paisagem)\n• Renovação automática do Certificado de Segurança SSL (HTTPS)\n• Otimização do redirecionamento rápido para o seu WhatsApp comercial\n\nSeu link oficial (https://{{dominio}}) está 100% online e operando em velocidade máxima para converter visitantes do seu Instagram.\n\nAtenciosamente,\nAdministração — BioVip Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nComunicamos que a manutenção e atualização de infraestrutura nos servidores do seu Microsite ({{dominio}}) foi concluída com 100% de sucesso!\n\n✅ MELHORIAS APLICADAS NA SUA PÁGINA:\n• Carregamento instantâneo de fotos e portfólio (orientação inteligente retrato/paisagem)\n• Renovação automática do Certificado de Segurança SSL (HTTPS)\n• Otimização do redirecionamento rápido para o seu WhatsApp comercial\n\nSeu link oficial (https://{{dominio}}) está 100% online e operando em velocidade máxima para converter visitantes do seu Instagram.\n\nAtenciosamente,\nAdministração — BioVip Studio Pro\ncontato@biovip.com.br`,
       };
     }
 
     if (cat === 'new_features') {
       return {
         subject: `[Novidades Liberadas] Novos recursos disponíveis para o seu Microsite Profissional ✨`,
-        body: `Olá, {{nome_cliente}}!\n\nTemos ótimas notícias! Liberamos novas atualizações e ferramentas de conversão para os clientes da nossa plataforma:\n\n🚀 O QUE HÁ DE NOVO:\n1. Galeria Inteligente Adaptativa: Suas fotos em formato vertical (retrato) e horizontal (paisagem) agora se ajustam automaticamente sem cortes.\n2. Rastreamento Avançado da Bio do Instagram: Acompanhe quantos cliques vieram diretamente do seu perfil.\n3. Catálogo e Agendamento Otimizado para WhatsApp.\n\nCaso deseje atualizar fotos, preços ou textos do seu microsite ({{dominio}}), basta responder a este comunicado ou nos chamar no WhatsApp de suporte!\n\nAtenciosamente,\nEquipe BioVip Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nTemos ótimas notícias! Liberamos novas atualizações e ferramentas de conversão para os clientes da nossa plataforma:\n\n🚀 O QUE HÁ DE NOVO:\n1. Galeria Inteligente Adaptativa: Suas fotos em formato vertical (retrato) e horizontal (paisagem) agora se ajustam automaticamente sem cortes.\n2. Rastreamento Avançado da Bio do Instagram: Acompanhe quantos cliques vieram diretamente do seu perfil.\n3. Catálogo e Agendamento Otimizado para WhatsApp.\n\nCaso deseje atualizar fotos, preços ou textos do seu microsite ({{dominio}}), basta responder a este comunicado no e-mail contato@biovip.com.br ou nos chamar no WhatsApp de suporte!\n\nAtenciosamente,\nEquipe BioVip Studio Pro\ncontato@biovip.com.br`,
       };
     }
 
     if (cat === 'billing_notice') {
       return {
         subject: `[Informativo Financeiro] Lembrete de Assinatura e Manutenção do Microsite`,
-        body: `Olá, {{nome_cliente}}!\n\nEste é um informativo administrativo referente à manutenção mensal, hospedagem premium e suporte contínuo do seu Microsite Profissional ({{dominio}}).\n\n📋 RESUMO DOS DADOS DE ASSINATURA:\n• Valor Mensal Vigente: R$ {{valor}}\n• Data de Vencimento Cadastrada: {{vencimento}}\n• Chave PIX Oficial p/ Renovação: ${pixKey} (${pixName})\n\nManter sua assinatura em dia garante que o link na Bio do seu Instagram e no Google Meu Negócio permaneça ativo 24h por dia com certificado SSL e suporte prioritário.\n\nCaso já tenha efetuado o pagamento do ciclo atual, por favor desconsidere este aviso.\n\nAtenciosamente,\nDepartamento Financeiro — BioVip Studio Pro`,
+        body: `Olá, {{nome_cliente}}!\n\nEste é um informativo administrativo referente à manutenção mensal, hospedagem premium e suporte contínuo do seu Microsite Profissional ({{dominio}}).\n\n📋 RESUMO DOS DADOS DE ASSINATURA:\n• Valor Mensal Vigente: R$ {{valor}}\n• Data de Vencimento Cadastrada: {{vencimento}}\n• Chave PIX Oficial p/ Renovação: ${pixKey} (${pixName})\n\nManter sua assinatura em dia garante que o link na Bio do seu Instagram e no Google Meu Negócio permaneça ativo 24h por dia com certificado SSL e suporte prioritário.\n\nCaso já tenha efetuado o pagamento do ciclo atual, por favor desconsidere este aviso.\n\nAtenciosamente,\nDepartamento Financeiro — BioVip Studio Pro\ncontato@biovip.com.br`,
       };
     }
 
     return {
       subject: `[Comunicado Oficial] Aviso Importante aos Clientes — BioVip Studio`,
-      body: `Olá, {{nome_cliente}}!\n\nEntramos em contato para informar sobre uma atualização importante referente ao seu Microsite ({{dominio}}):\n\n[Escreva aqui os detalhes do aviso, manutenção ou comunicado relevante para todos os clientes...]\n\nQualquer dúvida ou solicitação, nossa equipe está pronta para atender você.\n\nAtenciosamente,\nAdministração — BioVip Studio Pro`,
+      body: `Olá, {{nome_cliente}}!\n\nEntramos em contato para informar sobre uma atualização importante referente ao seu Microsite ({{dominio}}):\n\n[Escreva aqui os detalhes do aviso, manutenção ou comunicado relevante para todos os clientes...]\n\nQualquer dúvida ou solicitação, nossa equipe está pronta para atender você pelo e-mail contato@biovip.com.br.\n\nAtenciosamente,\nAdministração — BioVip Studio Pro\ncontato@biovip.com.br`,
     };
   };
 
@@ -6506,8 +6797,8 @@ export default function App() {
     setAsaasStatusTesting(true);
     setAsaasTestResult(null);
     try {
-      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
-      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const apiKey = getActiveAsaasApiKey();
+      const environment = getActiveAsaasEnv();
       const res = await fetch('/api/asaas/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -6515,12 +6806,17 @@ export default function App() {
       });
       const json = await res.json();
       if (res.ok && json.success) {
+        const resolvedEnv: 'sandbox' | 'production' = json.environment === 'production' ? 'production' : 'sandbox';
+        if (resolvedEnv !== environment) {
+          updateAsaasSettings({ environment: resolvedEnv });
+        }
+        const activeEnvLabel = resolvedEnv.toUpperCase();
         setAsaasTestResult({
           success: true,
-          message: `Conexão Asaas OK (${environment.toUpperCase()})! Saldo: R$ ${(json.balance ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+          message: `Conexão Asaas OK (${activeEnvLabel})! Saldo da conta: R$ ${(json.balance ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           balance: json.balance,
         });
-        showToast('✅ Conexão com o Asaas estabelecida com sucesso!');
+        showToast(`✅ Conexão com o Asaas (${activeEnvLabel}) estabelecida com sucesso!`);
       } else {
         setAsaasTestResult({
           success: false,
@@ -6543,8 +6839,8 @@ export default function App() {
     setAsaasGeneratingSiteId(site.id);
     try {
       const billing = getSiteBillingSummary(site);
-      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
-      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const apiKey = getActiveAsaasApiKey();
+      const environment = getActiveAsaasEnv();
 
       const res = await fetch('/api/asaas/create-payment', {
         method: 'POST',
@@ -6593,8 +6889,8 @@ export default function App() {
 
   const checkAsaasStatusAndConfirm = async (siteId: string, paymentId: string) => {
     try {
-      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
-      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const apiKey = getActiveAsaasApiKey();
+      const environment = getActiveAsaasEnv();
       const res = await fetch(`/api/asaas/payment/${paymentId}/status?apiKey=${encodeURIComponent(apiKey)}&environment=${environment}`);
       const result = await res.json();
       if (result.isPaid) {
@@ -6746,6 +7042,7 @@ export default function App() {
 
     const cleanName = landingOrderForm.clientName.trim() || 'Cliente BioVip';
     const cleanPhone = landingOrderForm.clientWhatsapp.replace(/\D/g, '') || '5511999999999';
+    const cleanCpfCnpj = landingOrderForm.clientCpfCnpj.replace(/\D/g, '');
     // Valor cobrado agora no Asaas = Valor definido no painel pelo Administrador
     const adminDefinedValue = getAdminAsaasCreationFee(paymentConfirmPlan.id);
     // Valor da recorrência futura = Valor do plano escolhido pelo cliente
@@ -6753,8 +7050,8 @@ export default function App() {
 
     setCheckoutAsaasPix({ loading: true });
     try {
-      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
-      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const apiKey = getActiveAsaasApiKey();
+      const environment = getActiveAsaasEnv();
 
       const res = await fetch('/api/asaas/create-payment', {
         method: 'POST',
@@ -6765,6 +7062,7 @@ export default function App() {
           customerName: cleanName,
           customerEmail: cleanEmail,
           customerPhone: cleanPhone,
+          customerCpfCnpj: cleanCpfCnpj,
           value: adminDefinedValue,
           description: `Criação Microsite BioVip - ${landingOrderForm.selectedModel} (${paymentConfirmPlan.name} · Recorrência R$ ${recurringPlanValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)`,
           billingType: 'PIX',
@@ -6772,12 +7070,13 @@ export default function App() {
         }),
       });
       const json = await res.json();
-      if (res.ok && json.success && json.pix?.payload) {
+      if (res.ok && json.success && (json.pix?.payload || json.invoiceUrl)) {
         setCheckoutAsaasPix({
           loading: false,
           paymentId: json.paymentId,
-          pixPayload: json.pix.payload,
-          pixQrCode: json.pix.encodedImage,
+          pixPayload: json.pix?.payload,
+          pixQrCode: json.pix?.encodedImage,
+          invoiceUrl: json.invoiceUrl,
           status: json.status || 'PENDING',
         });
         showToast(
@@ -6813,8 +7112,8 @@ export default function App() {
 
   const checkCheckoutAsaasPixStatus = async (paymentId: string) => {
     try {
-      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
-      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const apiKey = getActiveAsaasApiKey();
+      const environment = getActiveAsaasEnv();
       const currentPlanId = paymentConfirmPlan?.id || 'pro';
       const chargedVal = getAdminAsaasCreationFee(currentPlanId);
 
@@ -7390,37 +7689,63 @@ export default function App() {
   const updateConversion = (key: string, val: unknown) => setData(p => ({ ...p, conversion: { ...p.conversion, [key]: val } }));
   const updateProcess = (key: string, val: unknown) => setData(p => ({ ...p, processSteps: { ...p.processSteps, [key]: val } }));
   const updateStudentGrid = (key: string, val: unknown) => setData(p => ({ ...p, studentGrid: { ...p.studentGrid, [key]: val } }));
-  const addGalleryPhoto = (url: string) => {
+  const addGalleryPhoto = (url: string, optionalCaption?: string) => {
     if (!url.trim()) return;
-    setData(p => ({
-      ...p,
-      studentGrid: {
-        ...p.studentGrid,
-        photos: [...(p.studentGrid.photos || []), url.trim()]
-      }
-    }));
+    const descToSave = (optionalCaption !== undefined ? optionalCaption : newGalleryCaption).trim();
+    setData(p => {
+      const currentPhotos = p.studentGrid.photos || [];
+      const currentCaptions = Array.from({ length: currentPhotos.length }, (_, i) => (p.studentGrid.captions || [])[i] || '');
+      return {
+        ...p,
+        studentGrid: {
+          ...p.studentGrid,
+          photos: [...currentPhotos, url.trim()],
+          captions: [...currentCaptions, descToSave],
+        }
+      };
+    });
     setNewGalleryUrl('');
-    showToast('📸 Nova foto adicionada à galeria!');
+    setNewGalleryCaption('');
+    showToast(descToSave ? '📸 Nova foto com descrição adicionada à galeria!' : '📸 Nova foto adicionada à galeria!');
   };
   const removeGalleryPhoto = (index: number) => {
-    setData(p => ({
-      ...p,
-      studentGrid: {
-        ...p.studentGrid,
-        photos: p.studentGrid.photos.filter((_, idx) => idx !== index)
-      }
-    }));
+    setData(p => {
+      const currentPhotos = p.studentGrid.photos || [];
+      const currentCaptions = Array.from({ length: currentPhotos.length }, (_, i) => (p.studentGrid.captions || [])[i] || '');
+      return {
+        ...p,
+        studentGrid: {
+          ...p.studentGrid,
+          photos: currentPhotos.filter((_, idx) => idx !== index),
+          captions: currentCaptions.filter((_, idx) => idx !== index),
+        }
+      };
+    });
     showToast('🗑️ Foto removida da galeria.');
   };
   const moveGalleryPhoto = (from: number, to: number) => {
     setData(p => {
       const photos = [...(p.studentGrid.photos || [])];
       if (to < 0 || to >= photos.length) return p;
-      const [removed] = photos.splice(from, 1);
-      photos.splice(to, 0, removed);
+      const captions = Array.from({ length: photos.length }, (_, i) => (p.studentGrid.captions || [])[i] || '');
+      const [removedPhoto] = photos.splice(from, 1);
+      photos.splice(to, 0, removedPhoto);
+      const [removedCaption] = captions.splice(from, 1);
+      captions.splice(to, 0, removedCaption);
       return {
         ...p,
-        studentGrid: { ...p.studentGrid, photos }
+        studentGrid: { ...p.studentGrid, photos, captions }
+      };
+    });
+  };
+  const updateGalleryPhotoCaption = (index: number, caption: string) => {
+    setData(p => {
+      const photosLen = (p.studentGrid.photos || []).length;
+      const captions = Array.from({ length: photosLen }, (_, i) => (p.studentGrid.captions || [])[i] || '');
+      captions[index] = caption;
+      return {
+        ...p,
+        studentGrid: { ...p.studentGrid, captions }
       };
     });
   };
@@ -9639,6 +9964,21 @@ export default function App() {
     .gallery-item:hover img {
       transform: scale(1.08);
     }
+    .gallery-caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 18px 10px 8px;
+      background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 60%, transparent 100%);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 500;
+      line-height: 1.3;
+      z-index: 4;
+      pointer-events: none;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
     .gallery-aspect-square { aspect-ratio: 1 / 1; }
     .gallery-aspect-portrait { aspect-ratio: 4 / 5; }
     .gallery-aspect-landscape { aspect-ratio: 4 / 3; }
@@ -9998,9 +10338,11 @@ export default function App() {
             data.studentGrid.aspectRatio === 'portrait' ? 'gallery-aspect-portrait' :
             data.studentGrid.aspectRatio === 'landscape' ? 'gallery-aspect-landscape' :
             data.studentGrid.aspectRatio === 'square' ? 'gallery-aspect-square' : '';
+          const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
           return `
           <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
-            <img src="${p}" alt="Foto ${idx + 1}" loading="lazy" />
+            <img src="${p}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" />
+            ${caption ? `<div class="gallery-caption">${escapeHtmlAttr(caption)}</div>` : ''}
           </div>`;
         }).join('')}
       </div>
@@ -10208,13 +10550,27 @@ export default function App() {
     </div>
     <div style="position:relative; max-width:92vw; max-height:82vh; display:flex; align-items:center; justify-content:center;" onclick="event.stopPropagation()">
       <button onclick="navGalleryLightbox(-1)" style="position:absolute; left:-20px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%; font-size:22px; cursor:pointer; z-index:5;">‹</button>
-      <img id="lb-img" src="" style="max-width:90vw; max-height:80vh; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.15);" />
+      <img id="lb-img" src="" style="max-width:90vw; max-height:76vh; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.15);" />
       <button onclick="navGalleryLightbox(1)" style="position:absolute; right:-20px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%; font-size:22px; cursor:pointer; z-index:5;">›</button>
     </div>
+    <div id="lb-caption" style="display:none; margin-top:12px; max-width:85vw; padding:8px 16px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); color:#fff; font-size:13px; font-weight:500; text-align:center;" onclick="event.stopPropagation()"></div>
   </div>
   <script>
     var galleryPhotos = ${JSON.stringify(data.studentGrid?.photos || [])};
+    var galleryCaptions = ${JSON.stringify((data.studentGrid as any)?.captions || [])};
     var curLbIndex = 0;
+    function syncLightboxCaption() {
+      var capEl = document.getElementById('lb-caption');
+      if (!capEl) return;
+      var text = (galleryCaptions && galleryCaptions[curLbIndex] ? String(galleryCaptions[curLbIndex]).trim() : '');
+      if (text) {
+        capEl.innerText = text;
+        capEl.style.display = 'block';
+      } else {
+        capEl.innerText = '';
+        capEl.style.display = 'none';
+      }
+    }
     function openGalleryLightbox(idx) {
       curLbIndex = idx;
       var modal = document.getElementById('gallery-lightbox-modal');
@@ -10223,6 +10579,7 @@ export default function App() {
       if (!modal || !img) return;
       img.src = galleryPhotos[curLbIndex];
       if (counter) counter.innerText = (curLbIndex + 1) + ' / ' + galleryPhotos.length;
+      syncLightboxCaption();
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
     }
@@ -10238,6 +10595,7 @@ export default function App() {
       var counter = document.getElementById('lb-counter');
       if (img) img.src = galleryPhotos[curLbIndex];
       if (counter) counter.innerText = (curLbIndex + 1) + ' / ' + galleryPhotos.length;
+      syncLightboxCaption();
     }
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeGalleryLightbox();
@@ -10882,6 +11240,7 @@ COMO PUBLICAR NO SERVIDOR:
         aspectRatio: 'square',
         enableLightbox: true,
         photos: safeMeta.galleryPhotos,
+        captions: [],
       },
       locationCard: {
         enabled: true,
@@ -11592,10 +11951,10 @@ COMO PUBLICAR NO SERVIDOR:
     const fmt = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const creationPriceStr =
       planId === 'basic'
-        ? landingConfig.priceEssential || 'R$ 79,90'
+        ? formatCreationPriceDisplay(landingConfig.priceEssential, 'R$ 79,90')
         : planId === 'vip'
-        ? landingConfig.priceScale || 'R$ 79,90'
-        : landingConfig.pricePro || 'R$ 79,90';
+        ? formatCreationPriceDisplay(landingConfig.priceScale, 'R$ 79,90')
+        : formatCreationPriceDisplay(landingConfig.pricePro, 'R$ 79,90');
 
     if (planId === 'basic') {
       const p = MAINTENANCE_PLANS.basic_1;
@@ -11633,12 +11992,44 @@ COMO PUBLICAR NO SERVIDOR:
     };
   };
 
+  const redirectClientToPurchaseWhatsapp = (planId: 'basic' | 'pro' | 'vip') => {
+    const planDetails = getPlanCheckoutDetails(planId);
+    const targetWaPhone = formatWhatsAppPhone(landingConfig.agencyWhatsapp || '5531991390202') || '5531991390202';
+    const lines = [
+      `Olá! Quero contratar o meu Microsite BioVip de Alta Conversão 🚀`,
+      ``,
+      `• *Plano Escolhido:* ${planDetails.name} (${planDetails.price} no 1º mês s/ mensalidade)`,
+      `• *Manutenção:* ${planDetails.maintenanceInfo}`,
+      `• *Modelo de Interesse:* ${landingOrderForm.selectedModel || 'Personalizado sob medida'}`,
+    ];
+    if (landingOrderForm.clientName.trim()) {
+      lines.push(`• *Meu Nome / Empresa:* ${landingOrderForm.clientName.trim()}`);
+    }
+    if (landingOrderForm.clientWhatsapp.trim()) {
+      lines.push(`• *Meu WhatsApp:* ${landingOrderForm.clientWhatsapp.trim()}`);
+    }
+    if (landingOrderForm.instagramOrMaps.trim()) {
+      lines.push(`• *Instagram / Google Maps:* ${landingOrderForm.instagramOrMaps.trim()}`);
+    }
+    const waUrl = `https://wa.me/${targetWaPhone}?text=${encodeURIComponent(lines.join('\n'))}`;
+    const win = window.open(waUrl, '_blank', 'noopener,noreferrer');
+    if (!win) {
+      window.location.href = waUrl;
+    }
+    showToast('💬 Redirecionando para o atendimento VIP no WhatsApp (31) 99139-0202...');
+  };
+
   const openPaymentConfirmation = (planId: 'basic' | 'pro' | 'vip') => {
     const planDetails = getPlanCheckoutDetails(planId);
     setLandingOrderForm((prev) => ({
       ...prev,
       selectedPlan: planDetails.fullPlanLabel,
     }));
+    // Sistema de pagamento Asaas desativado temporariamente: direciona o cliente direto para o WhatsApp 31 991390202
+    if (!landingConfig.asaasEnabled) {
+      redirectClientToPurchaseWhatsapp(planId);
+      return;
+    }
     setPaymentConfirmPlan(planDetails);
     setPaymentConfirmChecked(false);
     setPaymentEmailTouched(false);
@@ -11688,6 +12079,10 @@ COMO PUBLICAR NO SERVIDOR:
 
   const handleProceedToExternalPayment = () => {
     if (!paymentConfirmPlan) return;
+    if (!landingConfig.asaasEnabled) {
+      redirectClientToPurchaseWhatsapp(paymentConfirmPlan.id);
+      return;
+    }
     setPaymentEmailTouched(true);
     const cleanEmail = paymentClientEmail.trim();
     if (!isClientPaymentEmailValid(cleanEmail) || !paymentConfirmChecked) {
@@ -11702,8 +12097,6 @@ COMO PUBLICAR NO SERVIDOR:
       return;
     }
 
-    // Caso o administrador ainda não tenha colado o link do portal externo nas configurações,
-    // exibe o aviso de integração pronta com os parâmetros pré-preenchidos e opção de prosseguir
     setPaymentPortalFallbackNotice(
       `E-mail "${cleanEmail}" confirmado para o ${paymentConfirmPlan.name}! O redirecionamento enviará automaticamente ?email=${encodeURIComponent(cleanEmail)} assim que você colar o link do seu portal de pagamento (Kiwify, Asaas, Mercado Pago, Stripe) em "Configurar Domínio & Checkout".`
     );
@@ -11723,6 +12116,7 @@ COMO PUBLICAR NO SERVIDOR:
       return;
     }
     setLandingOrderError(null);
+    setLandingOrderSuccess(true);
 
     const lowerPlan = landingOrderForm.selectedPlan.toLowerCase();
     const resolvedPlanId: 'basic' | 'pro' | 'vip' = lowerPlan.includes('básico') || lowerPlan.includes('basico')
@@ -11731,7 +12125,7 @@ COMO PUBLICAR NO SERVIDOR:
       ? 'vip'
       : 'pro';
 
-    openPaymentConfirmation(resolvedPlanId);
+    redirectClientToPurchaseWhatsapp(resolvedPlanId);
   };
 
   const renderSubdomainConfigModal = () => {
@@ -11845,39 +12239,120 @@ COMO PUBLICAR NO SERVIDOR:
             </p>
           </div>
 
-          {/* Integração do Portal Externo de Pagamento */}
-          <div className="pt-2 border-t border-neutral-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-400 block">
-                Integração do Portal Externo de Pagamento (Checkout)
-              </span>
-              <span className="text-[10px] font-mono text-neutral-400">
-                Envia ?email=cliente automaticamente
-              </span>
+          {/* Configuração Oficial do Gateway Asaas (API + PIX + Cartão/Boleto) */}
+          <div className="pt-3 border-t border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-amber-400 block">
+                  ⚡ Gateway de Pagamentos Asaas (API PIX & Links de Planos)
+                </span>
+                <span className="text-[10.5px] text-neutral-400">
+                  Configure sua chave <code className="text-amber-300">$aact_...</code> para gerar QR Code PIX oficial e links de assinatura.
+                </span>
+              </div>
+              <button
+                type="button"
+                disabled={asaasStatusTesting}
+                onClick={handleTestAsaasConnection}
+                className="px-3 py-1.5 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 border border-amber-400/40 text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${asaasStatusTesting ? 'animate-spin' : ''}`} />
+                <span>{asaasStatusTesting ? 'Testando...' : 'Testar Conexão Asaas'}</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-neutral-950 p-3.5 rounded-xl border border-amber-500/30">
+              <div className="sm:col-span-7">
+                <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                  Chave de API Asaas (access_token)
+                </label>
+                <input
+                  type="password"
+                  value={getActiveAsaasApiKey()}
+                  onChange={(e) => updateAsaasSettings({ apiKey: e.target.value })}
+                  placeholder="$aact_YTU5YTE0M2M6N2I4..."
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div className="sm:col-span-5">
+                <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                  Ambiente da Conta Asaas
+                </label>
+                <select
+                  value={getActiveAsaasEnv()}
+                  onChange={(e) => updateAsaasSettings({ environment: e.target.value as 'sandbox' | 'production' })}
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 font-semibold focus:border-amber-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="sandbox">🧪 Sandbox (Testes)</option>
+                  <option value="production">🚀 Produção (Conta Real)</option>
+                </select>
+              </div>
+              <div className="sm:col-span-12">
+                <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                  URL do Webhook Asaas (Cole em Minha Conta &gt; Integração &gt; Webhooks)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`https://${cleanDomain}/api/asaas/webhook`}
+                    className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] text-emerald-300 font-mono select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await safeCopyText(`https://${cleanDomain}/api/asaas/webhook`);
+                      showToast('📋 URL do Webhook do Asaas copiada!');
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-semibold border border-neutral-700 cursor-pointer shrink-0"
+                  >
+                    Copiar Webhook
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {asaasTestResult && (
+              <div
+                className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                  asaasTestResult.success
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-red-500/10 border-red-500/30 text-red-300'
+                }`}
+              >
+                <span>{asaasTestResult.message}</span>
+                <button
+                  type="button"
+                  onClick={() => setAsaasTestResult(null)}
+                  className="text-neutral-400 hover:text-white text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
                 <label className="text-[11px] text-neutral-400 block mb-1">
                   Nome do Portal Exibido na Confirmação
                 </label>
                 <input
                   type="text"
-                  value={landingConfig.checkoutPortalName ?? 'Kiwify'}
+                  value={landingConfig.checkoutPortalName ?? 'Asaas'}
                   onChange={(e) => updateLandingConfig('checkoutPortalName', e.target.value)}
-                  placeholder="Ex: Kiwify, Asaas, Mercado Pago, Stripe"
+                  placeholder="Ex: Asaas, Kiwify, Mercado Pago, Stripe"
                   className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-emerald-300 font-semibold focus:border-emerald-400 focus:outline-none"
                 />
               </div>
               <div>
                 <label className="text-[11px] text-neutral-400 block mb-1">
-                  Link de Pagamento — Plano Básico
+                  Link de Pagamento Asaas — Plano Básico
                 </label>
                 <input
                   type="text"
                   value={landingConfig.checkoutUrlBasic || ''}
                   onChange={(e) => updateLandingConfig('checkoutUrlBasic', e.target.value)}
-                  placeholder="https://pay.kiwify.com.br/seu-link-basico"
+                  placeholder="https://www.asaas.com/c/seu-link-basico"
                   className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-emerald-400 focus:outline-none"
                 />
               </div>
@@ -11886,25 +12361,25 @@ COMO PUBLICAR NO SERVIDOR:
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] text-neutral-400 block mb-1">
-                  Link de Pagamento — Plano Pro (Mais Escolhido)
+                  Link de Pagamento Asaas — Plano Pro (Mais Escolhido)
                 </label>
                 <input
                   type="text"
                   value={landingConfig.checkoutUrlPro || ''}
                   onChange={(e) => updateLandingConfig('checkoutUrlPro', e.target.value)}
-                  placeholder="https://pay.kiwify.com.br/seu-link-pro"
+                  placeholder="https://www.asaas.com/c/seu-link-pro"
                   className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-emerald-400 focus:outline-none"
                 />
               </div>
               <div>
                 <label className="text-[11px] text-neutral-400 block mb-1">
-                  Link de Pagamento — Plano VIP
+                  Link de Pagamento Asaas — Plano VIP
                 </label>
                 <input
                   type="text"
                   value={landingConfig.checkoutUrlVip || ''}
                   onChange={(e) => updateLandingConfig('checkoutUrlVip', e.target.value)}
-                  placeholder="https://pay.kiwify.com.br/seu-link-vip"
+                  placeholder="https://www.asaas.com/c/seu-link-vip"
                   className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-emerald-400 focus:outline-none"
                 />
               </div>
@@ -11916,7 +12391,7 @@ COMO PUBLICAR NO SERVIDOR:
             <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400 block">
               Dados da Sua Landing Page de Vendas
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="text-[11px] text-neutral-400 block mb-1">Nome da Sua Marca / Estúdio</label>
                 <input
@@ -11934,6 +12409,16 @@ COMO PUBLICAR NO SERVIDOR:
                   onChange={(e) => updateLandingConfig('agencyWhatsapp', e.target.value)}
                   placeholder="5511999999999"
                   className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-neutral-400 block mb-1">E-mail de Contato Oficial BioVip</label>
+                <input
+                  type="email"
+                  value={landingConfig.agencyEmail || 'contato@biovip.com.br'}
+                  onChange={(e) => updateLandingConfig('agencyEmail', e.target.value.trim())}
+                  placeholder="contato@biovip.com.br"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -12189,8 +12674,8 @@ COMO PUBLICAR NO SERVIDOR:
       return true;
     });
 
-    const isAsaasConfigured = Boolean(data.saasSettings?.asaas?.apiKey?.trim());
-    const asaasEnv = data.saasSettings?.asaas?.environment || 'sandbox';
+    const isAsaasConfigured = Boolean(getActiveAsaasApiKey()) || asaasServerConfigured;
+    const asaasEnv = getActiveAsaasEnv();
 
     return (
       <div className="flex-1 h-full w-full overflow-y-auto bg-[#09090b] text-[#fafaf9] flex flex-col relative selection:bg-amber-400 selection:text-neutral-950">
@@ -12470,6 +12955,13 @@ COMO PUBLICAR NO SERVIDOR:
               <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
                 <button
                   type="button"
+                  onClick={() => setAsaasGuideOpen(p => !p)}
+                  className="px-3 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-neutral-200 font-semibold text-xs border border-neutral-800 flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <span>📘 {asaasGuideOpen ? 'Ocultar Passo a Passo' : 'Como Configurar no Asaas'}</span>
+                </button>
+                <button
+                  type="button"
                   disabled={asaasStatusTesting}
                   onClick={handleTestAsaasConnection}
                   className="px-3.5 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-amber-300 font-semibold text-xs border border-amber-500/40 flex items-center gap-1.5 transition cursor-pointer"
@@ -12480,6 +12972,31 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
             </div>
 
+            {asaasGuideOpen && (
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-amber-500/30 space-y-2 text-xs text-neutral-300">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 block">
+                  Passo a Passo para Ativar sua Conta Asaas no BioVip:
+                </span>
+                <ol className="list-decimal list-inside space-y-1.5 text-[11.5px] text-neutral-300">
+                  <li>
+                    Acesse seu painel do <strong>Asaas</strong> (ou <em>sandbox.asaas.com</em> para testes) e vá em{' '}
+                    <code className="text-amber-300 font-mono">Minha Conta &gt; Integração &gt; Chave de API</code>.
+                  </li>
+                  <li>
+                    Clique em <strong>Gerar nova chave de API</strong>, copie o código iniciado por <code className="text-amber-300 font-mono">$aact_...</code> e cole no campo <strong>Token de Acesso da API Asaas</strong> abaixo.
+                  </li>
+                  <li>
+                    Selecione o ambiente correspondente (<strong>Produção</strong> para conta real ou <strong>Sandbox</strong> para testes) e clique em <strong>Testar Conexão Asaas</strong>.
+                  </li>
+                  <li>
+                    Para baixa automática de pagamentos, vá em <code className="text-amber-300 font-mono">Minha Conta &gt; Integração &gt; Webhooks</code> no Asaas, adicione a URL{' '}
+                    <code className="text-emerald-300 font-mono">https://{(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/api/asaas/webhook</code> e marque os eventos{' '}
+                    <code className="text-amber-200 font-mono">PAYMENT_RECEIVED</code> e <code className="text-amber-200 font-mono">PAYMENT_CONFIRMED</code>.
+                  </li>
+                </ol>
+              </div>
+            )}
+
             {/* Asaas Config Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 text-xs">
               <div className="sm:col-span-6">
@@ -12488,21 +13005,9 @@ COMO PUBLICAR NO SERVIDOR:
                 </label>
                 <input
                   type="password"
-                  value={data.saasSettings?.asaas?.apiKey || ''}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setData(p => ({
-                      ...p,
-                      saasSettings: {
-                        ...p.saasSettings,
-                        asaas: {
-                          ...(p.saasSettings?.asaas || { environment: 'sandbox', preferredMethod: 'PIX', enabled: true }),
-                          apiKey: val,
-                        },
-                      },
-                    }));
-                  }}
-                  placeholder="$aact_YTU5YTE0M2M6N2I4..."
+                  value={getActiveAsaasApiKey()}
+                  onChange={(e) => updateAsaasSettings({ apiKey: e.target.value })}
+                  placeholder={asaasServerConfigured ? '🟢 Configurado via Variável de Ambiente (ASAAS_API_KEY)' : '$aact_YTU5YTE0M2M6N2I4...'}
                   className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-400"
                 />
               </div>
@@ -12513,19 +13018,7 @@ COMO PUBLICAR NO SERVIDOR:
                 </label>
                 <select
                   value={asaasEnv}
-                  onChange={(e) => {
-                    const val = e.target.value as 'sandbox' | 'production';
-                    setData(p => ({
-                      ...p,
-                      saasSettings: {
-                        ...p.saasSettings,
-                        asaas: {
-                          ...(p.saasSettings?.asaas || { apiKey: '', preferredMethod: 'PIX', enabled: true }),
-                          environment: val,
-                        },
-                      },
-                    }));
-                  }}
+                  onChange={(e) => updateAsaasSettings({ environment: e.target.value as 'sandbox' | 'production' })}
                   className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
                 >
                   <option value="sandbox">🧪 Sandbox (Ambiente de Testes)</option>
@@ -12541,13 +13034,13 @@ COMO PUBLICAR NO SERVIDOR:
                   <input
                     type="text"
                     readOnly
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/asaas/webhook`}
+                    value={`https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/api/asaas/webhook`}
                     className="w-full px-2.5 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-400 font-mono text-[11px] select-all"
                   />
                   <button
                     type="button"
                     onClick={async () => {
-                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/asaas/webhook`;
+                      const url = `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/api/asaas/webhook`;
                       await safeCopyText(url);
                       showToast('📋 URL do Webhook do Asaas copiada!');
                     }}
@@ -12565,7 +13058,7 @@ COMO PUBLICAR NO SERVIDOR:
               <div className="lg:col-span-4 flex flex-col justify-between bg-neutral-950/60 p-3 rounded-xl border border-neutral-800">
                 <div>
                   <label className="text-[10px] text-amber-400 font-mono uppercase font-bold block mb-1.5">
-                    Valor Cobrado no Asaas (Taxa de Criação / Entrada R$)
+                    Valor da Taxa de Criação / Entrada (1º Mês R$)
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -12580,9 +13073,7 @@ COMO PUBLICAR NO SERVIDOR:
                             pricePro: val,
                             priceScale: val,
                           };
-                          try {
-                            localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
-                          } catch {}
+                          persistLandingConfigEverywhere(updated);
                           return updated;
                         });
                       }}
@@ -12590,8 +13081,8 @@ COMO PUBLICAR NO SERVIDOR:
                       className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-amber-400/50 text-amber-300 font-mono font-bold text-xs focus:outline-none focus:border-amber-300"
                     />
                   </div>
-                  <span className="text-[10px] text-neutral-400 block mt-1.5">
-                    Valor cobrado no checkout Asaas no ato da contratação.
+                  <span className="text-[10px] text-emerald-400 block mt-1.5 font-medium">
+                    💬 Asaas pausado: compras na Landing Page direcionam para o WhatsApp (31) 99139-0202.
                   </span>
                 </div>
                 <button
@@ -13620,7 +14111,7 @@ COMO PUBLICAR NO SERVIDOR:
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
                       <div>
                         <label className="block text-[10px] font-mono uppercase tracking-widest text-amber-400/90 mb-1.5">
                           Nome Profissional / Empresa *
@@ -13643,6 +14134,18 @@ COMO PUBLICAR NO SERVIDOR:
                           onChange={(e) => setLandingOrderForm(prev => ({ ...prev, clientWhatsapp: e.target.value }))}
                           placeholder="Ex: (11) 98765-4321"
                           className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-white/[0.1] text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-amber-400 transition"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase tracking-widest text-amber-400/90 mb-1.5">
+                          CPF ou CNPJ (Para Fatura Asaas)
+                        </label>
+                        <input
+                          type="text"
+                          value={landingOrderForm.clientCpfCnpj}
+                          onChange={(e) => setLandingOrderForm(prev => ({ ...prev, clientCpfCnpj: formatCpfCnpjInput(e.target.value) }))}
+                          placeholder="000.000.000-00"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-white/[0.1] text-sm font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-amber-400 transition"
                         />
                       </div>
                     </div>
@@ -13798,6 +14301,18 @@ COMO PUBLICAR NO SERVIDOR:
                               </button>
                             </div>
                           </div>
+                        )}
+
+                        {checkoutAsaasPix.invoiceUrl && (
+                          <a
+                            href={checkoutAsaasPix.invoiceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 px-3 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 transition no-underline"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Abrir Fatura Oficial no Asaas (PIX / Boleto / Cartão)</span>
+                          </a>
                         )}
 
                         {/* Action buttons during waiting for payment */}
@@ -14011,7 +14526,7 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex flex-wrap items-center gap-2.5">
                   <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-300 text-xs font-bold font-mono shadow-sm">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    ⚡ OFERTA DE LANÇAMENTO: 10 Primeiros por R$ 79,90 (Restam 3 vagas!)
+                    ⚡ OFERTA DE LANÇAMENTO: 10 Primeiros por {formatCreationPriceDisplay(landingConfig.pricePro)} (Restam 3 vagas!)
                   </span>
                   <span className="text-xs text-emerald-400 font-semibold font-mono">
                     • 1º Mês Sem Mensalidade
@@ -14666,210 +15181,246 @@ COMO PUBLICAR NO SERVIDOR:
 
         {/* SECTION 4: PLANOS E INVESTIMENTO (RETORNO GARANTIDO) */}
         <section id="investimento" className="py-20 lg:py-28 border-b border-white/[0.06] bg-neutral-950/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-            <div className="max-w-3xl space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
-                🔥 LOTE PROMOCIONAL DE LANÇAMENTO · VAGAS LIMITADAS
-              </span>
-              <h2
-                className="font-serif font-bold text-white tracking-tight"
-                style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
-              >
-                Os 10 primeiros microsites sairão por apenas R$ 79,90 — e sem mensalidade no 1º mês!
-              </h2>
-              <p className="text-sm text-neutral-400 leading-relaxed">
-                Condição especial de estreia: você garante a criação completa do seu biosite de luxo por taxa única de apenas <strong className="text-amber-300">R$ 79,90</strong> no primeiro mês (isento de mensalidade no 1º mês). A partir do 2º mês, você escolhe o plano de manutenção ideal para a rotina do seu negócio.
-              </p>
-            </div>
+          {(() => {
+            syncMaintenancePlansFromConfig(landingConfig);
+            const basicMonthlyPrice = parseBrlCurrency(landingConfig.recurringBasic, 29.90);
+            const proMonthlyPrice = parseBrlCurrency(landingConfig.recurringPro, 49.90);
+            const vipMonthlyPrice = parseBrlCurrency(landingConfig.recurringVip, 79.90);
+            const basicMaxUpdates = parsePlanMaxUpdates(landingConfig.updatesBasic, 1);
+            const proMaxUpdates = parsePlanMaxUpdates(landingConfig.updatesPro, 4);
+            const vipMaxUpdates = parsePlanMaxUpdates(landingConfig.updatesVip, Infinity);
+            const fmtBrl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const creationBasicStr = formatCreationPriceDisplay(landingConfig.priceEssential, 'R$ 79,90');
+            const creationProStr = formatCreationPriceDisplay(landingConfig.pricePro, 'R$ 79,90');
+            const creationVipStr = formatCreationPriceDisplay(landingConfig.priceScale, 'R$ 79,90');
 
-            {/* Escassez e Contador Visual de Vagas dos 10 Primeiros */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/90 border border-amber-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 font-bold text-lg shrink-0">
-                  ⚡
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-                    <span>Oferta de Lançamento dos 10 Primeiros</span>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-400 text-neutral-950 text-[10px] font-black uppercase tracking-wider">
-                      7 de 10 Vagas Preenchidas
-                    </span>
-                  </div>
-                  <p className="text-xs text-neutral-300 mt-0.5">
-                    Taxa única de criação por apenas <strong className="text-amber-300 font-mono">R$ 79,90</strong> (de ~R$ 197~). Restam <strong className="text-emerald-400">apenas 3 vagas</strong> com este valor promocional!
+            return (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+                <div className="max-w-3xl space-y-3">
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 block font-mono">
+                    🔥 LOTE PROMOCIONAL DE LANÇAMENTO · VAGAS LIMITADAS
+                  </span>
+                  <h2
+                    className="font-serif font-bold text-white tracking-tight"
+                    style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
+                  >
+                    Os 10 primeiros microsites sairão por apenas {creationProStr} — e sem mensalidade no 1º mês!
+                  </h2>
+                  <p className="text-sm text-neutral-400 leading-relaxed">
+                    Condição especial de estreia: você garante a criação completa do seu biosite de luxo por taxa única de apenas <strong className="text-amber-300">{creationProStr}</strong> no primeiro mês (isento de mensalidade no 1º mês). A partir do 2º mês, você escolhe o plano de manutenção ideal para a rotina do seu negócio.
                   </p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
-                <div className="w-32 bg-neutral-950 rounded-full h-2.5 overflow-hidden border border-white/10">
-                  <div className="bg-amber-400 h-2.5 rounded-full" style={{ width: '70%' }} />
-                </div>
-                <span className="text-xs font-mono font-bold text-amber-300 whitespace-nowrap">Restam 3 vagas</span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch tabular-nums">
-              {/* Plan 1: Básico */}
-              <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
-                    <span>01 · PLANO BÁSICO</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-bold uppercase">
-                      {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white">Presença Digital & Manutenção Básica</h3>
-                  <div className="pt-2 space-y-1">
-                    <div className="flex items-baseline gap-2">
-                      <span className="line-through text-neutral-500 text-sm font-mono">De R$ 197</span>
-                      <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceEssential || 'R$ 79,90'}</span>
-                      <span className="text-xs text-emerald-400 font-semibold">criação (10 primeiros)</span>
+                {/* Escassez e Contador Visual de Vagas dos 10 Primeiros */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900/90 border border-amber-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 font-bold text-lg shrink-0">
+                      ⚡
                     </div>
-                    <div className="text-xs text-emerald-300 font-semibold font-mono">
-                      ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
-                    </div>
-                    <div className="text-xs text-amber-300 font-bold font-mono">
-                      Manutenção (a partir do 2º mês): R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês ({formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)})
+                    <div>
+                      <div className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                        <span>Oferta de Lançamento dos 10 Primeiros</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-400 text-neutral-950 text-[10px] font-black uppercase tracking-wider">
+                          7 de 10 Vagas Preenchidas
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-300 mt-0.5">
+                        Taxa única de criação por apenas <strong className="text-amber-300 font-mono">{creationProStr}</strong> (de ~R$ 197~). Restam <strong className="text-emerald-400">apenas 3 vagas</strong> com este valor promocional!
+                      </p>
                     </div>
                   </div>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Perfeito para quem quer eliminar o Linktree amador hoje mesmo, garantir a vaga promocional de {landingConfig.priceEssential || 'R$ 79,90'} e ter {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)} inclusa(s).
-                  </p>
-                  <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês:</strong> Cobrada apenas a Taxa de Criação de {landingConfig.priceEssential || 'R$ 79,90'} (R$ 0 de mensalidade)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês com {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)} inclusa(s)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais avulsas quando precisar: R$ 14,90 cada</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Localização com rota em 1 toque no Google Maps e Waze</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Hospedagem ultrarrápida e Certificado SSL oficial inclusos</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
-                  </ul>
+                  <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
+                    <div className="w-32 bg-neutral-950 rounded-full h-2.5 overflow-hidden border border-white/10">
+                      <div className="bg-amber-400 h-2.5 rounded-full" style={{ width: '70%' }} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-amber-300 whitespace-nowrap">Restam 3 vagas</span>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => openPaymentConfirmation('basic')}
-                  className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
-                >
-                  Garantir Vaga por {landingConfig.priceEssential || 'R$ 79,90'} (Plano Básico R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)
-                </button>
-              </div>
 
-              {/* Plan 2: Pro (Mais Escolhido) */}
-              <div className="p-8 rounded-2xl bg-neutral-900 border-2 border-amber-400/80 flex flex-col justify-between space-y-6 shadow-2xl shadow-amber-500/15 relative overflow-hidden">
-                <div className="pointer-events-none absolute -top-8 -right-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
-                <div className="space-y-4 relative z-10">
-                  <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-amber-400">
-                    <span>02 · PLANO PRO</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold text-[10px]">MAIS ESCOLHIDO</span>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch tabular-nums">
+                  {/* Plan 1: Básico */}
+                  <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
+                        <span>01 · PLANO BÁSICO</span>
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-bold uppercase">
+                          {formatPlanUpdatesLabel(basicMaxUpdates, false)}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white">Presença Digital & Manutenção Básica</h3>
+                      <div className="pt-2 space-y-1.5">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-3xl font-serif font-bold text-white">R$ {fmtBrl(basicMonthlyPrice)}</span>
+                          <span className="text-xs text-neutral-400 font-mono">/mês (a partir do 2º mês)</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 space-y-0.5">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="line-through text-neutral-500 text-[11px] font-mono">De R$ 197</span>
+                            <span className="text-sm font-bold text-emerald-300 font-mono">
+                              1º Mês (Criação): {creationBasicStr}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-emerald-400/90 font-mono">
+                            ✓ Sem mensalidade no 1º mês · {formatPlanUpdatesLabel(basicMaxUpdates, false)}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-neutral-400 leading-relaxed">
+                        Perfeito para quem quer eliminar o Linktree amador hoje mesmo, garantir a vaga promocional de {creationBasicStr} e ter {formatPlanUpdatesLabel(basicMaxUpdates, false)} inclusa(s).
+                      </p>
+                      <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês:</strong> Cobrada apenas a Taxa de Criação de {creationBasicStr} (R$ 0 de mensalidade)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {fmtBrl(basicMonthlyPrice)}/mês com {formatPlanUpdatesLabel(basicMaxUpdates, false)} inclusa(s)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais avulsas quando precisar: R$ 14,90 cada</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Localização com rota em 1 toque no Google Maps e Waze</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Hospedagem ultrarrápida e Certificado SSL oficial inclusos</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openPaymentConfirmation('basic')}
+                      className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <WhatsAppIcon className="w-4 h-4 text-emerald-400" />
+                      <span>Quero o Plano Básico (R$ {fmtBrl(basicMonthlyPrice)}/mês · {formatPlanUpdatesLabel(basicMaxUpdates, true)})</span>
+                    </button>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Funil Anti-Curiosos & Catálogo Semanal</h3>
-                  <div className="pt-2 space-y-1">
-                    <div className="flex items-baseline gap-2">
-                      <span className="line-through text-neutral-500 text-sm font-mono">De R$ 297</span>
-                      <span className="text-4xl font-serif font-bold text-amber-400">{landingConfig.pricePro || 'R$ 79,90'}</span>
-                      <span className="text-xs text-emerald-300 font-semibold">criação (10 primeiros)</span>
+
+                  {/* Plan 2: Pro (Mais Escolhido) */}
+                  <div className="p-8 rounded-2xl bg-neutral-900 border-2 border-amber-400/80 flex flex-col justify-between space-y-6 shadow-2xl shadow-amber-500/15 relative overflow-hidden">
+                    <div className="pointer-events-none absolute -top-8 -right-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
+                    <div className="space-y-4 relative z-10">
+                      <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-mono uppercase tracking-widest text-amber-400">
+                        <span>02 · PLANO PRO</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase border border-amber-400/30">
+                            {formatPlanUpdatesLabel(proMaxUpdates, false)}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold text-[10px]">MAIS ESCOLHIDO</span>
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-bold text-white">Funil Anti-Curiosos & Catálogo Semanal</h3>
+                      <div className="pt-2 space-y-1.5">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-4xl font-serif font-bold text-amber-400">R$ {fmtBrl(proMonthlyPrice)}</span>
+                          <span className="text-xs text-neutral-300 font-mono">/mês (a partir do 2º mês)</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 space-y-0.5">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="line-through text-neutral-500 text-[11px] font-mono">De R$ 297</span>
+                            <span className="text-sm font-bold text-amber-300 font-mono">
+                              1º Mês (Criação): {creationProStr}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-emerald-300 font-mono">
+                            ✓ Sem mensalidade no 1º mês · {formatPlanUpdatesLabel(proMaxUpdates, false)}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-neutral-300 leading-relaxed">
+                        A estrutura mais vendida para clínicas, estúdios, especialistas e advogados com {formatPlanUpdatesLabel(proMaxUpdates, false)} inclusa(s) para atualizar procedimentos, fotos e promoções.
+                      </p>
+                      <ul className="space-y-2.5 pt-3 border-t border-white/[0.1] text-xs text-neutral-200">
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas {creationProStr} de criação (R$ 0 de mensalidade)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {fmtBrl(proMonthlyPrice)}/mês com {formatPlanUpdatesLabel(proMaxUpdates, false)} inclusa(s)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais excedentes: apenas R$ 14,90 cada</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo + Catálogo visual com fotos e preços</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Galeria inteligente adaptativa (fotos em retrato e paisagem sem cortes)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Rastreamento Meta Pixel + QR Code de balcão em alta definição</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
+                      </ul>
                     </div>
-                    <div className="text-xs text-emerald-300 font-semibold font-mono">
-                      ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
-                    </div>
-                    <div className="text-xs text-amber-300 font-bold font-mono">
-                      Manutenção (a partir do 2º mês): R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês ({formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)})
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openPaymentConfirmation('pro')}
+                      className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer relative z-10 flex items-center justify-center gap-2"
+                    >
+                      <WhatsAppIcon className="w-4 h-4 text-neutral-950" />
+                      <span>Quero o Plano Pro (R$ {fmtBrl(proMonthlyPrice)}/mês · {formatPlanUpdatesLabel(proMaxUpdates, true)})</span>
+                    </button>
                   </div>
-                  <p className="text-xs text-neutral-300 leading-relaxed">
-                    A estrutura mais vendida para clínicas, estúdios, especialistas e advogados que atualizam procedimentos, fotos e promoções toda semana.
-                  </p>
-                  <ul className="space-y-2.5 pt-3 border-t border-white/[0.1] text-xs text-neutral-200">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas {landingConfig.pricePro || 'R$ 79,90'} de criação (R$ 0 de mensalidade)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês com {formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)} inclusa(s)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais excedentes: apenas R$ 14,90 cada</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo + Catálogo visual com fotos e preços</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Galeria inteligente adaptativa (fotos em retrato e paisagem sem cortes)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Rastreamento Meta Pixel + QR Code de balcão em alta definição</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
-                  </ul>
+
+                  {/* Plan 3: VIP Ilimitado */}
+                  <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
+                        <span>03 · PLANO VIP</span>
+                        <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase">
+                          {formatPlanUpdatesLabel(vipMaxUpdates, false)}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white">Setup Concierge & Atualizações VIP</h3>
+                      <div className="pt-2 space-y-1.5">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-3xl font-serif font-bold text-white">R$ {fmtBrl(vipMonthlyPrice)}</span>
+                          <span className="text-xs text-neutral-400 font-mono">/mês (a partir do 2º mês)</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-0.5">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="line-through text-neutral-500 text-[11px] font-mono">De R$ 497</span>
+                            <span className="text-sm font-bold text-amber-300 font-mono">
+                              1º Mês (Criação): {creationVipStr}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-emerald-300 font-mono">
+                            ✓ Sem mensalidade no 1º mês · {formatPlanUpdatesLabel(vipMaxUpdates, false)}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-neutral-400 leading-relaxed">
+                        Para marcas consolidadas e especialistas que demandam suporte prioritário e {formatPlanUpdatesLabel(vipMaxUpdates, false)} no mês.
+                      </p>
+                      <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas {creationVipStr} de criação (R$ 0 de mensalidade)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {fmtBrl(vipMonthlyPrice)}/mês com {formatPlanUpdatesLabel(vipMaxUpdates, false)} inclusa(s)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte completo para Domínio Próprio (.com.br)</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário direto no WhatsApp</li>
+                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openPaymentConfirmation('vip')}
+                      className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <WhatsAppIcon className="w-4 h-4 text-emerald-400" />
+                      <span>Quero o Plano VIP (R$ {fmtBrl(vipMonthlyPrice)}/mês · {formatPlanUpdatesLabel(vipMaxUpdates, true)})</span>
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => openPaymentConfirmation('pro')}
-                  className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer relative z-10"
-                >
-                  Quero o Plano Pro por {landingConfig.pricePro || 'R$ 79,90'} (Manutenção R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)
-                </button>
-              </div>
 
-              {/* Plan 3: VIP Ilimitado */}
-              <div className="p-8 rounded-2xl bg-neutral-900/50 border border-white/[0.08] flex flex-col justify-between space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
-                    <span>03 · PLANO VIP</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase">
-                      {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}
-                    </span>
+                {/* Faixa Explicativa Oficial das Taxas de Manutenção */}
+                <div className="p-5 rounded-2xl bg-neutral-900/80 border border-amber-400/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-neutral-950 border border-emerald-500/30">
+                    <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block">🎉 10 Primeiros Microsites</span>
+                    <span className="font-bold text-white text-sm block mt-0.5">{creationProStr} (1º Mês)</span>
+                    <span className="text-[11px] text-neutral-400 block">Só taxa de criação. Sem mensalidade no 1º mês!</span>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Setup Concierge & Atualizações VIP</h3>
-                  <div className="pt-2 space-y-1">
-                    <div className="flex items-baseline gap-2">
-                      <span className="line-through text-neutral-500 text-sm font-mono">De R$ 497</span>
-                      <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceScale || 'R$ 79,90'}</span>
-                      <span className="text-xs text-emerald-400 font-semibold">criação (10 primeiros)</span>
-                    </div>
-                    <div className="text-xs text-emerald-300 font-semibold font-mono">
-                      ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
-                    </div>
-                    <div className="text-xs text-amber-300 font-bold font-mono">
-                      Manutenção (a partir do 2º mês): R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês ({formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)})
-                    </div>
+                  <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                    <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Básico</span>
+                    <span className="font-bold text-white text-sm block mt-0.5">R$ {fmtBrl(basicMonthlyPrice)} /mês</span>
+                    <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(basicMaxUpdates, false)} incluída(s)</span>
                   </div>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Para marcas consolidadas e especialistas que demandam suporte prioritário e amplo volume de atualizações no mês.
-                  </p>
-                  <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas {landingConfig.priceScale || 'R$ 79,90'} de criação (R$ 0 de mensalidade)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês com {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)} inclusa(s)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte completo para Domínio Próprio (.com.br)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário direto no WhatsApp</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
-                  </ul>
+                  <div className="p-3 rounded-xl bg-neutral-950 border border-amber-400/40">
+                    <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Pro (Destaque)</span>
+                    <span className="font-bold text-amber-300 text-sm block mt-0.5">R$ {fmtBrl(proMonthlyPrice)} /mês</span>
+                    <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(proMaxUpdates, false)} incluída(s)</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                    <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano VIP Total</span>
+                    <span className="font-bold text-white text-sm block mt-0.5">R$ {fmtBrl(vipMonthlyPrice)} /mês</span>
+                    <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(vipMaxUpdates, false)}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">ALTERAÇÃO EXTRA & SUPORTE</span>
+                    <span className="font-bold text-emerald-300 text-sm block mt-0.5">R$ 14,90 /avulsa</span>
+                    <span className="text-[11px] text-neutral-400 block">Sem multas ou fidelidade: você no controle total</span>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => openPaymentConfirmation('vip')}
-                  className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
-                >
-                  Quero o Plano VIP por {landingConfig.priceScale || 'R$ 79,90'} (Manutenção R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)
-                </button>
               </div>
-            </div>
-
-            {/* Faixa Explicativa Oficial das Taxas de Manutenção */}
-            <div className="p-5 rounded-2xl bg-neutral-900/80 border border-amber-400/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-neutral-950 border border-emerald-500/30">
-                <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block">🎉 10 Primeiros Microsites</span>
-                <span className="font-bold text-white text-sm block mt-0.5">{landingConfig.pricePro || 'R$ 79,90'} (1º Mês)</span>
-                <span className="text-[11px] text-neutral-400 block">Só taxa de criação. Sem mensalidade no 1º mês!</span>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Básico</span>
-                <span className="font-bold text-white text-sm block mt-0.5">R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</span>
-                <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)} incluída(s)</span>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-950 border border-amber-400/40">
-                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Pro (Destaque)</span>
-                <span className="font-bold text-amber-300 text-sm block mt-0.5">R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</span>
-                <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)} incluída(s)</span>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano VIP Total</span>
-                <span className="font-bold text-white text-sm block mt-0.5">R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</span>
-                <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-                <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">ALTERAÇÃO EXTRA & SUPORTE</span>
-                <span className="font-bold text-emerald-300 text-sm block mt-0.5">R$ 14,90 /avulsa</span>
-                <span className="text-[11px] text-neutral-400 block">Sem multas ou fidelidade: você no controle total</span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </section>
 
         {/* SECTION 5: FORMULÁRIO DE PEDIDO DIRETO PARA O WHATSAPP (GARANTIA E SEGURANÇA) */}
@@ -14884,7 +15435,7 @@ COMO PUBLICAR NO SERVIDOR:
                   Encomende seu Microsite Pronto e comece a faturar mais hoje mesmo.
                 </h2>
                 <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-                  Preencha os campos abaixo. Em instantes nossa equipe entrará em contato com você pelo WhatsApp para iniciar a montagem do seu microsite com atendimento VIP.
+                  Preencha os campos abaixo para iniciar seu atendimento VIP diretamente no nosso WhatsApp oficial <strong className="text-emerald-400">(31) 99139-0202</strong>.
                 </p>
               </div>
 
@@ -14910,7 +15461,7 @@ COMO PUBLICAR NO SERVIDOR:
                       type="tel"
                       value={landingOrderForm.clientWhatsapp}
                       onChange={(e) => setLandingOrderForm(p => ({ ...p, clientWhatsapp: e.target.value }))}
-                      placeholder="Ex: (11) 99999-9999"
+                      placeholder="Ex: (31) 99999-9999"
                       className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
                     />
                   </div>
@@ -14942,18 +15493,24 @@ COMO PUBLICAR NO SERVIDOR:
                       Pacote Escolhido
                     </label>
                     <select
-                      value={landingOrderForm.selectedPlan}
+                      value={
+                        landingOrderForm.selectedPlan.toLowerCase().includes('básico') || landingOrderForm.selectedPlan.toLowerCase().includes('basico')
+                          ? getPlanCheckoutDetails('basic').fullPlanLabel
+                          : landingOrderForm.selectedPlan.toLowerCase().includes('vip')
+                          ? getPlanCheckoutDetails('vip').fullPlanLabel
+                          : getPlanCheckoutDetails('pro').fullPlanLabel
+                      }
                       onChange={(e) => setLandingOrderForm(p => ({ ...p, selectedPlan: e.target.value }))}
                       className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
                     >
                       <option value={getPlanCheckoutDetails('pro').fullPlanLabel}>
-                        Plano Pro (R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)}) — Criação {landingConfig.pricePro || 'R$ 79,90'} (Mais Escolhido)
+                        Plano Pro (R$ {parseBrlCurrency(landingConfig.recurringPro, 49.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(parsePlanMaxUpdates(landingConfig.updatesPro, 4), false)}) — Criação {formatCreationPriceDisplay(landingConfig.pricePro)} (Mais Escolhido)
                       </option>
                       <option value={getPlanCheckoutDetails('basic').fullPlanLabel}>
-                        Plano Básico (R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)}) — Criação {landingConfig.priceEssential || 'R$ 79,90'}
+                        Plano Básico (R$ {parseBrlCurrency(landingConfig.recurringBasic, 29.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(parsePlanMaxUpdates(landingConfig.updatesBasic, 1), false)}) — Criação {formatCreationPriceDisplay(landingConfig.priceEssential)}
                       </option>
                       <option value={getPlanCheckoutDetails('vip').fullPlanLabel}>
-                        Plano VIP (R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}) — Criação {landingConfig.priceScale || 'R$ 79,90'}
+                        Plano VIP (R$ {parseBrlCurrency(landingConfig.recurringVip, 79.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(parsePlanMaxUpdates(landingConfig.updatesVip, Infinity), false)}) — Criação {formatCreationPriceDisplay(landingConfig.priceScale)}
                       </option>
                     </select>
                   </div>
@@ -14980,7 +15537,7 @@ COMO PUBLICAR NO SERVIDOR:
 
                 {landingOrderSuccess && (
                   <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300">
-                    Redirecionando para o WhatsApp com seu pedido formatado...
+                    Redirecionando para o WhatsApp (31) 99139-0202 com seu pedido formatado...
                   </div>
                 )}
 
@@ -14989,7 +15546,7 @@ COMO PUBLICAR NO SERVIDOR:
                   className="w-full py-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-sm tracking-wide flex items-center justify-center gap-2 transition cursor-pointer shadow-xl shadow-amber-500/15"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>QUERO MEU MICROSITE E MAIS CLIENTES NO WHATSAPP 🚀</span>
+                  <span>QUERO MEU MICROSITE NO WHATSAPP (31) 99139-0202 🚀</span>
                 </button>
               </form>
 
@@ -15005,7 +15562,7 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span><strong>Atendimento VIP:</strong> Suporte humano no WhatsApp.</span>
+                  <span><strong>Atendimento VIP:</strong> WhatsApp (31) 99139-0202.</span>
                 </div>
               </div>
             </div>
@@ -15053,8 +15610,8 @@ COMO PUBLICAR NO SERVIDOR:
                   a: 'Perfeitamente. Nossos microsites utilizam código nativo ultraleve, abrindo instantaneamente em iPhones e Androids com qualquer velocidade de internet, sem travar nem desalinhar.',
                 },
                 {
-                  q: 'Como funciona a oferta de R$ 79,90 e os planos de manutenção?',
-                  a: 'Os 10 primeiros microsites têm taxa única de criação promocional de apenas R$ 79,90 no primeiro mês — e no 1º mês você NÃO paga nenhuma mensalidade! A partir do 2º mês, você escolhe seu plano de manutenção mensal: Plano Básico (R$ 29,90 com 1 alteração mensal), Plano Pro (R$ 49,90 com 4 alterações mensais) ou Plano VIP (R$ 79,90 com alterações ilimitadas). Alterações extras avulsas fora da franquia custam R$ 14,90 cada. Para manter a estabilidade dos servidores e segurança, a desativação por atraso no pagamento ocorre de forma automática a partir do 7º dia de atraso.',
+                  q: `Como funciona a oferta de ${formatCreationPriceDisplay(landingConfig.pricePro)} e os planos de manutenção?`,
+                  a: `Os 10 primeiros microsites têm taxa única de criação promocional de apenas ${formatCreationPriceDisplay(landingConfig.pricePro)} no primeiro mês — e no 1º mês você NÃO paga nenhuma mensalidade! A partir do 2º mês, você escolhe seu plano de manutenção mensal: Plano Básico (R$ ${parseBrlCurrency(landingConfig.recurringBasic, 29.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} com ${formatPlanUpdatesLabel(parsePlanMaxUpdates(landingConfig.updatesBasic, 1), false)}), Plano Pro (R$ ${parseBrlCurrency(landingConfig.recurringPro, 49.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} com ${formatPlanUpdatesLabel(parsePlanMaxUpdates(landingConfig.updatesPro, 4), false)}) ou Plano VIP (R$ ${parseBrlCurrency(landingConfig.recurringVip, 79.90).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} com ${formatPlanUpdatesLabel(parsePlanMaxUpdates(landingConfig.updatesVip, Infinity), false)}). Alterações extras avulsas fora da franquia custam R$ 14,90 cada. Para manter a estabilidade dos servidores e segurança, a desativação por atraso no pagamento ocorre de forma automática a partir do 7º dia de atraso.`,
                 },
                 {
                   q: 'Como coloco o link no meu Instagram e redes sociais?',
@@ -15089,25 +15646,61 @@ COMO PUBLICAR NO SERVIDOR:
         </section>
         </main>
 
-        {/* FOOTER FOCADO EM AUTORIDADE E ACESSO DO ADMINISTRADOR */}
-        <footer className="py-12 bg-[#060608] text-xs text-neutral-400">
+        {/* FOOTER FOCADO EM AUTORIDADE, CONTATO OFICIAL E ACESSO DO ADMINISTRADOR */}
+        <footer className="py-12 bg-[#060608] text-xs text-neutral-400 border-t border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/30 flex items-center justify-center overflow-hidden shrink-0 shadow-md shadow-amber-500/10">
                 <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <div className="font-serif font-black tracking-widest text-sm text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500">
                   BIOVIP
                 </div>
                 <p className="text-[11px] text-neutral-400">
                   O fim dos links amadores. Microsites de alta conversão para o WhatsApp.
                 </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={`mailto:${landingConfig.agencyEmail || 'contato@biovip.com.br'}`}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-mono text-amber-300 hover:text-amber-200 transition"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{landingConfig.agencyEmail || 'contato@biovip.com.br'}</span>
+                  </a>
+                  <a
+                    href={`https://wa.me/${formatWhatsAppPhone(landingConfig.agencyWhatsapp || '5531991390202')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 hover:text-emerald-300 transition"
+                  >
+                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>(31) 99139-0202</span>
+                  </a>
+                </div>
               </div>
             </div>
 
-            {/* Acesso exclusivo ao Painel de Gestão (sem botão de configurar domínio na vitrine pública) */}
+            {/* Contato Oficial e Acesso exclusivo ao Painel de Gestão */}
             <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={`https://wa.me/${formatWhatsAppPhone(landingConfig.agencyWhatsapp || '5531991390202')}?text=${encodeURIComponent('Olá! Quero saber mais sobre os Microsites BioVip.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-mono text-xs border border-emerald-500/30 transition flex items-center gap-1.5"
+                title="Atendimento Comercial no WhatsApp (31) 99139-0202"
+              >
+                <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400" />
+                <span>(31) 99139-0202</span>
+              </a>
+              <a
+                href={`mailto:${landingConfig.agencyEmail || 'contato@biovip.com.br'}`}
+                className="px-3.5 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 hover:text-amber-300 font-mono text-xs border border-white/[0.08] transition flex items-center gap-1.5"
+                title="Enviar e-mail para o suporte e atendimento BioVip"
+              >
+                <Mail className="w-3.5 h-3.5 text-amber-400" />
+                <span>{landingConfig.agencyEmail || 'contato@biovip.com.br'}</span>
+              </a>
               <button
                 type="button"
                 onClick={openCreatorSubdomain}
@@ -15551,7 +16144,6 @@ COMO PUBLICAR NO SERVIDOR:
                     {pinAttemptsLeft} de {MAX_PIN_ATTEMPTS}
                   </strong>
                 </span>
-                <span className="text-neutral-500 font-mono">PIN padrão: {DEFAULT_ADMIN_PIN}</span>
               </div>
 
               {/* Unlock Action Button */}
@@ -17186,10 +17778,11 @@ COMO PUBLICAR NO SERVIDOR:
                       </div>
 
                       {/* Lista de Fotos */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[360px] overflow-y-auto tab-scrollbar p-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[420px] overflow-y-auto tab-scrollbar p-1">
                         {data.studentGrid.photos?.map((photo, idx) => {
                           const info = photoOrientations[photo];
                           const orient = info?.orientation || 'square';
+                          const currentCaption = ((data.studentGrid as any).captions || [])[idx] || '';
                           return (
                             <div
                               key={idx}
@@ -17198,7 +17791,7 @@ COMO PUBLICAR NO SERVIDOR:
                               <div className="relative aspect-square rounded-lg overflow-hidden border border-neutral-800 bg-black">
                                 <img
                                   src={photo}
-                                  alt={`Foto ${idx + 1}`}
+                                  alt={currentCaption || `Foto ${idx + 1}`}
                                   referrerPolicy="no-referrer"
                                   className="w-full h-full object-cover"
                                 />
@@ -17222,6 +17815,18 @@ COMO PUBLICAR NO SERVIDOR:
                                 >
                                   <Maximize2 className="w-3 h-3" />
                                 </button>
+                              </div>
+
+                              {/* Campo de Descrição Opcional da Foto */}
+                              <div>
+                                <input
+                                  type="text"
+                                  placeholder="Descrição opcional da imagem..."
+                                  value={currentCaption}
+                                  onChange={(e) => updateGalleryPhotoCaption(idx, e.target.value)}
+                                  className="w-full px-2 py-1 text-[10.5px] rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-200 placeholder:text-neutral-500 focus:border-amber-400 focus:outline-none"
+                                  title="Adicione uma legenda ou descrição opcional para esta imagem"
+                                />
                               </div>
 
                             <div className="flex items-center justify-between gap-1 pt-0.5">
@@ -17287,29 +17892,46 @@ COMO PUBLICAR NO SERVIDOR:
                       })}
                     </div>
 
-                      {/* Input para adicionar nova foto por URL ou botão de adição rápida */}
-                      <div className="pt-2 flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Cole a URL da imagem aqui para adicionar..."
-                          value={newGalleryUrl}
-                          onChange={(e) => setNewGalleryUrl(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addGalleryPhoto(newGalleryUrl);
-                            }
-                          }}
-                          className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => addGalleryPhoto(newGalleryUrl)}
-                          className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs flex items-center gap-1 cursor-pointer transition shadow"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Adicionar</span>
-                        </button>
+                      {/* Input para adicionar nova foto por URL + Descrição opcional */}
+                      <div className="pt-2 space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Cole a URL da imagem aqui para adicionar..."
+                            value={newGalleryUrl}
+                            onChange={(e) => setNewGalleryUrl(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addGalleryPhoto(newGalleryUrl, newGalleryCaption);
+                              }
+                            }}
+                            className="w-full px-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 focus:border-amber-400 focus:outline-none"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Descrição opcional da imagem (legenda)..."
+                              value={newGalleryCaption}
+                              onChange={(e) => setNewGalleryCaption(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addGalleryPhoto(newGalleryUrl, newGalleryCaption);
+                                }
+                              }}
+                              className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 focus:border-amber-400 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => addGalleryPhoto(newGalleryUrl, newGalleryCaption)}
+                              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs flex items-center gap-1 cursor-pointer transition shadow shrink-0"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Adicionar</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -19775,52 +20397,94 @@ COMO PUBLICAR NO SERVIDOR:
                 </button>
 
                 {pixCardExpanded && (
-                  <div className="p-4 pt-1 border-t border-neutral-900 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div>
-                      <label className="text-[10px] text-neutral-400 block mb-1">Chave PIX (E-mail, CPF, CNPJ ou Aleatória)</label>
-                      <input
-                        type="text"
-                        value={data.saasSettings?.pixKey || ''}
-                        onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixKey: e.target.value } }))}
-                        placeholder="ex: financeiro@seudominio.com"
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-amber-300 font-mono font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-neutral-400 block mb-1">Nome do Favorecido / Razão Social</label>
-                      <input
-                        type="text"
-                        value={data.saasSettings?.pixName || ''}
-                        onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixName: e.target.value } }))}
-                        placeholder="ex: Agência Digital BioVip"
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-neutral-400 block mb-1">Cidade do Banco</label>
-                      <input
-                        type="text"
-                        value={data.saasSettings?.pixCity || ''}
-                        onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixCity: e.target.value } }))}
-                        placeholder="ex: SAO PAULO"
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-neutral-400 block mb-1">Valor Padrão da Mensalidade (Novos Sites)</label>
-                      <div className="relative">
-                        <span className="text-xs text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 font-mono">R$</span>
+                  <div className="p-4 pt-1 border-t border-neutral-900 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label className="text-[10px] text-neutral-400 block mb-1">Chave PIX (E-mail, CPF, CNPJ ou Aleatória)</label>
                         <input
-                          type="number"
-                          step="0.01"
-                          value={data.saasSettings?.defaultMonthlyFee || 149.90}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            setData(p => ({ ...p, saasSettings: { ...p.saasSettings, defaultMonthlyFee: isNaN(val) ? 149.90 : val } }));
-                          }}
-                          placeholder="149.90"
-                          className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-emerald-300 font-mono font-bold"
+                          type="text"
+                          value={data.saasSettings?.pixKey || ''}
+                          onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixKey: e.target.value } }))}
+                          placeholder="ex: contato@biovip.com.br"
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-amber-300 font-mono font-bold"
                         />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-neutral-400 block mb-1">Nome do Favorecido / Razão Social</label>
+                        <input
+                          type="text"
+                          value={data.saasSettings?.pixName || ''}
+                          onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixName: e.target.value } }))}
+                          placeholder="ex: Agência Digital BioVip"
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-neutral-400 block mb-1">Cidade do Banco</label>
+                        <input
+                          type="text"
+                          value={data.saasSettings?.pixCity || ''}
+                          onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixCity: e.target.value } }))}
+                          placeholder="ex: SAO PAULO"
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-neutral-400 block mb-1">Valor Padrão da Mensalidade (Novos Sites)</label>
+                        <div className="relative">
+                          <span className="text-xs text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 font-mono">R$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={data.saasSettings?.defaultMonthlyFee || 149.90}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              setData(p => ({ ...p, saasSettings: { ...p.saasSettings, defaultMonthlyFee: isNaN(val) ? 149.90 : val } }));
+                            }}
+                            placeholder="149.90"
+                            className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-emerald-300 font-mono font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Configuração Direta Asaas no Modo Editor */}
+                    <div className="pt-3 border-t border-neutral-800/80 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                      <div className="sm:col-span-6">
+                        <label className="text-[10px] text-amber-400 font-mono uppercase font-bold block mb-1">
+                          ⚡ Token de Acesso da API Asaas (access_token)
+                        </label>
+                        <input
+                          type="password"
+                          value={getActiveAsaasApiKey()}
+                          onChange={(e) => updateAsaasSettings({ apiKey: e.target.value })}
+                          placeholder="$aact_YTU5YTE0M2M6N2I4..."
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-amber-500/40 text-amber-300 font-mono"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="text-[10px] text-neutral-400 font-mono uppercase block mb-1">
+                          Ambiente Asaas
+                        </label>
+                        <select
+                          value={getActiveAsaasEnv()}
+                          onChange={(e) => updateAsaasSettings({ environment: e.target.value as 'sandbox' | 'production' })}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold cursor-pointer"
+                        >
+                          <option value="sandbox">🧪 Sandbox</option>
+                          <option value="production">🚀 Produção</option>
+                        </select>
+                      </div>
+                      <div className="sm:col-span-3">
+                        <button
+                          type="button"
+                          disabled={asaasStatusTesting}
+                          onClick={handleTestAsaasConnection}
+                          className="w-full py-1.5 px-3 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${asaasStatusTesting ? 'animate-spin' : ''}`} />
+                          <span>{asaasStatusTesting ? 'Testando...' : 'Testar Asaas'}</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -19969,10 +20633,23 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-[10.5px]">
-                  <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                  <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-1.5">
                     <span className="font-bold text-amber-300 block">🎨 1º Mês (Criação)</span>
-                    <span className="text-neutral-200 font-semibold block mt-0.5">Sem Mensalidade (R$ 0)</span>
-                    <span className="text-[9.5px] text-neutral-400 block">Cobra apenas taxa de criação</span>
+                    <input
+                      type="text"
+                      value={landingConfig.pricePro || 'R$ 79,90'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLandingConfig(prev => {
+                          const updated = { ...prev, priceEssential: val, pricePro: val, priceScale: val };
+                          persistLandingConfigEverywhere(updated);
+                          return updated;
+                        });
+                      }}
+                      className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-amber-500/40 text-amber-300 font-mono font-bold text-[10.5px] focus:border-amber-300 focus:outline-none"
+                      title="Valor da taxa de criação no 1º mês"
+                    />
+                    <span className="text-[9.5px] text-neutral-400 block">Sem mensalidade no 1º mês</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-1.5">
                     <span className="font-bold text-emerald-300 block">🛠️ Plano Básico</span>
@@ -21188,10 +21865,12 @@ COMO PUBLICAR NO SERVIDOR:
                 <span>
                   Extraído:{' '}
                   <strong>
-                    {(lastExtractedMeta.instagramPhotosCount || 0) + (lastExtractedMeta.mapsPhotosCount || 0)} fotos
+                    {(lastExtractedMeta.instagramPhotosCount || 0) + (lastExtractedMeta.mapsPhotosCount || 0)} fotos mais curtidas
                   </strong>
+                  {lastExtractedMeta.instagramMaxLikes ? ` (até ${lastExtractedMeta.instagramMaxLikes} ❤️)` : ''}
+                  {lastExtractedMeta.servicesExtractedCount ? ` · ${lastExtractedMeta.servicesExtractedCount} serviços do cliente` : ''}
                   {lastExtractedMeta.whatsappDetected ? ' · WhatsApp real' : ''}
-                  {lastExtractedMeta.mapsRating ? ` · Nota ${lastExtractedMeta.mapsRating}★` : ''}
+                  {lastExtractedMeta.mapsRating ? ` · Nota ${lastExtractedMeta.mapsRating}` : ''}
                 </span>
               </div>
               <button
@@ -22072,6 +22751,7 @@ COMO PUBLICAR NO SERVIDOR:
                         const aspectCls = getItemAspectClass(p);
                         const info = photoOrientations[p];
                         const isLandscape = info?.orientation === 'landscape';
+                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
 
                         return (
                           <div
@@ -22082,15 +22762,22 @@ COMO PUBLICAR NO SERVIDOR:
                           >
                             <SimulatorImage
                               src={p}
-                              alt={`Foto ${idx + 1}`}
+                              alt={caption || `Foto ${idx + 1}`}
                               referrerPolicy="no-referrer"
                               accentColor={theme.accent}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
-                            {isLandscape && (
+                            {isLandscape && !caption && (
                               <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[7.5px] font-bold uppercase tracking-wider bg-black/60 text-amber-300 border border-amber-500/30 backdrop-blur z-20">
                                 Panorâmica
                               </span>
+                            )}
+                            {caption && (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2.5 py-2 pt-5 z-20 pointer-events-none">
+                                <p className="text-[10px] text-white font-medium leading-snug line-clamp-2 drop-shadow">
+                                  {caption}
+                                </p>
+                              </div>
                             )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                               <Maximize2 className="w-5 h-5 text-white drop-shadow" />
@@ -22106,6 +22793,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="columns-2 gap-2.5 pt-1 [column-fill:balance]">
                       {photos.map((p, idx) => {
                         const aspectCls = getItemAspectClass(p);
+                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -22115,11 +22803,18 @@ COMO PUBLICAR NO SERVIDOR:
                           >
                             <SimulatorImage
                               src={p}
-                              alt={`Foto ${idx + 1}`}
+                              alt={caption || `Foto ${idx + 1}`}
                               referrerPolicy="no-referrer"
                               accentColor={theme.accent}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
+                            {caption && (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2.5 py-2 pt-5 z-20 pointer-events-none">
+                                <p className="text-[10px] text-white font-medium leading-snug line-clamp-2 drop-shadow">
+                                  {caption}
+                                </p>
+                              </div>
+                            )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                               <Maximize2 className="w-5 h-5 text-white drop-shadow" />
                             </div>
@@ -22134,6 +22829,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="grid grid-cols-2 gap-2.5 pt-1">
                       {photos.map((p, idx) => {
                         const aspectCls = getItemAspectClass(p);
+                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -22143,11 +22839,18 @@ COMO PUBLICAR NO SERVIDOR:
                           >
                             <SimulatorImage
                               src={p}
-                              alt={`Foto ${idx + 1}`}
+                              alt={caption || `Foto ${idx + 1}`}
                               referrerPolicy="no-referrer"
                               accentColor={theme.accent}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
+                            {caption && (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2.5 py-2 pt-5 z-20 pointer-events-none">
+                                <p className="text-[10px] text-white font-medium leading-snug line-clamp-2 drop-shadow">
+                                  {caption}
+                                </p>
+                              </div>
+                            )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                               <Maximize2 className="w-5 h-5 text-white drop-shadow" />
                             </div>
@@ -22162,6 +22865,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="grid grid-cols-3 gap-2 pt-1">
                       {photos.map((p, idx) => {
                         const aspectCls = getItemAspectClass(p);
+                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -22171,11 +22875,18 @@ COMO PUBLICAR NO SERVIDOR:
                           >
                             <SimulatorImage
                               src={p}
-                              alt={`Foto ${idx + 1}`}
+                              alt={caption || `Foto ${idx + 1}`}
                               referrerPolicy="no-referrer"
                               accentColor={theme.accent}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
+                            {caption && (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 py-1.5 pt-4 z-20 pointer-events-none">
+                                <p className="text-[9px] text-white font-medium leading-tight line-clamp-2 drop-shadow">
+                                  {caption}
+                                </p>
+                              </div>
+                            )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                               <Maximize2 className="w-4 h-4 text-white drop-shadow" />
                             </div>
@@ -22191,6 +22902,7 @@ COMO PUBLICAR NO SERVIDOR:
                       {photos.map((p, idx) => {
                         const isHero = idx === 0;
                         const aspectCls = getItemAspectClass(p, isHero);
+                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -22200,7 +22912,7 @@ COMO PUBLICAR NO SERVIDOR:
                           >
                             <SimulatorImage
                               src={p}
-                              alt={`Foto ${idx + 1}`}
+                              alt={caption || `Foto ${idx + 1}`}
                               referrerPolicy="no-referrer"
                               accentColor={theme.accent}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -22209,6 +22921,13 @@ COMO PUBLICAR NO SERVIDOR:
                               <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-black/75 text-amber-300 border border-amber-500/30 backdrop-blur shadow z-20">
                                 Destaque
                               </span>
+                            )}
+                            {caption && (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2.5 py-2 pt-5 z-20 pointer-events-none">
+                                <p className="text-[10px] text-white font-medium leading-snug line-clamp-2 drop-shadow">
+                                  {caption}
+                                </p>
+                              </div>
                             )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                               <Maximize2 className="w-5 h-5 text-white drop-shadow" />
@@ -22225,6 +22944,7 @@ COMO PUBLICAR NO SERVIDOR:
                       <div className="flex gap-2.5 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar -mx-5 px-5 scroll-smooth">
                         {photos.map((p, idx) => {
                           const aspectCls = getItemAspectClass(p);
+                          const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
                           return (
                             <div
                               key={idx}
@@ -22234,11 +22954,18 @@ COMO PUBLICAR NO SERVIDOR:
                             >
                               <SimulatorImage
                                 src={p}
-                                alt={`Foto ${idx + 1}`}
+                                alt={caption || `Foto ${idx + 1}`}
                                 referrerPolicy="no-referrer"
                                 accentColor={theme.accent}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               />
+                              {caption && (
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2.5 py-2 pt-5 z-20 pointer-events-none">
+                                  <p className="text-[10px] text-white font-medium leading-snug line-clamp-2 drop-shadow">
+                                    {caption}
+                                  </p>
+                                </div>
+                              )}
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                                 <Maximize2 className="w-5 h-5 text-white drop-shadow" />
                               </div>
@@ -24558,26 +25285,26 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="space-y-2">
                   <h4 className="font-bold text-sm text-neutral-100 animate-pulse">
                     {aiStepIndex === 0
-                      ? '1/3 · Buscando foto de perfil, bio e posts no Instagram...'
+                      ? '1/3 · Buscando perfil, bio e as fotos mais curtidas no Instagram...'
                       : aiStepIndex === 1
-                      ? '2/3 · Extraindo endereço, avaliações e fotos do Google Meu Negócio...'
-                      : '3/3 · Criando microsite personalizado com IA e aplicando imagens...'}
+                      ? '2/3 · Extraindo serviços das legendas, endereço e dados do negócio...'
+                      : '3/3 · Montando galeria mais curtida e catálogo personalizado com IA...'}
                   </h4>
                   <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                    A IA está coletando os dados reais e as imagens públicas do perfil informado para montar o cabeçalho, portfólio, localização e catálogo.
+                    A IA seleciona automaticamente as fotos com mais curtidas do Instagram para a galeria e cria os serviços com base nas informações reais coletadas do cliente.
                   </p>
                   <div className="max-w-xs mx-auto pt-2 space-y-1.5 text-left">
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 0 ? 'bg-pink-500/10 border-pink-500/30 text-pink-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <Instagram className="w-3.5 h-3.5 shrink-0" />
-                      <span>Extração do Instagram (@{(aiForm.instagram || 'perfil').replace('@', '')})</span>
+                      <span>Fotos Mais Curtidas & Bio (@{(aiForm.instagram || 'perfil').replace('@', '')})</span>
                     </div>
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 1 ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span>Extração do Google Meu Negócio / Maps</span>
+                      <span>Extração de Serviços Reais & Localização</span>
                     </div>
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 2 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                      <span>Geração de Copy, Paleta VIP e Galeria de Fotos</span>
+                      <span>Galeria Ordenada por Curtidas & Catálogo VIP</span>
                     </div>
                   </div>
                 </div>
@@ -24587,7 +25314,7 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 text-[11px] flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>
-                    A IA busca automaticamente a <strong>foto de perfil, fotos de posts, bio, endereço e nota</strong> do Instagram e do Google Meu Negócio informados.
+                    A IA seleciona as <strong>imagens com mais curtidas no Instagram</strong> para a galeria e monta o <strong>catálogo de serviços baseado nos dados reais coletados do cliente</strong>.
                   </span>
                 </div>
 
@@ -25390,9 +26117,9 @@ COMO PUBLICAR NO SERVIDOR:
 
               <img
                 src={data.studentGrid.photos[lightboxIndex]}
-                alt={`Foto ampliada ${lightboxIndex + 1}`}
+                alt={((data.studentGrid as any).captions?.[lightboxIndex] || '').trim() || `Foto ampliada ${lightboxIndex + 1}`}
                 referrerPolicy="no-referrer"
-                className="max-w-[85vw] max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/15"
+                className="max-w-[85vw] max-h-[72vh] object-contain rounded-2xl shadow-2xl border border-white/15"
               />
 
               {data.studentGrid.photos.length > 1 && (
@@ -25408,7 +26135,12 @@ COMO PUBLICAR NO SERVIDOR:
             </div>
 
             {/* Bottom Caption & Navigation Hint */}
-            <div className="pt-3.5 text-center space-y-1">
+            <div className="pt-3.5 text-center space-y-1.5 max-w-xl">
+              {((data.studentGrid as any).captions?.[lightboxIndex] || '').trim() && (
+                <div className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-sm text-white font-medium shadow">
+                  {((data.studentGrid as any).captions?.[lightboxIndex] || '').trim()}
+                </div>
+              )}
               <p className="text-xs text-neutral-300 font-medium">
                 {data.studentGrid.headline}
               </p>
@@ -26147,9 +26879,6 @@ COMO PUBLICAR NO SERVIDOR:
                   <p className="leading-relaxed">
                     Defina um <strong className="text-white">código de 6 dígitos numéricos</strong> exclusivo. O PIN é armazenado em formato criptográfico <strong className="text-amber-300 font-mono">SHA-256</strong> com salt exclusivo.
                   </p>
-                  <p className="text-[11px] text-neutral-400">
-                    PIN padrão inicial do sistema: <code className="text-amber-300 font-mono font-bold">230217</code>
-                  </p>
                 </div>
 
                 <div className="space-y-3">
@@ -26167,7 +26896,7 @@ COMO PUBLICAR NO SERVIDOR:
                         setChangePinCurrent(e.target.value.replace(/\D/g, '').slice(0, 6));
                         setChangePinError(null);
                       }}
-                      placeholder="Ex: 230217"
+                      placeholder="••••••"
                       className="w-full tracking-widest text-base font-mono py-2.5 px-3 rounded-xl bg-neutral-950 border border-neutral-800 text-amber-300 focus:outline-none focus:border-amber-400"
                     />
                   </div>

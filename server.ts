@@ -6,9 +6,11 @@ import generateMicrositeHandler from './api/generate-microsite.ts';
 import optimizeCopyHandler from './api/optimize-copy.ts';
 import sendBulkEmailHandler from './api/send-bulk-email.ts';
 import {
+  getAsaasServerStatus,
   testAsaasConnection,
   createAsaasPayment,
   checkAsaasPaymentStatus,
+  recordAsaasWebhookEvent,
 } from './api/asaas.ts';
 
 dotenv.config();
@@ -20,6 +22,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 
 // Express API routes for Asaas Gateway
+app.get('/api/asaas/config-status', (_req, res) => {
+  return res.status(200).json(getAsaasServerStatus());
+});
+
 app.post('/api/asaas/test-connection', async (req, res) => {
   try {
     const { apiKey, environment } = req.body || {};
@@ -86,10 +92,16 @@ app.get('/api/asaas/payment/:id/status', async (req, res) => {
 
 // Asaas Webhook Listener
 app.post('/api/asaas/webhook', (req, res) => {
+  const configuredToken = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
+  const incomingToken = String(req.headers['asaas-access-token'] || '').trim();
+  if (configuredToken && incomingToken && configuredToken !== incomingToken) {
+    return res.status(401).json({ received: false, error: 'Token de webhook Asaas inválido.' });
+  }
   const eventData = req.body || {};
-  console.log('🔔 [Asaas Webhook Received]:', eventData?.event, eventData?.payment?.id);
+  const logEntry = recordAsaasWebhookEvent(eventData);
+  console.log('🔔 [Asaas Webhook Received]:', logEntry.event, logEntry.paymentId);
   // Returns 200 OK as required by Asaas webhook specifications
-  return res.status(200).json({ received: true, event: eventData?.event });
+  return res.status(200).json({ received: true, event: logEntry.event, log: logEntry });
 });
 
 // Express API route for AI Microsite Generation (shared with Vercel /api/generate-microsite)
@@ -105,6 +117,48 @@ app.post('/api/optimize-copy', async (req, res) => {
 // Express API route for Admin Bulk Email Broadcasts (shared with Vercel /api/send-bulk-email)
 app.post('/api/send-bulk-email', async (req, res) => {
   await sendBulkEmailHandler(req, res);
+});
+
+// Shared server-side persistence for Landing Page Plan Prices, Updates & Agency Config (cross-subdomain sync)
+const LANDING_CONFIG_PATH = path.resolve(__dirname, '.landing-config.json');
+let memoryLandingConfig: Record<string, any> | null = null;
+
+app.get('/api/landing-config', async (_req, res) => {
+  try {
+    if (memoryLandingConfig) {
+      return res.status(200).json({ success: true, config: memoryLandingConfig });
+    }
+    const fs = await import('fs');
+    if (fs.existsSync(LANDING_CONFIG_PATH)) {
+      const raw = fs.readFileSync(LANDING_CONFIG_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      memoryLandingConfig = parsed;
+      return res.status(200).json({ success: true, config: parsed });
+    }
+    return res.status(200).json({ success: true, config: null });
+  } catch {
+    return res.status(200).json({ success: true, config: memoryLandingConfig });
+  }
+});
+
+app.post('/api/landing-config', async (req, res) => {
+  try {
+    const incoming = req.body?.config;
+    if (!incoming || typeof incoming !== 'object') {
+      return res.status(400).json({ success: false, error: 'Invalid config payload' });
+    }
+    const sanitized = { ...(memoryLandingConfig || {}), ...incoming };
+    // Never store sensitive raw Asaas API key in shared public landing config file
+    delete sanitized.asaasApiKey;
+    memoryLandingConfig = sanitized;
+    try {
+      const fs = await import('fs');
+      fs.writeFileSync(LANDING_CONFIG_PATH, JSON.stringify(sanitized, null, 2), 'utf-8');
+    } catch {}
+    return res.status(200).json({ success: true, config: sanitized });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to save landing config' });
+  }
 });
 
 // Vite Dev Server middleware or production static server
