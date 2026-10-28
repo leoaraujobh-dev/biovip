@@ -42,7 +42,15 @@ export async function onRequestPost(context: CloudflareContext): Promise<Respons
 
     const mockReq = {
       method: 'POST',
-      body,
+      body: {
+        ...(body || {}),
+        geminiApiKey:
+          body?.geminiApiKey ||
+          context.env?.GEMINI_API_KEY ||
+          context.env?.GOOGLE_API_KEY ||
+          context.env?.GOOGLE_GENAI_API_KEY ||
+          (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : undefined),
+      },
       headers: Object.fromEntries(context.request.headers.entries()),
     };
 
