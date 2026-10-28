@@ -1851,7 +1851,7 @@ export const getUnderConstructionPageHtml = (
   const cleanAgencyPhone = formatWhatsAppPhone(rawAgencyPhone);
   const baseDomain = (agencyConfig?.baseDomain || 'biovip.com.br').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const subdomain = customer?.subdomain || 'meusite';
-  const fullDomain = customer?.customDomain ? customer.customDomain : `${subdomain}.${baseDomain}`;
+  const fullDomain = customer?.customDomain ? customer.customDomain : `${baseDomain}/${subdomain}`;
   const displayUrl = `https://${fullDomain}`;
 
   const defaultWhatsappMsg = encodeURIComponent(
@@ -3317,9 +3317,9 @@ export default function App() {
     const subSlug = (targetSite.subdomain || 'meusite').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'meusite';
 
     const rootDomainToCheck = cleanCustomDom ? domVal.rootDomain : basePlatformDomain;
-    const cnameHostToCheck = cleanCustomDom ? domVal.cnameHost : subSlug;
+    const cnameHostToCheck = cleanCustomDom ? domVal.cnameHost : 'www';
     const cnameFullDomainToCheck = `${cnameHostToCheck}.${rootDomainToCheck}`;
-    const displayCheckedDomain = cleanCustomDom || cnameFullDomainToCheck;
+    const displayCheckedDomain = cleanCustomDom || `${basePlatformDomain}/${subSlug}`;
 
     setDnsTesting(true);
     try {
@@ -3396,7 +3396,7 @@ export default function App() {
       if (!cnameRecordOk) {
         cnameRecordStatusText = cleanCustomDom
           ? `CNAME "${cnameHostToCheck}" não encontrado em ${rootDomainToCheck} — adicione ${cnameHostToCheck} → ${expectedCnameTarget}`
-          : `Subdomínio "${cnameFullDomainToCheck}" sem apontamento no DNS — adicione CNAME "${subSlug}" ou "*" (wildcard) no Cloudflare apontando para ${basePlatformDomain}`;
+          : `CNAME "${cnameFullDomainToCheck}" sem apontamento no DNS — adicione CNAME "www" no Cloudflare apontando para ${basePlatformDomain}`;
       } else if (hasExplicitCname) {
         cnameRecordStatusText = `CNAME ativo (${cnameHostToCheck} → ${cnameTargets.join(', ')})`;
       } else {
@@ -3413,13 +3413,13 @@ export default function App() {
 
       let statusSummary = '';
       if (overallStatus === 'verified') {
-        statusSummary = `Registros A (${rootDomainToCheck}) e CNAME (${cnameFullDomainToCheck}) verificados e apontando corretamente para o servidor!`;
+        statusSummary = `Registros A (${rootDomainToCheck}) e CNAME (${cnameFullDomainToCheck}) verificados e apontando corretamente para https://${displayCheckedDomain}!`;
       } else if (aRecordOk && !cnameRecordOk) {
         statusSummary = cleanCustomDom
           ? `O Registro A de ${rootDomainToCheck} está ativo, mas falta o registro CNAME (${cnameHostToCheck} → ${expectedCnameTarget}).`
-          : `O domínio raiz ${rootDomainToCheck} está ativo na Cloudflare, mas o subdomínio ${cnameFullDomainToCheck} ainda não possui registro CNAME ("${subSlug}" ou curinga "*") configurado no DNS.`;
+          : `O domínio raiz ${rootDomainToCheck} está ativo na Cloudflare para https://${displayCheckedDomain}, mas falta o CNAME ${cnameFullDomainToCheck}.`;
       } else if (!aRecordOk && cnameRecordOk) {
-        statusSummary = `O subdomínio ${cnameFullDomainToCheck} responde no DNS, mas falta o Registro A na raiz (${rootDomainToCheck} → ${expectedARecordIp}).`;
+        statusSummary = `O registro CNAME ${cnameFullDomainToCheck} responde no DNS, mas falta o Registro A na raiz (${rootDomainToCheck} → ${expectedARecordIp}).`;
       } else if (bothExist && !bothVerified) {
         statusSummary = `Registros A e CNAME encontrados no DNS, porém apontando para endereços diferentes do padrão (${expectedARecordIp} / ${expectedCnameTarget}).`;
       } else {
@@ -3601,7 +3601,7 @@ export default function App() {
     const valor = billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
     const currentBaseDomain = (landingConfig?.baseDomain || 'biovip.com.br').toLowerCase().trim();
-    const siteDomainDisplay = site.customDomain || `${slug}.${currentBaseDomain}`;
+    const siteDomainDisplay = site.customDomain || `${currentBaseDomain}/${slug}`;
 
     const templates: Record<'d_minus_3' | 'd_0' | 'd_plus_3' | 'd_plus_7', string> = {
       d_minus_3: `Olá, ${nome}! Tudo bem? Passando para avisar que a manutenção do seu Bio Site (${siteDomainDisplay}) vence em 3 dias (${vencimento}). Segue sua chave Pix Copia e Cola: ${pix}. Qualquer dúvida estou à disposição!`,
@@ -4636,12 +4636,12 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname.toLowerCase();
       if (host === baseDomain || host === `www.${baseDomain}` || host.endsWith(`.${baseDomain}`)) {
-        return `https://${cleanSub}.${baseDomain}`;
+        return `https://${baseDomain}/${cleanSub}`;
       }
       return `${window.location.origin}/${cleanSub}`;
     }
 
-    return `https://${cleanSub}.${baseDomain}`;
+    return `https://${baseDomain}/${cleanSub}`;
   };
 
   const openPublicMicrosite = (slug: string, customDomain?: string) => {
@@ -4707,7 +4707,7 @@ export default function App() {
     const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
 
     let msg = `👋 Olá *${site.clientName}*!\n\n`;
-    msg += `Segue o resumo da fatura do seu Biosite de Alta Conversão (*${site.customDomain || site.subdomain + '.biovip.com.br'}*):\n\n`;
+    msg += `Segue o resumo da fatura do seu Biosite de Alta Conversão (*${site.customDomain || 'biovip.com.br/' + site.subdomain}*):\n\n`;
     if (billing.isFirstMonth) {
       msg += `✨ *Ciclo Atual:* 1º Mês (Taxa Única de Criação — *Isento de Mensalidade no 1º mês*)\n`;
       msg += `🎨 *Taxa de Criação (1º Mês):* R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
@@ -4760,9 +4760,9 @@ export default function App() {
     site: SavedMicrosite,
     templateType: 'complete_kit' | 'onboarding_bio' | 'renewal_details' = 'complete_kit'
   ) => {
-    const primaryDomain = (site.customDomain || '').trim() || `${site.subdomain || 'meusite'}.biovip.com.br`;
+    const primaryDomain = (site.customDomain || '').trim() || `biovip.com.br/${site.subdomain || 'meusite'}`;
     const primaryUrl = `https://${primaryDomain}`;
-    const subdomainUrl = `https://${site.subdomain || 'meusite'}.biovip.com.br`;
+    const subdomainUrl = `https://biovip.com.br/${site.subdomain || 'meusite'}`;
     const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
     const billing = getSiteBillingSummary(site);
     const dueBr = formatDueDateBr(site.dueDate);
@@ -5561,7 +5561,7 @@ export default function App() {
       const clicks = s.whatsappClicks || 0;
       const views = s.pageViews || 100;
       const rate = ((clicks / views) * 100).toFixed(1);
-      const domain = s.customDomain || `${s.subdomain}.biovip.com.br`;
+      const domain = s.customDomain || `biovip.com.br/${s.subdomain}`;
       const isModel = isModelMicrosite(s);
       const statusLabel = isModel ? 'Modelo (Isento)' : s.status === 'disabled' ? 'Desativado' : s.status === 'overdue' ? 'Vencido' : 'Em Dia';
       const statusColor = isModel ? '#d97706' : s.status === 'disabled' ? '#dc2626' : s.status === 'overdue' ? '#d97706' : '#16a34a';
@@ -5767,7 +5767,7 @@ export default function App() {
     const clicks = site.whatsappClicks || 0;
     const views = site.pageViews || 100;
     const rate = ((clicks / views) * 100).toFixed(1);
-    const domain = site.customDomain || `${site.subdomain}.biovip.com.br`;
+    const domain = site.customDomain || `biovip.com.br/${site.subdomain}`;
     const statusLabel = site.status === 'disabled' ? 'Desativado' : site.status === 'overdue' ? 'Vencido' : 'Em Dia';
     const statusColor = site.status === 'disabled' ? '#dc2626' : site.status === 'overdue' ? '#d97706' : '#16a34a';
 
@@ -5903,7 +5903,7 @@ export default function App() {
     const clicks = site.whatsappClicks || 0;
     const views = site.pageViews || 100;
     const rate = ((clicks / views) * 100).toFixed(1);
-    const domain = site.customDomain || `${site.subdomain}.biovip.com.br`;
+    const domain = site.customDomain || `biovip.com.br/${site.subdomain}`;
     const statusText = site.status === 'disabled' ? 'Desativado' : site.status === 'overdue' ? 'Vencido' : 'Em Dia';
     const statusIcon = site.status === 'disabled' ? '🛑' : site.status === 'overdue' ? '🟡' : '🟢';
 
@@ -6274,7 +6274,7 @@ export default function App() {
         id: s.id,
         clientName: s.clientName,
         email: (s.clientEmail || '').trim(),
-        domain: s.customDomain || `${s.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`,
+        domain: s.customDomain || `${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${s.subdomain}`,
       }));
 
       let protocol = `MAIL-${Date.now().toString(36).toUpperCase()}`;
@@ -6557,7 +6557,7 @@ export default function App() {
           customerPhone: site.clientPhone || site.data?.profile?.whatsapp,
           value: billing.totalDueThisMonth,
           dueDate: site.dueDate,
-          description: `Manutenção Mensal Microsite - ${site.clientName} (${site.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()})`,
+          description: `Manutenção Mensal Microsite - ${site.clientName} (${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${site.subdomain})`,
           billingType: 'PIX',
           externalReference: site.id,
         }),
@@ -12823,7 +12823,7 @@ COMO PUBLICAR NO SERVIDOR:
                 const clicks = site.whatsappClicks || 0;
                 const views = site.pageViews || 100;
                 const rate = ((clicks / views) * 100).toFixed(1);
-                const domain = site.customDomain || `${site.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
+                const domain = site.customDomain || `${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${site.subdomain}`;
 
                 return (
                   <div
@@ -13064,7 +13064,7 @@ COMO PUBLICAR NO SERVIDOR:
                               type="button"
                               onClick={() => {
                                 const targetPhone = formatWhatsAppPhone(site.clientPhone || '');
-                                const domainUrl = site.customDomain || `${site.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
+                                const domainUrl = site.customDomain || `${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${site.subdomain}`;
                                 const msg = encodeURIComponent(
                                   `Olá ${site.clientName}! Vimos que seu pagamento no Asaas foi confirmado com sucesso e seu link https://${domainUrl} já foi reservado! 🚀\n\n` +
                                   `Para colocarmos seu microsite no ar em tempo recorde, precisamos que nos envie:\n` +
@@ -13423,7 +13423,7 @@ COMO PUBLICAR NO SERVIDOR:
               </button>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono text-amber-300 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                <span>{foundSite.subdomain}.{getCleanBaseDomain()} · 🚧 Em Construção</span>
+                <span>{getCleanBaseDomain()}/{foundSite.subdomain} · 🚧 Em Construção</span>
               </div>
             </div>
             <iframe
@@ -14103,7 +14103,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span className="text-[11px] font-mono text-neutral-300 truncate">
-                        https://{activeHeroModel.subdomain}.{cleanDomain}
+                        https://{cleanDomain}/{activeHeroModel.subdomain}
                       </span>
                     </div>
                     <button
@@ -14264,7 +14264,7 @@ COMO PUBLICAR NO SERVIDOR:
               }`}
             >
               {[...filteredModels, ...filteredModels].map((model, idx) => {
-                const fullUrl = `https://${model.subdomain}.${cleanDomain}`;
+                const fullUrl = `https://${cleanDomain}/${model.subdomain}`;
                 const isCopied = landingShareCopiedId === `${model.id}-${idx}`;
                 return (
                   <div
@@ -14375,7 +14375,7 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="bg-white p-4 rounded-2xl inline-block mx-auto shadow-inner">
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-                      `https://${qrModalModel.subdomain}.${cleanDomain}`
+                      `https://${cleanDomain}/${qrModalModel.subdomain}`
                     )}`}
                     alt={`QR Code ${qrModalModel.personaName}`}
                     className="w-44 h-44"
@@ -14383,7 +14383,7 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 <p className="text-xs text-neutral-400 font-mono">
-                  https://{qrModalModel.subdomain}.{cleanDomain}
+                  https://{cleanDomain}/{qrModalModel.subdomain}
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
@@ -19047,7 +19047,7 @@ COMO PUBLICAR NO SERVIDOR:
                         {data.seo?.metaDescription || data.profile.tagline}
                       </div>
                       <div className="text-[9.5px] text-[#8696a0] font-mono uppercase tracking-wider">
-                        {data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.biovip.com.br
+                        biovip.com.br/{data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}
                       </div>
                     </div>
                   </div>
@@ -19067,7 +19067,7 @@ COMO PUBLICAR NO SERVIDOR:
             const totalSourceHits = (sources.instagram || 0) + (sources.googleMaps || 0) + (sources.paidAds || 0) + (sources.tiktok || 0) + (sources.direct || 0);
             const calcPct = (count: number) => totalSourceHits > 0 ? Math.round((count / totalSourceHits) * 100) : 0;
             const currentSubdomain = activeSite?.subdomain || data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'cliente';
-            const fullDomain = activeSite?.customDomain || `${currentSubdomain}.biovip.com.br`;
+            const fullDomain = activeSite?.customDomain || `biovip.com.br/${currentSubdomain}`;
 
             return (
               <div className="space-y-5">
@@ -20421,7 +20421,7 @@ COMO PUBLICAR NO SERVIDOR:
                           const linkStatus: 'ativo' | 'manutencao' = isSuspended ? 'manutencao' : (site.linkStatus || 'ativo');
                           const isDueToday = daysDiff === 0;
                           const isDueSoon = daysDiff > 0 && daysDiff <= 7;
-                          const currentFullDomain = site.customDomain || `${site.subdomain}.biovip.com.br`;
+                          const currentFullDomain = site.customDomain || `biovip.com.br/${site.subdomain}`;
                           const clicks = site.whatsappClicks || 0;
                           const views = site.pageViews || 100;
                           const rate = Number(((clicks / views) * 100).toFixed(1));
@@ -23240,14 +23240,15 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-neutral-400 block mb-1">Subdomínio (.biovip.com.br)</label>
+                  <label className="text-[10px] text-neutral-400 block mb-1">Endereço do Cliente (biovip.com.br/cliente)</label>
                   <div className="flex items-center rounded-xl bg-neutral-950 border border-neutral-800 overflow-hidden">
+                    <span className="pl-2.5 text-[10px] text-neutral-500 font-mono select-none">biovip.com.br/</span>
                     <input
                       type="text"
                       placeholder="meucliente"
                       value={saveForm.subdomain}
                       onChange={(e) => setSaveForm(f => ({ ...f, subdomain: e.target.value }))}
-                      className="flex-1 px-2.5 py-2 bg-transparent text-amber-300 font-mono text-xs focus:outline-none"
+                      className="flex-1 px-1.5 py-2 bg-transparent text-amber-300 font-mono text-xs focus:outline-none"
                     />
                   </div>
                 </div>
@@ -23407,12 +23408,12 @@ COMO PUBLICAR NO SERVIDOR:
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto space-y-4 pr-1 tab-scrollbar">
-                {/* Opção 1: Subdomínio Grátis */}
+                {/* Opção 1: Endereço Oficial BioVip */}
                 <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      Opção 1: Subdomínio Oficial BioVip (Ativação Imediata)
+                      Opção 1: Domínio Oficial BioVip (Ativação Imediata)
                     </span>
                     <div className="flex items-center gap-1.5">
                       <button
@@ -23420,10 +23421,10 @@ COMO PUBLICAR NO SERVIDOR:
                         disabled={dnsTesting}
                         onClick={() => verifyDomainDnsRecords({ forceMode: 'subdomain' })}
                         className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
-                        title="Consultar API DNS da Cloudflare para verificar se este subdomínio está apontando para o servidor"
+                        title="Consultar API DNS da Cloudflare para verificar se o domínio está apontando para o servidor"
                       >
                         <RefreshCw className={`w-2.5 h-2.5 ${dnsTesting ? 'animate-spin' : ''}`} />
-                        <span>Verificar DNS Subdomínio</span>
+                        <span>Verificar DNS BioVip</span>
                       </button>
                       <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
                         ● PRONTO PARA USO
@@ -23431,7 +23432,9 @@ COMO PUBLICAR NO SERVIDOR:
                     </div>
                   </div>
                   <div className="flex items-center rounded-xl bg-neutral-900 border border-neutral-800 focus-within:border-amber-500/60 overflow-hidden">
-                    <span className="pl-3 text-xs text-neutral-500 font-mono select-none">https://</span>
+                    <span className="pl-3 pr-1 text-xs text-neutral-400 font-mono select-none bg-neutral-950/60 py-2 border-r border-neutral-800">
+                      https://{(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/
+                    </span>
                     <input
                       type="text"
                       value={targetSite.subdomain || 'meusite'}
@@ -23440,22 +23443,19 @@ COMO PUBLICAR NO SERVIDOR:
                         const updated = savedSites.map(s => s.id === targetSite.id ? { ...s, subdomain: cleanSubInput } : s);
                         setSavedSites(updated);
                       }}
-                      className="flex-1 px-1.5 py-2 bg-transparent text-amber-300 font-mono text-xs font-bold focus:outline-none"
+                      className="flex-1 px-2.5 py-2 bg-transparent text-amber-300 font-mono text-xs font-bold focus:outline-none"
                     />
-                    <span className="px-3 text-xs text-neutral-400 font-mono border-l border-neutral-800 bg-neutral-950/60 py-2">
-                      .{ (landingConfig.baseDomain || 'biovip.com.br').toLowerCase() }
-                    </span>
                     <button
                       type="button"
                       onClick={() =>
                         copyDnsValue(
-                          `https://${targetSite.subdomain || 'meusite'}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`,
+                          `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${targetSite.subdomain || 'meusite'}`,
                           'subdomain-url',
-                          'Link do subdomínio'
+                          'Link do BioSite'
                         )
                       }
                       className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition border-l border-neutral-700"
-                      title="Copiar URL do Subdomínio"
+                      title="Copiar URL do BioSite"
                     >
                       {copiedDnsField === 'subdomain-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
                       <span>{copiedDnsField === 'subdomain-url' ? 'Copiado!' : 'Copiar'}</span>
@@ -24187,7 +24187,7 @@ COMO PUBLICAR NO SERVIDOR:
                     showToast(
                       finalCustomDom
                         ? `🚀 Domínio personalizado ${finalCustomDom} vinculado e publicado com sucesso!`
-                        : `🚀 Microsite publicado em https://${targetSite.subdomain || 'meusite'}.biovip.com.br!`
+                        : `🚀 Microsite publicado em https://biovip.com.br/${targetSite.subdomain || 'meusite'}!`
                     );
                     setPublishModalOpen(false);
                   }}
@@ -24293,7 +24293,7 @@ COMO PUBLICAR NO SERVIDOR:
                         const clicks = s.whatsappClicks || 0;
                         const views = s.pageViews || 100;
                         const rate = ((clicks / views) * 100).toFixed(1);
-                        const domain = s.customDomain || `${s.subdomain}.biovip.com.br`;
+                        const domain = s.customDomain || `biovip.com.br/${s.subdomain}`;
                         const isModel = isModelMicrosite(s);
 
                         return (
@@ -24388,7 +24388,7 @@ COMO PUBLICAR NO SERVIDOR:
         const clicks = site.whatsappClicks || 0;
         const views = site.pageViews || 100;
         const rate = Number(((clicks / views) * 100).toFixed(1));
-        const domain = site.customDomain || `${site.subdomain}.biovip.com.br`;
+        const domain = site.customDomain || `biovip.com.br/${site.subdomain}`;
 
         return (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -24844,7 +24844,7 @@ COMO PUBLICAR NO SERVIDOR:
                       </span>
                     </h3>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      Domínio: <strong className="text-amber-300 font-mono">{pixModalSite.customDomain || `${pixModalSite.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`}</strong> · Vencimento:{' '}
+                      Domínio: <strong className="text-amber-300 font-mono">{pixModalSite.customDomain || `${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${pixModalSite.subdomain}`}</strong> · Vencimento:{' '}
                       <strong className="text-neutral-200">{formatDueDateBr(pixModalSite.dueDate)}</strong> · Valor:{' '}
                       <strong className="text-emerald-400">R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                     </p>
@@ -25257,7 +25257,7 @@ COMO PUBLICAR NO SERVIDOR:
         };
         const liveUrl = targetSite.customDomain 
           ? `https://${targetSite.customDomain}` 
-          : `https://${targetSite.subdomain || 'meusite'}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
+          : `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${targetSite.subdomain || 'meusite'}`;
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(liveUrl)}`;
 
         return (
@@ -25618,7 +25618,7 @@ COMO PUBLICAR NO SERVIDOR:
       {/* VALORES, LINKS PARA REDES SOCIAIS & PASSO A PASSO BIO DO INSTAGRAM)      */}
       {/* ========================================================================= */}
       {clientWaPromptSite && (() => {
-        const primaryDomain = (clientWaPromptSite.customDomain || '').trim() || `${clientWaPromptSite.subdomain || 'meusite'}.biovip.com.br`;
+        const primaryDomain = (clientWaPromptSite.customDomain || '').trim() || `biovip.com.br/${clientWaPromptSite.subdomain || 'meusite'}`;
         const primaryUrl = `https://${primaryDomain}`;
         const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
         const billing = getSiteBillingSummary(clientWaPromptSite);
