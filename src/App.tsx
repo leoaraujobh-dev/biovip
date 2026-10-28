@@ -1807,6 +1807,7 @@ export const getSuspendedPageHtml = (customer: Partial<SavedMicrosite> & { clien
  */
 export const isSiteUnderConstruction = (site?: Partial<SavedMicrosite> | null): boolean => {
   if (!site) return false;
+  if (isModelMicrosite(site)) return false;
   return Boolean(site.isUnderConstruction || site.underConstruction);
 };
 
@@ -3456,22 +3457,50 @@ export default function App() {
     const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
     const search = new URLSearchParams(window.location.search);
     const host = window.location.hostname.toLowerCase();
-    
+
     if (search.get('site')) return search.get('site')!.toLowerCase();
     if (search.get('p')) return search.get('p')!.toLowerCase();
     if (search.get('microsite')) return search.get('microsite')!.toLowerCase();
 
     const configuredSub = (landingConfig?.creatorSubdomain || 'criador').toLowerCase();
+    const baseDomain = (landingConfig?.baseDomain || 'biovip.com.br')
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/.*$/, '');
+
     const reservedPaths = [
-      '', 'criador', 'studio', 'painel', 'editor', 'admin', 'api', 'assets', configuredSub,
+      '',
+      'index.html',
+      'landing',
+      'home',
+      'inicio',
+      'vitrine',
+      'vendas',
+      'criador',
+      'studio',
+      'painel',
+      'editor',
+      'admin',
+      'api',
+      'assets',
+      'www',
+      configuredSub,
+      baseDomain,
     ];
+
     if (path && !reservedPaths.includes(path) && !path.includes('.')) {
       return path;
     }
-    const baseDomain = (landingConfig?.baseDomain || 'biovip.com.br').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    if (host.includes(baseDomain)) {
-      const sub = host.replace(`.${baseDomain}`, '').trim();
-      if (sub && sub !== 'www' && !reservedPaths.includes(sub)) {
+
+    if (
+      baseDomain &&
+      host !== baseDomain &&
+      host !== `www.${baseDomain}` &&
+      host.endsWith(`.${baseDomain}`)
+    ) {
+      const sub = host.slice(0, -(baseDomain.length + 1)).trim();
+      if (sub && sub !== 'www' && !sub.includes('.') && !reservedPaths.includes(sub)) {
         return sub;
       }
     }
@@ -12795,12 +12824,14 @@ COMO PUBLICAR NO SERVIDOR:
   // =========================================================================
   if (appSurface === 'microsite') {
     const slug = (activePublicSlug || '').toLowerCase().trim();
-    const foundSite = savedSites.find(
-      (s) =>
-        (s.subdomain && s.subdomain.toLowerCase() === slug) ||
-        s.id === slug ||
-        (s.clientName && s.clientName.toLowerCase().replace(/[^a-z0-9]/g, '-') === slug)
-    );
+    const foundSite = slug
+      ? savedSites.find(
+          (s) =>
+            (s.subdomain && s.subdomain.toLowerCase() === slug) ||
+            s.id.toLowerCase() === slug ||
+            (s.clientName && s.clientName.toLowerCase().replace(/[^a-z0-9]/g, '-') === slug)
+        )
+      : undefined;
 
     if (foundSite) {
       if (isSiteUnderConstruction(foundSite)) {
@@ -12870,13 +12901,14 @@ COMO PUBLICAR NO SERVIDOR:
     }
 
     // Modelo demonstrativo
-    const demoModel =
-      DYNAMIC_LANDING_MODELS.find(
-        (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
-      ) ||
-      READY_MADE_MODELS.find(
-        (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
-      );
+    const demoModel = slug
+      ? DYNAMIC_LANDING_MODELS.find(
+          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+        ) ||
+        READY_MADE_MODELS.find(
+          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+        )
+      : undefined;
 
     if (demoModel) {
       return (
@@ -12902,55 +12934,12 @@ COMO PUBLICAR NO SERVIDOR:
         </div>
       );
     }
-
-    // Domínio não encontrado / em fase de ativação
-    return (
-      <div className="min-h-screen bg-[#09090b] text-[#fafaf9] flex flex-col items-center justify-center p-6 text-center font-sans selection:bg-amber-400 selection:text-neutral-950 relative overflow-hidden">
-        <div
-          className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] opacity-20 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, transparent 70%)',
-          }}
-        />
-        <div className="w-36 h-24 rounded-2xl bg-[#1c1c1e] border border-amber-400/40 shadow-2xl shadow-amber-500/20 flex items-center justify-center mb-6 relative z-10 overflow-hidden">
-          <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip" className="w-full h-full object-cover scale-125" />
-        </div>
-        <span className="px-3.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 font-mono text-xs uppercase tracking-widest mb-3 relative z-10">
-          Endereço BioVip Reservado
-        </span>
-        <h1 className="font-serif text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neutral-100 via-amber-200 to-amber-400 mb-3 relative z-10">
-          biovip.com.br/{slug}
-        </h1>
-        <p className="text-neutral-400 max-w-md text-sm leading-relaxed mb-6 relative z-10">
-          Este endereço foi registrado na BioVip e está em fase de ativação e montagem. Se você realizou o pagamento pelo Asaas, aguarde o envio do briefing ou entre em contato com nossa equipe.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
-          <button
-            type="button"
-            onClick={() => {
-              window.history.pushState({}, '', '/');
-              setAppSurface('landing');
-              setActivePublicSlug(null);
-            }}
-            className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-lg shadow-amber-500/20"
-          >
-            ← Voltar para Início
-          </button>
-          <a
-            href={`https://wa.me/${(landingConfig.agencyWhatsapp || '5511999999999').replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Acabei de registrar o domínio biovip.com.br/${slug} e gostaria de acompanhar o status.`)}`}
-            className="px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] text-white font-semibold text-xs transition inline-flex items-center gap-2"
-          >
-            <span>Falar com Atendimento WhatsApp ↗</span>
-          </a>
-        </div>
-      </div>
-    );
   }
 
   // =========================================================================
-  // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing')
+  // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing' OU SLUG NÃO ENCONTRADO)
   // =========================================================================
-  if (appSurface === 'landing') {
+  if (appSurface === 'landing' || appSurface === 'microsite') {
     if (paymentConfirmPlan) {
       const portalName = (landingConfig.checkoutPortalName || 'Kiwify').trim();
       const trimmedClientEmail = paymentClientEmail.trim();
@@ -13197,7 +13186,7 @@ COMO PUBLICAR NO SERVIDOR:
                     </div>
 
                     <p className="text-xs text-neutral-300 leading-relaxed">
-                      Ao pagar via PIX pelo Asaas, o sistema cria automaticamente seu cadastro com endereço oficial <strong className="text-amber-300 font-mono">biovip.com.br/seu-nome</strong> em modo <strong className="text-amber-300">Página em Construção</strong>, aguardando suas fotos e briefing.
+                      Ao pagar via PIX pelo Asaas, o sistema cria automaticamente seu cadastro com endereço oficial <strong className="text-amber-300 font-mono">biovip.com.br/seu-nome</strong> para personalização imediata com suas fotos e informações.
                     </p>
 
                     {/* Botão de Geração ou Visualizador de PIX */}
@@ -13382,7 +13371,6 @@ COMO PUBLICAR NO SERVIDOR:
             </div>
           </div>
           {renderPaymentSuccessModal()}
-          {renderUnderConstructionPreviewModal()}
         </div>
       );
     }
@@ -14668,7 +14656,6 @@ COMO PUBLICAR NO SERVIDOR:
 
         {renderSubdomainConfigModal()}
         {renderPaymentSuccessModal()}
-        {renderUnderConstructionPreviewModal()}
       </div>
     );
   }
