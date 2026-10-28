@@ -4713,9 +4713,15 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // Real-time listener on admin_sites to restore private client microsites across devices when Admin is authenticated
+  // Real-time listener on admin_sites to restore private client microsites across devices when Admin is authenticated with Firebase
   useEffect(() => {
-    if (!isAuthorizedAdmin) return;
+    if (
+      !adminUser ||
+      !firebaseAuth.currentUser ||
+      adminUser.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()
+    ) {
+      return;
+    }
     const unsub = onSnapshot(
       collection(firebaseDb, 'admin_sites'),
       (snap) => {
@@ -4772,7 +4778,7 @@ export default function App() {
       }
     );
     return () => unsub();
-  }, [isAuthorizedAdmin]);
+  }, [adminUser]);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -4894,6 +4900,10 @@ export default function App() {
           originalText: currentVal,
           fieldType: fieldLabel,
           niche: THEMES[data.theme]?.category || 'Geral',
+          geminiApiKey:
+            (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+            (import.meta as any).env?.GEMINI_API_KEY ||
+            undefined,
         }),
       });
       const json = await res.json();
@@ -5115,6 +5125,14 @@ export default function App() {
     visualStyle: 'auto' as 'auto' | 'rose_luxury' | 'dark_gold' | 'clean_minimal' | 'vibrant_glam',
   });
   const [lastExtractedMeta, setLastExtractedMeta] = useState<any | null>(null);
+  const [aiCreationMode, setAiCreationMode] = useState<'auto_api' | 'gemini_script'>('gemini_script');
+  const [geminiPastedCode, setGeminiPastedCode] = useState('');
+  const [copiedGeminiScript, setCopiedGeminiScript] = useState(false);
+  const [copiedGeminiPrefilledScript, setCopiedGeminiPrefilledScript] = useState(false);
+  const [geminiAutoFetchInstaPhotos, setGeminiAutoFetchInstaPhotos] = useState(true);
+  const [geminiAutoCreateAdminRecord, setGeminiAutoCreateAdminRecord] = useState(true);
+  const [geminiImporting, setGeminiImporting] = useState(false);
+  const [showStylingGeminiBox, setShowStylingGeminiBox] = useState(true);
 
   const buildClientSmartMicrosite = () => {
     const cleanInsta = (aiForm.instagram || '').replace('@', '').trim() || 'studiovip';
@@ -5537,7 +5555,7 @@ export default function App() {
         : ''
     );
 
-    setData((prev) => ({
+    const builtMicrositeData: typeof INITIAL_DATA = {
       ...INITIAL_DATA,
       theme: safeTheme,
       customColors: { ...INITIAL_DATA.customColors, enabled: false },
@@ -5555,9 +5573,9 @@ export default function App() {
         ...(generated?.profile || {}),
         name:
           generated?.profile?.name ||
-          (aiForm.businessName ? aiForm.businessName.toUpperCase() : prev.profile.name),
-        instagram: generated?.profile?.instagram || cleanInsta || prev.profile.instagram,
-        mapsUrl: generated?.profile?.mapsUrl || cleanMaps || prev.profile.mapsUrl,
+          (aiForm.businessName ? aiForm.businessName.toUpperCase() : data.profile.name),
+        instagram: generated?.profile?.instagram || cleanInsta || data.profile.instagram,
+        mapsUrl: generated?.profile?.mapsUrl || cleanMaps || data.profile.mapsUrl,
       },
       metrics: {
         ...INITIAL_DATA.metrics,
@@ -5638,8 +5656,9 @@ export default function App() {
           generated?.profile?.tagline || aiForm.additionalInfo || INITIAL_DATA.profile.tagline,
         ogImageUrl: generated?.profile?.avatarUrl || INITIAL_DATA.profile.avatarUrl,
       },
-    }));
+    };
 
+    setData(builtMicrositeData);
     setLastExtractedMeta(extractedMeta || null);
     setEditingSiteId(null);
     setAiModalOpen(false);
@@ -5664,6 +5683,587 @@ export default function App() {
       }
     } else {
       showToast('✨ Microsite gerado com sucesso! Confira no simulador.');
+    }
+
+    return builtMicrositeData;
+  };
+
+  // ============================================================================
+  // GERADOR VIA SCRIPT INTERATIVO NO GEMINI EXTERNO (COPIAR SCRIPT & COLAR JSON)
+  // ============================================================================
+  const buildGeminiSequentialScript = (prefilled: boolean = false) => {
+    const cleanInsta = (aiForm.instagram || '').replace('@', '').trim();
+    const prefilledBlock =
+      prefilled && (cleanInsta || aiForm.googleMaps || aiForm.businessName || aiForm.businessNiche)
+        ? `\n### DADOS INICIAIS QUE JÁ TENHO DO CLIENTE:
+- Nome do Cliente/Negócio: ${aiForm.businessName || 'Extrair do perfil'}
+- Nicho/Especialidade: ${aiForm.businessNiche || 'Extrair do perfil'}
+- Instagram: ${cleanInsta ? `@${cleanInsta} (https://www.instagram.com/${cleanInsta}/)` : 'Solicitar na entrevista'}
+- Google Maps / Endereço: ${aiForm.googleMaps || 'Solicitar ou buscar na internet'}
+- Informações Extras: ${aiForm.additionalInfo || 'Nenhuma'}
+(Se já tiver o suficiente acima, pesquise imediatamente na internet e gere o bloco JSON final! Caso falte algo importante, pergunte primeiro).\n`
+        : '';
+
+    return `Você agora é o **Arquiteto Oficial de Microsites do BioVip Studio Pro**.
+Sua missão é coletar os dados de um cliente, pesquisar profundamente na internet (Instagram, Google Maps / Google Meu Negócio e buscas do Google) todas as informações reais desse negócio e entregar um **ÚNICO BLOCO DE CÓDIGO JSON** pronto para ser colado na aba de criação do BioVip Studio Pro (que montará automaticamente a página completa + a Área de Administração do cliente).
+${prefilledBlock}
+### PASSO 1: ENTREVISTA SEQUENCIAL (FAÇA UMA PERGUNTA POR VEZ)
+Cumprimente-me de forma rápida e faça as seguintes solicitações **SEQUENCIALMENTE (uma pergunta por vez, aguardando minha resposta antes de fazer a próxima)**. *Observação: se eu já enviar vários dados de uma só vez, avance diretamente para o que faltar ou para a geração do código.*
+
+1️⃣ **Solicitação 1 (Nome, Nicho e WhatsApp):**
+"Para começarmos, qual é o **Nome do Cliente / Empresa**, o **Nicho de Atuação** (ex: Extensão de Cílios, Nail Designer, Barbearia, Clínica de Estética, Advocacia, Odontologia, etc.) e o **WhatsApp** de atendimento?"
+
+2️⃣ **Solicitação 2 (Instagram do Cliente):**
+"Qual é o **@usuario ou link do Instagram** desse cliente? (Se desejar, você também pode colar aqui o texto da Bio ou os principais serviços que ele posta)."
+
+3️⃣ **Solicitação 3 (Endereço e Google Maps):**
+"Qual é o **Link do Google Maps / Google Meu Negócio** ou o **Endereço completo (Rua, Bairro, Cidade/UF)** do cliente?"
+
+4️⃣ **Solicitação 4 (Estilo Visual e Plano de Manutenção):**
+"Qual **Tema Visual** combina mais com esse cliente?
+- \`roseGoldQuartz\` (Rosé Gold, Nude & Quartzo — Beleza, Cílios, Unhas, Estética)
+- \`obsidianGold\` (Dark Luxury & Ouro Imperial — Studios VIP, Clínicas, Advocacia, Mentorias)
+- \`barberVintage\` (Dark Barbearia & Âmbar — Barbearias e Grooming)
+- \`clinicalClean\` (Clean Minimalista & Pérola — Saúde, Odonto, Psicologia, Medicina)
+- \`velvetGlamour\` (Glamour Vibrante & Orquídea — Moda, Salões, Maquiagem)
+- \`navyLaw\` (Azul Marinho & Dourado — Jurídico, Contabilidade, Consultoria)
+E há algum serviço, pacote ou preço específico que deseja destacar?"
+
+---
+
+### PASSO 2: PESQUISA PROFUNDA NA INTERNET (QUANDO EU RESPONDER)
+Assim que tiver os dados do cliente, pesquise na internet e no Google Maps tudo sobre esse negócio:
+- Nome comercial exato, especialidade principal e posicionamento de autoridade.
+- Biografia real do Instagram, número de seguidores, telefone/WhatsApp e links da bio.
+- Os **4 a 6 serviços/procedimentos reais** trabalhados pelo cliente (baseados nas informações coletadas do perfil, legendas e nicho), criando descrições persuasivas e elegantes.
+- Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
+- 6 legendas curtas e impactantes baseadas nos posts mais curtidos do Instagram para a galeria.
+
+---
+
+### PASSO 3: ENTREGA DO CÓDIGO FINAL (FORMATO JSON OBRIGATÓRIO)
+Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguindo rigorosamente esta estrutura abaixo, sem omitir nenhuma chave, para que eu copie e cole direto no espaço de importação do BioVip Studio Pro:
+
+\`\`\`json
+{
+  "adminClient": {
+    "clientName": "Nome do Cliente ou Empresa",
+    "clientPhone": "5531999999999",
+    "clientEmail": "contato@cliente.com.br",
+    "subdomain": "slug-do-cliente-sem-espacos",
+    "nicheCategory": "Beleza & Estética",
+    "maintenancePlan": "pro_4",
+    "monthlyFee": 49.90,
+    "creationFee": 79.90,
+    "isLandingModel": false
+  },
+  "microsite": {
+    "theme": "roseGoldQuartz",
+    "styling": {
+      "fontFamily": "Playfair Display",
+      "borderRadius": 20,
+      "glassmorphism": true,
+      "metallicBorders": true,
+      "spotlightGlow": true
+    },
+    "announcement": {
+      "enabled": true,
+      "badge": "AGENDA VIP ABERTA",
+      "text": "Últimos horários disponíveis nesta semana. Reserve seu atendimento exclusivo!",
+      "link": "#booking"
+    },
+    "profile": {
+      "name": "NOME DO NEGÓCIO EM MAIÚSCULO",
+      "title": "ESPECIALIDADE PRINCIPAL DE ALTO PADRÃO",
+      "tagline": "Bio persuasiva baseada nas informações reais do Instagram e diferenciais do cliente.",
+      "cursivePhrase": "Excelência, sofisticação e cuidado em cada detalhe.",
+      "instagram": "usuario_sem_arroba",
+      "whatsapp": "5531999999999",
+      "mapsUrl": "https://maps.google.com/?q=Endereco+do+Cliente"
+    },
+    "metrics": {
+      "enabled": true,
+      "items": [
+        { "value": "5.0★", "label": "Avaliação no Google" },
+        { "value": "+1.000", "label": "Clientes Atendidas" },
+        { "value": "100%", "label": "Atendimento VIP" }
+      ]
+    },
+    "actionCards": [
+      {
+        "id": "cta-1",
+        "title": "AGENDAR MEU HORÁRIO NO WHATSAPP",
+        "subtitle": "Atendimento rápido e personalizado com hora marcada",
+        "icon": "Calendar",
+        "linkType": "whatsapp",
+        "url": "#whatsapp",
+        "whatsappMessage": "Olá! Vi seu microsite e gostaria de agendar um horário.",
+        "variant": "accent",
+        "animation": "pulse-glow",
+        "badgeText": "MAIS PROCURADO",
+        "ctaActionText": "AGENDAR AGORA"
+      },
+      {
+        "id": "cta-2",
+        "title": "CONHECER CATÁLOGO DE SERVIÇOS",
+        "subtitle": "Confira todos os procedimentos e protocolos exclusivos",
+        "icon": "Sparkles",
+        "linkType": "catalogo",
+        "url": "#catalogo",
+        "variant": "default",
+        "animation": "none",
+        "badgeText": "PROCEDIMENTOS",
+        "ctaActionText": "VER SERVIÇOS"
+      },
+      {
+        "id": "cta-3",
+        "title": "COMO CHEGAR · LOCALIZAÇÃO NO MAPS",
+        "subtitle": "Endereço completo do cliente extraído do Google Maps",
+        "icon": "MapPin",
+        "linkType": "maps",
+        "url": "https://maps.google.com",
+        "variant": "default",
+        "animation": "none",
+        "badgeText": "ROTAS GPS",
+        "ctaActionText": "ABRIR MAPA"
+      }
+    ],
+    "studentGrid": {
+      "enabled": true,
+      "headline": "Resultados Reais & Portfólio em Destaque",
+      "subtitle": "Registros mais curtidos no nosso Instagram oficial",
+      "badgeText": "PORTFÓLIO OFICIAL",
+      "layout": "smart_masonry",
+      "captions": [
+        "Legenda curta do destaque 1 baseada no serviço principal",
+        "Legenda curta do destaque 2 baseada na técnica exclusiva",
+        "Legenda curta do destaque 3 com foco em acabamento natural",
+        "Legenda curta do destaque 4 de resultado real",
+        "Legenda curta do destaque 5 de atendimento personalizado",
+        "Legenda curta do destaque 6 do espaço e biossegurança"
+      ]
+    },
+    "locationCard": {
+      "enabled": true,
+      "title": "Localização & Espaço Exclusivo",
+      "address": "Rua Exemplo, 123 - Bairro, Cidade - UF",
+      "hours": "Seg a Sáb · 08:30 às 19:30",
+      "openStatus": "Atendimento com Hora Marcada",
+      "mapsUrl": "https://maps.google.com",
+      "buttonLabel": "Traçar Rota no Google Maps",
+      "showHours": true
+    },
+    "services": {
+      "enabled": true,
+      "headline": "Procedimentos & Serviços Exclusivos",
+      "subtitle": "Protocolos personalizados baseados nas técnicas do nosso espaço",
+      "layout": "list",
+      "items": [
+        {
+          "id": "srv-1",
+          "name": "Nome Real do Serviço 1",
+          "description": "Descrição detalhada e persuasiva do serviço oferecido pelo cliente.",
+          "price": "Sob Consulta",
+          "duration": "1h30",
+          "badge": "DESTAQUE VIP",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
+          "featured": true
+        },
+        {
+          "id": "srv-2",
+          "name": "Nome Real do Serviço 2",
+          "description": "Descrição detalhada do segundo procedimento mais procurado.",
+          "price": "Sob Consulta",
+          "duration": "1h30",
+          "badge": "MUITO PROCURADO",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
+          "featured": true
+        },
+        {
+          "id": "srv-3",
+          "name": "Nome Real do Serviço 3",
+          "description": "Descrição detalhada do terceiro procedimento do cliente.",
+          "price": "Sob Consulta",
+          "duration": "1h00",
+          "badge": "",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
+          "featured": false
+        },
+        {
+          "id": "srv-4",
+          "name": "Manutenção / Atendimento Personalizado",
+          "description": "Acompanhamento completo para manter seu resultado impecável por mais tempo.",
+          "price": "Sob Consulta",
+          "duration": "1h00",
+          "badge": "",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
+          "featured": false
+        }
+      ]
+    },
+    "testimonials": {
+      "enabled": true,
+      "headline": "O Que Dizem No Google Meu Negócio",
+      "items": [
+        {
+          "id": "t-1",
+          "clientName": "Nome da Cliente 1",
+          "city": "Cidade - UF",
+          "text": "Avaliação 5 estrelas baseada nos elogios reais do negócio.",
+          "rating": 5
+        },
+        {
+          "id": "t-2",
+          "clientName": "Nome da Cliente 2",
+          "city": "Cidade - UF",
+          "text": "Segunda avaliação destacando o atendimento impecável e o ambiente.",
+          "rating": 5
+        },
+        {
+          "id": "t-3",
+          "clientName": "Nome da Cliente 3",
+          "city": "Cidade - UF",
+          "text": "Terceira avaliação elogiando a durabilidade e o profissionalismo.",
+          "rating": 5
+        }
+      ]
+    },
+    "qualifierFunnel": {
+      "enabled": true,
+      "buttonLabel": "✨ Descobrir Procedimento Ideal (Triagem VIP)",
+      "headline": "Atendimento Personalizado",
+      "subtitle": "Responda 3 perguntas rápidas para agilizar seu atendimento no WhatsApp:",
+      "questions": [
+        {
+          "id": "q-1",
+          "question": "Qual procedimento você tem mais interesse hoje?",
+          "options": ["Serviço 1", "Serviço 2", "Serviço 3", "Avaliação Personalizada"]
+        },
+        {
+          "id": "q-2",
+          "question": "Qual o melhor período para o seu horário?",
+          "options": ["Manhã", "Tarde", "Final do dia / Sábado", "Qualquer horário disponível"]
+        },
+        {
+          "id": "q-3",
+          "question": "Qual o seu objetivo principal?",
+          "options": ["Primeiro atendimento", "Manutenção", "Ocasião especial", "Quero tirar dúvidas"]
+        }
+      ]
+    },
+    "aboutMe": {
+      "enabled": true,
+      "headline": "Sobre Especialista & Nosso Espaço",
+      "bioText": "Texto institucional apresentando a trajetória, o cuidado com cada cliente e os diferenciais do espaço.",
+      "badges": ["Atendimento Exclusivo", "Materiais Premium", "Hora Marcada"]
+    },
+    "faq": {
+      "enabled": true,
+      "headline": "Dúvidas Frequentes",
+      "items": [
+        {
+          "id": "faq-1",
+          "question": "Como faço para agendar meu horário?",
+          "answer": "Basta clicar no botão de WhatsApp ou no catálogo de serviços para escolher seu melhor dia e horário."
+        },
+        {
+          "id": "faq-2",
+          "question": "Onde o espaço está localizado?",
+          "answer": "Estamos localizados no endereço indicado no mapa acima, com fácil acesso e ambiente climatizado."
+        },
+        {
+          "id": "faq-3",
+          "question": "Quais são as formas de pagamento aceitas?",
+          "answer": "Aceitamos Pix, cartões de crédito e débito."
+        }
+      ]
+    }
+  }
+}
+\`\`\`
+
+Inicie agora fazendo a **Solicitação 1**!`;
+  };
+
+  const handleCopyGeminiScript = async (prefilled: boolean = false) => {
+    try {
+      const scriptText = buildGeminiSequentialScript(prefilled);
+      await navigator.clipboard.writeText(scriptText);
+      if (prefilled) {
+        setCopiedGeminiPrefilledScript(true);
+        setTimeout(() => setCopiedGeminiPrefilledScript(false), 3000);
+        showToast('📋 Script com dados pré-preenchidos copiado! Cole agora no Gemini.');
+      } else {
+        setCopiedGeminiScript(true);
+        setTimeout(() => setCopiedGeminiScript(false), 3000);
+        showToast('📋 Script Sequencial copiado! Cole lá no Gemini para ele iniciar as perguntas.');
+      }
+    } catch {
+      showToast('⚠️ Não foi possível copiar automaticamente. Selecione o texto abaixo e copie.');
+    }
+  };
+
+  const handleImportGeminiCode = async () => {
+    setAiError(null);
+    const rawInput = geminiPastedCode.trim();
+    if (!rawInput) {
+      const msg = 'Cole o código JSON entregue pelo Gemini no campo abaixo antes de importar.';
+      setAiError(msg);
+      showToast(`⚠️ ${msg}`);
+      return;
+    }
+
+    // Extrai o JSON mesmo que o usuário tenha colado cercas markdown (```json ... ```) ou textos extras do Gemini
+    let parsedPayload: any = null;
+    try {
+      const fenceMatch = rawInput.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      const candidate = fenceMatch ? fenceMatch[1].trim() : rawInput;
+      try {
+        parsedPayload = JSON.parse(candidate);
+      } catch {
+        const firstBrace = rawInput.indexOf('{');
+        const lastBrace = rawInput.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          parsedPayload = JSON.parse(rawInput.slice(firstBrace, lastBrace + 1));
+        }
+      }
+    } catch (e: any) {
+      const msg = 'O código colado não parece ser um JSON válido. Copie todo o bloco de código que o Gemini gerou e tente novamente.';
+      setAiError(msg);
+      showToast(`❌ ${msg}`);
+      return;
+    }
+
+    if (!parsedPayload || typeof parsedPayload !== 'object') {
+      const msg = 'Formato de código inválido. Certifique-se de colar o JSON gerado pelo script do Gemini.';
+      setAiError(msg);
+      showToast(`❌ ${msg}`);
+      return;
+    }
+
+    const adminClientObj = parsedPayload.adminClient || parsedPayload.client || {};
+    const micrositeObj = parsedPayload.microsite || parsedPayload.data || parsedPayload;
+
+    setGeminiImporting(true);
+    let extractedMeta: any = null;
+
+    try {
+      const rawInsta =
+        micrositeObj?.profile?.instagram ||
+        adminClientObj?.instagram ||
+        aiForm.instagram ||
+        '';
+      const cleanInsta = String(rawInsta)
+        .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+        .split('/')[0]
+        .split('?')[0]
+        .replace('@', '')
+        .trim();
+
+      // Se ativado e houver @instagram, busca no servidor as 6 fotos reais mais curtidas e o avatar oficial para combinar com o código do Gemini!
+      if (geminiAutoFetchInstaPhotos && cleanInsta) {
+        try {
+          const res = await fetch('/api/generate-microsite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              instagram: cleanInsta,
+              googleMaps:
+                micrositeObj?.locationCard?.mapsUrl ||
+                micrositeObj?.profile?.mapsUrl ||
+                aiForm.googleMaps ||
+                '',
+              businessName:
+                micrositeObj?.profile?.name ||
+                adminClientObj?.clientName ||
+                aiForm.businessName ||
+                '',
+              businessNiche:
+                micrositeObj?.profile?.title ||
+                adminClientObj?.nicheCategory ||
+                aiForm.businessNiche ||
+                '',
+            }),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.success && json?.data) {
+              extractedMeta = json.extractedMeta || null;
+              const serverData = json.data;
+              // Injeta o avatar real do Instagram se o Gemini não trouxe foto real
+              if (
+                serverData?.profile?.avatarUrl &&
+                (!micrositeObj?.profile?.avatarUrl ||
+                  micrositeObj.profile.avatarUrl.includes('unsplash.com') ||
+                  micrositeObj.profile.avatarUrl.includes('exemplo'))
+              ) {
+                micrositeObj.profile = {
+                  ...(micrositeObj.profile || {}),
+                  avatarUrl: serverData.profile.avatarUrl,
+                };
+              }
+              // Injeta as 6 fotos mais curtidas reais do Instagram na galeria
+              if (
+                Array.isArray(serverData?.studentGrid?.photos) &&
+                serverData.studentGrid.photos.length > 0
+              ) {
+                const geminiCaptions = Array.isArray(micrositeObj?.studentGrid?.captions)
+                  ? micrositeObj.studentGrid.captions
+                  : [];
+                const serverCaptions = Array.isArray(serverData?.studentGrid?.captions)
+                  ? serverData.studentGrid.captions
+                  : [];
+                micrositeObj.studentGrid = {
+                  ...(micrositeObj.studentGrid || {}),
+                  enabled: true,
+                  photos: serverData.studentGrid.photos,
+                  captions: serverData.studentGrid.photos.map(
+                    (_: string, i: number) => geminiCaptions[i] || serverCaptions[i] || ''
+                  ),
+                };
+              }
+              // Injeta fotos reais nos serviços e nos actionCards se não tiverem imagem própria
+              if (
+                Array.isArray(micrositeObj?.services?.items) &&
+                Array.isArray(serverData?.studentGrid?.photos) &&
+                serverData.studentGrid.photos.length > 0
+              ) {
+                micrositeObj.services.items = micrositeObj.services.items.map(
+                  (srv: any, idx: number) => ({
+                    ...srv,
+                    imageUrl:
+                      srv.imageUrl && !srv.imageUrl.includes('unsplash.com')
+                        ? srv.imageUrl
+                        : serverData.studentGrid.photos[idx % serverData.studentGrid.photos.length],
+                  })
+                );
+              }
+              if (
+                Array.isArray(micrositeObj?.actionCards) &&
+                Array.isArray(serverData?.studentGrid?.photos) &&
+                serverData.studentGrid.photos.length > 0
+              ) {
+                if (micrositeObj.actionCards[0] && !micrositeObj.actionCards[0].cardImage) {
+                  micrositeObj.actionCards[0].cardImage = serverData.studentGrid.photos[0];
+                }
+                if (micrositeObj.actionCards[1] && !micrositeObj.actionCards[1].cardImage) {
+                  micrositeObj.actionCards[1].cardImage =
+                    serverData.studentGrid.photos[1] || serverData.studentGrid.photos[0];
+                }
+              }
+            }
+          }
+        } catch (instaErr) {
+          console.warn('Aviso ao enriquecer fotos do Instagram na importação Gemini:', instaErr);
+        }
+      }
+
+      const builtData = applyGeneratedMicrositeData(micrositeObj, extractedMeta);
+
+      // Se ativado, já cria e vincula o registro completo do cliente na Área de Administração (Painel & Clientes)
+      if (geminiAutoCreateAdminRecord && builtData) {
+        const clientName =
+          (adminClientObj?.clientName || micrositeObj?.profile?.name || aiForm.businessName || 'Cliente BioVip').trim();
+        const clientPhone =
+          (adminClientObj?.clientPhone || micrositeObj?.profile?.whatsapp || '').replace(/\D/g, '');
+        const clientEmail = (adminClientObj?.clientEmail || '').trim();
+        const rawSlug =
+          adminClientObj?.subdomain ||
+          micrositeObj?.profile?.instagram ||
+          clientName;
+        const cleanSlug =
+          String(rawSlug)
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || `cliente-${Date.now().toString().slice(-4)}`;
+
+        const planKey: MaintenancePlanId =
+          adminClientObj?.maintenancePlan && MAINTENANCE_PLANS[adminClientObj.maintenancePlan as MaintenancePlanId]
+            ? (adminClientObj.maintenancePlan as MaintenancePlanId)
+            : 'pro_4';
+        const feeNum =
+          typeof adminClientObj?.monthlyFee === 'number' && adminClientObj.monthlyFee > 0
+            ? adminClientObj.monthlyFee
+            : MAINTENANCE_PLANS[planKey].price;
+        const creationFeeNum =
+          typeof adminClientObj?.creationFee === 'number' && adminClientObj.creationFee >= 0
+            ? adminClientObj.creationFee
+            : Number((landingConfig as any).creationFee) || 79.9;
+        const isModel = Boolean(adminClientObj?.isLandingModel ?? false);
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const nextMonth = new Date();
+        nextMonth.setDate(nextMonth.getDate() + 30);
+        const dueDateStr = nextMonth.toISOString().split('T')[0];
+        const newId = 'site-' + Date.now();
+
+        const newSite: SavedMicrosite = {
+          id: newId,
+          clientName,
+          clientPhone: clientPhone || builtData.profile.whatsapp,
+          clientEmail,
+          nicheCategory:
+            adminClientObj?.nicheCategory ||
+            THEMES[builtData.theme]?.category ||
+            'Beleza & Estética',
+          createdAt: todayStr,
+          dueDate: dueDateStr,
+          monthlyFee: feeNum,
+          maintenancePlan: planKey,
+          creationFee: creationFeeNum,
+          isFirstMonth: true,
+          status: 'active',
+          updatesThisMonth: 0,
+          lastUpdated: todayStr,
+          domainType: 'subdomain',
+          subdomain: cleanSlug,
+          customDomain: '',
+          dnsConfigured: true,
+          sslActive: true,
+          whatsappClicks: 0,
+          pageViews: 100,
+          isLandingModel: isModel,
+          data: JSON.parse(JSON.stringify(builtData)),
+        };
+
+        setSavedSites((prev) => {
+          const updatedList = [newSite, ...prev];
+          persistSavedSitesToStorage(updatedList);
+          return updatedList;
+        });
+        setEditingSiteId(newId);
+        setSaveForm({
+          clientName,
+          clientPhone: clientPhone || builtData.profile.whatsapp,
+          clientEmail,
+          maintenancePlan: planKey,
+          monthlyFee: feeNum.toFixed(2).replace('.', ','),
+          creationFee: creationFeeNum.toFixed(2).replace('.', ','),
+          isFirstMonth: true,
+          subdomain: cleanSlug,
+          customDomain: '',
+          isLandingModel: isModel,
+        });
+        syncSiteToFirestore(newSite);
+        setIsClientsFullscreen(false);
+        setGeminiPastedCode('');
+        showToast(
+          `🎉 Página + Área de Administração de "${clientName}" (${cleanSlug}) criadas e salvas com sucesso!`
+        );
+      } else {
+        setIsClientsFullscreen(false);
+        setGeminiPastedCode('');
+        showToast('✨ Código do Gemini importado com sucesso! Página montada no editor.');
+      }
+    } finally {
+      setGeminiImporting(false);
     }
   };
 
@@ -5795,7 +6395,13 @@ export default function App() {
       const res = await fetch('/api/generate-microsite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(aiForm),
+        body: JSON.stringify({
+          ...aiForm,
+          geminiApiKey:
+            (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+            (import.meta as any).env?.GEMINI_API_KEY ||
+            undefined,
+        }),
       });
 
       const contentType = res.headers.get('content-type') || '';
@@ -12742,6 +13348,19 @@ COMO PUBLICAR NO SERVIDOR:
 
             <button
               type="button"
+              onClick={() => {
+                setAiCreationMode('gemini_script');
+                setAiModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-400/15 hover:from-amber-400 hover:to-amber-300 text-amber-300 hover:text-neutral-950 font-bold text-xs flex items-center gap-1.5 border border-amber-400/40 cursor-pointer transition shadow-sm"
+              title="Copiar Script Sequencial para o Gemini ou Colar Código do Cliente"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>🤖 Script Gemini & Colar Código</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setSubdomainModalOpen(true)}
               className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
               title="Configurar Domínio Principal, Subdomínio do Criador, Preços e Checkout"
@@ -16479,6 +17098,184 @@ COMO PUBLICAR NO SERVIDOR:
           {/* TAB 1: ESTILO, MODELOS & TEMAS */}
           {activeTab === 'styling' && (
             <div className="space-y-6">
+              {/* ================================================================= */}
+              {/* PAINEL DE CRIAÇÃO VIA SCRIPT GEMINI & IMPORTAÇÃO DE CÓDIGO PRONTO */}
+              {/* ================================================================= */}
+              <div className="rounded-2xl bg-gradient-to-br from-neutral-900 via-neutral-950 to-amber-950/20 border border-amber-500/40 p-4 space-y-3.5 shadow-xl">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                          Criar via Script no Gemini & Colar Código
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400 text-neutral-950">
+                          PÁGINA + ADMIN PRONTOS
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400">
+                        Copie o script sequencial, cole no Gemini e depois cole aqui o código gerado para criar a página já com a Área de Administração pronta.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowStylingGeminiBox((v) => !v)}
+                    className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px] font-semibold border border-neutral-700 cursor-pointer transition"
+                  >
+                    {showStylingGeminiBox ? 'Recolher ▲' : 'Expandir ▼'}
+                  </button>
+                </div>
+
+                {showStylingGeminiBox && (
+                  <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+                    {/* PASSO 1: COPIAR SCRIPT SEQUENCIAL */}
+                    <div className="p-3 rounded-xl bg-neutral-950/90 border border-neutral-800 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                          <span className="w-4 h-4 rounded-full bg-amber-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">1</span>
+                          Passo 1: Copie o Script de Perguntas Sequenciais para o Gemini
+                        </span>
+                        <a
+                          href="https://gemini.google.com/app"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-amber-300 hover:text-amber-200 underline flex items-center gap-1"
+                        >
+                          <span>Abrir Gemini (gemini.google.com)</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 leading-relaxed">
+                        Este script faz o Gemini te pedir sequencialmente o <strong>Nome/Nicho do Cliente</strong>, o <strong>@Instagram</strong> e o <strong>Endereço/Google Maps</strong>, pesquisar tudo na internet e te devolver o código pronto.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyGeminiScript(false)}
+                          className={`flex-1 min-w-[200px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow ${
+                            copiedGeminiScript
+                              ? 'bg-emerald-500 text-neutral-950'
+                              : 'bg-amber-400 hover:bg-amber-300 text-neutral-950'
+                          }`}
+                        >
+                          {copiedGeminiScript ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          <span>
+                            {copiedGeminiScript
+                              ? 'Script Sequencial Copiado! Cole no Gemini'
+                              : '📋 Copiar Script Sequencial para o Gemini'}
+                          </span>
+                        </button>
+                      </div>
+                      <details className="text-[10px] text-neutral-400">
+                        <summary className="cursor-pointer hover:text-amber-300 font-semibold select-none">
+                          👁️ Visualizar texto completo do Script que será enviado ao Gemini
+                        </summary>
+                        <textarea
+                          readOnly
+                          rows={5}
+                          value={buildGeminiSequentialScript(false)}
+                          className="w-full mt-2 p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[10px] font-mono text-neutral-300 focus:outline-none"
+                        />
+                      </details>
+                    </div>
+
+                    {/* PASSO 2: COLAR O CÓDIGO ENTREGUE PELO GEMINI */}
+                    <div className="p-3 rounded-xl bg-neutral-950/90 border border-neutral-800 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
+                          <span className="w-4 h-4 rounded-full bg-emerald-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">2</span>
+                          Passo 2: Cole aqui o Código que o Gemini te entregou
+                        </span>
+                        {geminiPastedCode.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setGeminiPastedCode('')}
+                            className="text-[10px] text-neutral-400 hover:text-red-300 cursor-pointer"
+                          >
+                            Limpar código
+                          </button>
+                        )}
+                      </div>
+
+                      <textarea
+                        rows={4}
+                        placeholder='Cole aqui o bloco de código JSON que o Gemini gerou (ex: { "adminClient": { ... }, "microsite": { ... } })...'
+                        value={geminiPastedCode}
+                        onChange={(e) => {
+                          setAiError(null);
+                          setGeminiPastedCode(e.target.value);
+                        }}
+                        className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-amber-400 text-xs font-mono text-emerald-200 placeholder-neutral-500 focus:outline-none resize-y"
+                      />
+
+                      <div className="space-y-1.5 pt-0.5">
+                        <label className="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={geminiAutoFetchInstaPhotos}
+                            onChange={(e) => setGeminiAutoFetchInstaPhotos(e.target.checked)}
+                            className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
+                          />
+                          <span>
+                            📸 Puxar automaticamente as <strong>6 fotos mais curtidas e avatar real do Instagram</strong> informado no código
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={geminiAutoCreateAdminRecord}
+                            onChange={(e) => setGeminiAutoCreateAdminRecord(e.target.checked)}
+                            className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
+                          />
+                          <span>
+                            🛡️ Já criar com a <strong>Área de Administração pronta</strong> (Cadastrar cliente, subdomínio e mensalidade no Painel)
+                          </span>
+                        </label>
+                      </div>
+
+                      {aiError && (
+                        <div className="p-2.5 rounded-lg bg-red-500/15 border border-red-500/40 text-red-200 text-[11px] flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                          <span>{aiError}</span>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          disabled={geminiImporting}
+                          onClick={handleImportGeminiCode}
+                          className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 hover:brightness-110 disabled:opacity-50 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer transition"
+                        >
+                          <Sparkles className="w-4 h-4 fill-neutral-950" />
+                          <span>
+                            {geminiImporting
+                              ? 'Montando Página + Puxando Fotos do Instagram + Criando Área Admin...'
+                              : '✨ Criar Página + Área de Administração Pronta'}
+                          </span>
+                        </button>
+
+                        {editingSiteId && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('dashboard')}
+                            className="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs border border-amber-500/40 flex items-center gap-1.5 cursor-pointer transition"
+                            title="Ir para a Área de Administração do cliente criado"
+                          >
+                            <Server className="w-3.5 h-3.5" />
+                            <span>Ver na Área de Administração</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Filtro por Nicho e Barra de Pesquisa */}
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
@@ -25257,8 +26054,8 @@ COMO PUBLICAR NO SERVIDOR:
 
       {/* AI Microsite Generator Modal (Instagram & Google Meu Negócio) */}
       {aiModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-neutral-900 border border-amber-500/40 rounded-2xl p-6 space-y-5 text-neutral-100 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-xl bg-neutral-900 border border-amber-500/40 rounded-2xl p-6 space-y-4 text-neutral-100 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex justify-between items-start border-b border-neutral-800 pb-3.5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 flex items-center justify-center text-neutral-950 font-bold shrink-0 shadow-lg shadow-amber-500/20">
@@ -25269,13 +26066,13 @@ COMO PUBLICAR NO SERVIDOR:
                     Gerador de Microsite com IA
                   </h3>
                   <p className="text-xs text-neutral-400">
-                    Criação automática usando Instagram e Google Meu Negócio
+                    Use o Script Sequencial no Gemini Externo ou gere direto pela API
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                disabled={aiGenerating}
+                disabled={aiGenerating || geminiImporting}
                 onClick={() => setAiModalOpen(false)}
                 className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-pointer disabled:opacity-40"
               >
@@ -25283,7 +26080,168 @@ COMO PUBLICAR NO SERVIDOR:
               </button>
             </div>
 
-            {aiGenerating ? (
+            {/* Seletor de Modo: Script para Gemini Externo vs Geração Automática API */}
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-neutral-950 border border-neutral-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setAiError(null);
+                  setAiCreationMode('gemini_script');
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  aiCreationMode === 'gemini_script'
+                    ? 'bg-amber-400 text-neutral-950 shadow'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Code className="w-3.5 h-3.5" />
+                <span>🤖 Script Gemini & Colar Código</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAiError(null);
+                  setAiCreationMode('auto_api');
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  aiCreationMode === 'auto_api'
+                    ? 'bg-amber-400 text-neutral-950 shadow'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>⚡ Geração Direta Automática</span>
+              </button>
+            </div>
+
+            {aiCreationMode === 'gemini_script' ? (
+              <div className="space-y-3.5 text-xs">
+                {/* PASSO 1: COPIAR SCRIPT SEQUENCIAL PARA O GEMINI */}
+                <div className="p-3.5 rounded-xl bg-neutral-950 border border-amber-500/30 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-amber-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">1</span>
+                      Passo 1: Copie o Script Sequencial e cole no Gemini
+                    </span>
+                    <a
+                      href="https://gemini.google.com/app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-bold text-amber-300 hover:text-amber-200 underline flex items-center gap-1"
+                    >
+                      <span>Abrir Gemini (gemini.google.com)</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 leading-relaxed">
+                    Ao colar esse script lá no Gemini, ele vai te solicitar <strong>sequencialmente</strong> os dados do cliente, o <strong>@Instagram</strong> e o <strong>endereço do Google Maps</strong>, puxar todas as informações da internet e te entregar o código pronto.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyGeminiScript(false)}
+                    className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg ${
+                      copiedGeminiScript
+                        ? 'bg-emerald-500 text-neutral-950'
+                        : 'bg-amber-400 hover:bg-amber-300 text-neutral-950'
+                    }`}
+                  >
+                    {copiedGeminiScript ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span>
+                      {copiedGeminiScript
+                        ? 'Script Sequencial Copiado! Agora cole lá no Gemini'
+                        : '📋 Copiar Script Sequencial para o Gemini'}
+                    </span>
+                  </button>
+                  <details className="text-[10px] text-neutral-400">
+                    <summary className="cursor-pointer hover:text-amber-300 font-semibold select-none">
+                      👁️ Ver ou copiar manualmente o texto do Script
+                    </summary>
+                    <textarea
+                      readOnly
+                      rows={5}
+                      value={buildGeminiSequentialScript(false)}
+                      className="w-full mt-2 p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[10px] font-mono text-neutral-300 focus:outline-none"
+                    />
+                  </details>
+                </div>
+
+                {/* PASSO 2: COLAR O CÓDIGO ENTREGUE PELO GEMINI */}
+                <div className="p-3.5 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">2</span>
+                      Passo 2: Cole aqui o Código que o Gemini te entregou
+                    </span>
+                    {geminiPastedCode.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setGeminiPastedCode('')}
+                        className="text-[10px] text-neutral-400 hover:text-red-300 cursor-pointer"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+
+                  <textarea
+                    rows={5}
+                    placeholder='Cole aqui o código JSON gerado pelo Gemini...'
+                    value={geminiPastedCode}
+                    onChange={(e) => {
+                      setAiError(null);
+                      setGeminiPastedCode(e.target.value);
+                    }}
+                    className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-400 text-xs font-mono text-emerald-200 placeholder-neutral-500 focus:outline-none resize-y"
+                  />
+
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={geminiAutoFetchInstaPhotos}
+                        onChange={(e) => setGeminiAutoFetchInstaPhotos(e.target.checked)}
+                        className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
+                      />
+                      <span>
+                        📸 Puxar automaticamente as <strong>6 fotos mais curtidas e avatar real do Instagram</strong>
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={geminiAutoCreateAdminRecord}
+                        onChange={(e) => setGeminiAutoCreateAdminRecord(e.target.checked)}
+                        className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
+                      />
+                      <span>
+                        🛡️ Já criar com a <strong>Área de Administração pronta</strong> (Cadastrar cliente no Painel)
+                      </span>
+                    </label>
+                  </div>
+
+                  {aiError && (
+                    <div className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                      <span>{aiError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={geminiImporting}
+                    onClick={handleImportGeminiCode}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 hover:brightness-110 disabled:opacity-50 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 cursor-pointer transition"
+                  >
+                    <Sparkles className="w-4 h-4 fill-neutral-950" />
+                    <span>
+                      {geminiImporting
+                        ? 'Criando Página + Puxando Fotos + Montando Área de Administração...'
+                        : '✨ Criar Página + Área de Administração Pronta'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ) : aiGenerating ? (
               <div className="py-8 text-center space-y-4">
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                   <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin" />
