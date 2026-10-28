@@ -5657,8 +5657,13 @@ export default function App() {
       showToast(
         `✨ Microsite criado com ${totalRealPhotos} foto(s) mais curtida(s) e ${servicesCount} serviço(s) extraído(s) do cliente!`
       );
+      if (extractedMeta?.warning) {
+        setTimeout(() => {
+          showToast(`ℹ️ Hospedagem: configure GEMINI_API_KEY no painel para redação neural via Gemini.`);
+        }, 4000);
+      }
     } else {
-      showToast('✨ Microsite gerado com IA com sucesso! Confira no simulador.');
+      showToast('✨ Microsite gerado com sucesso! Confira no simulador.');
     }
   };
 
@@ -5802,12 +5807,14 @@ export default function App() {
         }
       }
 
-      // Caso o servidor retorne erro temporário ou rota estática, aciona o motor inteligente local
+      // Caso o servidor da hospedagem retorne erro ou timeout, aciona o motor inteligente local
+      showToast('⚠️ Servidor da hospedagem retornou erro ou timeout. Aplicando layout inteligente local.');
       await new Promise((r) => setTimeout(r, 900));
       const fallbackGenerated = buildClientSmartMicrosite();
       applyGeneratedMicrositeData(fallbackGenerated);
     } catch (err: any) {
       console.warn('Fallback local ativado na geração do microsite:', err);
+      showToast('⚠️ Falha de conexão com a API da hospedagem. Aplicando layout inteligente local.');
       await new Promise((r) => setTimeout(r, 900));
       const fallbackGenerated = buildClientSmartMicrosite();
       applyGeneratedMicrositeData(fallbackGenerated);

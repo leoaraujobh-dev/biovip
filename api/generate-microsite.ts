@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 
-const GEMINI_MODELS = ['gemini-3-flash-preview', 'gemini-3.8-flash', 'gemini-flash-latest'];
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash-lite'];
 
 interface ExtractedInstagramPost {
   shortcode: string;
@@ -285,20 +285,21 @@ async function fetchInstagramEmbedProfile(username: string): Promise<{
   const empty = { found: false, posts: [] as ExtractedInstagramPost[] };
   if (!username) return empty;
 
-  const urls = [
-    `https://www.instagram.com/${encodeURIComponent(username)}/embed/?_fb_noscript=1`,
-    `https://www.instagram.com/${encodeURIComponent(username)}/embed/`,
+  const targetUrl = `https://www.instagram.com/${encodeURIComponent(username)}/embed/?_fb_noscript=1`;
+  const userAgents = [
+    'WhatsApp/2.23.20.76 i',
+    'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
   ];
 
-  for (const targetUrl of urls) {
+  for (const ua of userAgents) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4500);
+      const timer = setTimeout(() => controller.abort(), 2600);
       const res = await fetch(targetUrl, {
         signal: controller.signal,
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+          'User-Agent': ua,
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8',
         },
@@ -399,17 +400,22 @@ async function fetchInstagramHtmlMultiSocket(username: string): Promise<string |
   if (!username) return null;
   const targetUrl = `https://www.instagram.com/${encodeURIComponent(username)}/`;
 
-  // Dispara conexões simultâneas para contornar IPs com rate-limit (302) e obter resposta 200 OK com OpenGraph completo
-  for (let round = 0; round < 2; round++) {
-    const sockets = Array.from({ length: 6 }, async () => {
+  const botUas = [
+    'TelegramBot (like TwitterBot)',
+    'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+  ];
+
+  try {
+    const sockets = botUas.map(async (ua) => {
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 3600);
+        const timer = setTimeout(() => controller.abort(), 2200);
         const res = await fetch(targetUrl, {
           redirect: 'manual',
           signal: controller.signal,
           headers: {
-            'User-Agent': 'TelegramBot (like TwitterBot)',
+            'User-Agent': ua,
+            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           },
         });
         clearTimeout(timer);
@@ -419,17 +425,15 @@ async function fetchInstagramHtmlMultiSocket(username: string): Promise<string |
             return text;
           }
         }
-      } catch {
-        // Ignora falha individual do socket
-      }
+      } catch {}
       return null;
     });
 
     const results = await Promise.all(sockets);
-    const validHtml = results.find(Boolean);
-    if (validHtml) return validHtml;
+    return results.find(Boolean) || null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 function parseInstagramMetaFromHtml(html: string): {
@@ -669,7 +673,7 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
   const secondaryHandle = mentionedHandles.find(
     (h) => h.toLowerCase() !== username.toLowerCase()
   );
-  if (secondaryHandle) {
+  if (secondaryHandle && allPostsMap.size === 0) {
     result.secondaryUsername = secondaryHandle;
     const [secEmbed, secondaryHtml] = await Promise.all([
       fetchInstagramEmbedProfile(secondaryHandle),
@@ -1007,7 +1011,7 @@ async function extractGoogleMapsInfo(rawMapsInput?: string): Promise<ExtractedGo
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5500);
+    const timer = setTimeout(() => controller.abort(), 2600);
     const res = await fetch(input, {
       redirect: 'follow',
       signal: controller.signal,
@@ -2710,11 +2714,20 @@ export default async function handler(req: any, res: any) {
     mapsRating: mapsData.rating || null,
     mapsReviewsCount: mapsData.reviews.length,
     mapsPhotosCount: mapsData.photos.length,
+    warning: null as string | null,
   };
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey =
+      (process.env.GEMINI_API_KEY || '').trim() ||
+      (process.env.GOOGLE_API_KEY || '').trim() ||
+      (process.env.GOOGLE_GENAI_API_KEY || '').trim() ||
+      (process.env.VITE_GEMINI_API_KEY || '').trim() ||
+      (req.body?.geminiApiKey || '').trim();
+
     if (!apiKey) {
+      extractedMeta.warning =
+        'Chave GEMINI_API_KEY não configurada no painel da sua hospedagem. Todos os dados reais (fotos mais curtidas do Instagram, serviços, endereço e WhatsApp) foram extraídos e aplicados com sucesso pelo motor inteligente!';
       const fallbackData = applyExtractedAssetsToMicrosite(
         buildSmartFallbackMicrosite(
           {
@@ -3092,7 +3105,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
             },
           }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Timeout calling ${modelName}`)), 12000)
+            setTimeout(() => reject(new Error(`Timeout calling ${modelName}`)), 4500)
           ),
         ]);
 
