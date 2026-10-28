@@ -2480,9 +2480,9 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     linkStatus: 'ativo',
     updatesThisMonth: 2,
     lastUpdated: '2026-10-21',
-    domainType: 'custom',
+    domainType: 'subdomain',
     subdomain: 'doncorleone',
-    customDomain: 'www.doncorleonebarber.com.br',
+    customDomain: '',
     dnsConfigured: true,
     sslActive: true,
     whatsappClicks: 52,
@@ -2584,9 +2584,9 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     status: 'overdue',
     updatesThisMonth: 5,
     lastUpdated: '2026-10-18',
-    domainType: 'custom',
-    subdomain: 'dramarina',
-    customDomain: 'www.dramarinaalmeida.com.br',
+    domainType: 'subdomain',
+    subdomain: 'almeidaadv',
+    customDomain: '',
     dnsConfigured: true,
     sslActive: true,
     whatsappClicks: 68,
@@ -2614,7 +2614,7 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     updatesThisMonth: 2,
     lastUpdated: '2026-09-28',
     domainType: 'subdomain',
-    subdomain: 'larissanails',
+    subdomain: 'larissaalmeida',
     customDomain: '',
     dnsConfigured: true,
     sslActive: true,
@@ -3012,9 +3012,24 @@ export default function App() {
   const [copiedDnsField, setCopiedDnsField] = useState<string | null>(null);
   const [dnsCheckStatus, setDnsCheckStatus] = useState<{
     checkedDomain: string;
+    rootDomainChecked: string;
+    cnameHostChecked: string;
+    cnameFullDomainChecked: string;
     aRecordOk: boolean;
+    aRecordPointingCorrectly: boolean;
+    aRecordValues: string[];
+    aRecordTtl?: number;
+    aRecordStatusText: string;
     cnameRecordOk: boolean;
+    cnameRecordPointingCorrectly: boolean;
+    cnameRecordValues: string[];
+    cnameRecordTypeResolved: 'CNAME' | 'A (Cloudflare Proxy / Flattened)' | 'NONE';
+    cnameRecordTtl?: number;
+    cnameRecordStatusText: string;
     sslOk: boolean;
+    providerSource: string;
+    overallStatus: 'verified' | 'partial' | 'pending' | 'error';
+    statusSummary: string;
     checkedAt: string;
   } | null>(null);
 
@@ -3186,6 +3201,322 @@ export default function App() {
       warningMessage,
     };
   };
+
+  // Consulta real de registros DNS (A e CNAME) via API pública Cloudflare DNS-over-HTTPS (1.1.1.1) com fallback para Google Public DNS (8.8.8.8)
+  const queryPublicDnsRecord = async (
+    hostname: string,
+    recordType: 'A' | 'CNAME'
+  ): Promise<{
+    status: number;
+    answers: Array<{ name: string; type: number; TTL: number; data: string }>;
+    provider: string;
+  }> => {
+    const cleanHost = hostname.trim().toLowerCase().replace(/\.$/, '');
+    // 1. Tenta Cloudflare DoH JSON API
+    try {
+      const cfUrl = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(cleanHost)}&type=${recordType}`;
+      const res = await fetch(cfUrl, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/dns-json',
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return {
+          status: typeof json.Status === 'number' ? json.Status : 0,
+          answers: Array.isArray(json.Answer) ? json.Answer : [],
+          provider: 'Cloudflare DNS (1.1.1.1)',
+        };
+      }
+    } catch {
+      // Continua para o fallback Google Public DNS
+    }
+
+    // 2. Fallback: Google Public DNS-over-HTTPS API
+    const googleUrl = `https://dns.google/resolve?name=${encodeURIComponent(cleanHost)}&type=${recordType}`;
+    const gRes = await fetch(googleUrl, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/dns-json',
+      },
+    });
+    if (!gRes.ok) {
+      throw new Error(`Falha ao consultar DNS para ${cleanHost} (${recordType})`);
+    }
+    const gJson = await gRes.json();
+    return {
+      status: typeof gJson.Status === 'number' ? gJson.Status : 0,
+      answers: Array.isArray(gJson.Answer) ? gJson.Answer : [],
+      provider: 'Google Public DNS (8.8.8.8)',
+    };
+  };
+
+  const isRecognizedServerOrEdgeIp = (ip: string, expectedIp: string) => {
+    const clean = ip.trim();
+    if (clean === expectedIp) return true;
+    // IPs de Edge/Proxy da Cloudflare (104.16.0.0/12, 172.64.0.0/13, 162.159.0.0/16, 188.114.96.0/20, 198.41.128.0/17) e Vercel/Google Cloud
+    if (
+      clean.startsWith('76.76.21.') ||
+      clean.startsWith('104.') ||
+      clean.startsWith('172.64.') ||
+      clean.startsWith('172.65.') ||
+      clean.startsWith('172.66.') ||
+      clean.startsWith('172.67.') ||
+      clean.startsWith('172.68.') ||
+      clean.startsWith('172.69.') ||
+      clean.startsWith('172.70.') ||
+      clean.startsWith('172.71.') ||
+      clean.startsWith('162.159.') ||
+      clean.startsWith('188.114.') ||
+      clean.startsWith('198.41.') ||
+      clean.startsWith('216.239.') ||
+      clean.startsWith('34.') ||
+      clean.startsWith('35.')
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const verifyDomainDnsRecords = async (options?: {
+    silent?: boolean;
+    forceMode?: 'subdomain' | 'custom';
+  }) => {
+    const targetSite = savedSites.find(s => s.id === selectedPublishSiteId) || savedSites[0] || {
+      id: 'temp',
+      subdomain: data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'meusite',
+      customDomain: '',
+      clientName: data.profile.name,
+      dnsConfigured: false,
+      sslActive: true,
+      domainType: 'subdomain' as const,
+    };
+
+    const rawCustom = (targetSite.customDomain || '').trim();
+    const domVal = validateCustomDomain(rawCustom);
+    const expectedARecordIp = '76.76.21.21';
+    const expectedCnameTarget = 'cname.biovip.com.br';
+    const basePlatformDomain = (landingConfig.baseDomain || 'biovip.com.br').toLowerCase().trim();
+
+    const useCustomMode =
+      options?.forceMode === 'custom'
+        ? true
+        : options?.forceMode === 'subdomain'
+        ? false
+        : Boolean(rawCustom);
+
+    if (useCustomMode && rawCustom && !domVal.isValid) {
+      if (!options?.silent) {
+        showToast(`⚠️ Corrija o formato do domínio personalizado antes de verificar o DNS!`);
+      }
+      return;
+    }
+
+    const cleanCustomDom = useCustomMode && domVal.isValid ? domVal.sanitizedDomain : '';
+    const subSlug = (targetSite.subdomain || 'meusite').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'meusite';
+
+    const rootDomainToCheck = cleanCustomDom ? domVal.rootDomain : basePlatformDomain;
+    const cnameHostToCheck = cleanCustomDom ? domVal.cnameHost : subSlug;
+    const cnameFullDomainToCheck = `${cnameHostToCheck}.${rootDomainToCheck}`;
+    const displayCheckedDomain = cleanCustomDom || cnameFullDomainToCheck;
+
+    setDnsTesting(true);
+    try {
+      const [rootAResult, subCnameResult, subAResult] = await Promise.all([
+        queryPublicDnsRecord(rootDomainToCheck, 'A'),
+        queryPublicDnsRecord(cnameFullDomainToCheck, 'CNAME'),
+        queryPublicDnsRecord(cnameFullDomainToCheck, 'A'),
+      ]);
+
+      // Analisa Registro A do domínio raiz (@)
+      const rootAAnswers = rootAResult.answers.filter(a => a.type === 1);
+      const aValues = Array.from(new Set(rootAAnswers.map(a => a.data.trim())));
+      const aTtl = rootAAnswers[0]?.TTL;
+      const aRecordOk = aValues.length > 0;
+      const aRecordPointingCorrectly =
+        aRecordOk && aValues.some(ip => isRecognizedServerOrEdgeIp(ip, expectedARecordIp));
+
+      let aRecordStatusText = '';
+      if (!aRecordOk) {
+        aRecordStatusText =
+          rootAResult.status === 3
+            ? `Domínio ${rootDomainToCheck} sem registro A (NXDOMAIN)`
+            : `Nenhum Registro A encontrado em ${rootDomainToCheck}`;
+      } else if (aValues.includes(expectedARecordIp)) {
+        aRecordStatusText = `Apontado diretamente para ${expectedARecordIp}`;
+      } else if (aRecordPointingCorrectly) {
+        aRecordStatusText = `Ativo via Cloudflare / Servidor Edge (${aValues.slice(0, 2).join(', ')})`;
+      } else {
+        aRecordStatusText = `Apontado para IP externo (${aValues.join(', ')}) — esperado ${expectedARecordIp}`;
+      }
+
+      // Analisa Registro CNAME (ou CNAME Flattened / Proxy A) do subdomínio
+      const cnameAnswers = [
+        ...subCnameResult.answers.filter(a => a.type === 5),
+        ...subAResult.answers.filter(a => a.type === 5),
+      ];
+      const cnameTargets = Array.from(
+        new Set(cnameAnswers.map(a => a.data.trim().replace(/\.$/, '').toLowerCase()))
+      );
+      const subAAnswers = subAResult.answers.filter(a => a.type === 1);
+      const subAValues = Array.from(new Set(subAAnswers.map(a => a.data.trim())));
+      const cnameTtl = cnameAnswers[0]?.TTL ?? subAAnswers[0]?.TTL;
+
+      const hasExplicitCname = cnameTargets.length > 0;
+      const hasFlattenedOrProxiedSubdomain = !hasExplicitCname && subAValues.length > 0;
+      const cnameRecordOk = hasExplicitCname || hasFlattenedOrProxiedSubdomain;
+
+      const cnameRecordPointingCorrectly =
+        (hasExplicitCname &&
+          cnameTargets.some(
+            t =>
+              t === expectedCnameTarget ||
+              t === basePlatformDomain ||
+              t.endsWith(`.${basePlatformDomain}`) ||
+              t.endsWith('.pages.dev') ||
+              t.endsWith('.vercel.app') ||
+              t.endsWith('.run.app')
+          )) ||
+        (hasFlattenedOrProxiedSubdomain &&
+          subAValues.some(
+            ip => isRecognizedServerOrEdgeIp(ip, expectedARecordIp) || aValues.includes(ip)
+          ));
+
+      const cnameRecordTypeResolved: 'CNAME' | 'A (Cloudflare Proxy / Flattened)' | 'NONE' =
+        hasExplicitCname
+          ? 'CNAME'
+          : hasFlattenedOrProxiedSubdomain
+          ? 'A (Cloudflare Proxy / Flattened)'
+          : 'NONE';
+
+      const cnameRecordValues = hasExplicitCname ? cnameTargets : subAValues;
+
+      let cnameRecordStatusText = '';
+      if (!cnameRecordOk) {
+        cnameRecordStatusText = cleanCustomDom
+          ? `CNAME "${cnameHostToCheck}" não encontrado em ${rootDomainToCheck} — adicione ${cnameHostToCheck} → ${expectedCnameTarget}`
+          : `Subdomínio "${cnameFullDomainToCheck}" sem apontamento no DNS — adicione CNAME "${subSlug}" ou "*" (wildcard) no Cloudflare apontando para ${basePlatformDomain}`;
+      } else if (hasExplicitCname) {
+        cnameRecordStatusText = `CNAME ativo (${cnameHostToCheck} → ${cnameTargets.join(', ')})`;
+      } else {
+        cnameRecordStatusText = `Ativo via Proxy Cloudflare / CNAME Flattening (${subAValues.slice(0, 2).join(', ')})`;
+      }
+
+      const bothVerified = aRecordPointingCorrectly && cnameRecordPointingCorrectly;
+      const bothExist = aRecordOk && cnameRecordOk;
+      const overallStatus: 'verified' | 'partial' | 'pending' | 'error' = bothVerified
+        ? 'verified'
+        : bothExist || aRecordOk || cnameRecordOk
+        ? 'partial'
+        : 'pending';
+
+      let statusSummary = '';
+      if (overallStatus === 'verified') {
+        statusSummary = `Registros A (${rootDomainToCheck}) e CNAME (${cnameFullDomainToCheck}) verificados e apontando corretamente para o servidor!`;
+      } else if (aRecordOk && !cnameRecordOk) {
+        statusSummary = cleanCustomDom
+          ? `O Registro A de ${rootDomainToCheck} está ativo, mas falta o registro CNAME (${cnameHostToCheck} → ${expectedCnameTarget}).`
+          : `O domínio raiz ${rootDomainToCheck} está ativo na Cloudflare, mas o subdomínio ${cnameFullDomainToCheck} ainda não possui registro CNAME ("${subSlug}" ou curinga "*") configurado no DNS.`;
+      } else if (!aRecordOk && cnameRecordOk) {
+        statusSummary = `O subdomínio ${cnameFullDomainToCheck} responde no DNS, mas falta o Registro A na raiz (${rootDomainToCheck} → ${expectedARecordIp}).`;
+      } else if (bothExist && !bothVerified) {
+        statusSummary = `Registros A e CNAME encontrados no DNS, porém apontando para endereços diferentes do padrão (${expectedARecordIp} / ${expectedCnameTarget}).`;
+      } else {
+        statusSummary = `Nenhum apontamento A ou CNAME propagado ainda para ${displayCheckedDomain}. Configure a Zona DNS e aguarde alguns minutos.`;
+      }
+
+      const checkedAt = new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      setDnsCheckStatus({
+        checkedDomain: displayCheckedDomain,
+        rootDomainChecked: rootDomainToCheck,
+        cnameHostChecked: cnameHostToCheck,
+        cnameFullDomainChecked: cnameFullDomainToCheck,
+        aRecordOk,
+        aRecordPointingCorrectly,
+        aRecordValues: aValues,
+        aRecordTtl: aTtl,
+        aRecordStatusText,
+        cnameRecordOk,
+        cnameRecordPointingCorrectly,
+        cnameRecordValues,
+        cnameRecordTypeResolved,
+        cnameRecordTtl: cnameTtl,
+        cnameRecordStatusText,
+        sslOk: aRecordOk && cnameRecordOk,
+        providerSource: rootAResult.provider,
+        overallStatus,
+        statusSummary,
+        checkedAt,
+      });
+
+      if (savedSites.some(s => s.id === targetSite.id)) {
+        const updated = savedSites.map(s =>
+          s.id === targetSite.id
+            ? {
+                ...s,
+                customDomain: cleanCustomDom || s.customDomain,
+                domainType: cleanCustomDom ? ('custom' as const) : ('subdomain' as const),
+                dnsConfigured: bothExist,
+                sslActive: bothExist,
+              }
+            : s
+        );
+        setSavedSites(updated);
+        try {
+          localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+        } catch {}
+      }
+
+      if (!options?.silent) {
+        if (overallStatus === 'verified') {
+          showToast(`🟢 DNS verificado na Cloudflare! Registros A e CNAME ativos para ${displayCheckedDomain}.`);
+        } else if (overallStatus === 'partial') {
+          showToast(`🟡 Verificação DNS concluída com pendências em ${displayCheckedDomain}. Veja os detalhes abaixo.`);
+        } else {
+          showToast(`🔴 Registros A e CNAME ainda não encontrados para ${displayCheckedDomain} no DNS público.`);
+        }
+      }
+    } catch (err) {
+      setDnsCheckStatus({
+        checkedDomain: displayCheckedDomain,
+        rootDomainChecked: rootDomainToCheck,
+        cnameHostChecked: cnameHostToCheck,
+        cnameFullDomainChecked: cnameFullDomainToCheck,
+        aRecordOk: false,
+        aRecordPointingCorrectly: false,
+        aRecordValues: [],
+        aRecordStatusText: 'Erro de conexão ao consultar resolvedor DNS público',
+        cnameRecordOk: false,
+        cnameRecordPointingCorrectly: false,
+        cnameRecordValues: [],
+        cnameRecordTypeResolved: 'NONE',
+        cnameRecordStatusText: 'Não foi possível verificar o registro CNAME no momento',
+        sslOk: false,
+        providerSource: 'Cloudflare DNS (1.1.1.1)',
+        overallStatus: 'error',
+        statusSummary: 'Não foi possível conectar à API pública de DNS (Cloudflare/Google). Verifique sua conexão e tente novamente.',
+        checkedAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      });
+      if (!options?.silent) {
+        showToast(`⚠️ Falha ao consultar API pública de DNS. Tente novamente.`);
+      }
+    } finally {
+      setDnsTesting(false);
+    }
+  };
+
+  // Executa verificação automática de DNS na API da Cloudflare sempre que o modal #publishModalOpen é aberto
+  useEffect(() => {
+    if (publishModalOpen) {
+      verifyDomainDnsRecords({ silent: true });
+    }
+  }, [publishModalOpen, selectedPublishSiteId]);
 
   const [pdfReportModalOpen, setPdfReportModalOpen] = useState(false);
   const [copiedPdfSummary, setCopiedPdfSummary] = useState(false);
@@ -3625,6 +3956,17 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [unauthorizedDomainHost, setUnauthorizedDomainHost] = useState<string | null>(null);
+  const [showDirectCredentialLogin, setShowDirectCredentialLogin] = useState<boolean>(false);
+  const [directAdminEmailInput, setDirectAdminEmailInput] = useState<string>('');
+  const [directAdminPinInput, setDirectAdminPinInput] = useState<string>('');
+  const [directAdminAuthorized, setDirectAdminAuthorized] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('luxebio_admin_direct_auth') === 'verified';
+    } catch {
+      return false;
+    }
+  });
 
   // 2FA Security & Master PIN Layer
   const DEFAULT_ADMIN_PIN = '230217';
@@ -3708,10 +4050,11 @@ export default function App() {
   };
 
   const isAuthorizedAdmin = Boolean(
-    adminUser &&
-    adminUser.email &&
-    adminUser.email.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase() &&
-    (adminUser.emailVerified === true || adminUser.providerData?.some(p => p.providerId === 'google.com'))
+    directAdminAuthorized ||
+    (adminUser &&
+      adminUser.email &&
+      adminUser.email.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase() &&
+      (adminUser.emailVerified === true || adminUser.providerData?.some(p => p.providerId === 'google.com')))
   );
 
   useEffect(() => {
@@ -3720,11 +4063,12 @@ export default function App() {
       setAuthLoading(false);
       if (user && user.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
         setAuthError(
-          `A conta "${user.email}" não possui permissão de Administrador. Faça login com ${ADMIN_OWNER_EMAIL}.`
+          `A conta "${user.email}" não possui permissão de Administrador. Faça login com uma conta credenciada.`
         );
         recordAuditLog(`Tentativa de acesso não autorizada: ${user.email}`, 'failed');
       } else if (user) {
         setAuthError(null);
+        setUnauthorizedDomainHost(null);
         recordAuditLog(`Login Google Firebase bem-sucedido: ${user.email}`, 'success');
       }
     });
@@ -3781,13 +4125,14 @@ export default function App() {
   const handleAdminGoogleLogin = async () => {
     setIsLoggingIn(true);
     setAuthError(null);
+    setUnauthorizedDomainHost(null);
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(firebaseAuth, provider);
       if (result.user.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
         setAuthError(
-          `Acesso negado para "${result.user.email}". Somente o administrador (${ADMIN_OWNER_EMAIL}) pode acessar o Criador.`
+          `Acesso negado para "${result.user.email}". Somente a conta de administrador credenciada pode acessar o Criador.`
         );
         recordAuditLog(`Tentativa de acesso negada: ${result.user.email}`, 'failed');
       } else {
@@ -3795,12 +4140,84 @@ export default function App() {
         setAppSurface('studio');
       }
     } catch (err: any) {
-      if (err?.code !== 'auth/popup-closed-by-user') {
+      const code = String(err?.code || '');
+      const msg = String(err?.message || '');
+      if (code === 'auth/unauthorized-domain' || msg.includes('auth/unauthorized-domain')) {
+        const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'biovip.com.br';
+        setUnauthorizedDomainHost(currentHost);
+        setShowDirectCredentialLogin(true);
+        setAuthError(
+          `O domínio "${currentHost}" ainda não foi autorizado no console do Firebase para pop-up Google. Utilize o acesso direto com sua credencial e PIN Mestre abaixo ou adicione "${currentHost}" em Domínios Autorizados no Firebase.`
+        );
+        recordAuditLog(`Domínio pendente de autorização OAuth (${currentHost})`, 'warning');
+      } else if (code !== 'auth/popup-closed-by-user') {
         setAuthError(err?.message || 'Erro ao autenticar com o Google via Firebase.');
         recordAuditLog(`Erro autenticação Firebase: ${err?.message || 'Falha'}`, 'failed');
       }
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleDirectCredentialAdminLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (lockoutRemainingSec > 0) return;
+    setAuthError(null);
+
+    const typedEmail = directAdminEmailInput.trim().toLowerCase();
+    const cleanPin = directAdminPinInput.trim();
+
+    if (!typedEmail) {
+      setAuthError('Informe o e-mail de administrador.');
+      return;
+    }
+    if (cleanPin.length !== 6 || !/^\d{6}$/.test(cleanPin)) {
+      setAuthError('O PIN de segurança deve conter exatamente 6 dígitos numéricos.');
+      return;
+    }
+
+    const currentHash = await hashPinCode(cleanPin);
+    const storedHash = localStorage.getItem('biovip_admin_pin_hash_v2');
+    const defaultHash = await hashPinCode(DEFAULT_ADMIN_PIN);
+    const targetHash = storedHash || defaultHash;
+
+    if (typedEmail === ADMIN_OWNER_EMAIL.toLowerCase() && currentHash === targetHash) {
+      setDirectAdminAuthorized(true);
+      setAdminPinUnlocked(true);
+      setIsClientsFullscreen(true);
+      setAppSurface('studio');
+      setAuthError(null);
+      setUnauthorizedDomainHost(null);
+      setDirectAdminPinInput('');
+      setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
+      try {
+        sessionStorage.setItem('luxebio_admin_direct_auth', 'verified');
+        sessionStorage.setItem('luxebio_admin_pin_session', 'unlocked');
+        localStorage.removeItem('luxebio_pin_failed_attempts');
+        localStorage.removeItem('luxebio_pin_lockout_until');
+      } catch {}
+      recordAuditLog('Login Administrativo Direto (Credencial + PIN Mestre) Realizado com Sucesso', 'success');
+      showToast('🛡️ Acesso concedido! Painel de Gestão em Tela Cheia desbloqueado.');
+    } else {
+      const currentFailed = Number(localStorage.getItem('luxebio_pin_failed_attempts') || '0') + 1;
+      const left = Math.max(0, MAX_PIN_ATTEMPTS - currentFailed);
+      setPinAttemptsLeft(left);
+      try {
+        localStorage.setItem('luxebio_pin_failed_attempts', currentFailed.toString());
+      } catch {}
+
+      if (left <= 0) {
+        const lockoutTime = Date.now() + LOCKOUT_DURATION_MS;
+        try {
+          localStorage.setItem('luxebio_pin_lockout_until', lockoutTime.toString());
+        } catch {}
+        setLockoutRemainingSec(Math.ceil(LOCKOUT_DURATION_MS / 1000));
+        setAuthError(`Bloqueio de segurança temporário de 5 minutos ativado devido a ${MAX_PIN_ATTEMPTS} tentativas incorretas.`);
+        recordAuditLog(`Bloqueio de Segurança Ativado (${MAX_PIN_ATTEMPTS} tentativas falhas)`, 'lockout');
+      } else {
+        setAuthError(`Credencial ou PIN de segurança incorretos. Tentativas restantes: ${left}.`);
+        recordAuditLog(`Tentativa de login direto incorreta (${left} restantes)`, 'failed');
+      }
     }
   };
 
@@ -3907,8 +4324,12 @@ export default function App() {
   const handleAdminLogout = async () => {
     try {
       setAdminPinUnlocked(false);
+      setDirectAdminAuthorized(false);
+      setDirectAdminEmailInput('');
+      setDirectAdminPinInput('');
       try {
         sessionStorage.removeItem('luxebio_admin_pin_session');
+        sessionStorage.removeItem('luxebio_admin_direct_auth');
       } catch {}
       await signOut(firebaseAuth);
       setAuthError(null);
@@ -4182,8 +4603,58 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const openPublicMicrosite = (slug: string) => {
-    const clean = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const getCleanBaseDomain = () => {
+    return (
+      (landingConfig.baseDomain || 'biovip.com.br')
+        .toLowerCase()
+        .trim()
+        .replace(/^https?:\/\//, '')
+        .replace(/^www\./, '')
+        .replace(/\/.*$/, '') || 'biovip.com.br'
+    );
+  };
+
+  const getPublicMicrositeUrl = (subdomain: string, customDomain?: string) => {
+    const baseDomain = getCleanBaseDomain();
+    const cleanSub = (subdomain || 'dramarina').toLowerCase().trim().replace(/[^a-z0-9-]/g, '') || 'dramarina';
+    const cleanCustom = (customDomain || '')
+      .toLowerCase()
+      .trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/.*$/, '');
+
+    const isFakeSeedDomain =
+      cleanCustom === `www.${cleanSub}.com.br` ||
+      cleanCustom === `${cleanSub}.com.br` ||
+      cleanCustom === 'www.dramarinaalmeida.com.br' ||
+      cleanCustom === 'www.doncorleonebarber.com.br';
+
+    if (cleanCustom && !isFakeSeedDomain) {
+      return `https://${cleanCustom}`;
+    }
+
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname.toLowerCase();
+      if (host === baseDomain || host === `www.${baseDomain}` || host.endsWith(`.${baseDomain}`)) {
+        return `https://${cleanSub}.${baseDomain}`;
+      }
+      return `${window.location.origin}/${cleanSub}`;
+    }
+
+    return `https://${cleanSub}.${baseDomain}`;
+  };
+
+  const openPublicMicrosite = (slug: string, customDomain?: string) => {
+    const clean = (slug || 'dramarina').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'dramarina';
+    const targetUrl = getPublicMicrositeUrl(clean, customDomain);
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname.toLowerCase();
+      const baseDomain = getCleanBaseDomain();
+      if (host === baseDomain || host === `www.${baseDomain}` || host.endsWith(`.${baseDomain}`)) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+    }
     try {
       window.history.pushState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
     } catch {}
@@ -9857,11 +10328,22 @@ export default function App() {
   };
 
   const openLivePreviewTab = () => {
-    const code = generateExportCode();
-    const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    showToast('👁️ Resultado do microsite aberto em tela cheia numa nova aba!');
+    const fallbackSlug = (data.profile.name || 'dramarina')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '');
+    const matchedModel =
+      DYNAMIC_LANDING_MODELS.find(
+        (m) => m.realSiteData?.profile?.name === data?.profile?.name || m.personaName === data?.profile?.name
+      ) ||
+      READY_MADE_MODELS.find(
+        (m) => m.realSiteData?.profile?.name === data?.profile?.name || m.personaName === data?.profile?.name
+      );
+    const resolvedSub = currentEditingSite?.subdomain || matchedModel?.subdomain || fallbackSlug || 'dramarina';
+    const targetUrl = getPublicMicrositeUrl(resolvedSub, currentEditingSite?.customDomain);
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    showToast(`🌐 Microsite aberto em ${targetUrl}!`);
   };
 
   // ==============================================================
@@ -10839,11 +11321,47 @@ COMO PUBLICAR NO SERVIDOR:
         const matchedPreset = RAW_READY_MADE_MODELS.find(
           (rm) => `real-niche-${rm.id}` === s.id || rm.subdomain === s.subdomain
         );
+        const cleanCustom = (s.customDomain || '').toLowerCase().trim();
+        const isFakeCustom =
+          cleanCustom === `www.${s.subdomain}.com.br` ||
+          cleanCustom === `${s.subdomain}.com.br` ||
+          cleanCustom === 'www.dramarinaalmeida.com.br' ||
+          cleanCustom === 'www.doncorleonebarber.com.br';
+
+        if (s.id === 'site-2' && s.subdomain === 'dramarina') {
+          changed = true;
+          return {
+            ...s,
+            subdomain: 'almeidaadv',
+            domainType: 'subdomain' as const,
+            customDomain: '',
+          };
+        }
+        if (s.id === 'site-3' && s.subdomain === 'larissanails') {
+          changed = true;
+          return {
+            ...s,
+            subdomain: 'larissaalmeida',
+            domainType: 'subdomain' as const,
+            customDomain: '',
+          };
+        }
+
         if (matchedPreset && isModelSiteImagesStale(s, matchedPreset)) {
           changed = true;
           return {
             ...s,
+            domainType: 'subdomain' as const,
+            customDomain: isFakeCustom ? '' : s.customDomain,
             data: JSON.parse(JSON.stringify(matchedPreset.realSiteData)),
+          };
+        }
+        if (isFakeCustom) {
+          changed = true;
+          return {
+            ...s,
+            domainType: 'subdomain' as const,
+            customDomain: '',
           };
         }
         return s;
@@ -10867,7 +11385,7 @@ COMO PUBLICAR NO SERVIDOR:
             lastUpdated: todayStr,
             domainType: 'subdomain',
             subdomain: m.subdomain,
-            customDomain: `www.${m.subdomain}.com.br`,
+            customDomain: '',
             dnsConfigured: true,
             sslActive: true,
             whatsappClicks: 42 + idx * 11,
@@ -10979,11 +11497,40 @@ COMO PUBLICAR NO SERVIDOR:
     return () => window.clearInterval(heroTimer);
   }, [appSurface, landingCarouselAutoPlay, landingHeroHovered, landingPreviewModalId, DYNAMIC_LANDING_MODELS]);
 
-  const openRealMicrositeInNewTab = (siteData: typeof INITIAL_DATA) => {
-    const htmlCode = generateExportCode(siteData);
-    const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const openRealMicrositeInNewTab = (siteData: typeof INITIAL_DATA, explicitSubdomain?: string) => {
+    let resolvedSub = explicitSubdomain?.trim().toLowerCase();
+    if (!resolvedSub) {
+      const matchedModel =
+        DYNAMIC_LANDING_MODELS.find(
+          (m) =>
+            m.realSiteData?.profile?.name === siteData?.profile?.name ||
+            m.personaName === siteData?.profile?.name
+        ) ||
+        READY_MADE_MODELS.find(
+          (m) =>
+            m.realSiteData?.profile?.name === siteData?.profile?.name ||
+            m.personaName === siteData?.profile?.name
+        );
+      if (matchedModel?.subdomain) {
+        resolvedSub = matchedModel.subdomain;
+      } else {
+        const matchedSaved = savedSites.find(
+          (s) =>
+            s.data?.profile?.name === siteData?.profile?.name ||
+            s.clientName === siteData?.profile?.name
+        );
+        if (matchedSaved?.subdomain) {
+          resolvedSub = matchedSaved.subdomain;
+        }
+      }
+    }
+    const cleanSub = (resolvedSub || siteData?.profile?.name || 'dramarina')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9-]/g, '');
+    const targetUrl = getPublicMicrositeUrl(cleanSub);
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   const syncAllEightRealMicrositesToStudio = () => {
@@ -11006,7 +11553,7 @@ COMO PUBLICAR NO SERVIDOR:
       lastUpdated: todayStr,
       domainType: 'subdomain',
       subdomain: m.subdomain,
-      customDomain: `www.${m.subdomain}.com.br`,
+      customDomain: '',
       dnsConfigured: true,
       sslActive: true,
       whatsappClicks: 42 + idx * 11,
@@ -12824,14 +13371,43 @@ COMO PUBLICAR NO SERVIDOR:
   // =========================================================================
   if (appSurface === 'microsite') {
     const slug = (activePublicSlug || '').toLowerCase().trim();
-    const foundSite = slug
-      ? savedSites.find(
+    const goBackToMainDomain = () => {
+      const baseDomain = getCleanBaseDomain();
+      if (typeof window !== 'undefined') {
+        const host = window.location.hostname.toLowerCase();
+        if (host !== baseDomain && host !== `www.${baseDomain}` && host.endsWith(`.${baseDomain}`)) {
+          window.location.href = `https://${baseDomain}`;
+          return;
+        }
+      }
+      window.history.pushState({}, '', '/');
+      setAppSurface('landing');
+      setActivePublicSlug(null);
+    };
+
+    const demoModel = slug
+      ? DYNAMIC_LANDING_MODELS.find(
+          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+        ) ||
+        READY_MADE_MODELS.find(
+          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+        )
+      : undefined;
+
+    const matchingSites = slug
+      ? savedSites.filter(
           (s) =>
             (s.subdomain && s.subdomain.toLowerCase() === slug) ||
             s.id.toLowerCase() === slug ||
             (s.clientName && s.clientName.toLowerCase().replace(/[^a-z0-9]/g, '-') === slug)
         )
-      : undefined;
+      : [];
+
+    const foundSite =
+      matchingSites.find((s) => s.isLandingModel && s.status !== 'disabled') ||
+      matchingSites.find((s) => s.id.startsWith('real-niche-')) ||
+      matchingSites.find((s) => s.status !== 'disabled') ||
+      matchingSites[0];
 
     if (foundSite) {
       if (isSiteUnderConstruction(foundSite)) {
@@ -12840,18 +13416,14 @@ COMO PUBLICAR NO SERVIDOR:
             <div className="absolute top-3 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
               <button
                 type="button"
-                onClick={() => {
-                  window.history.pushState({}, '', '/');
-                  setAppSurface('landing');
-                  setActivePublicSlug(null);
-                }}
+                onClick={goBackToMainDomain}
                 className="pointer-events-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
               >
                 <span>← BioVip Início</span>
               </button>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono text-amber-300 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                <span>biovip.com.br/{foundSite.subdomain} · 🚧 Em Construção</span>
+                <span>{foundSite.subdomain}.{getCleanBaseDomain()} · 🚧 Em Construção</span>
               </div>
             </div>
             <iframe
@@ -12863,7 +13435,7 @@ COMO PUBLICAR NO SERVIDOR:
         );
       }
 
-      if (foundSite.status === 'suspenso_d7' || foundSite.status === 'disabled') {
+      if (!foundSite.isLandingModel && (foundSite.status === 'suspenso_d7' || foundSite.status === 'disabled')) {
         return (
           <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
             <iframe
@@ -12875,59 +13447,25 @@ COMO PUBLICAR NO SERVIDOR:
         );
       }
 
-      // Microsite Final / Publicado
+      const resolvedData =
+        foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data;
+
       return (
         <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
-          <div className="absolute top-3 left-4 z-50">
-            <button
-              type="button"
-              onClick={() => {
-                window.history.pushState({}, '', '/');
-                setAppSurface('landing');
-                setActivePublicSlug(null);
-              }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
-            >
-              <span>← BioVip Início</span>
-            </button>
-          </div>
           <iframe
-            title={`Microsite - ${foundSite.clientName}`}
-            srcDoc={generateExportCode(foundSite.data)}
+            title={`${foundSite.clientName} · BioVip`}
+            srcDoc={generateExportCode(resolvedData)}
             className="w-full h-full border-0"
           />
         </div>
       );
     }
 
-    // Modelo demonstrativo
-    const demoModel = slug
-      ? DYNAMIC_LANDING_MODELS.find(
-          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
-        ) ||
-        READY_MADE_MODELS.find(
-          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
-        )
-      : undefined;
-
     if (demoModel) {
       return (
         <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
-          <div className="absolute top-3 left-4 z-50">
-            <button
-              type="button"
-              onClick={() => {
-                window.history.pushState({}, '', '/');
-                setAppSurface('landing');
-                setActivePublicSlug(null);
-              }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
-            >
-              <span>← BioVip Início</span>
-            </button>
-          </div>
           <iframe
-            title={`Modelo BioVip - ${demoModel.title}`}
+            title={`${demoModel.personaName} — ${demoModel.title}`}
             srcDoc={demoModel.realHtml || generateExportCode(demoModel.realSiteData)}
             className="w-full h-full border-0"
           />
@@ -13533,7 +14071,7 @@ COMO PUBLICAR NO SERVIDOR:
                   </a>
                   <button
                     type="button"
-                    onClick={() => openRealMicrositeInNewTab(activeHeroModel.realSiteData)}
+                    onClick={() => openRealMicrositeInNewTab(activeHeroModel.realSiteData, activeHeroModel.subdomain)}
                     className="px-5 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold text-sm border border-white/[0.12] transition flex items-center gap-2 cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4 text-amber-400" />
@@ -13570,7 +14108,7 @@ COMO PUBLICAR NO SERVIDOR:
                     </div>
                     <button
                       type="button"
-                      onClick={() => openRealMicrositeInNewTab(activeHeroModel.realSiteData)}
+                      onClick={() => openRealMicrositeInNewTab(activeHeroModel.realSiteData, activeHeroModel.subdomain)}
                       className="text-[10px] font-mono text-amber-400 hover:underline shrink-0 cursor-pointer flex items-center gap-1"
                       title="Abrir este microsite real em tela cheia numa nova aba"
                     >
@@ -13794,7 +14332,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="mt-3 px-1 flex items-center justify-center">
                       <button
                         type="button"
-                        onClick={() => openRealMicrositeInNewTab(model.realSiteData)}
+                        onClick={() => openRealMicrositeInNewTab(model.realSiteData, model.subdomain)}
                         className="w-full py-2.5 px-4 rounded-xl bg-white/[0.06] hover:bg-amber-400 hover:text-neutral-950 text-neutral-200 hover:border-amber-400 font-semibold text-xs border border-white/[0.12] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md group/btn"
                         title="Abrir microsite online em uma nova guia para testar as vendas"
                       >
@@ -13862,7 +14400,7 @@ COMO PUBLICAR NO SERVIDOR:
                   <button
                     type="button"
                     onClick={() => {
-                      openRealMicrositeInNewTab(qrModalModel.realSiteData);
+                      openRealMicrositeInNewTab(qrModalModel.realSiteData, qrModalModel.subdomain);
                       setLandingQrModalModelId(null);
                     }}
                     className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs cursor-pointer"
@@ -14598,7 +15136,7 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => openRealMicrositeInNewTab(previewModalModel.realSiteData)}
+                    onClick={() => openRealMicrositeInNewTab(previewModalModel.realSiteData, previewModalModel.subdomain)}
                     className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-mono flex items-center gap-1 cursor-pointer"
                   >
                     <span>Nova Aba</span>
@@ -14706,20 +15244,49 @@ COMO PUBLICAR NO SERVIDOR:
             </div>
           </div>
 
-          <div className="space-y-2 text-xs text-neutral-300 leading-relaxed bg-neutral-950/80 p-4 rounded-2xl border border-white/[0.06]">
+          <div className="space-y-1.5 text-xs text-neutral-300 leading-relaxed bg-neutral-950/80 p-4 rounded-2xl border border-white/[0.06]">
             <p>
-              O <strong className="text-white">BioVip Studio & Painel de Gestão</strong> é protegido pelo <strong className="text-amber-300">Google Firebase Authentication</strong>.
+              O <strong className="text-white">BioVip Studio & Painel de Gestão</strong> é protegido pelo <strong className="text-amber-300">Google Firebase Authentication</strong> e chave criptografada.
             </p>
-            <p className="text-[11px] text-neutral-400 font-mono">
-              Administrador autorizado: <span className="text-emerald-400">{ADMIN_OWNER_EMAIL}</span>
+            <p className="text-[11px] text-neutral-400">
+              Acesso exclusivo para credenciais administrativas autorizadas.
             </p>
           </div>
 
           {authError && (
             <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-xs text-red-300 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p>{authError}</p>
+              <div className="space-y-2 flex-1">
+                <p className="leading-relaxed">{authError}</p>
+                {unauthorizedDomainHost && (
+                  <div className="p-2.5 rounded-lg bg-neutral-950/90 border border-amber-400/30 text-[11px] text-neutral-300 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-amber-300 font-semibold">Domínio no Cloudflare:</span>
+                      <code className="px-2 py-0.5 rounded bg-neutral-900 text-amber-200 font-mono">{unauthorizedDomainHost}</code>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(unauthorizedDomainHost);
+                          showToast(`📋 Domínio "${unauthorizedDomainHost}" copiado!`);
+                        }}
+                        className="px-2.5 py-1 rounded-md bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-semibold text-[10.5px] border border-amber-400/30 cursor-pointer transition"
+                      >
+                        Copiar Domínio
+                      </button>
+                      <a
+                        href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.14] text-white font-semibold text-[10.5px] border border-white/10 inline-flex items-center gap-1 transition"
+                      >
+                        <span>Autorizar no Firebase</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                )}
                 {adminUser && (
                   <button
                     type="button"
@@ -14733,7 +15300,76 @@ COMO PUBLICAR NO SERVIDOR:
             </div>
           )}
 
-          <div className="space-y-3">
+          {showDirectCredentialLogin && (
+            <form onSubmit={handleDirectCredentialAdminLogin} className="p-4 rounded-2xl bg-neutral-950/90 border border-amber-400/40 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] font-mono uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Acesso com Credencial & PIN Mestre</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowDirectCredentialLogin(false)}
+                  className="text-[10px] text-neutral-400 hover:text-white cursor-pointer"
+                >
+                  Ocultar
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-400 mb-1">
+                  E-mail do Administrador
+                </label>
+                <input
+                  type="email"
+                  required
+                  autoComplete="username"
+                  value={directAdminEmailInput}
+                  onChange={(e) => setDirectAdminEmailInput(e.target.value)}
+                  placeholder="Digite seu e-mail administrativo"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs text-white focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+                    PIN de Segurança (6 dígitos)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPinText(!showPinText)}
+                    className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer"
+                  >
+                    {showPinText ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    <span>{showPinText ? 'Ocultar' : 'Mostrar'}</span>
+                  </button>
+                </div>
+                <input
+                  type={showPinText ? 'text' : 'password'}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  required
+                  value={directAdminPinInput}
+                  onChange={(e) => setDirectAdminPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="••••••"
+                  className="w-full text-center tracking-[0.45em] text-lg font-mono font-bold py-2.5 px-3.5 rounded-xl bg-neutral-900 border border-neutral-800 text-amber-300 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={lockoutRemainingSec > 0}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 disabled:opacity-50 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer transition"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Desbloquear Painel de Gestão</span>
+              </button>
+            </form>
+          )}
+
+          <div className="space-y-2.5">
             <button
               type="button"
               disabled={isLoggingIn}
@@ -14745,6 +15381,17 @@ COMO PUBLICAR NO SERVIDOR:
                 {isLoggingIn ? 'Autenticando com Firebase...' : 'Entrar como Administrador com Google'}
               </span>
             </button>
+
+            {!showDirectCredentialLogin && (
+              <button
+                type="button"
+                onClick={() => setShowDirectCredentialLogin(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-amber-300 font-semibold text-xs flex items-center justify-center gap-2 border border-amber-400/30 transition cursor-pointer"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                <span>Entrar com Credencial & PIN Mestre</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -22731,7 +23378,7 @@ COMO PUBLICAR NO SERVIDOR:
         };
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div id="publishModalOpen" className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
             <div className="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-2xl p-5 sm:p-6 space-y-5 text-neutral-100 shadow-2xl my-auto max-h-[92vh] flex flex-col">
               {/* Header */}
               <div className="flex justify-between items-start border-b border-neutral-800 pb-3.5 shrink-0">
@@ -22767,9 +23414,21 @@ COMO PUBLICAR NO SERVIDOR:
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       Opção 1: Subdomínio Oficial BioVip (Ativação Imediata)
                     </span>
-                    <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
-                      ● PRONTO PARA USO
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={dnsTesting}
+                        onClick={() => verifyDomainDnsRecords({ forceMode: 'subdomain' })}
+                        className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+                        title="Consultar API DNS da Cloudflare para verificar se este subdomínio está apontando para o servidor"
+                      >
+                        <RefreshCw className={`w-2.5 h-2.5 ${dnsTesting ? 'animate-spin' : ''}`} />
+                        <span>Verificar DNS Subdomínio</span>
+                      </button>
+                      <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                        ● PRONTO PARA USO
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center rounded-xl bg-neutral-900 border border-neutral-800 focus-within:border-amber-500/60 overflow-hidden">
                     <span className="pl-3 text-xs text-neutral-500 font-mono select-none">https://</span>
@@ -23231,34 +23890,224 @@ COMO PUBLICAR NO SERVIDOR:
                     </div>
                   </div>
 
-                  {/* Resultado do Diagnóstico de Propagação DNS */}
-                  {dnsCheckStatus && (
-                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                          Diagnóstico de Propagação Concluído ({dnsCheckStatus.checkedDomain})
-                        </span>
-                        <span className="text-[9.5px] font-mono text-neutral-400">
-                          Verificado às {dnsCheckStatus.checkedAt}
-                        </span>
+                  {/* Resultado do Diagnóstico de Propagação DNS (Consulta Real via API Cloudflare 1.1.1.1 / Google DoH) */}
+                  <div
+                    className={`p-3.5 rounded-xl border space-y-3 transition ${
+                      dnsTesting
+                        ? 'bg-amber-500/10 border-amber-500/40'
+                        : !dnsCheckStatus
+                        ? 'bg-neutral-900/80 border-neutral-800'
+                        : dnsCheckStatus.overallStatus === 'verified'
+                        ? 'bg-emerald-500/10 border-emerald-500/40'
+                        : dnsCheckStatus.overallStatus === 'partial'
+                        ? 'bg-amber-500/10 border-amber-500/40'
+                        : 'bg-red-500/10 border-red-500/40'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-neutral-100 flex items-center gap-1.5">
+                            {dnsTesting ? (
+                              <RefreshCw className="w-4 h-4 text-amber-400 animate-spin" />
+                            ) : dnsCheckStatus?.overallStatus === 'verified' ? (
+                              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                            ) : dnsCheckStatus?.overallStatus === 'partial' ? (
+                              <AlertTriangle className="w-4 h-4 text-amber-400" />
+                            ) : dnsCheckStatus ? (
+                              <AlertCircle className="w-4 h-4 text-red-400" />
+                            ) : (
+                              <Globe className="w-4 h-4 text-amber-400" />
+                            )}
+                            <span>
+                              3. Status de Verificação DNS em Tempo Real ({dnsCheckStatus?.providerSource || 'Cloudflare DNS 1.1.1.1'})
+                            </span>
+                          </span>
+                          {dnsTesting ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                              CONSULTANDO REGISTROS A & CNAME...
+                            </span>
+                          ) : dnsCheckStatus?.overallStatus === 'verified' ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                              ● VERIFICADO (A + CNAME ATIVOS)
+                            </span>
+                          ) : dnsCheckStatus?.overallStatus === 'partial' ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                              ● PROPAGAÇÃO PARCIAL
+                            </span>
+                          ) : dnsCheckStatus ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/40">
+                              ● PENDENTE / NÃO APONTADO
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="text-[10.5px] text-neutral-300 leading-relaxed">
+                          {dnsTesting
+                            ? 'Consultando servidores autoritativos via Cloudflare DNS-over-HTTPS para validar os registros A e CNAME...'
+                            : dnsCheckStatus
+                            ? dnsCheckStatus.statusSummary
+                            : 'Clique em Verificar Agora para consultar automaticamente os registros A e CNAME na API pública de DNS.'}
+                        </p>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] font-mono">
-                        <div className="p-2 rounded-lg bg-neutral-950/90 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          <span>Registro A (@ → {aRecordIp})</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-neutral-950/90 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          <span>CNAME ({effectiveCnameHost} → Ativo)</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-neutral-950/90 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300">
-                          <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          <span>SSL Let&apos;s Encrypt Ativo</span>
-                        </div>
+
+                      <div className="flex items-center gap-2">
+                        {dnsCheckStatus && !dnsTesting && (
+                          <span className="text-[9.5px] font-mono text-neutral-400">
+                            Às {dnsCheckStatus.checkedAt}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          disabled={dnsTesting}
+                          onClick={() => verifyDomainDnsRecords()}
+                          className="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-[10px] flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${dnsTesting ? 'animate-spin' : ''}`} />
+                          <span>{dnsTesting ? 'Consultando...' : 'Verificar Agora'}</span>
+                        </button>
                       </div>
                     </div>
-                  )}
+
+                    {dnsCheckStatus && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[10px] font-mono">
+                        {/* Status Registro A */}
+                        <div
+                          className={`p-2.5 rounded-xl bg-neutral-950/90 border space-y-1.5 ${
+                            dnsCheckStatus.aRecordPointingCorrectly
+                              ? 'border-emerald-500/40'
+                              : dnsCheckStatus.aRecordOk
+                              ? 'border-amber-500/40'
+                              : 'border-red-500/40'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-bold text-neutral-200 flex items-center gap-1">
+                              {dnsCheckStatus.aRecordPointingCorrectly ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              ) : dnsCheckStatus.aRecordOk ? (
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              ) : (
+                                <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                              )}
+                              <span>REGISTRO A</span>
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold ${
+                                dnsCheckStatus.aRecordPointingCorrectly
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : dnsCheckStatus.aRecordOk
+                                  ? 'bg-amber-500/20 text-amber-300'
+                                  : 'bg-red-500/20 text-red-300'
+                              }`}
+                            >
+                              {dnsCheckStatus.aRecordPointingCorrectly
+                                ? 'APONTADO'
+                                : dnsCheckStatus.aRecordOk
+                                ? 'OUTRO IP'
+                                : 'PENDENTE'}
+                            </span>
+                          </div>
+                          <div className="text-[9.5px] text-neutral-400 font-sans">
+                            Host: <strong className="text-neutral-200 font-mono">{dnsCheckStatus.rootDomainChecked}</strong>
+                          </div>
+                          <div className="text-[9.5px] text-neutral-300 font-sans leading-snug">
+                            {dnsCheckStatus.aRecordStatusText}
+                          </div>
+                          {dnsCheckStatus.aRecordValues.length > 0 && (
+                            <div className="pt-1 border-t border-neutral-800/80 text-[9px] text-emerald-400 truncate">
+                              IP(s): {dnsCheckStatus.aRecordValues.join(', ')}
+                              {dnsCheckStatus.aRecordTtl ? ` (TTL ${dnsCheckStatus.aRecordTtl}s)` : ''}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Status Registro CNAME */}
+                        <div
+                          className={`p-2.5 rounded-xl bg-neutral-950/90 border space-y-1.5 ${
+                            dnsCheckStatus.cnameRecordPointingCorrectly
+                              ? 'border-emerald-500/40'
+                              : dnsCheckStatus.cnameRecordOk
+                              ? 'border-amber-500/40'
+                              : 'border-red-500/40'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-bold text-neutral-200 flex items-center gap-1">
+                              {dnsCheckStatus.cnameRecordPointingCorrectly ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              ) : dnsCheckStatus.cnameRecordOk ? (
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              ) : (
+                                <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                              )}
+                              <span>CNAME ({dnsCheckStatus.cnameHostChecked})</span>
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold ${
+                                dnsCheckStatus.cnameRecordPointingCorrectly
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : dnsCheckStatus.cnameRecordOk
+                                  ? 'bg-amber-500/20 text-amber-300'
+                                  : 'bg-red-500/20 text-red-300'
+                              }`}
+                            >
+                              {dnsCheckStatus.cnameRecordPointingCorrectly
+                                ? 'APONTADO'
+                                : dnsCheckStatus.cnameRecordOk
+                                ? 'ATIVO'
+                                : 'NÃO ENCONTRADO'}
+                            </span>
+                          </div>
+                          <div className="text-[9.5px] text-neutral-400 font-sans truncate">
+                            Host: <strong className="text-amber-300 font-mono">{dnsCheckStatus.cnameFullDomainChecked}</strong>
+                          </div>
+                          <div className="text-[9.5px] text-neutral-300 font-sans leading-snug">
+                            {dnsCheckStatus.cnameRecordStatusText}
+                          </div>
+                          {dnsCheckStatus.cnameRecordValues.length > 0 && (
+                            <div className="pt-1 border-t border-neutral-800/80 text-[9px] text-emerald-400 truncate">
+                              Alvo: {dnsCheckStatus.cnameRecordValues.join(', ')}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Status Certificado SSL / HTTPS */}
+                        <div
+                          className={`p-2.5 rounded-xl bg-neutral-950/90 border space-y-1.5 ${
+                            dnsCheckStatus.sslOk ? 'border-emerald-500/40' : 'border-neutral-800'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-bold text-neutral-200 flex items-center gap-1">
+                              <Lock
+                                className={`w-3.5 h-3.5 shrink-0 ${
+                                  dnsCheckStatus.sslOk ? 'text-emerald-400' : 'text-neutral-500'
+                                }`}
+                              />
+                              <span>SSL / HTTPS</span>
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold ${
+                                dnsCheckStatus.sslOk
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'bg-neutral-800 text-neutral-400'
+                              }`}
+                            >
+                              {dnsCheckStatus.sslOk ? 'ATIVO (TLS 1.3)' : 'AGUARDANDO DNS'}
+                            </span>
+                          </div>
+                          <div className="text-[9.5px] text-neutral-400 font-sans">
+                            Domínio: <strong className="text-neutral-200 font-mono">{dnsCheckStatus.checkedDomain}</strong>
+                          </div>
+                          <div className="text-[9.5px] text-neutral-300 font-sans leading-snug">
+                            {dnsCheckStatus.sslOk
+                              ? 'Certificado SSL/HTTPS ativo na borda (Cloudflare / Let’s Encrypt).'
+                              : 'O certificado SSL será emitido automaticamente assim que os registros A e CNAME propagarem.'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Opção 3: Pacote ZIP para Hospedagem Própria / Vercel */}
@@ -23290,6 +24139,7 @@ COMO PUBLICAR NO SERVIDOR:
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-neutral-800 shrink-0">
                 <button
                   type="button"
+                  disabled={dnsTesting}
                   onClick={() => {
                     if (rawCustomDomain.trim() && !domainValidation.isValid) {
                       showToast(`⚠️ Corrija o formato do domínio personalizado antes de testar o DNS!`);
@@ -23299,41 +24149,12 @@ COMO PUBLICAR NO SERVIDOR:
                     if (cleanDomToSave && cleanDomToSave !== rawCustomDomain) {
                       updateTargetCustomDomain(cleanDomToSave);
                     }
-                    setDnsTesting(true);
-                    setTimeout(() => {
-                      setDnsTesting(false);
-                      const targetDomainDisplay = cleanDomToSave || `${targetSite.subdomain || 'meusite'}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
-                      setDnsCheckStatus({
-                        checkedDomain: targetDomainDisplay,
-                        aRecordOk: true,
-                        cnameRecordOk: true,
-                        sslOk: true,
-                        checkedAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                      });
-                      if (savedSites.some(s => s.id === targetSite.id)) {
-                        const updated = savedSites.map(s =>
-                          s.id === targetSite.id
-                            ? {
-                                ...s,
-                                customDomain: cleanDomToSave,
-                                domainType: cleanDomToSave ? ('custom' as const) : ('subdomain' as const),
-                                dnsConfigured: true,
-                                sslActive: true,
-                              }
-                            : s
-                        );
-                        setSavedSites(updated);
-                        try {
-                          localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-                        } catch {}
-                      }
-                      showToast(`🟢 Registros A, CNAME e Certificado SSL validados para ${targetDomainDisplay}!`);
-                    }, 900);
+                    verifyDomainDnsRecords();
                   }}
-                  className="px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-xs flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition"
+                  className="px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-semibold text-xs flex items-center gap-1.5 cursor-pointer border border-amber-500/30 transition disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${dnsTesting ? 'animate-spin text-amber-400' : 'text-amber-400'}`} />
-                  <span>{dnsTesting ? 'Verificando Registros A & CNAME...' : 'Testar & Validar Apontamento DNS'}</span>
+                  <span>{dnsTesting ? 'Consultando API DNS Cloudflare...' : 'Testar & Validar Apontamento DNS (Cloudflare)'}</span>
                 </button>
 
                 <button
