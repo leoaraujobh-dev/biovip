@@ -119,7 +119,7 @@ export async function findOrCreateCustomer(
   const cleanCpfCnpj = (client.cpfCnpj || '').replace(/\D/g, '');
 
   const createBody: Record<string, any> = {
-    name: client.name || 'Cliente LuxeBio',
+    name: client.name || 'Cliente BioVip',
     email: cleanEmail,
   };
   if (cleanPhone) {
@@ -190,7 +190,7 @@ export async function createAsaasPayment(
     billingType: params.billingType || 'PIX',
     value: Math.max(Number(params.value) || 10, 5),
     dueDate: formattedDueDate,
-    description: params.description || 'Assinatura LuxeBio Digital',
+    description: params.description || 'Assinatura BioVip Digital',
     externalReference: params.externalReference || '',
     postalService: false,
   };
@@ -297,3 +297,89 @@ export async function checkAsaasPaymentStatus(
     invoiceUrl: data.invoiceUrl,
   };
 }
+
+/**
+ * Default Serverless Function Handler for Vercel (/api/asaas/*)
+ */
+export default async function handler(req: any, res: any) {
+  const rawRoute = Array.isArray(req.query?.route)
+    ? req.query.route.join('/')
+    : String(req.query?.route || '');
+  const urlPath = String(req.url || '').split('?')[0];
+  const subPath = rawRoute || urlPath.replace(/^\/api\/asaas\/?/, '');
+
+  try {
+    // 1. POST /api/asaas/test-connection
+    if (subPath === 'test-connection' && req.method === 'POST') {
+      const { apiKey, environment } = req.body || {};
+      const result = await testAsaasConnection(apiKey, environment);
+      return res.status(result.success ? 200 : 400).json(result);
+    }
+
+    // 2. POST /api/asaas/create-payment
+    if (subPath === 'create-payment' && req.method === 'POST') {
+      const {
+        apiKey,
+        environment,
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerCpfCnpj,
+        billingType,
+        value,
+        dueDate,
+        description,
+        externalReference,
+      } = req.body || {};
+
+      if (!customerEmail || !value) {
+        return res.status(400).json({
+          success: false,
+          error: 'E-mail do cliente e valor são obrigatórios para gerar cobrança Asaas.',
+        });
+      }
+
+      const result = await createAsaasPayment(apiKey, environment, {
+        customerName: customerName || 'Cliente BioVip',
+        customerEmail,
+        customerPhone,
+        customerCpfCnpj,
+        billingType: billingType || 'PIX',
+        value: Number(value),
+        dueDate: dueDate || '',
+        description: description || 'Manutenção Mensal Microsite BioVip',
+        externalReference: externalReference || '',
+      });
+
+      return res.status(200).json(result);
+    }
+
+    // 3. GET /api/asaas/payment/:id/status
+    const statusMatch = subPath.match(/^payment\/([^/]+)\/status$/);
+    if ((statusMatch || req.query?.paymentId) && req.method === 'GET') {
+      const paymentId = statusMatch ? statusMatch[1] : String(req.query.paymentId);
+      const apiKey = (req.query?.apiKey as string) || '';
+      const environment = (req.query?.environment as 'sandbox' | 'production') || 'sandbox';
+      const result = await checkAsaasPaymentStatus(apiKey, environment, paymentId);
+      return res.status(200).json(result);
+    }
+
+    // 4. POST /api/asaas/webhook
+    if (subPath === 'webhook' && req.method === 'POST') {
+      const eventData = req.body || {};
+      console.log('🔔 [Asaas Webhook Received]:', eventData?.event, eventData?.payment?.id);
+      return res.status(200).json({ received: true, event: eventData?.event });
+    }
+
+    return res.status(404).json({
+      success: false,
+      error: `Rota Asaas não encontrada: ${subPath || urlPath}`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Erro interno no gateway Asaas.',
+    });
+  }
+}
+

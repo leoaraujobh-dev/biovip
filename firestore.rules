@@ -62,7 +62,7 @@ service cloud.firestore {
       data.subdomain is string && data.subdomain.size() >= 1 && data.subdomain.size() <= 120 &&
       data.customDomain is string && data.customDomain.size() <= 180 &&
       data.isLandingModel is bool &&
-      data.sitePayload is string && data.sitePayload.size() >= 2 && data.sitePayload.size() <= 500000 &&
+      data.sitePayload is string && data.sitePayload.size() >= 2 && data.sitePayload.size() <= 950000 &&
       data.updatedAt == request.time;
     }
 
@@ -94,7 +94,7 @@ service cloud.firestore {
       data.nicheCategory is string && data.nicheCategory.size() >= 1 && data.nicheCategory.size() <= 120 &&
       data.status is string && data.status.size() <= 32 && data.status in ['active', 'overdue', 'disabled'] &&
       data.isLandingModel is bool &&
-      data.recordPayload is string && data.recordPayload.size() >= 2 && data.recordPayload.size() <= 600000 &&
+      data.recordPayload is string && data.recordPayload.size() >= 2 && data.recordPayload.size() <= 950000 &&
       data.updatedAt == request.time;
     }
 
@@ -104,7 +104,13 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
     }
 
-    // 5. Public Showcase Models Collection (Landing Page Carousel)
+    // 5. Connectivity Diagnostic Collection
+    match /_connection_test_/{pingId} {
+      allow get: if isValidId(pingId);
+      allow list, create, update, delete: if false;
+    }
+
+    // 6. Public Showcase Models Collection (Landing Page Carousel)
     match /public_models/{siteId} {
       allow get: if isValidId(siteId) && (existing().isLandingModel == true || isAdmin());
       allow list: if existing().isLandingModel == true || isAdmin();
@@ -123,7 +129,7 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isValidId(siteId) && isAdmin();
     }
 
-    // 6. Private Admin Sites Collection (Creator Studio Management Dashboard)
+    // 7. Private Admin Sites Collection (Creator Studio Management Dashboard)
     match /admin_sites/{siteId} {
       allow get: if isSignedIn() && isValidId(siteId) && isAdmin();
       allow list: if isSignedIn() && isAdmin();

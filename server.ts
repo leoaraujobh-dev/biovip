@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import generateMicrositeHandler from './api/generate-microsite.ts';
 import optimizeCopyHandler from './api/optimize-copy.ts';
+import sendBulkEmailHandler from './api/send-bulk-email.ts';
 import {
   testAsaasConnection,
   createAsaasPayment,
@@ -53,14 +54,14 @@ app.post('/api/asaas/create-payment', async (req, res) => {
     }
 
     const result = await createAsaasPayment(apiKey, environment, {
-      customerName: customerName || 'Cliente LuxeBio',
+      customerName: customerName || 'Cliente BioVip',
       customerEmail,
       customerPhone,
       customerCpfCnpj,
       billingType: billingType || 'PIX',
       value: Number(value),
       dueDate: dueDate || '',
-      description: description || 'Manutenção Mensal Microsite LuxeBio',
+      description: description || 'Manutenção Mensal Microsite BioVip',
       externalReference: externalReference || '',
     });
 
@@ -101,50 +102,9 @@ app.post('/api/optimize-copy', async (req, res) => {
   await optimizeCopyHandler(req, res);
 });
 
-// Express API route for Admin Bulk Email Broadcasts (maintenance notices & client announcements)
+// Express API route for Admin Bulk Email Broadcasts (shared with Vercel /api/send-bulk-email)
 app.post('/api/send-bulk-email', async (req, res) => {
-  try {
-    const { subject, body, category, recipients } = req.body || {};
-    if (!subject || !body || !Array.isArray(recipients) || recipients.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Assunto, mensagem e pelo menos um destinatário com e-mail válido são obrigatórios.',
-      });
-    }
-
-    const validRecipients = recipients.filter(
-      (r: any) => r && typeof r.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(r.email.trim())
-    );
-
-    if (validRecipients.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Nenhum destinatário possui um endereço de e-mail válido.',
-      });
-    }
-
-    const protocol = `MAIL-${Date.now().toString(36).toUpperCase()}`;
-    const sentAt = new Date().toISOString();
-
-    return res.status(200).json({
-      success: true,
-      protocol,
-      sentAt,
-      category: category || 'maintenance',
-      totalRequested: recipients.length,
-      totalDelivered: validRecipients.length,
-      deliveredTo: validRecipients.map((r: any) => ({
-        clientName: r.clientName || 'Cliente',
-        email: r.email.trim(),
-        status: 'sent',
-      })),
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      error: err?.message || 'Erro interno ao processar disparo de e-mail em massa.',
-    });
-  }
+  await sendBulkEmailHandler(req, res);
 });
 
 // Vite Dev Server middleware or production static server

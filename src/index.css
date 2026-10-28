@@ -182,6 +182,7 @@ html, body {
 
 .cta-card {
   position: relative;
+  border: none !important;
   animation: ctaIdlePulse 3s ease-in-out infinite;
 }
 
@@ -193,22 +194,25 @@ html, body {
   padding: 1px;
   background: linear-gradient(
     135deg,
-    var(--theme-accent, #E2B857) 0%,
-    rgba(255, 255, 255, 0.14) 50%,
-    color-mix(in srgb, var(--theme-accent, #E2B857) 40%, transparent) 100%
+    color-mix(in srgb, var(--theme-accent, #E2B857) 92%, #ffffff 8%) 0%,
+    var(--theme-accent, #E2B857) 30%,
+    color-mix(in srgb, var(--theme-accent, #E2B857) 48%, rgba(255, 255, 255, 0.32)) 62%,
+    color-mix(in srgb, var(--theme-accent, #E2B857) 88%, transparent) 100%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.72;
-  transition: opacity 0.35s ease;
-  z-index: 2;
+  opacity: 0.96;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--theme-accent, #E2B857) 42%, transparent));
+  transition: opacity 0.35s ease, filter 0.35s ease;
+  z-index: 5;
 }
 
 .cta-card:hover::before {
   opacity: 1;
+  filter: brightness(1.15) drop-shadow(0 0 8px color-mix(in srgb, var(--theme-accent, #E2B857) 68%, transparent));
 }
 
 .cta-card.anim-pulse-glow {
@@ -229,8 +233,8 @@ html, body {
   transform: scale(1.035) translateY(-3px) !important;
   box-shadow: 0 18px 38px -6px rgba(0, 0, 0, 0.58),
               0 8px 18px -4px rgba(0, 0, 0, 0.36),
-              0 0 24px 2px color-mix(in srgb, var(--theme-accent, #E2B857) 22%, transparent),
-              0 0 0 1px rgba(255, 255, 255, 0.16) !important;
+              0 0 26px 2px color-mix(in srgb, var(--theme-accent, #E2B857) 32%, transparent),
+              0 0 0 1px color-mix(in srgb, var(--theme-accent, #E2B857) 45%, rgba(255, 255, 255, 0.2)) !important;
 }
 
 .cta-card:active,

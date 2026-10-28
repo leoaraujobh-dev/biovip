@@ -43,7 +43,7 @@
         },
         "sitePayload": {
           "type": "string",
-          "maxLength": 500000,
+          "maxLength": 950000,
           "description": "Serialized microsite visual configuration for live rendering"
         },
         "updatedAt": {
@@ -103,7 +103,7 @@
         },
         "recordPayload": {
           "type": "string",
-          "maxLength": 600000,
+          "maxLength": 950000,
           "description": "Full saved microsite record payload"
         },
         "updatedAt": {
@@ -122,6 +122,18 @@
         "recordPayload",
         "updatedAt"
       ]
+    },
+    "ConnectionPing": {
+      "title": "ConnectionPing",
+      "description": "Read-only diagnostic document used to verify Firestore connectivity at startup",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Ping status indicator"
+        }
+      }
     }
   },
   "firestore": {
@@ -132,6 +144,10 @@
     "/admin_sites/{siteId}": {
       "schema": { "$ref": "#/entities/AdminSite" },
       "description": "Administrator-only microsite management records"
+    },
+    "/_connection_test_/{pingId}": {
+      "schema": { "$ref": "#/entities/ConnectionPing" },
+      "description": "Read-only connectivity health check endpoint"
     }
   }
 }

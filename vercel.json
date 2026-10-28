@@ -6,6 +6,10 @@
   "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     {
+      "source": "/api/asaas/(.*)",
+      "destination": "/api/asaas?route=$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

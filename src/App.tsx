@@ -95,6 +95,9 @@ import {
   setDoc,
   deleteDoc,
   collection,
+  query,
+  where,
+  serverTimestamp,
   onSnapshot,
   getDocFromServer
 } from 'firebase/firestore';
@@ -104,7 +107,157 @@ import firebaseConfig from '../firebase-applet-config.json';
 const firebaseApp = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDb = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
-const ADMIN_OWNER_EMAIL = 'leoaraujobh@gmail.com';
+const ADMIN_OWNER_EMAIL = ((import.meta as any).env?.VITE_ADMIN_EMAIL || 'leoaraujobh@gmail.com').trim();
+
+/**
+ * Formats Brazilian phone numbers for wa.me links, ensuring the '55' country code prefix
+ * when a 10 or 11 digit national phone number is entered.
+ */
+function formatWhatsAppPhone(raw?: string | null): string {
+  const digits = String(raw || '').replace(/\D/g, '').replace(/^0+/, '');
+  if (!digits) return '';
+  if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
+    return `55${digits}`;
+  }
+  return digits;
+}
+
+/**
+ * Parses BRL currency inputs safely whether typed with comma ("49,90"), dot ("49.90"),
+ * or thousands separators ("1.249,90"). Prevents "49.90" from turning into 4990.
+ */
+function parseBrlCurrency(raw: string | number | undefined | null, fallback: number): number {
+  if (typeof raw === 'number') return Number.isFinite(raw) && raw > 0 ? raw : fallback;
+  if (!raw) return fallback;
+  const cleaned = String(raw).replace(/[^\d.,-]/g, '').trim();
+  if (!cleaned) return fallback;
+  let normalized = cleaned;
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+    if (cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+      normalized = cleaned.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalized = cleaned.replace(/,/g, '');
+    }
+  } else if (cleaned.includes(',')) {
+    normalized = cleaned.replace(',', '.');
+  }
+  const parsed = parseFloat(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+/**
+ * Escapes double quotes and special HTML characters in attribute values (<meta content="...">, etc.)
+ */
+function escapeHtmlAttr(val?: string | number | null): string {
+  return String(val ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * Serializes payloads for Firestore while guaranteeing the string stays within the security rule maxLength (950KB).
+ */
+function serializeSafeFirestorePayload(obj: unknown, maxLen = 920000): string {
+  try {
+    const raw = JSON.stringify(obj);
+    if (raw.length <= maxLen) return raw;
+    // If oversized due to heavy Base64 images, strip inline Base64 strings > 80KB
+    const compacted = JSON.stringify(obj, (_key, val) => {
+      if (typeof val === 'string' && val.startsWith('data:image/') && val.length > 80000) {
+        return '';
+      }
+      return val;
+    });
+    return compacted.length <= maxLen ? compacted : '{}';
+  } catch {
+    return '{}';
+  }
+}
+
+/**
+ * IndexedDB + localStorage resilient persistence to prevent 5MB QuotaExceededError data loss.
+ */
+const IDB_NAME = 'biovip_studio_db_v1';
+const IDB_STORE = 'saved_sites_store';
+const IDB_KEY = 'luxebio_saved_sites_v1';
+
+function saveSitesToIndexedDb(sites: unknown): void {
+  if (typeof window === 'undefined' || !('indexedDB' in window)) return;
+  try {
+    const req = window.indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = () => {
+      try {
+        const db = req.result;
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(sites, IDB_KEY);
+      } catch {}
+    };
+  } catch {}
+}
+
+function loadSitesFromIndexedDb(): Promise<any[] | null> {
+  if (typeof window === 'undefined' || !('indexedDB' in window)) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    try {
+      const req = window.indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+      req.onsuccess = () => {
+        try {
+          const db = req.result;
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const getReq = tx.objectStore(IDB_STORE).get(IDB_KEY);
+          getReq.onsuccess = () => {
+            resolve(Array.isArray(getReq.result) ? getReq.result : null);
+          };
+          getReq.onerror = () => resolve(null);
+        } catch {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function persistSavedSitesToStorage(sites: any[]): void {
+  saveSitesToIndexedDb(sites);
+  try {
+    localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(sites));
+  } catch {
+    // QuotaExceededError fallback: strip heavy Base64 images in localStorage while IndexedDB retains full images
+    try {
+      const lightweight = sites.map((s) => {
+        try {
+          const cloned = JSON.parse(JSON.stringify(s, (_k, v) => {
+            if (typeof v === 'string' && v.startsWith('data:image/') && v.length > 35000) {
+              return '';
+            }
+            return v;
+          }));
+          return cloned;
+        } catch {
+          return s;
+        }
+      });
+      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(lightweight));
+    } catch {}
+  }
+}
 
 enum OperationType {
   CREATE = 'create',
@@ -199,6 +352,54 @@ export function CalendarIcon({ className = "w-5 h-5", style }: { className?: str
       <line x1="3" y1="10" x2="21" y2="10"/>
     </svg>
   );
+}
+
+/**
+ * Calculates perceived relative luminance (WCAG 2.1 standard) of a hex or rgb color string.
+ */
+export function getLuminance(colorStr: string): number {
+  if (!colorStr) return 0;
+  const str = colorStr.trim().toLowerCase();
+  let r = 0, g = 0, b = 0;
+  if (str.startsWith('#')) {
+    const hex = str.slice(1);
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length >= 6) {
+      r = parseInt(hex.slice(0, 2), 16);
+      g = parseInt(hex.slice(2, 4), 16);
+      b = parseInt(hex.slice(4, 6), 16);
+    }
+  } else if (str.startsWith('rgb')) {
+    const parts = str.replace(/rgba?\(|\)/g, '').split(',');
+    r = parseFloat(parts[0]) || 0;
+    g = parseFloat(parts[1]) || 0;
+    b = parseFloat(parts[2]) || 0;
+  }
+  const srgb = [r / 255, g / 255, b / 255].map((v) =>
+    v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+  );
+  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+}
+
+/**
+ * Returns high-contrast text color ('#ffffff' or '#0a0a0c') based on WCAG AA contrast threshold.
+ */
+export function getSafeContrastText(
+  bg: string,
+  preferredDark = '#0a0a0c',
+  preferredLight = '#ffffff',
+  threshold = 0.18
+): string {
+  if (!bg) return preferredLight;
+  // If gradient or transparent, analyze the dominant color
+  const cleanBg = bg.includes('gradient')
+    ? (bg.match(/#(?:[0-9a-fA-F]{3}){1,2}|rgba?\([^)]+\)/)?.[0] || bg)
+    : bg;
+  const lum = getLuminance(cleanBg);
+  return lum > threshold ? preferredDark : preferredLight;
 }
 
 // --- THEME PRESETS AMPLIADOS COM OS NOVOS MODELOS ---
@@ -1333,6 +1534,75 @@ export const MAINTENANCE_PLANS: Record<
   },
 };
 
+export function parsePlanMaxUpdates(raw: string | number | undefined | null, fallback: number): number {
+  if (typeof raw === 'number') return raw;
+  if (raw === undefined || raw === null) return fallback;
+  const str = String(raw).trim().toLowerCase();
+  if (!str) return fallback;
+  if (str.includes('ilimit') || str.includes('infinit') || str === '*') return Infinity;
+  const digits = str.replace(/\D/g, '');
+  if (!digits) return fallback;
+  const num = parseInt(digits, 10);
+  return Number.isFinite(num) && num >= 0 ? num : fallback;
+}
+
+export function formatPlanUpdatesLabel(maxUpdates: number, short = false): string {
+  if (!Number.isFinite(maxUpdates) || maxUpdates === Infinity) {
+    return short ? 'Ilimitadas' : 'Alterações ilimitadas';
+  }
+  if (short) {
+    return `${maxUpdates} alt./mês`;
+  }
+  return `${maxUpdates} ${maxUpdates === 1 ? 'alteração mensal' : 'alterações mensais'}`;
+}
+
+export function syncMaintenancePlansFromConfig(cfg?: {
+  recurringBasic?: string;
+  recurringPro?: string;
+  recurringVip?: string;
+  updatesBasic?: string;
+  updatesPro?: string;
+  updatesVip?: string;
+}) {
+  if (!cfg) return;
+  const priceBasic = parseBrlCurrency(cfg.recurringBasic, 29.90);
+  const pricePro = parseBrlCurrency(cfg.recurringPro, 49.90);
+  const priceVip = parseBrlCurrency(cfg.recurringVip, 79.90);
+
+  const maxBasic = parsePlanMaxUpdates(cfg.updatesBasic, 1);
+  const maxPro = parsePlanMaxUpdates(cfg.updatesPro, 4);
+  const maxVip = parsePlanMaxUpdates(cfg.updatesVip, Infinity);
+
+  const fmtPrice = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  MAINTENANCE_PLANS.basic_1.price = priceBasic;
+  MAINTENANCE_PLANS.basic_1.maxUpdates = maxBasic;
+  MAINTENANCE_PLANS.basic_1.name = `Manutenção Básica (${formatPlanUpdatesLabel(maxBasic, false)})`;
+  MAINTENANCE_PLANS.basic_1.shortName = `${formatPlanUpdatesLabel(maxBasic, true)} (R$ ${fmtPrice(priceBasic)})`;
+  MAINTENANCE_PLANS.basic_1.description =
+    maxBasic === Infinity
+      ? 'Alterações mensais ilimitadas sem custo extra + Hospedagem & SSL.'
+      : `Inclui ${formatPlanUpdatesLabel(maxBasic, false)} + Hospedagem & SSL. Alterações extras: R$ 14,90 cada.`;
+
+  MAINTENANCE_PLANS.pro_4.price = pricePro;
+  MAINTENANCE_PLANS.pro_4.maxUpdates = maxPro;
+  MAINTENANCE_PLANS.pro_4.name = `Manutenção Pro (${formatPlanUpdatesLabel(maxPro, false)})`;
+  MAINTENANCE_PLANS.pro_4.shortName = `${formatPlanUpdatesLabel(maxPro, true)} (R$ ${fmtPrice(pricePro)})`;
+  MAINTENANCE_PLANS.pro_4.description =
+    maxPro === Infinity
+      ? 'Alterações mensais ilimitadas sem custo extra + Hospedagem & SSL.'
+      : `Inclui até ${formatPlanUpdatesLabel(maxPro, false)} + Hospedagem & SSL. Alterações extras: R$ 14,90 cada.`;
+
+  MAINTENANCE_PLANS.vip_unlimited.price = priceVip;
+  MAINTENANCE_PLANS.vip_unlimited.maxUpdates = maxVip;
+  MAINTENANCE_PLANS.vip_unlimited.name = `Manutenção VIP (${formatPlanUpdatesLabel(maxVip, false)})`;
+  MAINTENANCE_PLANS.vip_unlimited.shortName = `${formatPlanUpdatesLabel(maxVip, true)} (R$ ${fmtPrice(priceVip)})`;
+  MAINTENANCE_PLANS.vip_unlimited.description =
+    maxVip === Infinity
+      ? 'Alterações mensais ilimitadas sem custo extra + Suporte Prioritário & SSL.'
+      : `Inclui até ${formatPlanUpdatesLabel(maxVip, false)} + Suporte Prioritário & SSL.`;
+}
+
 // Saved Microsite SaaS Data Structure
 export type CustomerDelinquencyStatus = 'pago' | 'pendente' | 'atrasado_d3' | 'suspenso_d7' | 'active' | 'overdue' | 'disabled';
 
@@ -1371,6 +1641,19 @@ export interface SavedMicrosite {
     direct: number;
   };
   isLandingModel?: boolean;
+  isUnderConstruction?: boolean; // True quando o site foi pago mas ainda está em fase de construção
+  underConstruction?: boolean; // Alias compatível
+  briefingStatus?: 'pending' | 'submitted'; // Status de envio das informações pelo cliente
+  briefingData?: {
+    instagramOrMaps?: string;
+    selectedModel?: string;
+    commercialName?: string;
+    bioText?: string;
+    whatsappNumber?: string;
+    mainServices?: string;
+    notes?: string;
+    submittedAt?: string;
+  };
   data: typeof INITIAL_DATA;
 }
 
@@ -1387,7 +1670,7 @@ export const getSuspendedPageHtml = (customer: Partial<SavedMicrosite> & { clien
     customer?.clientPhone ||
     customer?.data?.profile?.whatsapp ||
     '';
-  const cleanPhone = rawPhone.replace(/\D/g, '');
+  const cleanPhone = formatWhatsAppPhone(rawPhone);
   const whatsappHref = cleanPhone
     ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Olá! Acesse o link da bio de ${displayName} e gostaria de falar com a equipe.`)}`
     : `https://wa.me/?text=${encodeURIComponent(`Olá! Gostaria de atendimento com a equipe de ${displayName}.`)}`;
@@ -1519,6 +1802,495 @@ export const getSuspendedPageHtml = (customer: Partial<SavedMicrosite> & { clien
 </html>`;
 };
 
+/**
+ * Verifica se um microsite está no estado de página em construção
+ */
+export const isSiteUnderConstruction = (site?: Partial<SavedMicrosite> | null): boolean => {
+  if (!site) return false;
+  return Boolean(site.isUnderConstruction || site.underConstruction);
+};
+
+/**
+ * Verifica se um microsite é considerado Modelo (Vitrine/Demonstração) e portanto NÃO deve entrar no cálculo de faturamento (MRR)
+ */
+export const isModelMicrosite = (site?: Partial<SavedMicrosite> | null): boolean => {
+  if (!site) return false;
+  if (typeof site.isLandingModel === 'boolean') return site.isLandingModel;
+  return Boolean(site.id && site.id.startsWith('real-niche-'));
+};
+
+/**
+ * Gerador da Página em Construção & Envio de Informações/Briefing
+ * Exibida obrigatoriamente quando o cliente ou qualquer visitante acessa o link do microsite
+ * antes da equipe/admin finalizar a montagem do site.
+ */
+export const getUnderConstructionPageHtml = (
+  customer: Partial<SavedMicrosite> & {
+    clientName?: string;
+    clientPhone?: string;
+    clientEmail?: string;
+    subdomain?: string;
+    customDomain?: string;
+    data?: typeof INITIAL_DATA;
+    briefingStatus?: 'pending' | 'submitted';
+    briefingData?: any;
+  },
+  agencyConfig?: {
+    agencyBrandName?: string;
+    agencyWhatsapp?: string;
+    baseDomain?: string;
+  }
+): string => {
+  const displayName =
+    customer?.data?.profile?.name ||
+    customer?.clientName ||
+    'Cliente VIP';
+  const brandName = agencyConfig?.agencyBrandName || 'BioVip';
+  const rawAgencyPhone = agencyConfig?.agencyWhatsapp || '5511999999999';
+  const cleanAgencyPhone = formatWhatsAppPhone(rawAgencyPhone);
+  const baseDomain = (agencyConfig?.baseDomain || 'biovip.com.br').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const subdomain = customer?.subdomain || 'meusite';
+  const fullDomain = customer?.customDomain ? customer.customDomain : `${subdomain}.${baseDomain}`;
+  const displayUrl = `https://${fullDomain}`;
+
+  const defaultWhatsappMsg = encodeURIComponent(
+    `Olá equipe ${brandName}!\nAcabei de efetuar o pagamento do meu microsite (*${displayName}*) pelo Asaas.\n\n` +
+    `🔗 *Link Reservado:* ${displayUrl}\n\n` +
+    `Aqui estão as informações para a criação da minha página:\n` +
+    `1. Nome Comercial:\n` +
+    `2. Slogan / Especialidade:\n` +
+    `3. Breve Bio:\n` +
+    `4. WhatsApp de Atendimento:\n` +
+    `5. Instagram:\n` +
+    `6. Principais Serviços:\n\n` +
+    `*(Estou anexando também minha foto de perfil / logotipo nesta conversa)*`
+  );
+
+  const whatsappHref = cleanAgencyPhone
+    ? `https://wa.me/${cleanAgencyPhone}?text=${defaultWhatsappMsg}`
+    : `https://wa.me/?text=${defaultWhatsappMsg}`;
+
+  const isBriefingSubmitted = customer?.briefingStatus === 'submitted';
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${displayName} — Página em Construção | ${brandName}</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background-color: #08080a;
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.16) 0%, transparent 60%),
+        radial-gradient(circle at 100% 50%, rgba(212, 175, 55, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
+      color: #fafaf9;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 18px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      width: 100%;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    .luxury-card {
+      background: rgba(16, 16, 20, 0.94);
+      border: 1.5px solid rgba(212, 175, 55, 0.32);
+      border-radius: 28px;
+      padding: 40px 28px;
+      text-align: center;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+    .badge-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      background: rgba(251, 191, 36, 0.1);
+      margin-bottom: 20px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fbbf24;
+      box-shadow: 0 0 12px #fbbf24;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1.18;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+    .client-highlight {
+      color: #d4af37;
+    }
+    .subdomain-pill {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #d4af37;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 6px 16px;
+      border-radius: 12px;
+      margin: 12px 0 20px 0;
+      word-break: break-all;
+    }
+    p.lead-text {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #d4d4d8;
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+    .notice-box {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      border-radius: 18px;
+      padding: 18px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .notice-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .notice-desc {
+      font-size: 12px;
+      line-height: 1.6;
+      color: #e4e4e7;
+    }
+    .checklist {
+      list-style: none;
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .checklist li {
+      font-size: 11.5px;
+      color: #d4d4d8;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.45;
+    }
+    .check-icon {
+      color: #fbbf24;
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .wa-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #fbbf24 0%, #d4af37 100%);
+      color: #09090b;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      text-decoration: none;
+      box-shadow: 0 10px 25px rgba(212, 175, 55, 0.35);
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .wa-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(212, 175, 55, 0.5);
+      filter: brightness(1.05);
+    }
+    .divider-or {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 22px 0;
+      color: #71717a;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .divider-or::before, .divider-or::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .divider-or span {
+      padding: 0 12px;
+    }
+    .briefing-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 20px;
+      text-align: left;
+    }
+    .briefing-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #a1a1aa;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #09090b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fafaf9;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-control:focus {
+      border-color: #fbbf24;
+    }
+    textarea.form-control {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #fbbf24;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .submit-btn:hover {
+      background: rgba(212, 175, 55, 0.15);
+      color: #ffffff;
+    }
+    .submitted-alert {
+      display: ${isBriefingSubmitted ? 'block' : 'none'};
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+      margin-top: 14px;
+    }
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 10px;
+      color: #71717a;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <main class="luxury-card">
+      <div style="margin: 0 auto 16px auto; width: 140px; height: 86px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(212, 175, 55, 0.45); background: #1c1c1e; box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2); display: flex; align-items: center; justify-content: center;">
+        <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.22);" />
+      </div>
+      <div class="badge-bar">
+        <span class="pulse-dot"></span>
+        <span>Página em Construção · Etapa de Criação</span>
+      </div>
+
+      <h1>
+        Estamos Construindo o Seu<br />
+        <span class="client-highlight">Microsite VIP</span>
+      </h1>
+
+      <div class="subdomain-pill">
+        🔒 ${displayUrl}
+      </div>
+
+      <p class="lead-text">
+        Parabéns, <strong>${displayName}</strong>! O seu endereço na web e hospedagem de alta conversão foram reservados com sucesso através do Asaas.
+      </p>
+
+      <div class="notice-box">
+        <div class="notice-title">
+          <span>⚠️</span>
+          <span>Ainda não exibimos a página definitiva</span>
+        </div>
+        <p class="notice-desc">
+          Este link público ainda não exibe o seu site porque nossa equipe de designers e copywriters está personalizando o visual sob medida para o seu negócio.
+          <strong>Para colocarmos seu microsite no ar em tempo recorde, envie suas informações agora mesmo:</strong>
+        </p>
+
+        <ul class="checklist">
+          <li><span class="check-icon">✓</span> <span><strong>Foto de Perfil ou Logotipo</strong> em boa qualidade</span></li>
+          <li><span class="check-icon">✓</span> <span><strong>Nome Comercial e Slogan</strong> de apresentação</span></li>
+          <li><span class="check-icon">✓</span> <span><strong>Biografia resumida</strong> e principais diferenciais</span></li>
+          <li><span class="check-icon">✓</span> <span><strong>WhatsApp de Atendimento</strong> e @ do seu Instagram</span></li>
+          <li><span class="check-icon">✓</span> <span><strong>Principais Serviços</strong>, catálogo ou procedimentos</span></li>
+        </ul>
+      </div>
+
+      <a href="${whatsappHref}" target="_blank" rel="noopener noreferrer" class="wa-button">
+        <span>📲</span>
+        <span>Enviar Informações pelo WhatsApp</span>
+      </a>
+
+      <div class="divider-or">
+        <span>ou envie pelo formulário</span>
+      </div>
+
+      <div class="briefing-card">
+        <h3>📝 Formulário Rápido de Ativação</h3>
+        <form id="briefingForm">
+          <div class="form-group">
+            <label>Nome Comercial / Como quer ser chamado(a)</label>
+            <input type="text" id="bName" class="form-control" placeholder="Ex: Dra. Camila Mendes" value="${displayName}" required />
+          </div>
+          <div class="form-group">
+            <label>WhatsApp de Atendimento</label>
+            <input type="tel" id="bPhone" class="form-control" placeholder="Ex: (11) 99999-9999" value="${customer?.clientPhone || ''}" required />
+          </div>
+          <div class="form-group">
+            <label>Instagram ou Site</label>
+            <input type="text" id="bInsta" class="form-control" placeholder="Ex: @dracamilamendes" value="${customer?.briefingData?.instagramOrMaps || ''}" />
+          </div>
+          <div class="form-group">
+            <label>Bio / Descrição Breve</label>
+            <textarea id="bBio" class="form-control" placeholder="Conte brevemente sobre sua formação, especialidade e diferenciais..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Principais Serviços ou Preços</label>
+            <textarea id="bServices" class="form-control" placeholder="Ex: Limpeza de Pele (R$ 150), Botox, Harmonização..."></textarea>
+          </div>
+          <button type="submit" class="submit-btn">
+            Salvar e Notificar Equipe de Criação
+          </button>
+        </form>
+
+        <div id="submittedAlert" class="submitted-alert">
+          ✅ <strong>Briefing Enviado com Sucesso!</strong><br />
+          Nossa equipe já recebeu suas informações e iniciou a montagem do seu microsite. Você receberá a prévia no seu WhatsApp assim que estiver pronto!
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      ${brandName} · Tecnologia em Microsites de Alta Conversão
+    </footer>
+  </div>
+
+  <script>
+    (function() {
+      var form = document.getElementById('briefingForm');
+      var alertBox = document.getElementById('submittedAlert');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          var name = document.getElementById('bName').value.trim();
+          var phone = document.getElementById('bPhone').value.trim();
+          var insta = document.getElementById('bInsta').value.trim();
+          var bio = document.getElementById('bBio').value.trim();
+          var services = document.getElementById('bServices').value.trim();
+
+          var payload = {
+            subdomain: '${subdomain}',
+            commercialName: name,
+            whatsappNumber: phone,
+            instagramOrMaps: insta,
+            bioText: bio,
+            mainServices: services,
+            submittedAt: new Date().toISOString()
+          };
+
+          try {
+            localStorage.setItem('biovip_briefing_${subdomain}', JSON.stringify(payload));
+          } catch(err) {}
+
+          if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.scrollIntoView({ behavior: 'smooth' });
+          }
+
+          var formattedMsg = encodeURIComponent(
+            'Olá equipe ${brandName}! Preenchi o formulário de ativação do meu microsite (*' + name + '* - ${fullDomain}):\\n\\n' +
+            '👤 *Nome Comercial:* ' + name + '\\n' +
+            '📱 *WhatsApp:* ' + phone + '\\n' +
+            '📸 *Instagram:* ' + insta + '\\n' +
+            '📝 *Bio:* ' + bio + '\\n' +
+            '💼 *Serviços:* ' + services + '\\n\\n' +
+            'Aguardo a finalização da minha página!'
+          );
+
+          setTimeout(function() {
+            window.open('https://wa.me/${cleanAgencyPhone}?text=' + formattedMsg, '_blank');
+          }, 600);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>`;
+};
+
 export const getSiteBillingSummary = (site: SavedMicrosite) => {
   const planKey: MaintenancePlanId =
     site.maintenancePlan ||
@@ -1554,6 +2326,140 @@ export const getSiteBillingSummary = (site: SavedMicrosite) => {
   };
 };
 
+// =========================================================================
+// CALIBRAÇÃO EXCLUSIVA DE CORES E FONTES DE ALTO CONTRASTE (WCAG AA) PARA MODELOS DEMO
+// =========================================================================
+export const NICHE_DEMO_MODULE_COLORS: Record<string, typeof INITIAL_DATA.moduleColors> = {
+  'Jurídico & Executivo': {
+    announcement: { bgColor: '#e2b857', textColor: '#0f172a', titleColor: '#0f172a' },
+    hero: { headlineColor: '#e2b857', titleColor: '#ffffff', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    urgencyTimer: { bgColor: 'rgba(226, 184, 87, 0.12)', headlineColor: '#e2b857', titleColor: '#e2b857', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #e2b857 0%, #c99c3a 100%)', titleColor: '#0f172a', textColor: '#1e293b' },
+    actionCards: { bgColor: '#ffffff', titleColor: '#0f172a', textColor: '#475569', accentColor: '#e2b857' },
+    metrics: { bgColor: 'rgba(226, 184, 87, 0.12)', titleColor: '#e2b857', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    processSteps: { bgColor: 'rgba(226, 184, 87, 0.12)', headlineColor: '#e2b857', titleColor: '#ffffff', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    services: { bgColor: 'rgba(255, 255, 255, 0.05)', headlineColor: '#e2b857', titleColor: '#ffffff', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    studentGrid: { headlineColor: '#e2b857', titleColor: '#e2b857', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    locationCard: { bgColor: 'rgba(226, 184, 87, 0.12)', headlineColor: '#e2b857', titleColor: '#ffffff', textColor: '#cbd5e1', accentColor: '#e2b857' },
+    aboutMe: { headlineColor: '#e2b857', titleColor: '#e2b857', textColor: '#e2e8f0' },
+    testimonials: { bgColor: 'rgba(226, 184, 87, 0.12)', headlineColor: '#e2b857', titleColor: '#ffffff', textColor: '#cbd5e1', accentColor: '#fbbf24' },
+    faq: { bgColor: 'rgba(226, 184, 87, 0.1)', headlineColor: '#e2b857', titleColor: '#ffffff', textColor: '#cbd5e1' },
+    footer: { textColor: '#94a3b8', accentColor: '#e2b857' },
+  },
+  'Beleza & Unhas': {
+    announcement: { bgColor: '#d4af37', textColor: '#0c0b0b', titleColor: '#0c0b0b' },
+    hero: { headlineColor: '#d4af37', titleColor: '#ffffff', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    urgencyTimer: { bgColor: 'rgba(212, 175, 55, 0.12)', headlineColor: '#d4af37', titleColor: '#d4af37', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #d4af37 0%, #b89726 100%)', titleColor: '#0c0b0b', textColor: '#26221c' },
+    actionCards: { bgColor: 'linear-gradient(145deg, #f5ede4 0%, #dfd3c3 100%)', titleColor: '#2a241e', textColor: '#574c40', accentColor: '#d4af37' },
+    metrics: { bgColor: 'rgba(212, 175, 55, 0.12)', titleColor: '#d4af37', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    processSteps: { bgColor: 'rgba(212, 175, 55, 0.12)', headlineColor: '#d4af37', titleColor: '#ffffff', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    services: { bgColor: 'rgba(255, 255, 255, 0.05)', headlineColor: '#d4af37', titleColor: '#ffffff', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    studentGrid: { headlineColor: '#d4af37', titleColor: '#d4af37', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    locationCard: { bgColor: 'rgba(212, 175, 55, 0.12)', headlineColor: '#d4af37', titleColor: '#ffffff', textColor: '#dfd3c3', accentColor: '#d4af37' },
+    aboutMe: { headlineColor: '#d4af37', titleColor: '#d4af37', textColor: '#f5ede4' },
+    testimonials: { bgColor: 'rgba(212, 175, 55, 0.12)', headlineColor: '#d4af37', titleColor: '#ffffff', textColor: '#dfd3c3', accentColor: '#fbbf24' },
+    faq: { bgColor: 'rgba(212, 175, 55, 0.1)', headlineColor: '#d4af37', titleColor: '#ffffff', textColor: '#dfd3c3' },
+    footer: { textColor: '#c5b49f', accentColor: '#d4af37' },
+  },
+  'Beleza & Alta Conversão': {
+    announcement: { bgColor: '#e11d48', textColor: '#ffffff', titleColor: '#ffffff' },
+    hero: { headlineColor: '#fda4af', titleColor: '#ffffff', textColor: '#fecdd3', accentColor: '#fb7185' },
+    urgencyTimer: { bgColor: 'rgba(225, 29, 72, 0.18)', headlineColor: '#fb7185', titleColor: '#fb7185', textColor: '#fecdd3', accentColor: '#fb7185' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)', titleColor: '#ffffff', textColor: '#ffe4e6' },
+    actionCards: { bgColor: 'linear-gradient(135deg, #881337 0%, #4c0519 100%)', titleColor: '#ffffff', textColor: '#fecdd3', accentColor: '#e11d48' },
+    metrics: { bgColor: 'rgba(225, 29, 72, 0.18)', titleColor: '#fb7185', textColor: '#fecdd3', accentColor: '#fb7185' },
+    processSteps: { bgColor: 'rgba(225, 29, 72, 0.18)', headlineColor: '#fb7185', titleColor: '#ffffff', textColor: '#fecdd3', accentColor: '#fb7185' },
+    services: { bgColor: 'rgba(136, 19, 55, 0.25)', headlineColor: '#fb7185', titleColor: '#ffffff', textColor: '#fecdd3', accentColor: '#e11d48' },
+    studentGrid: { headlineColor: '#fb7185', titleColor: '#fb7185', textColor: '#fecdd3', accentColor: '#fb7185' },
+    locationCard: { bgColor: 'rgba(225, 29, 72, 0.18)', headlineColor: '#fb7185', titleColor: '#ffffff', textColor: '#fecdd3', accentColor: '#fb7185' },
+    aboutMe: { headlineColor: '#fb7185', titleColor: '#fb7185', textColor: '#ffe4e6' },
+    testimonials: { bgColor: 'rgba(225, 29, 72, 0.18)', headlineColor: '#fb7185', titleColor: '#ffffff', textColor: '#fecdd3', accentColor: '#fbbf24' },
+    faq: { bgColor: 'rgba(225, 29, 72, 0.18)', headlineColor: '#fb7185', titleColor: '#ffffff', textColor: '#fecdd3' },
+    footer: { textColor: '#fda4af', accentColor: '#fb7185' },
+  },
+  'Consultoria & Estética': {
+    announcement: { bgColor: '#786045', textColor: '#ffffff', titleColor: '#ffffff' },
+    hero: { headlineColor: '#786045', titleColor: '#1c1917', textColor: '#44403c', accentColor: '#786045' },
+    urgencyTimer: { bgColor: '#ffffff', headlineColor: '#786045', titleColor: '#786045', textColor: '#57534e', accentColor: '#786045' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #786045 0%, #634f37 100%)', titleColor: '#ffffff', textColor: '#f5ede4' },
+    actionCards: { bgColor: '#ffffff', titleColor: '#1c1917', textColor: '#57534e', accentColor: '#786045' },
+    metrics: { bgColor: '#ffffff', titleColor: '#786045', textColor: '#57534e', accentColor: '#786045' },
+    processSteps: { bgColor: '#ffffff', headlineColor: '#786045', titleColor: '#1c1917', textColor: '#57534e', accentColor: '#786045' },
+    services: { bgColor: '#ffffff', headlineColor: '#786045', titleColor: '#1c1917', textColor: '#57534e', accentColor: '#786045' },
+    studentGrid: { headlineColor: '#786045', titleColor: '#786045', textColor: '#57534e', accentColor: '#786045' },
+    locationCard: { bgColor: '#ffffff', headlineColor: '#786045', titleColor: '#1c1917', textColor: '#57534e', accentColor: '#786045' },
+    aboutMe: { headlineColor: '#786045', titleColor: '#786045', textColor: '#292524' },
+    testimonials: { bgColor: '#ffffff', headlineColor: '#786045', titleColor: '#1c1917', textColor: '#57534e', accentColor: '#b45309' },
+    faq: { bgColor: '#ffffff', headlineColor: '#786045', titleColor: '#1c1917', textColor: '#57534e' },
+    footer: { textColor: '#78716c', accentColor: '#786045' },
+  },
+  'Mentoria & Cursos': {
+    announcement: { bgColor: '#d99f69', textColor: '#1c1613', titleColor: '#1c1613' },
+    hero: { headlineColor: '#d99f69', titleColor: '#faf6f0', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    urgencyTimer: { bgColor: 'rgba(217, 159, 105, 0.14)', headlineColor: '#d99f69', titleColor: '#d99f69', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #d99f69 0%, #b87f4c 100%)', titleColor: '#1c1613', textColor: '#2c1e15' },
+    actionCards: { bgColor: 'linear-gradient(135deg, #f7efe6 0%, #e8d7c3 100%)', titleColor: '#261b14', textColor: '#574438', accentColor: '#d99f69' },
+    metrics: { bgColor: 'rgba(217, 159, 105, 0.14)', titleColor: '#d99f69', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    processSteps: { bgColor: 'rgba(217, 159, 105, 0.14)', headlineColor: '#d99f69', titleColor: '#faf6f0', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    services: { bgColor: 'rgba(255, 255, 255, 0.05)', headlineColor: '#d99f69', titleColor: '#faf6f0', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    studentGrid: { headlineColor: '#d99f69', titleColor: '#d99f69', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    locationCard: { bgColor: 'rgba(217, 159, 105, 0.14)', headlineColor: '#d99f69', titleColor: '#faf6f0', textColor: '#d6c4b8', accentColor: '#d99f69' },
+    aboutMe: { headlineColor: '#d99f69', titleColor: '#d99f69', textColor: '#faf6f0' },
+    testimonials: { bgColor: 'rgba(217, 159, 105, 0.14)', headlineColor: '#d99f69', titleColor: '#faf6f0', textColor: '#d6c4b8', accentColor: '#fbbf24' },
+    faq: { bgColor: 'rgba(217, 159, 105, 0.12)', headlineColor: '#d99f69', titleColor: '#faf6f0', textColor: '#d6c4b8' },
+    footer: { textColor: '#bda89b', accentColor: '#d99f69' },
+  },
+  'Barbearia & Grooming': {
+    announcement: { bgColor: '#d97706', textColor: '#0c0a09', titleColor: '#0c0a09' },
+    hero: { headlineColor: '#fbbf24', titleColor: '#f5efe6', textColor: '#c4b5a2', accentColor: '#d97706' },
+    urgencyTimer: { bgColor: 'rgba(217, 119, 6, 0.14)', headlineColor: '#fbbf24', titleColor: '#fbbf24', textColor: '#c4b5a2', accentColor: '#d97706' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', titleColor: '#0c0a09', textColor: '#261b14' },
+    actionCards: { bgColor: 'linear-gradient(145deg, #211c18 0%, #161310 100%)', titleColor: '#f5efe6', textColor: '#b8a996', accentColor: '#d97706' },
+    metrics: { bgColor: 'rgba(217, 119, 6, 0.14)', titleColor: '#fbbf24', textColor: '#c4b5a2', accentColor: '#d97706' },
+    processSteps: { bgColor: 'rgba(217, 119, 6, 0.14)', headlineColor: '#fbbf24', titleColor: '#f5efe6', textColor: '#c4b5a2', accentColor: '#d97706' },
+    services: { bgColor: 'rgba(33, 28, 24, 0.7)', headlineColor: '#fbbf24', titleColor: '#f5efe6', textColor: '#c4b5a2', accentColor: '#d97706' },
+    studentGrid: { headlineColor: '#fbbf24', titleColor: '#fbbf24', textColor: '#c4b5a2', accentColor: '#d97706' },
+    locationCard: { bgColor: 'rgba(217, 119, 6, 0.14)', headlineColor: '#fbbf24', titleColor: '#f5efe6', textColor: '#c4b5a2', accentColor: '#fbbf24' },
+    aboutMe: { headlineColor: '#fbbf24', titleColor: '#fbbf24', textColor: '#f5efe6' },
+    testimonials: { bgColor: 'rgba(217, 119, 6, 0.14)', headlineColor: '#fbbf24', titleColor: '#f5efe6', textColor: '#c4b5a2', accentColor: '#fbbf24' },
+    faq: { bgColor: 'rgba(217, 119, 6, 0.12)', headlineColor: '#fbbf24', titleColor: '#f5efe6', textColor: '#c4b5a2' },
+    footer: { textColor: '#a89984', accentColor: '#fbbf24' },
+  },
+  'Saúde & Psicologia': {
+    announcement: { bgColor: '#7a3b22', textColor: '#ffffff', titleColor: '#ffffff' },
+    hero: { headlineColor: '#7a3b22', titleColor: '#1c1511', textColor: '#4a3b34', accentColor: '#7a3b22' },
+    urgencyTimer: { bgColor: '#ffffff', headlineColor: '#7a3b22', titleColor: '#7a3b22', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #7a3b22 0%, #632d18 100%)', titleColor: '#ffffff', textColor: '#f5ded4' },
+    actionCards: { bgColor: '#ffffff', titleColor: '#1c1511', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    metrics: { bgColor: '#ffffff', titleColor: '#7a3b22', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    processSteps: { bgColor: '#ffffff', headlineColor: '#7a3b22', titleColor: '#1c1511', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    services: { bgColor: '#ffffff', headlineColor: '#7a3b22', titleColor: '#1c1511', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    studentGrid: { headlineColor: '#7a3b22', titleColor: '#7a3b22', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    locationCard: { bgColor: '#ffffff', headlineColor: '#7a3b22', titleColor: '#1c1511', textColor: '#5c4b42', accentColor: '#7a3b22' },
+    aboutMe: { headlineColor: '#7a3b22', titleColor: '#7a3b22', textColor: '#291d17' },
+    testimonials: { bgColor: '#ffffff', headlineColor: '#7a3b22', titleColor: '#1c1511', textColor: '#5c4b42', accentColor: '#b45309' },
+    faq: { bgColor: '#ffffff', headlineColor: '#7a3b22', titleColor: '#1c1511', textColor: '#5c4b42' },
+    footer: { textColor: '#78645a', accentColor: '#7a3b22' },
+  },
+  'Moda & Juventude': {
+    announcement: { bgColor: '#9d174d', textColor: '#ffffff', titleColor: '#ffffff' },
+    hero: { headlineColor: '#9d174d', titleColor: '#2b0914', textColor: '#4a1d29', accentColor: '#be185d' },
+    urgencyTimer: { bgColor: '#ffffff', headlineColor: '#be185d', titleColor: '#be185d', textColor: '#5c2d3a', accentColor: '#be185d' },
+    qualifierFunnel: { bgColor: 'linear-gradient(135deg, #be185d 0%, #9d174d 100%)', titleColor: '#ffffff', textColor: '#fce7ee' },
+    actionCards: { bgColor: '#ffffff', titleColor: '#2b0914', textColor: '#5c2d3a', accentColor: '#be185d' },
+    metrics: { bgColor: '#ffffff', titleColor: '#be185d', textColor: '#5c2d3a', accentColor: '#be185d' },
+    processSteps: { bgColor: '#ffffff', headlineColor: '#be185d', titleColor: '#2b0914', textColor: '#5c2d3a', accentColor: '#be185d' },
+    services: { bgColor: '#ffffff', headlineColor: '#be185d', titleColor: '#2b0914', textColor: '#5c2d3a', accentColor: '#be185d' },
+    studentGrid: { headlineColor: '#be185d', titleColor: '#be185d', textColor: '#5c2d3a', accentColor: '#be185d' },
+    locationCard: { bgColor: '#ffffff', headlineColor: '#be185d', titleColor: '#2b0914', textColor: '#5c2d3a', accentColor: '#be185d' },
+    aboutMe: { headlineColor: '#be185d', titleColor: '#be185d', textColor: '#3f111d' },
+    testimonials: { bgColor: '#ffffff', headlineColor: '#be185d', titleColor: '#2b0914', textColor: '#5c2d3a', accentColor: '#b45309' },
+    faq: { bgColor: '#ffffff', headlineColor: '#be185d', titleColor: '#2b0914', textColor: '#5c2d3a' },
+    footer: { textColor: '#8b4b5a', accentColor: '#be185d' },
+  },
+};
+
 const INITIAL_SAVED_SITES: SavedMicrosite[] = [
   {
     id: 'site-1',
@@ -1585,6 +2491,7 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     data: {
       ...INITIAL_DATA,
       theme: 'barberVintage',
+      moduleColors: JSON.parse(JSON.stringify(NICHE_DEMO_MODULE_COLORS['Barbearia & Grooming'] || {})),
       profile: {
         ...INITIAL_DATA.profile,
         name: 'DON CORLEONE BARBER',
@@ -1684,7 +2591,11 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     whatsappClicks: 68,
     pageViews: 380,
     trafficSources: { instagram: 190, tiktok: 30, googleMaps: 90, paidAds: 50, direct: 20 },
-    data: INITIAL_DATA,
+    data: {
+      ...INITIAL_DATA,
+      theme: 'navyLaw',
+      moduleColors: JSON.parse(JSON.stringify(NICHE_DEMO_MODULE_COLORS['Jurídico & Executivo'] || {})),
+    },
   },
   {
     id: 'site-3',
@@ -1712,6 +2623,7 @@ const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     data: {
       ...INITIAL_DATA,
       theme: 'darkGold',
+      moduleColors: JSON.parse(JSON.stringify(NICHE_DEMO_MODULE_COLORS['Beleza & Unhas'] || {})),
       profile: {
         ...INITIAL_DATA.profile,
         name: 'LARISSA ALMEIDA NAILS',
@@ -1928,6 +2840,9 @@ export default function App() {
     const newlyAutoDisabled: string[] = [];
 
     const normalized = sitesList.map((site) => {
+      if (isModelMicrosite(site)) {
+        return site;
+      }
       const daysDiff = getDaysUntilDue(site.dueDate);
       const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
       const hasActiveManualOverride = Boolean(site.manualOverrideUntil && site.manualOverrideUntil >= todayStr);
@@ -2431,6 +3346,12 @@ export default function App() {
     priceEssential: string;
     pricePro: string;
     priceScale: string;
+    recurringBasic?: string;
+    recurringPro?: string;
+    recurringVip?: string;
+    updatesBasic?: string;
+    updatesPro?: string;
+    updatesVip?: string;
     creatorFooterUrl?: string;
     creatorFooterLabel?: string;
     checkoutPortalName?: string;
@@ -2447,6 +3368,12 @@ export default function App() {
       priceEssential: 'R$ 79,90',
       pricePro: 'R$ 79,90',
       priceScale: 'R$ 79,90',
+      recurringBasic: '29,90',
+      recurringPro: '49,90',
+      recurringVip: '79,90',
+      updatesBasic: '1',
+      updatesPro: '4',
+      updatesVip: 'Ilimitadas',
       creatorFooterUrl: '',
       creatorFooterLabel: 'Quero um microsite assim',
       checkoutPortalName: 'Kiwify',
@@ -2464,15 +3391,21 @@ export default function App() {
         if (!parsed.agencyBrandName || parsed.agencyBrandName === 'LuxeBio Digital') {
           parsed.agencyBrandName = 'BioVip Digital';
         }
-        return { ...defaults, ...parsed };
+        const merged = { ...defaults, ...parsed };
+        syncMaintenancePlansFromConfig(merged);
+        return merged;
       }
     } catch {}
+    syncMaintenancePlansFromConfig(defaults);
     return defaults;
   });
+
+  syncMaintenancePlansFromConfig(landingConfig);
 
   const updateLandingConfig = (key: string, val: string) => {
     setLandingConfig(prev => {
       const updated = { ...prev, [key]: val };
+      syncMaintenancePlansFromConfig(updated);
       try {
         localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
       } catch {}
@@ -2518,8 +3451,38 @@ export default function App() {
     return { brandName, ctaLabel, href };
   };
 
-  const detectCreatorSurface = (): 'landing' | 'studio' => {
+  const detectPublicMicrositeSlug = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const search = new URLSearchParams(window.location.search);
+    const host = window.location.hostname.toLowerCase();
+    
+    if (search.get('site')) return search.get('site')!.toLowerCase();
+    if (search.get('p')) return search.get('p')!.toLowerCase();
+    if (search.get('microsite')) return search.get('microsite')!.toLowerCase();
+
+    const configuredSub = (landingConfig?.creatorSubdomain || 'criador').toLowerCase();
+    const reservedPaths = [
+      '', 'criador', 'studio', 'painel', 'editor', 'admin', 'api', 'assets', configuredSub,
+    ];
+    if (path && !reservedPaths.includes(path) && !path.includes('.')) {
+      return path;
+    }
+    const baseDomain = (landingConfig?.baseDomain || 'biovip.com.br').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    if (host.includes(baseDomain)) {
+      const sub = host.replace(`.${baseDomain}`, '').trim();
+      if (sub && sub !== 'www' && !reservedPaths.includes(sub)) {
+        return sub;
+      }
+    }
+    return null;
+  };
+
+  const detectCreatorSurface = (): 'landing' | 'studio' | 'microsite' => {
     if (typeof window === 'undefined') return 'landing';
+    const publicSlug = detectPublicMicrositeSlug();
+    if (publicSlug) return 'microsite';
+
     const host = window.location.hostname.toLowerCase();
     const path = window.location.pathname.toLowerCase();
     const search = new URLSearchParams(window.location.search);
@@ -2551,14 +3514,26 @@ export default function App() {
     return 'landing';
   };
 
-  const [appSurface, setAppSurface] = useState<'landing' | 'studio'>(() => detectCreatorSurface());
+  const [appSurface, setAppSurface] = useState<'landing' | 'studio' | 'microsite'>(() => detectCreatorSurface());
+  const [activePublicSlug, setActivePublicSlug] = useState<string | null>(() => detectPublicMicrositeSlug());
+  const [underConstructionPreviewSite, setUnderConstructionPreviewSite] = useState<SavedMicrosite | null>(null);
+  const [paymentSuccessSite, setPaymentSuccessSite] = useState<SavedMicrosite | null>(null);
+  const [checkoutAsaasPix, setCheckoutAsaasPix] = useState<{
+    loading: boolean;
+    paymentId?: string;
+    pixPayload?: string;
+    pixQrCode?: string;
+    status?: string;
+    error?: string;
+  } | null>(null);
   const [isClientsFullscreen, setIsClientsFullscreen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') return true;
     const search = new URLSearchParams(window.location.search);
-    return search.get('view') === 'clients' || search.get('gestao') === 'true' || window.location.hash === '#gestao';
+    if (search.get('view') === 'editor' || search.get('modo') === 'editor') return false;
+    return true;
   });
   const [clientsFilterTerm, setClientsFilterTerm] = useState<string>('');
-  const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'active' | 'overdue' | 'suspended' | 'disabled'>('all');
+  const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'active' | 'overdue' | 'suspended' | 'disabled' | 'construction' | 'model'>('all');
   const [asaasStatusTesting, setAsaasStatusTesting] = useState<boolean>(false);
   const [asaasTestResult, setAsaasTestResult] = useState<{ success: boolean; message: string; balance?: number } | null>(null);
   const [asaasGeneratingSiteId, setAsaasGeneratingSiteId] = useState<string | null>(null);
@@ -2623,7 +3598,7 @@ export default function App() {
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
   // 2FA Security & Master PIN Layer
-  const DEFAULT_ADMIN_PIN = '849201';
+  const DEFAULT_ADMIN_PIN = '230217';
   const MAX_PIN_ATTEMPTS = 5;
   const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 min
   const INACTIVITY_LOCK_MS = 20 * 60 * 1000; // 20 min
@@ -2677,7 +3652,7 @@ export default function App() {
   const hashPinCode = async (pin: string): Promise<string> => {
     try {
       const encoder = new TextEncoder();
-      const data = encoder.encode(`luxebio_admin_salt_2026_${pin.trim()}`);
+      const data = encoder.encode(`biovip_admin_salt_2026_${pin.trim()}`);
       const hashBuf = await crypto.subtle.digest('SHA-256', data);
       return Array.from(new Uint8Array(hashBuf))
         .map(b => b.toString(16).padStart(2, '0'))
@@ -2786,6 +3761,9 @@ export default function App() {
           `Acesso negado para "${result.user.email}". Somente o administrador (${ADMIN_OWNER_EMAIL}) pode acessar o Criador.`
         );
         recordAuditLog(`Tentativa de acesso negada: ${result.user.email}`, 'failed');
+      } else {
+        setIsClientsFullscreen(true);
+        setAppSurface('studio');
       }
     } catch (err: any) {
       if (err?.code !== 'auth/popup-closed-by-user') {
@@ -2806,12 +3784,14 @@ export default function App() {
     }
 
     const currentHash = await hashPinCode(cleanPin);
-    const storedHash = localStorage.getItem('luxebio_admin_pin_hash_v1');
+    const storedHash = localStorage.getItem('biovip_admin_pin_hash_v2');
     const defaultHash = await hashPinCode(DEFAULT_ADMIN_PIN);
     const targetHash = storedHash || defaultHash;
 
     if (currentHash === targetHash) {
       setAdminPinUnlocked(true);
+      setIsClientsFullscreen(true);
+      setAppSurface('studio');
       setAdminPinError(null);
       setAdminPinInput('');
       setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
@@ -2821,7 +3801,7 @@ export default function App() {
         localStorage.removeItem('luxebio_pin_lockout_until');
       } catch {}
       recordAuditLog('Autenticação 2FA / PIN Mestre Realizada com Sucesso', 'success');
-      showToast('🛡️ Acesso concedido! Painel de Administrador desbloqueado.');
+      showToast('🛡️ Acesso concedido! Painel de Gestão em Tela Cheia desbloqueado.');
     } else {
       const currentFailed = Number(localStorage.getItem('luxebio_pin_failed_attempts') || '0') + 1;
       const left = Math.max(0, MAX_PIN_ATTEMPTS - currentFailed);
@@ -2874,7 +3854,7 @@ export default function App() {
     }
 
     const currentHash = await hashPinCode(changePinCurrent);
-    const storedHash = localStorage.getItem('luxebio_admin_pin_hash_v1');
+    const storedHash = localStorage.getItem('biovip_admin_pin_hash_v2');
     const defaultHash = await hashPinCode(DEFAULT_ADMIN_PIN);
     const targetHash = storedHash || defaultHash;
 
@@ -2885,7 +3865,7 @@ export default function App() {
 
     const newHash = await hashPinCode(changePinNew);
     try {
-      localStorage.setItem('luxebio_admin_pin_hash_v1', newHash);
+      localStorage.setItem('biovip_admin_pin_hash_v2', newHash);
     } catch {}
     setSecurityModalOpen(false);
     setChangePinCurrent('');
@@ -2914,57 +3894,122 @@ export default function App() {
       if (!firebaseAuth.currentUser || firebaseAuth.currentUser.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
         return;
       }
+      const safeId = String(site.id || 'site-default').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 128);
+      const ownerUid = firebaseAuth.currentUser.uid;
+      const safeClientName = (site.clientName || 'Cliente BioVip').slice(0, 160);
+      const safeNiche = (site.nicheCategory || 'Geral').slice(0, 120);
+      const safeSubdomain = (site.subdomain || 'modelo').slice(0, 120);
+      const safeCustomDomain = (site.customDomain || '').slice(0, 180);
+      const safeStatus: 'active' | 'overdue' | 'disabled' =
+        site.status === 'overdue' || site.status === 'disabled' ? site.status : 'active';
+
       try {
-        await setDoc(doc(firebaseDb, 'admin_sites', site.id), {
-          ...site,
-          updatedBy: firebaseAuth.currentUser.email,
+        const recordPayload = serializeSafeFirestorePayload(site);
+        await setDoc(doc(firebaseDb, 'admin_sites', safeId), {
+          id: safeId,
+          ownerId: ownerUid,
+          clientName: safeClientName,
+          nicheCategory: safeNiche,
+          status: safeStatus,
+          isLandingModel: Boolean(site.isLandingModel),
+          recordPayload,
+          updatedAt: serverTimestamp(),
         });
+
         if (site.isLandingModel) {
-          await setDoc(doc(firebaseDb, 'public_models', site.id), {
-            id: site.id,
-            clientName: site.clientName,
-            nicheCategory: site.nicheCategory,
-            subdomain: site.subdomain,
-            customDomain: site.customDomain || '',
-            status: site.status,
-            isLandingModel: true,
-            lastUpdated: site.lastUpdated,
+          const sitePayload = serializeSafeFirestorePayload({
             data: site.data,
+            status: safeStatus,
+            lastUpdated: site.lastUpdated,
+            createdAt: site.createdAt,
+            dueDate: site.dueDate,
+            monthlyFee: site.monthlyFee,
+          });
+          await setDoc(doc(firebaseDb, 'public_models', safeId), {
+            id: safeId,
+            ownerId: ownerUid,
+            clientName: safeClientName,
+            nicheCategory: safeNiche,
+            subdomain: safeSubdomain,
+            customDomain: safeCustomDomain,
+            isLandingModel: true,
+            sitePayload,
+            updatedAt: serverTimestamp(),
           });
         } else {
-          await deleteDoc(doc(firebaseDb, 'public_models', site.id));
+          await deleteDoc(doc(firebaseDb, 'public_models', safeId));
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.WRITE, `admin_sites/${site.id}`);
+        handleFirestoreError(err, OperationType.WRITE, `admin_sites/${safeId}`);
       }
     },
     []
   );
 
-  // Real-time listener on public_models so Landing Page visitors see live updates from Firestore
+  // Hydrate full-resolution saved sites from IndexedDB on startup (prevents 5MB localStorage quota truncation)
   useEffect(() => {
-    const unsub = onSnapshot(
+    let active = true;
+    loadSitesFromIndexedDb().then((idbSites) => {
+      if (!active || !Array.isArray(idbSites) || idbSites.length === 0) return;
+      setSavedSites((prev) => {
+        const byId = new Map(prev.map((s) => [s.id, s]));
+        idbSites.forEach((idbSite: SavedMicrosite) => {
+          if (idbSite && idbSite.id && idbSite.data) {
+            const existing = byId.get(idbSite.id);
+            if (!existing || JSON.stringify(idbSite.data).length > JSON.stringify(existing.data).length) {
+              byId.set(idbSite.id, { ...existing, ...idbSite });
+            }
+          }
+        });
+        return Array.from(byId.values());
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Real-time listener on public_models (with where('isLandingModel', '==', true) required by firestore.rules)
+  useEffect(() => {
+    const publicModelsQuery = query(
       collection(firebaseDb, 'public_models'),
+      where('isLandingModel', '==', true)
+    );
+    const unsub = onSnapshot(
+      publicModelsQuery,
       (snap) => {
         if (snap.empty) return;
         const remoteModels: SavedMicrosite[] = [];
         snap.forEach((docSnap) => {
-          const d = docSnap.data() as SavedMicrosite;
-          if (d && d.id && d.data) {
+          const raw = docSnap.data() as Record<string, any>;
+          if (!raw || !raw.id) return;
+          let parsedPayload: Record<string, any> = {};
+          if (typeof raw.sitePayload === 'string') {
+            try {
+              parsedPayload = JSON.parse(raw.sitePayload) || {};
+            } catch {}
+          }
+          const siteData = parsedPayload.data || raw.data;
+          if (siteData) {
             remoteModels.push({
-              ...d,
-              createdAt: d.createdAt || '2026-10-01',
-              dueDate: d.dueDate || '2026-11-15',
-              monthlyFee: typeof d.monthlyFee === 'number' ? d.monthlyFee : 197,
-              status: d.status || 'active',
-              updatesThisMonth: d.updatesThisMonth || 1,
-              lastUpdated: d.lastUpdated || '2026-10-24',
-              domainType: d.customDomain ? 'custom' : 'subdomain',
-              subdomain: d.subdomain || 'modelo',
-              customDomain: d.customDomain || '',
+              id: raw.id,
+              clientName: raw.clientName || 'Modelo BioVip',
+              clientPhone: parsedPayload.clientPhone || raw.clientPhone || '',
+              clientEmail: parsedPayload.clientEmail || raw.clientEmail || '',
+              nicheCategory: raw.nicheCategory || 'Geral',
+              createdAt: parsedPayload.createdAt || raw.createdAt || '2026-10-01',
+              dueDate: parsedPayload.dueDate || raw.dueDate || '2026-11-15',
+              monthlyFee: typeof parsedPayload.monthlyFee === 'number' ? parsedPayload.monthlyFee : typeof raw.monthlyFee === 'number' ? raw.monthlyFee : 197,
+              status: parsedPayload.status || raw.status || 'active',
+              updatesThisMonth: parsedPayload.updatesThisMonth || raw.updatesThisMonth || 1,
+              lastUpdated: parsedPayload.lastUpdated || raw.lastUpdated || '2026-10-24',
+              domainType: raw.customDomain ? 'custom' : 'subdomain',
+              subdomain: raw.subdomain || 'modelo',
+              customDomain: raw.customDomain || '',
               dnsConfigured: true,
               sslActive: true,
               isLandingModel: true,
+              data: siteData,
             });
           }
         });
@@ -2977,6 +4022,7 @@ export default function App() {
               if (Array.isArray(parsedDel)) deletedIds = parsedDel;
             }
           } catch {}
+
           setSavedSites((prev) => {
             const byId = new Map(prev.map((s) => [s.id, s]));
             remoteModels.forEach((rm) => {
@@ -2989,6 +4035,7 @@ export default function App() {
                 rm.data?.profile?.avatarUrl?.includes('1580489944761') ||
                 ((rm.id === 'site-1' || rm.subdomain === 'doncorleone') &&
                   rm.data?.profile?.avatarUrl?.includes('1573496359142'));
+
               if (isRemoteStale && existing) {
                 byId.set(rm.id, { ...rm, data: existing.data, isLandingModel: existing.isLandingModel ?? true });
               } else {
@@ -2996,9 +4043,7 @@ export default function App() {
               }
             });
             const merged = Array.from(byId.values());
-            try {
-              localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(merged));
-            } catch {}
+            persistSavedSitesToStorage(merged);
             return merged;
           });
         }
@@ -3010,9 +4055,71 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Real-time listener on admin_sites to restore private client microsites across devices when Admin is authenticated
+  useEffect(() => {
+    if (!isAuthorizedAdmin) return;
+    const unsub = onSnapshot(
+      collection(firebaseDb, 'admin_sites'),
+      (snap) => {
+        if (snap.empty) return;
+        const remoteAdminSites: SavedMicrosite[] = [];
+        snap.forEach((docSnap) => {
+          const raw = docSnap.data() as Record<string, any>;
+          if (!raw || !raw.id) return;
+          let parsedRecord: SavedMicrosite | null = null;
+          if (typeof raw.recordPayload === 'string') {
+            try {
+              parsedRecord = JSON.parse(raw.recordPayload);
+            } catch {}
+          } else if (raw.data) {
+            parsedRecord = raw as SavedMicrosite;
+          }
+          if (parsedRecord && parsedRecord.id && parsedRecord.data) {
+            remoteAdminSites.push({
+              ...parsedRecord,
+              id: raw.id,
+              clientName: raw.clientName || parsedRecord.clientName,
+              nicheCategory: raw.nicheCategory || parsedRecord.nicheCategory,
+              status: raw.status || parsedRecord.status || 'active',
+              isLandingModel: typeof raw.isLandingModel === 'boolean' ? raw.isLandingModel : parsedRecord.isLandingModel,
+            });
+          }
+        });
+
+        if (remoteAdminSites.length > 0) {
+          let deletedIds: string[] = [];
+          try {
+            const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+            if (deletedRaw) {
+              const parsedDel = JSON.parse(deletedRaw);
+              if (Array.isArray(parsedDel)) deletedIds = parsedDel;
+            }
+          } catch {}
+
+          setSavedSites((prev) => {
+            const byId = new Map(prev.map((s) => [s.id, s]));
+            remoteAdminSites.forEach((rs) => {
+              if (deletedIds.includes(rs.id)) return;
+              const existing = byId.get(rs.id);
+              byId.set(rs.id, existing ? { ...existing, ...rs } : rs);
+            });
+            const merged = Array.from(byId.values());
+            persistSavedSitesToStorage(merged);
+            return merged;
+          });
+        }
+      },
+      (err) => {
+        handleFirestoreError(err, OperationType.LIST, 'admin_sites');
+      }
+    );
+    return () => unsub();
+  }, [isAuthorizedAdmin]);
+
   useEffect(() => {
     const handleRouteChange = () => {
       setAppSurface(detectCreatorSurface());
+      setActivePublicSlug(detectPublicMicrositeSlug());
     };
     window.addEventListener('popstate', handleRouteChange);
     window.addEventListener('hashchange', handleRouteChange);
@@ -3022,12 +4129,18 @@ export default function App() {
     };
   }, [landingConfig.creatorSubdomain]);
 
-  const openCreatorSubdomain = () => {
+  const openCreatorSubdomain = (openInEditor?: boolean | React.MouseEvent) => {
     const subSlug = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
     try {
       window.history.pushState({ surface: 'studio' }, '', `/${subSlug}`);
     } catch {}
     setAppSurface('studio');
+    setActivePublicSlug(null);
+    if (openInEditor === true) {
+      setIsClientsFullscreen(false);
+    } else {
+      setIsClientsFullscreen(true);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -3036,6 +4149,17 @@ export default function App() {
       window.history.pushState({ surface: 'landing' }, '', '/');
     } catch {}
     setAppSurface('landing');
+    setActivePublicSlug(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openPublicMicrosite = (slug: string) => {
+    const clean = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    try {
+      window.history.pushState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
+    } catch {}
+    setActivePublicSlug(clean);
+    setAppSurface('microsite');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -3075,15 +4199,15 @@ export default function App() {
   };
 
   const sendWhatsappBillingReminder = (site: SavedMicrosite) => {
-    const pixKey = data.saasSettings?.pixKey || 'contato@luxebio.com.br';
-    const pixName = data.saasSettings?.pixName || 'LuxeBio Studio SaaS';
+    const pixKey = data.saasSettings?.pixKey || 'contato@biovip.com.br';
+    const pixName = data.saasSettings?.pixName || 'BioVip Studio SaaS';
     const billing = getSiteBillingSummary(site);
     const dueBr = formatDueDateBr(site.dueDate);
     const daysDiff = getDaysUntilDue(site.dueDate);
     const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
 
     let msg = `👋 Olá *${site.clientName}*!\n\n`;
-    msg += `Segue o resumo da fatura do seu Biosite de Alta Conversão (*${site.customDomain || site.subdomain + '.luxebio.site'}*):\n\n`;
+    msg += `Segue o resumo da fatura do seu Biosite de Alta Conversão (*${site.customDomain || site.subdomain + '.biovip.com.br'}*):\n\n`;
     if (billing.isFirstMonth) {
       msg += `✨ *Ciclo Atual:* 1º Mês (Taxa Única de Criação — *Isento de Mensalidade no 1º mês*)\n`;
       msg += `🎨 *Taxa de Criação (1º Mês):* R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
@@ -3110,7 +4234,7 @@ export default function App() {
     msg += `👤 *Favorecido:* ${pixName}\n\n`;
     msg += `Após realizar a transferência, por favor envie o comprovante por aqui para baixa e liberação automática. Qualquer dúvida estou à disposição! 🚀`;
 
-    const phone = (site.clientPhone || '').replace(/\D/g, '');
+    const phone = formatWhatsAppPhone(site.clientPhone);
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
     showToast(`📲 Lembrete de cobrança detalhado enviado no WhatsApp de ${site.clientName}!`);
@@ -3136,14 +4260,14 @@ export default function App() {
     site: SavedMicrosite,
     templateType: 'complete_kit' | 'onboarding_bio' | 'renewal_details' = 'complete_kit'
   ) => {
-    const primaryDomain = (site.customDomain || '').trim() || `${site.subdomain || 'meusite'}.luxebio.site`;
+    const primaryDomain = (site.customDomain || '').trim() || `${site.subdomain || 'meusite'}.biovip.com.br`;
     const primaryUrl = `https://${primaryDomain}`;
-    const subdomainUrl = `https://${site.subdomain || 'meusite'}.luxebio.site`;
+    const subdomainUrl = `https://${site.subdomain || 'meusite'}.biovip.com.br`;
     const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
     const billing = getSiteBillingSummary(site);
     const dueBr = formatDueDateBr(site.dueDate);
-    const pixKey = data.saasSettings?.pixKey || 'contato@luxebio.com.br';
-    const pixName = data.saasSettings?.pixName || 'LuxeBio Studio SaaS';
+    const pixKey = data.saasSettings?.pixKey || 'contato@biovip.com.br';
+    const pixName = data.saasSettings?.pixName || 'BioVip Studio SaaS';
     const statusText = site.status === 'disabled' ? '🔴 Desativado por Atraso (>= 7 dias)' : site.status === 'overdue' ? '🟡 Pagamento em Atraso (Desativação no 7º dia)' : '🟢 Ativo & Online com SSL';
 
     if (templateType === 'onboarding_bio') {
@@ -3923,10 +5047,11 @@ export default function App() {
 
   const generatePdfReportHtml = () => {
     const todayStr = new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+    const billableSites = savedSites.filter(s => !isModelMicrosite(s));
     const totalSites = savedSites.length;
-    const activeSites = savedSites.filter(s => s.status === 'active').length;
-    const overdueSites = savedSites.filter(s => s.status === 'overdue').length;
-    const totalMrr = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0);
+    const activeSites = billableSites.filter(s => s.status !== 'disabled' && !isSiteSuspendedStatus(s)).length;
+    const overdueSites = billableSites.filter(s => s.status === 'overdue' || getDaysUntilDue(s.dueDate) < 0).length;
+    const totalMrr = billableSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0);
     const totalClicks = savedSites.reduce((acc, s) => acc + (s.whatsappClicks || 0), 0);
     const totalViews = savedSites.reduce((acc, s) => acc + (s.pageViews || 100), 0);
     const avgConversion = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
@@ -3936,9 +5061,10 @@ export default function App() {
       const clicks = s.whatsappClicks || 0;
       const views = s.pageViews || 100;
       const rate = ((clicks / views) * 100).toFixed(1);
-      const domain = s.customDomain || `${s.subdomain}.luxebio.site`;
-      const statusLabel = s.status === 'disabled' ? 'Desativado' : s.status === 'overdue' ? 'Vencido' : 'Em Dia';
-      const statusColor = s.status === 'disabled' ? '#dc2626' : s.status === 'overdue' ? '#d97706' : '#16a34a';
+      const domain = s.customDomain || `${s.subdomain}.biovip.com.br`;
+      const isModel = isModelMicrosite(s);
+      const statusLabel = isModel ? 'Modelo (Isento)' : s.status === 'disabled' ? 'Desativado' : s.status === 'overdue' ? 'Vencido' : 'Em Dia';
+      const statusColor = isModel ? '#d97706' : s.status === 'disabled' ? '#dc2626' : s.status === 'overdue' ? '#d97706' : '#16a34a';
 
       return `
         <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -3954,7 +5080,7 @@ export default function App() {
               ${statusLabel}
             </span>
           </td>
-          <td style="padding: 12px; text-align: center; font-size: 12px; color: #374151;">${s.dueDate}</td>
+          <td style="padding: 12px; text-align: center; font-size: 12px; color: #374151;">${isModel ? '—' : s.dueDate}</td>
           <td style="padding: 12px; text-align: center; font-size: 12px; color: #111827; font-weight: bold;">
             ${clicks} <span style="font-weight: normal; color: #6b7280;">/ ${views}</span>
           </td>
@@ -3963,7 +5089,7 @@ export default function App() {
           </td>
           <td style="padding: 12px; text-align: center; font-size: 12px; color: #374151;">${s.updatesThisMonth}</td>
           <td style="padding: 12px; text-align: right; font-size: 13px; font-weight: bold; color: #111827;">
-            R$ ${s.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            ${isModel ? 'Isento (Modelo)' : `R$ ${s.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           </td>
         </tr>
       `;
@@ -3973,7 +5099,7 @@ export default function App() {
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatorio Executivo - LuxeBio Studio Pro</title>
+  <title>Relatorio Executivo - BioVip Studio Pro</title>
   <style>
     @media print {
       body { background: #fff !important; color: #000 !important; padding: 0 !important; }
@@ -4007,7 +5133,7 @@ export default function App() {
   <div class="container">
     <div class="header">
       <div class="title-group">
-        <h1>LUXEBIO STUDIO PRO — RELATÓRIO EXECUTIVO DE PERFORMANCE</h1>
+        <h1>BIOVIP STUDIO PRO — RELATÓRIO EXECUTIVO DE PERFORMANCE</h1>
         <p>Relatório Consolidado de Status Financeiro & Conversão de Clientes · Emitido em: ${todayStr}</p>
       </div>
       <span class="badge-saas">SaaS Executive Report</span>
@@ -4039,7 +5165,6 @@ export default function App() {
     <h3 style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
       Detalhamento por Cliente & Microsite
     </h3>
-
     <table>
       <thead>
         <tr>
@@ -4059,7 +5184,7 @@ export default function App() {
     </table>
 
     <div class="footer">
-      <div>LuxeBio Studio SaaS Engine — Plataforma de Gestão de Microsites & Landing Pages</div>
+      <div>BioVip Studio SaaS Engine — Plataforma de Gestão de Microsites & Landing Pages</div>
       <div>Documento Executivo de Relatório Mensal</div>
     </div>
   </div>
@@ -4069,7 +5194,8 @@ export default function App() {
 
   const copyWhatsappExecutiveSummary = async () => {
     const todayStr = new Date().toLocaleDateString('pt-BR');
-    const totalMrr = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0);
+    const billableSites = savedSites.filter(s => !isModelMicrosite(s));
+    const totalMrr = billableSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0);
     const totalClicks = savedSites.reduce((acc, s) => acc + (s.whatsappClicks || 0), 0);
     const totalViews = savedSites.reduce((acc, s) => acc + (s.pageViews || 100), 0);
     const avgConversion = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
@@ -4077,7 +5203,7 @@ export default function App() {
     let msg = `📊 *RESUMO EXECUTIVO DE PERFORMANCE & STATUS FINANCEIRO*\n`;
     msg += `📅 *Data de Emissão:* ${todayStr}\n\n`;
     msg += `💼 *MÉTRICAS GERAIS SAAS:*\n`;
-    msg += `• Total de Microsites: ${savedSites.length}\n`;
+    msg += `• Total de Microsites: ${savedSites.length} (${billableSites.length} faturáveis / ${savedSites.length - billableSites.length} modelos)\n`;
     msg += `• Faturamento MRR: R$ ${totalMrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
     msg += `• Taxa Média de Conversão WA: ${avgConversion}%\n\n`;
     msg += `📋 *STATUS INDIVIDUAL DOS CLIENTES:*\n`;
@@ -4086,15 +5212,17 @@ export default function App() {
       const clicks = s.whatsappClicks || 0;
       const views = s.pageViews || 100;
       const rate = ((clicks / views) * 100).toFixed(1);
-      const statusIcon = s.status === 'disabled' ? '🛑' : s.status === 'overdue' ? '🟡' : '🟢';
-      const statusText = s.status === 'disabled' ? 'Desativado' : s.status === 'overdue' ? 'Vencido' : 'Em dia';
+      const isModel = isModelMicrosite(s);
+      const statusIcon = isModel ? '⭐' : s.status === 'disabled' ? '🛑' : s.status === 'overdue' ? '🟡' : '🟢';
+      const statusText = isModel ? 'Modelo (Sem Faturamento)' : s.status === 'disabled' ? 'Desativado' : s.status === 'overdue' ? 'Vencido' : 'Em dia';
+
       msg += `\n${idx + 1}. *${s.clientName}* (${s.nicheCategory})\n`;
-      msg += `   ${statusIcon} Status: ${statusText} (Venc: ${s.dueDate})\n`;
+      msg += `   ${statusIcon} Status: ${statusText}${isModel ? '' : ` (Venc: ${s.dueDate})`}\n`;
       msg += `   📈 Conversão WA: *${rate}%* (${clicks} cliques / ${views} views)\n`;
-      msg += `   💰 Mensalidade: R$ ${s.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      msg += `   💰 Mensalidade: ${isModel ? 'Isento (Modelo)' : `R$ ${s.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}\n`;
     });
 
-    msg += `\nGerado por *LuxeBio Studio Pro* 🚀`;
+    msg += `\nGerado por *BioVip Studio Pro* 🚀`;
 
     const success = await safeCopyText(msg);
     if (success) {
@@ -4126,7 +5254,7 @@ export default function App() {
     const link = document.createElement('a');
     link.href = url;
     const dateSlug = new Date().toISOString().split('T')[0];
-    link.download = `relatorio-executivo-luxebio-${dateSlug}.html`;
+    link.download = `relatorio-executivo-biovip-${dateSlug}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -4139,7 +5267,7 @@ export default function App() {
     const clicks = site.whatsappClicks || 0;
     const views = site.pageViews || 100;
     const rate = ((clicks / views) * 100).toFixed(1);
-    const domain = site.customDomain || `${site.subdomain}.luxebio.site`;
+    const domain = site.customDomain || `${site.subdomain}.biovip.com.br`;
     const statusLabel = site.status === 'disabled' ? 'Desativado' : site.status === 'overdue' ? 'Vencido' : 'Em Dia';
     const statusColor = site.status === 'disabled' ? '#dc2626' : site.status === 'overdue' ? '#d97706' : '#16a34a';
 
@@ -4196,7 +5324,7 @@ export default function App() {
   <div class="container">
     <div class="header">
       <div class="title-group">
-        <h1>LUXEBIO STUDIO PRO</h1>
+        <h1>BIOVIP STUDIO PRO</h1>
         <h2>RELATÓRIO DE PERFORMANCE & COBRANÇA</h2>
         <p>Cliente: <strong>${site.clientName}</strong> · Emitido em: ${todayStr}</p>
       </div>
@@ -4262,7 +5390,7 @@ export default function App() {
     </p>
 
     <div class="footer">
-      <div>LuxeBio Studio SaaS Engine — Relatório Individual do Cliente</div>
+      <div>BioVip Studio SaaS Engine — Relatório Individual do Cliente</div>
       <div>Página 1 de 1</div>
     </div>
   </div>
@@ -4275,7 +5403,7 @@ export default function App() {
     const clicks = site.whatsappClicks || 0;
     const views = site.pageViews || 100;
     const rate = ((clicks / views) * 100).toFixed(1);
-    const domain = site.customDomain || `${site.subdomain}.luxebio.site`;
+    const domain = site.customDomain || `${site.subdomain}.biovip.com.br`;
     const statusText = site.status === 'disabled' ? 'Desativado' : site.status === 'overdue' ? 'Vencido' : 'Em Dia';
     const statusIcon = site.status === 'disabled' ? '🛑' : site.status === 'overdue' ? '🟡' : '🟢';
 
@@ -4511,7 +5639,7 @@ export default function App() {
       return { ...s, clientEmail: cleanEmail };
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
     showToast(`📧 E-mail de "${target?.clientName}" atualizado para ${cleanEmail}!`);
@@ -4550,13 +5678,12 @@ export default function App() {
     cat: 'scheduled_maintenance' | 'maintenance_completed' | 'new_features' | 'billing_notice' | 'custom_announcement'
   ) => {
     const todayBr = new Date().toLocaleDateString('pt-BR');
-    const pixKey = data.saasSettings?.pixKey || 'contato@luxebio.com.br';
-    const pixName = data.saasSettings?.pixName || 'LuxeBio Studio SaaS';
-
+    const pixKey = data.saasSettings?.pixKey || 'contato@biovip.com.br';
+    const pixName = data.saasSettings?.pixName || 'BioVip Studio SaaS';
     if (cat === 'scheduled_maintenance') {
       return {
-        subject: `[Comunicado Importante] Manutenção Programada de Servidores & DNS — LuxeBio Studio`,
-        body: `Olá, {{nome_cliente}}!\n\nInformamos que realizaremos uma manutenção preventiva programada em nossa infraestrutura de servidores, CDN e certificados SSL para garantir ainda mais velocidade e estabilidade ao seu Microsite ({{dominio}}).\n\n📅 DETALHES DA JANELA DE MANUTENÇÃO:\n• Data Programada: ${todayBr} (Madrugada, das 02:00h às 03:30h)\n• Impacto Estimado: Nenhum impacto nos seus dados ou agendamentos (possível oscilação de apenas alguns segundos durante a atualização de cache SSL).\n• O que será atualizado: Otimização de carregamento de imagens em alta definição, blindagem de segurança DNS e velocidade dos botões de WhatsApp.\n\nVocê não precisa realizar nenhuma ação no seu link da Bio do Instagram ou redes sociais — tudo continuará funcionando automaticamente.\n\nEm caso de dúvidas, nossa equipe de suporte está à disposição pelo WhatsApp.\n\nAtenciosamente,\nEquipe de Administração & Infraestrutura — LuxeBio Studio Pro`,
+        subject: `[Comunicado Importante] Manutenção Programada de Servidores & DNS — BioVip Studio`,
+        body: `Olá, {{nome_cliente}}!\n\nInformamos que realizaremos uma manutenção preventiva programada em nossa infraestrutura de servidores, CDN e certificados SSL para garantir ainda mais velocidade e estabilidade ao seu Microsite ({{dominio}}).\n\n📅 DETALHES DA JANELA DE MANUTENÇÃO:\n• Data Programada: ${todayBr} (Madrugada, das 02:00h às 03:30h)\n• Impacto Estimado: Nenhum impacto nos seus dados ou agendamentos (possível oscilação de apenas alguns segundos durante a atualização de cache SSL).\n• O que será atualizado: Otimização de carregamento de imagens em alta definição, blindagem de segurança DNS e velocidade dos botões de WhatsApp.\n\nVocê não precisa realizar nenhuma ação no seu link da Bio do Instagram ou redes sociais — tudo continuará funcionando automaticamente.\n\nEm caso de dúvidas, nossa equipe de suporte está à disposição pelo WhatsApp.\n\nAtenciosamente,\nEquipe de Administração & Infraestrutura — BioVip Studio Pro`,
       };
     }
 
@@ -4732,8 +5859,8 @@ export default function App() {
     const clientName = saveForm.clientName.trim() || data.profile.name || 'Novo Cliente';
     const slug = (saveForm.subdomain.trim() || clientName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'microsite';
     const selectedPlanObj = MAINTENANCE_PLANS[saveForm.maintenancePlan] || MAINTENANCE_PLANS.pro_4;
-    const feeNum = parseFloat(saveForm.monthlyFee.replace('R$', '').replace('.', '').replace(',', '.')) || selectedPlanObj.price;
-    const creationFeeNum = parseFloat((saveForm.creationFee || '79,90').replace('R$', '').replace('.', '').replace(',', '.')) || 79.90;
+    const feeNum = parseBrlCurrency(saveForm.monthlyFee, selectedPlanObj.price);
+    const creationFeeNum = parseBrlCurrency(saveForm.creationFee || '79,90', 79.90);
     const todayStr = new Date().toISOString().split('T')[0];
 
     if (editingSiteId && !asNew) {
@@ -4757,7 +5884,6 @@ export default function App() {
 
         isDataModified = dataChanged;
         const newUpdates = contentChanged ? s.updatesThisMonth + 1 : s.updatesThisMonth;
-
         const updatedSite: SavedMicrosite = {
           ...s,
           clientName,
@@ -4779,7 +5905,7 @@ export default function App() {
         return updatedSite;
       });
       setSavedSites(updated);
-      try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+      persistSavedSitesToStorage(updated);
       if (savedTargetSite) {
         syncSiteToFirestore(savedTargetSite);
       }
@@ -4819,11 +5945,10 @@ export default function App() {
         isLandingModel: saveForm.isLandingModel,
         data: JSON.parse(JSON.stringify(data)),
       };
-
       const newList = [newSite, ...savedSites];
       setSavedSites(newList);
       setEditingSiteId(newId);
-      try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(newList)); } catch {}
+      persistSavedSitesToStorage(newList);
       syncSiteToFirestore(newSite);
       showToast(
         newSite.isFirstMonth
@@ -4984,22 +6109,293 @@ export default function App() {
     }
   };
 
+  // Retorna o valor cobrado no Asaas definido pelo Administrador no Painel
+  const getAdminAsaasCreationFee = (planId?: 'basic' | 'pro' | 'vip'): number => {
+    const rawStr =
+      planId === 'basic'
+        ? landingConfig.priceEssential
+        : planId === 'vip'
+        ? landingConfig.priceScale
+        : landingConfig.pricePro;
+    return parseBrlCurrency(rawStr || landingConfig.pricePro || saveForm.creationFee, 79.90);
+  };
+
+  // Retorna o valor da recorrência mensal de acordo com o plano escolhido pelo cliente
+  const getSelectedPlanRecurringFee = (planId?: 'basic' | 'pro' | 'vip'): number => {
+    if (planId === 'basic') return MAINTENANCE_PLANS.basic_1.price; // R$ 29,90/mês
+    if (planId === 'vip') return MAINTENANCE_PLANS.vip_unlimited.price; // R$ 79,90/mês
+    return MAINTENANCE_PLANS.pro_4.price; // R$ 49,90/mês
+  };
+
+  const handleAsaasPaymentConfirmed = async (paidDetails: {
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    selectedModel?: string;
+    selectedPlan?: string;
+    instagramOrMaps?: string;
+    planId?: 'basic' | 'pro' | 'vip';
+    paymentId?: string;
+    chargedCreationFee?: number;
+  }) => {
+    // 1. Gera slug único a partir do nome informado pelo cliente
+    const rawName = (paidDetails.clientName || 'cliente').trim();
+    const baseSlug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'microsite';
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+    while (savedSites.some(s => s.subdomain.toLowerCase() === uniqueSlug.toLowerCase())) {
+      uniqueSlug = `${baseSlug}-${counter++}`;
+    }
+
+    // 2. Define o plano escolhido pelo cliente (Recorrência) e o valor de entrada cobrado no Asaas (Definido pelo Admin)
+    const planId = paidDetails.planId || 'pro';
+    const recurringPlanFee = getSelectedPlanRecurringFee(planId);
+    const adminCreationFee =
+      typeof paidDetails.chargedCreationFee === 'number' && paidDetails.chargedCreationFee > 0
+        ? paidDetails.chargedCreationFee
+        : getAdminAsaasCreationFee(planId);
+    const maintenancePlan: MaintenancePlanId =
+      planId === 'basic' ? 'basic_1' : planId === 'vip' ? 'vip_unlimited' : 'pro_4';
+
+    // 3. Define nicho correspondente ao modelo
+    const modelStr = paidDetails.selectedModel || 'Beleza & Estética';
+    let nicheKey = 'Beleza & Alta Conversão';
+    if (modelStr.includes('Advocacia') || modelStr.includes('Jurídico') || modelStr.includes('law')) {
+      nicheKey = 'Jurídico & Executivo';
+    } else if (modelStr.includes('Unhas') || modelStr.includes('nails')) {
+      nicheKey = 'Beleza & Unhas';
+    } else if (modelStr.includes('Consultoria') || modelStr.includes('consulting')) {
+      nicheKey = 'Consultoria & Estética';
+    } else if (modelStr.includes('Mentoria') || modelStr.includes('mentor')) {
+      nicheKey = 'Mentoria & Cursos';
+    } else if (modelStr.includes('Barbearia') || modelStr.includes('barber')) {
+      nicheKey = 'Barbearia & Grooming';
+    } else if (modelStr.includes('Saúde') || modelStr.includes('Psicologia') || modelStr.includes('health')) {
+      nicheKey = 'Saúde & Psicologia';
+    } else if (modelStr.includes('Moda') || modelStr.includes('fashion')) {
+      nicheKey = 'Moda & Juventude';
+    }
+
+    // 4. Cria o novo cliente no sistema:
+    // - creationFee = valor cobrado no Asaas definido pelo administrador no painel (já pago!)
+    // - monthlyFee = valor da recorrência do plano escolhido pelo cliente (R$ 29,90 / R$ 49,90 / R$ 79,90)
+    // - isFirstMonth = false (como a entrada já foi paga no Asaas, as próximas cobranças recorrentes serão no valor do plano escolhido!)
+    // - isUnderConstruction = true (exibe Página em Construção exigindo envio das informações)
+    const newClient: SavedMicrosite = {
+      id: `site-${Date.now()}`,
+      clientName: paidDetails.clientName.trim() || 'Novo Cliente',
+      clientPhone: paidDetails.clientPhone.trim() || '',
+      clientEmail: paidDetails.clientEmail.trim(),
+      nicheCategory: nicheKey,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      monthlyFee: recurringPlanFee,
+      maintenancePlan: maintenancePlan,
+      creationFee: adminCreationFee,
+      isFirstMonth: false,
+      status: 'pago',
+      daysOverdue: 0,
+      edicoesBloqueadas: false,
+      linkStatus: 'ativo',
+      isUnderConstruction: true, // 🚧 PÁGINA EM CONSTRUÇÃO
+      underConstruction: true,
+      briefingStatus: 'pending',
+      briefingData: {
+        instagramOrMaps: paidDetails.instagramOrMaps || '',
+        selectedModel: paidDetails.selectedModel || '',
+        commercialName: paidDetails.clientName,
+        whatsappNumber: paidDetails.clientPhone,
+        notes: '',
+        submittedAt: '',
+      },
+      updatesThisMonth: 0,
+      lastUpdated: new Date().toLocaleDateString('pt-BR'),
+      domainType: 'subdomain',
+      subdomain: uniqueSlug,
+      customDomain: '',
+      dnsConfigured: true,
+      sslActive: true,
+      whatsappClicks: 0,
+      pageViews: 1,
+      data: buildRealNicheMicrositeData(nicheKey),
+    };
+
+    // 5. Salva na lista de clientes (localStorage + Firestore)
+    const updatedList = [newClient, ...savedSites];
+    setSavedSites(updatedList);
+    persistSavedSitesToStorage(updatedList);
+    syncSiteToFirestore(newClient);
+
+    // 6. Atualiza estados visuais e modal de celebração
+    setCheckoutAsaasPix(null);
+    setPaymentConfirmPlan(null);
+    setPaymentSuccessSite(newClient);
+    showToast(
+      `🎉 Pagamento de R$ ${adminCreationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} confirmado no Asaas! Recorrência configurada em R$ ${recurringPlanFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês (${MAINTENANCE_PLANS[maintenancePlan].shortName}).`
+    );
+  };
+
+  const handleGenerateCheckoutAsaasPix = async () => {
+    if (!paymentConfirmPlan) return;
+    const cleanEmail = paymentClientEmail.trim();
+    if (!isClientPaymentEmailValid(cleanEmail)) {
+      setPaymentEmailTouched(true);
+      showToast('⚠️ Digite um e-mail válido para vincular o plano.');
+      return;
+    }
+
+    const cleanName = landingOrderForm.clientName.trim() || 'Cliente BioVip';
+    const cleanPhone = landingOrderForm.clientWhatsapp.replace(/\D/g, '') || '5511999999999';
+    // Valor cobrado agora no Asaas = Valor definido no painel pelo Administrador
+    const adminDefinedValue = getAdminAsaasCreationFee(paymentConfirmPlan.id);
+    // Valor da recorrência futura = Valor do plano escolhido pelo cliente
+    const recurringPlanValue = getSelectedPlanRecurringFee(paymentConfirmPlan.id);
+
+    setCheckoutAsaasPix({ loading: true });
+    try {
+      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
+      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+
+      const res = await fetch('/api/asaas/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey,
+          environment,
+          customerName: cleanName,
+          customerEmail: cleanEmail,
+          customerPhone: cleanPhone,
+          value: adminDefinedValue,
+          description: `Criação Microsite BioVip - ${landingOrderForm.selectedModel} (${paymentConfirmPlan.name} · Recorrência R$ ${recurringPlanValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)`,
+          billingType: 'PIX',
+          externalReference: `order-${Date.now()}`,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.pix?.payload) {
+        setCheckoutAsaasPix({
+          loading: false,
+          paymentId: json.paymentId,
+          pixPayload: json.pix.payload,
+          pixQrCode: json.pix.encodedImage,
+          status: json.status || 'PENDING',
+        });
+        showToast(
+          `⚡ QR Code PIX Asaas gerado no valor de R$ ${adminDefinedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (Recorrência: R$ ${recurringPlanValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)!`
+        );
+      } else {
+        const mockPaymentId = `pay_mock_${Date.now()}`;
+        const mockPixPayload = `00020126580014br.gov.bcb.pix0136${mockPaymentId}5204000053039865405${adminDefinedValue.toFixed(2)}5802BR5925BioVip Microsites Pro6009SAO PAULO62070503***6304`;
+        setCheckoutAsaasPix({
+          loading: false,
+          paymentId: mockPaymentId,
+          pixPayload: mockPixPayload,
+          status: 'PENDING',
+        });
+        showToast(
+          `⚡ PIX Asaas gerado: R$ ${adminDefinedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (Recorrência do plano: R$ ${recurringPlanValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)`
+        );
+      }
+    } catch {
+      const mockPaymentId = `pay_mock_${Date.now()}`;
+      const mockPixPayload = `00020126580014br.gov.bcb.pix0136${mockPaymentId}5204000053039865405${adminDefinedValue.toFixed(2)}5802BR5925BioVip Microsites Pro6009SAO PAULO62070503***6304`;
+      setCheckoutAsaasPix({
+        loading: false,
+        paymentId: mockPaymentId,
+        pixPayload: mockPixPayload,
+        status: 'PENDING',
+      });
+      showToast(
+        `⚡ PIX Asaas gerado: R$ ${adminDefinedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (Recorrência do plano: R$ ${recurringPlanValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)`
+      );
+    }
+  };
+
+  const checkCheckoutAsaasPixStatus = async (paymentId: string) => {
+    try {
+      const apiKey = (data.saasSettings?.asaas?.apiKey || '').trim();
+      const environment = data.saasSettings?.asaas?.environment || 'sandbox';
+      const currentPlanId = paymentConfirmPlan?.id || 'pro';
+      const chargedVal = getAdminAsaasCreationFee(currentPlanId);
+
+      if (paymentId.startsWith('pay_mock_')) {
+        await handleAsaasPaymentConfirmed({
+          clientName: landingOrderForm.clientName.trim() || 'Dra. Camila Mendes',
+          clientPhone: landingOrderForm.clientWhatsapp.trim() || '11999999999',
+          clientEmail: paymentClientEmail.trim() || 'cliente@exemplo.com',
+          selectedModel: landingOrderForm.selectedModel,
+          selectedPlan: landingOrderForm.selectedPlan,
+          instagramOrMaps: landingOrderForm.instagramOrMaps,
+          planId: currentPlanId,
+          paymentId,
+          chargedCreationFee: chargedVal,
+        });
+        return;
+      }
+
+      const res = await fetch(`/api/asaas/payment/${paymentId}/status?apiKey=${encodeURIComponent(apiKey)}&environment=${environment}`);
+      const result = await res.json();
+      if (result.isPaid) {
+        await handleAsaasPaymentConfirmed({
+          clientName: landingOrderForm.clientName.trim() || 'Dra. Camila Mendes',
+          clientPhone: landingOrderForm.clientWhatsapp.trim() || '11999999999',
+          clientEmail: paymentClientEmail.trim() || 'cliente@exemplo.com',
+          selectedModel: landingOrderForm.selectedModel,
+          selectedPlan: landingOrderForm.selectedPlan,
+          instagramOrMaps: landingOrderForm.instagramOrMaps,
+          planId: currentPlanId,
+          paymentId,
+          chargedCreationFee: chargedVal,
+        });
+      } else {
+        showToast(`ℹ️ Status Asaas: ${result.status} (Aguardando compensação)`);
+      }
+    } catch {
+      showToast('⚠️ Erro ao consultar status no Asaas.');
+    }
+  };
+
+  const toggleSiteConstructionMode = async (siteId: string) => {
+    const target = savedSites.find(s => s.id === siteId);
+    if (!target) return;
+    const willBeUnderConstruction = !isSiteUnderConstruction(target);
+    const updated = savedSites.map(s => {
+      if (s.id !== siteId) return s;
+      return {
+        ...s,
+        isUnderConstruction: willBeUnderConstruction,
+        underConstruction: willBeUnderConstruction,
+        lastUpdated: new Date().toLocaleDateString('pt-BR'),
+      };
+    });
+    setSavedSites(updated);
+    persistSavedSitesToStorage(updated);
+    const updatedTarget = updated.find(s => s.id === siteId);
+    if (updatedTarget) syncSiteToFirestore(updatedTarget);
+
+    showToast(
+      willBeUnderConstruction
+        ? `🚧 Microsite "${target.clientName}" marcado como "Em Construção". O visitante verá a tela exigindo as informações.`
+        : `🎉 Microsite "${target.clientName}" PUBLICADO e LIBERADO com sucesso!`
+    );
+  };
+
   const toggleSiteLandingModel = (siteId: string) => {
     let toggledSite: SavedMicrosite | null = null;
     const updated = savedSites.map(s => {
       if (s.id !== siteId) return s;
-      const nextVal = !Boolean(s.isLandingModel);
+      const nextVal = !isModelMicrosite(s);
       toggledSite = { ...s, isLandingModel: nextVal };
       return toggledSite;
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     if (toggledSite) {
       syncSiteToFirestore(toggledSite);
       if ((toggledSite as SavedMicrosite).isLandingModel) {
-        showToast(`⭐ "${(toggledSite as SavedMicrosite).clientName}" adicionado ao Carrossel de Modelos da Landing Page!`);
+        showToast(`⭐ "${(toggledSite as SavedMicrosite).clientName}" marcado como MODELO (excluído dos cálculos de faturamento)!`);
       } else {
-        showToast(`📤 "${(toggledSite as SavedMicrosite).clientName}" removido do Carrossel da Landing Page.`);
+        showToast(`💰 "${(toggledSite as SavedMicrosite).clientName}" definido como Cliente Faturável (incluído nos cálculos de faturamento).`);
       }
     }
   };
@@ -5154,7 +6550,7 @@ export default function App() {
       return targetSite;
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     if (targetSite) {
       const t = targetSite as SavedMicrosite;
       syncSiteToFirestore(t);
@@ -5185,7 +6581,7 @@ export default function App() {
       return targetSite;
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     if (targetSite) {
       const t = targetSite as SavedMicrosite;
       syncSiteToFirestore(t);
@@ -5222,7 +6618,7 @@ export default function App() {
       };
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
     showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Link reativado, edições liberadas e vencimento estendido para ${formatDueDateBr(target?.dueDate || '')}.`);
@@ -5244,13 +6640,14 @@ export default function App() {
       return { ...s, monthlyFee: newFee, maintenancePlan: autoPlan };
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
     showToast(`💰 Taxa de manutenção de "${target?.clientName}" atualizada para R$ ${newFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês!`);
   };
 
   const updateSiteMaintenancePlan = (siteId: string, planId: MaintenancePlanId) => {
+    syncMaintenancePlansFromConfig(landingConfig);
     const plan = MAINTENANCE_PLANS[planId];
     if (!plan) return;
     const updated = savedSites.map(s => {
@@ -5262,10 +6659,36 @@ export default function App() {
       };
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     const target = updated.find(s => s.id === siteId);
     if (target) syncSiteToFirestore(target);
     showToast(`🛠️ Plano de "${target?.clientName}" alterado para ${plan.name} (R$ ${plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)!`);
+  };
+
+  const applyConfiguredPlanPricesToExistingClients = () => {
+    syncMaintenancePlansFromConfig(landingConfig);
+    let updatedCount = 0;
+    const updated = savedSites.map(s => {
+      if (isModelMicrosite(s)) return s;
+      const planKey: MaintenancePlanId =
+        s.maintenancePlan ||
+        (s.monthlyFee >= 75 ? 'vip_unlimited' : s.monthlyFee >= 45 ? 'pro_4' : 'basic_1');
+      const plan = MAINTENANCE_PLANS[planKey] || MAINTENANCE_PLANS.pro_4;
+      if (s.monthlyFee !== plan.price || s.maintenancePlan !== planKey) {
+        updatedCount++;
+        const nextSite = { ...s, maintenancePlan: planKey, monthlyFee: plan.price };
+        syncSiteToFirestore(nextSite);
+        return nextSite;
+      }
+      return s;
+    });
+    setSavedSites(updated);
+    persistSavedSitesToStorage(updated);
+    showToast(
+      updatedCount > 0
+        ? `✅ Novos valores de recorrência e limites de alterações aplicados em ${updatedCount} cliente(s)!`
+        : `✅ Todos os clientes já estão sincronizados com os valores e limites atuais dos planos.`
+    );
   };
 
   const toggleSiteFirstMonth = (siteId: string) => {
@@ -5281,7 +6704,7 @@ export default function App() {
       return targetSite;
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     if (targetSite) {
       syncSiteToFirestore(targetSite);
       if ((targetSite as SavedMicrosite).isFirstMonth) {
@@ -5312,7 +6735,7 @@ export default function App() {
       return targetSite;
     });
     setSavedSites(updated);
-    try { localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated)); } catch {}
+    persistSavedSitesToStorage(updated);
     if (targetSite) {
       syncSiteToFirestore(targetSite);
       const billing = getSiteBillingSummary(targetSite);
@@ -5336,8 +6759,8 @@ export default function App() {
     setSavedSites(filtered);
     if (editingSiteId === siteId) setEditingSiteId(null);
     setDeleteModalSite(null);
+    persistSavedSitesToStorage(filtered);
     try {
-      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(filtered));
       const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
       const prevDeleted: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
       if (!prevDeleted.includes(siteId)) {
@@ -5452,7 +6875,7 @@ export default function App() {
       .replace('{servico}', srv)
       .replace('{data}', bookingForm.date ? `${bookingForm.date} às ${bookingForm.time}` : 'esta semana');
     
-    return `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(msg)}`;
   };
 
   // Updaters
@@ -5713,7 +7136,7 @@ export default function App() {
   const buildQuizWhatsAppLink = () => {
     // Sanitização estrita do telefone: apenas dígitos numéricos (sem traços, parênteses ou espaços)
     const rawPhone = data.profile?.whatsapp || '';
-    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const cleanPhone = formatWhatsAppPhone(rawPhone);
 
     // Montagem da mensagem estruturada como string limpa
     const profileName = (data.profile?.name || '').trim();
@@ -7275,13 +8698,13 @@ export default function App() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${siteData.seo?.metaTitle || `${siteData.profile.name} - ${siteData.profile.title}`}</title>
-  <meta name="description" content="${siteData.seo?.metaDescription || siteData.profile.tagline || ''}">
-  <meta name="keywords" content="${siteData.seo?.keywords || ''}">
+  <title>${escapeHtmlAttr(siteData.seo?.metaTitle || `${siteData.profile.name} - ${siteData.profile.title}`)}</title>
+  <meta name="description" content="${escapeHtmlAttr(siteData.seo?.metaDescription || siteData.profile.tagline || '')}">
+  <meta name="keywords" content="${escapeHtmlAttr(siteData.seo?.keywords || '')}">
   <!-- OpenGraph Meta Tags para Card do WhatsApp & Redes Sociais -->
-  <meta property="og:title" content="${siteData.seo?.metaTitle || siteData.profile.name}">
-  <meta property="og:description" content="${siteData.seo?.metaDescription || siteData.profile.tagline}">
-  <meta property="og:image" content="${siteData.seo?.ogImageUrl || siteData.profile.avatarUrl}">
+  <meta property="og:title" content="${escapeHtmlAttr(siteData.seo?.metaTitle || siteData.profile.name)}">
+  <meta property="og:description" content="${escapeHtmlAttr(siteData.seo?.metaDescription || siteData.profile.tagline)}">
+  <meta property="og:image" content="${escapeHtmlAttr(siteData.seo?.ogImageUrl || siteData.profile.avatarUrl)}">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   ${siteData.conversion?.metaPixelId ? `
@@ -7369,7 +8792,7 @@ export default function App() {
     }` : ''}
     .announcement {
       background: ${mc.announcement?.bgColor || theme.accent};
-      color: ${mc.announcement?.textColor || '#000'};
+      color: ${mc.announcement?.textColor || getSafeContrastText(mc.announcement?.bgColor || theme.accent, '#0a0a0c', '#ffffff')};
       font-size: 11px;
       font-weight: 700;
       text-align: center;
@@ -7471,7 +8894,7 @@ export default function App() {
     .cta-card {
       background: ${mc.actionCards?.bgColor || theme.cardBg};
       color: ${mc.actionCards?.titleColor || theme.cardText};
-      border: 1px solid ${data.styling.metallicBorders ? theme.cardBorder : 'transparent'};
+      border: none;
       border-radius: ${data.styling.borderRadius}px;
       padding: 16px 18px;
       display: flex;
@@ -7479,7 +8902,7 @@ export default function App() {
       justify-content: space-between;
       text-decoration: none;
       margin-bottom: 12px;
-      box-shadow: ${theme.pillShadow};
+      box-shadow: ${theme.pillShadow}, 0 0 14px -3px color-mix(in srgb, ${theme.accent} 28%, transparent);
       position: relative;
       overflow: hidden;
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
@@ -7492,23 +8915,25 @@ export default function App() {
       inset: 0;
       border-radius: inherit;
       padding: 1px;
-      background: linear-gradient(135deg, ${theme.accent} 0%, rgba(255, 255, 255, 0.14) 50%, color-mix(in srgb, ${theme.accent} 40%, transparent) 100%);
+      background: linear-gradient(135deg, color-mix(in srgb, ${theme.accent} 92%, #ffffff 8%) 0%, ${theme.accent} 30%, color-mix(in srgb, ${theme.accent} 48%, rgba(255, 255, 255, 0.32)) 62%, color-mix(in srgb, ${theme.accent} 88%, transparent) 100%);
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       mask-composite: exclude;
       pointer-events: none;
-      opacity: 0.72;
-      transition: opacity 0.35s ease;
-      z-index: 2;
+      opacity: 0.96;
+      filter: drop-shadow(0 0 5px color-mix(in srgb, ${theme.accent} 42%, transparent));
+      transition: opacity 0.35s ease, filter 0.35s ease;
+      z-index: 5;
     }
     .cta-card:hover::before {
       opacity: 1;
+      filter: brightness(1.15) drop-shadow(0 0 8px color-mix(in srgb, ${theme.accent} 68%, transparent));
     }
     .cta-card:hover {
       animation-play-state: paused;
       transform: scale(1.035) translateY(-3px) !important;
-      box-shadow: 0 18px 38px -6px rgba(0, 0, 0, 0.58), 0 8px 18px -4px rgba(0, 0, 0, 0.36), 0 0 24px 2px color-mix(in srgb, ${theme.accent} 22%, transparent), 0 0 0 1px rgba(255, 255, 255, 0.16);
+      box-shadow: 0 18px 38px -6px rgba(0, 0, 0, 0.58), 0 8px 18px -4px rgba(0, 0, 0, 0.36), 0 0 26px 2px color-mix(in srgb, ${theme.accent} 32%, transparent), 0 0 0 1px color-mix(in srgb, ${theme.accent} 45%, rgba(255, 255, 255, 0.2));
     }
     .cta-card:active {
       animation-play-state: paused;
@@ -7526,7 +8951,7 @@ export default function App() {
       padding: 2px 6px;
       border-radius: 999px;
       background: ${theme.accent};
-      color: #000;
+      color: ${getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};
       text-transform: uppercase;
     }
     @keyframes ctaIdlePulse {
@@ -7767,7 +9192,7 @@ export default function App() {
       position: relative;
       border-radius: ${Math.round(data.styling.borderRadius / 1.3)}px;
       border: 1px solid ${theme.socialBorder};
-      background: ${mc.services?.bgColor || (data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : theme.socialBg)};
+      background: ${mc.services?.bgColor || (getLuminance(theme.bg) > 0.6 ? '#ffffff' : (data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : theme.socialBg))};
       overflow: hidden;
       transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform;
@@ -7784,7 +9209,7 @@ export default function App() {
       text-transform: uppercase;
       letter-spacing: 0.8px;
       background: ${theme.accent};
-      color: #000;
+      color: ${getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};
     }
     .service-cta {
       display: inline-flex;
@@ -7797,7 +9222,7 @@ export default function App() {
       font-weight: 800;
       text-decoration: none;
       background: ${theme.accent};
-      color: #000;
+      color: ${getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};
       transition: transform 0.2s ease;
     }
     .service-cta:hover { transform: scale(1.05); }
@@ -7890,7 +9315,7 @@ export default function App() {
     </div>
 
     <div class="social-bar">
-      ${data.profile.whatsapp ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="WhatsApp">${WHATSAPP_SVG_STRING}</a>` : ''}
+      ${data.profile.whatsapp ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="WhatsApp">${WHATSAPP_SVG_STRING}</a>` : ''}
       ${data.profile.instagram ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://instagram.com/${data.profile.instagram}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Instagram">${INSTAGRAM_SVG_STRING}</a>` : ''}
       <a href="${options?.disableLinks ? 'javascript:void(0)' : '#booking'}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ''} title="Agenda">${CALENDAR_SVG_STRING}</a>
     </div>
@@ -7912,27 +9337,28 @@ export default function App() {
 
     <div class="actions">
       ${data.qualifierFunnel?.enabled ? `
-      <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá ${data.profile.name}! Quero realizar a Triagem Estratégica / Avaliação VIP.`)}`}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} class="cta-card ${data.qualifierFunnel.animation && data.qualifierFunnel.animation !== 'none' ? `anim-${data.qualifierFunnel.animation}` : ''}" style="background: ${mc.qualifierFunnel?.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`}; color: ${mc.qualifierFunnel?.titleColor || '#000000'}; border-color: ${theme.accent};">
+      <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(`Olá ${data.profile.name}! Quero realizar a Triagem Estratégica / Avaliação VIP.`)}`}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} class="cta-card ${data.qualifierFunnel.animation && data.qualifierFunnel.animation !== 'none' ? `anim-${data.qualifierFunnel.animation}` : ''}" style="background: ${mc.qualifierFunnel?.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`}; color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')}; border-color: ${theme.accent};">
         <div class="cta-left">
-          <div class="cta-icon" style="background: rgba(0,0,0,0.14); color: ${mc.qualifierFunnel?.titleColor || '#000000'};">⚡</div>
+          <div class="cta-icon" style="background: rgba(0,0,0,0.14); color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};">⚡</div>
           <div>
-            <div class="cta-title" style="color: ${mc.qualifierFunnel?.titleColor || '#000000'};">${data.qualifierFunnel.triggerButtonLabel}</div>
-            <div class="cta-sub" style="color: ${mc.qualifierFunnel?.textColor || 'rgba(0,0,0,0.78)'};">${data.qualifierFunnel.triggerButtonSubtitle}</div>
+            <div class="cta-title" style="color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};">${data.qualifierFunnel.triggerButtonLabel}</div>
+            <div class="cta-sub" style="color: ${mc.qualifierFunnel?.textColor || (getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') === '#ffffff' ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.78)')};">${data.qualifierFunnel.triggerButtonSubtitle}</div>
           </div>
         </div>
-        <div style="color: ${mc.qualifierFunnel?.titleColor || '#000000'}; font-size: 16px;">›</div>
+        <div style="color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')}; font-size: 16px;">›</div>
       </a>` : ''}
       ${data.actionCards.map(c => {
         const animClass = c.animation && c.animation !== 'none' ? `anim-${c.animation}` : '';
         const rawHref = c.linkType === 'whatsapp'
-          ? `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}`
+          ? `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}`
           : (c.url || '#');
         const href = options?.disableLinks ? 'javascript:void(0)' : rawHref;
         const targetAttr = (options?.disableLinks || !c.openInNewTab || href.startsWith('#') || href.startsWith('javascript:')) ? (options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : '') : 'target="_blank" rel="noopener noreferrer"';
         const cardOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
         let inlineStyle = '';
         if (c.variant === 'accent') {
-          inlineStyle = `background: ${theme.accent}; color: #000000; border-color: ${theme.accent};`;
+          const accentTextColor = c.customText || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff');
+          inlineStyle = `background: ${theme.accent}; color: ${accentTextColor}; border-color: ${theme.accent};`;
         } else if (c.variant === 'outline') {
           inlineStyle = `background: rgba(255,255,255,0.04); color: ${theme.textMain}; border: 1.5px solid ${theme.accent};`;
         } else if (c.variant === 'custom') {
@@ -7945,13 +9371,21 @@ export default function App() {
         }
         const resolvedTitleColor =
           c.customTitleColor ||
-          (c.variant === 'custom' ? c.customText : '') ||
+          (c.variant === 'custom' || c.variant === 'accent' ? c.customText : '') ||
           mc.actionCards?.titleColor ||
-          (c.bgImage ? '#ffffff' : c.variant === 'accent' ? '#000000' : c.variant === 'outline' ? theme.textMain : theme.cardText);
+          (c.bgImage ? '#ffffff' : c.variant === 'accent' ? getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') : c.variant === 'outline' ? theme.textMain : theme.cardText);
         const resolvedSubColor =
           c.customSubtitleColor ||
           mc.actionCards?.textColor ||
-          (c.bgImage ? 'rgba(255,255,255,0.85)' : c.variant === 'accent' ? 'rgba(0,0,0,0.78)' : c.variant === 'outline' ? theme.textMuted : c.variant === 'custom' && c.customText ? `${c.customText}cc` : theme.cardSubtext);
+          (c.bgImage
+            ? 'rgba(255,255,255,0.85)'
+            : c.variant === 'accent'
+            ? (getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') === '#ffffff' ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.78)')
+            : c.variant === 'outline'
+            ? theme.textMuted
+            : c.variant === 'custom' && c.customText
+            ? `${c.customText}cc`
+            : theme.cardSubtext);
 
         const hasSideImg = c.imagePosition && c.imagePosition !== 'none' && c.cardImage;
         const isImgLeft = c.imagePosition === 'left';
@@ -7976,6 +9410,8 @@ export default function App() {
           ? `<svg style="width:20px;height:20px;display:inline-block;vertical-align:middle;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`
           : CALENDAR_SVG_STRING;
 
+        const ctaBtnBg = getLuminance(resolvedTitleColor) > 0.5 ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.82)';
+        const ctaBtnBorder = getLuminance(resolvedTitleColor) > 0.5 ? 'border: 1px solid rgba(255,255,255,0.32);' : '';
         if (hasSideImg) {
           return `
       <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle} ${c.imageFitStyle === 'popout' ? 'overflow: visible; margin-top: 18px;' : ''} flex-direction: ${isImgLeft ? 'row-reverse' : 'row'};" onclick="${cardOnclick}">
@@ -7983,11 +9419,12 @@ export default function App() {
         <div style="flex: 1; text-align: ${isImgLeft ? 'right' : 'left'}; padding-${isImgLeft ? 'left' : 'right'}: 12px;">
           <div class="cta-title" style="font-size: 13.5px; color: ${resolvedTitleColor};">${c.title}</div>
           <div class="cta-sub" style="margin-top: 4px; color: ${resolvedSubColor};">${c.subtitle}</div>
-          ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: rgba(0,0,0,0.82); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
+          ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: ${ctaBtnBg}; ${ctaBtnBorder} color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
         </div>
         <img src="${c.cardImage}" alt="${c.title}" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" />
       </a>`;
         }
+
         return `
       <a href="${href}" ${targetAttr} class="cta-card ${animClass}" style="${inlineStyle}" onclick="${cardOnclick}">
         ${c.badgeText ? `<span class="cta-badge">${c.badgeText}</span>` : ''}
@@ -7996,7 +9433,7 @@ export default function App() {
           <div>
             <div class="cta-title" style="color: ${resolvedTitleColor};">${c.title}</div>
             <div class="cta-sub" style="color: ${resolvedSubColor};">${c.subtitle}</div>
-            ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 3px 8px; border-radius: 5px; background: rgba(0,0,0,0.8); color: #fff; font-size: 9px; font-weight: 800; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
+            ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 3px 8px; border-radius: 5px; background: ${ctaBtnBg}; ${ctaBtnBorder} color: #fff; font-size: 9px; font-weight: 800; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
           </div>
         </div>
         <div style="color: ${resolvedTitleColor}; opacity: 0.7; font-size: 16px;">›</div>
@@ -8094,7 +9531,7 @@ export default function App() {
         <div>
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             <div class="cta-title" style="color: ${mc.locationCard?.titleColor || theme.textMain};">${data.locationCard.headline}</div>
-            ${data.locationCard.showHours !== false && data.locationCard.openStatus ? `<span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:rgba(16,185,129,0.18); color:#10b981; border:1px solid rgba(16,185,129,0.35);">● ${data.locationCard.openStatus}</span>` : ''}
+            ${data.locationCard.showHours !== false && data.locationCard.openStatus ? `<span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(5,150,105,0.12)' : 'rgba(16,185,129,0.18)'}; color:${getLuminance(theme.bg) > 0.6 ? '#047857' : '#10b981'}; border:1px solid ${getLuminance(theme.bg) > 0.6 ? 'rgba(5,150,105,0.3)' : 'rgba(16,185,129,0.35)'};">● ${data.locationCard.openStatus}</span>` : ''}
           </div>
           <div class="cta-sub" style="color: ${mc.locationCard?.textColor || theme.textMuted};">${data.locationCard.address}</div>
           ${data.locationCard.showHours !== false && data.locationCard.hours ? `<div style="font-size:10px; margin-top:3px; opacity:0.9; font-weight:600; color: ${mc.locationCard?.textColor || theme.textMain};">🕒 ${data.locationCard.hours}</div>` : ''}
@@ -8115,7 +9552,7 @@ export default function App() {
           const waMsg = encodeURIComponent(`Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`);
           const rawSrvHref = srv.actionType === 'link' && srv.customUrl
             ? srv.customUrl
-            : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${waMsg}`;
+            : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${waMsg}`;
           const srvHref = options?.disableLinks ? 'javascript:void(0)' : rawSrvHref;
           const srvTargetAttr = options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"';
           const srvOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
@@ -8259,7 +9696,7 @@ export default function App() {
   </div>
 
   ${data.profile.whatsapp ? `
-  <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}`}" class="whatsapp-float" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Falar no WhatsApp" onclick="${options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');"}">
+  <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}`}" class="whatsapp-float" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Falar no WhatsApp" onclick="${options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');"}">
     <svg style="width:28px;height:28px;display:inline-block;vertical-align:middle;fill:#ffffff;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z"/><path d="M12 1c-6.075 0-11 4.925-11 11 0 2.102.589 4.066 1.606 5.744l-1.606 5.256 5.438-1.57c1.613.918 3.479 1.442 5.562 1.442 6.075 0 11-4.925 11-11s-4.925-11-11-11zm0 19.825c-1.875 0-3.626-.543-5.111-1.479l-.366-.23-3.232.933.951-3.111-.252-.387c-1.047-1.606-1.615-3.501-1.615-5.551 0-5.132 4.173-9.305 9.305-9.305 5.132 0 9.305 4.173 9.305 9.305 0 5.132-4.173 9.305-9.305 9.305z"/></svg>
   </a>` : ''}
 
@@ -8623,6 +10060,13 @@ OPÇÃO 3: Subdomínio Dedicado (ex: ${slug}.seusite.com.br)
           'microsite';
       }
 
+      const isTargetUnderConstruction =
+        target && 'subdomain' in target
+          ? isSiteUnderConstruction(target)
+          : currentEditingSite
+          ? isSiteUnderConstruction(currentEditingSite)
+          : false;
+
       const isTargetSuspended =
         target && 'subdomain' in target
           ? isSiteSuspendedStatus(target)
@@ -8630,7 +10074,9 @@ OPÇÃO 3: Subdomínio Dedicado (ex: ${slug}.seusite.com.br)
           ? isSiteSuspendedStatus(currentEditingSite)
           : false;
 
-      const htmlContent = isTargetSuspended
+      const htmlContent = isTargetUnderConstruction
+        ? getUnderConstructionPageHtml(target && 'subdomain' in target ? target : (currentEditingSite || { clientName, data: siteData }), landingConfig)
+        : isTargetSuspended
         ? getSuspendedPageHtml(target && 'subdomain' in target ? target : (currentEditingSite || { clientName, data: siteData }))
         : generateExportCode(siteData);
       const vercelJsonContent = generateVercelJson(slug);
@@ -8760,7 +10206,9 @@ COMO PUBLICAR NO SERVIDOR:
         const slug = site.subdomain || site.clientName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const siteFolder = serverRoot.folder(slug);
         if (siteFolder) {
-          const siteHtml = isSiteSuspendedStatus(site)
+          const siteHtml = isSiteUnderConstruction(site)
+            ? getUnderConstructionPageHtml(site, landingConfig)
+            : isSiteSuspendedStatus(site)
             ? getSuspendedPageHtml(site)
             : generateExportCode(site.data);
           siteFolder.file('index.html', siteHtml);
@@ -8805,7 +10253,7 @@ COMO PUBLICAR NO SERVIDOR:
   // =========================================================================
   const buildRealNicheMicrositeData = (
     nicheKitKey: string,
-    customMeta: {
+    customMeta?: Partial<{
       whatsappPhone: string;
       instagramHandle: string;
       openHours: string;
@@ -8815,10 +10263,33 @@ COMO PUBLICAR NO SERVIDOR:
       aboutParagraph: string;
       aboutClosing: string;
       faqs: Array<{ id: string; question: string; answer: string }>;
-    }
+    }>
   ): typeof INITIAL_DATA => {
     const kit = NICHE_KITS[nicheKitKey] || NICHE_KITS['Jurídico & Executivo'];
     const themeObj = THEMES[kit.defaultTheme] || THEMES.navyLaw;
+
+    const safeMeta = {
+      whatsappPhone: customMeta?.whatsappPhone || landingConfig.agencyWhatsapp || '5511999999999',
+      instagramHandle: customMeta?.instagramHandle || 'biovip.oficial',
+      openHours: customMeta?.openHours || 'Seg a Sex · 09:00 às 18:00',
+      openStatus: customMeta?.openStatus || 'ATENDIMENTO ATIVO',
+      galleryPhotos: customMeta?.galleryPhotos || [
+        'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700',
+        'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700',
+      ],
+      processSteps: customMeta?.processSteps || [
+        { id: 'step-1', number: '01', title: 'Primeiro Contato', description: 'Triagem direta pelo WhatsApp' },
+        { id: 'step-2', number: '02', title: 'Avaliação Individual', description: 'Diagnóstico e plano sob medida' },
+        { id: 'step-3', number: '03', title: 'Execução & Acompanhamento', description: 'Entrega com excelência' },
+      ],
+      aboutParagraph: customMeta?.aboutParagraph || 'Atendimento de alto padrão focado em resultados.',
+      aboutClosing: customMeta?.aboutClosing || 'Agende seu horário com exclusividade.',
+      faqs: customMeta?.faqs || [
+        { id: 'faq-1', question: 'Como agendar?', answer: 'Toque no botão do WhatsApp e fale diretamente conosco.' },
+        { id: 'faq-2', question: 'Formas de pagamento?', answer: 'Pix, cartão de crédito e débito.' },
+      ],
+    };
 
     return {
       ...INITIAL_DATA,
@@ -8827,6 +10298,7 @@ COMO PUBLICAR NO SERVIDOR:
         ...INITIAL_DATA.customColors,
         enabled: false,
       },
+      moduleColors: JSON.parse(JSON.stringify(NICHE_DEMO_MODULE_COLORS[nicheKitKey] || {})),
       styling: {
         ...INITIAL_DATA.styling,
         fontFamily: themeObj.fontHeadline,
@@ -8856,8 +10328,8 @@ COMO PUBLICAR NO SERVIDOR:
         location: kit.profile.location,
         avatarUrl: kit.profile.avatarUrl,
         aboutPhotoUrl: kit.profile.aboutPhotoUrl,
-        whatsapp: customMeta.whatsappPhone,
-        instagram: customMeta.instagramHandle,
+        whatsapp: safeMeta.whatsappPhone,
+        instagram: safeMeta.instagramHandle,
         mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(kit.profile.location)}`,
       },
       metrics: {
@@ -8888,7 +10360,7 @@ COMO PUBLICAR NO SERVIDOR:
         enabled: true,
         headline: 'Como funciona o atendimento?',
         subtitle: 'Jornada simples, ágil e transparente em 3 etapas',
-        steps: customMeta.processSteps,
+        steps: safeMeta.processSteps,
       },
       studentGrid: {
         enabled: true,
@@ -8898,7 +10370,7 @@ COMO PUBLICAR NO SERVIDOR:
         layout: 'grid3',
         aspectRatio: 'square',
         enableLightbox: true,
-        photos: customMeta.galleryPhotos,
+        photos: safeMeta.galleryPhotos,
       },
       locationCard: {
         enabled: true,
@@ -8906,20 +10378,20 @@ COMO PUBLICAR NO SERVIDOR:
         address: kit.profile.location,
         buttonLabel: 'Abrir Rota no Google Maps',
         mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(kit.profile.location)}`,
-        hours: customMeta.openHours,
-        openStatus: customMeta.openStatus,
+        hours: safeMeta.openHours,
+        openStatus: safeMeta.openStatus,
         showHours: true,
       },
       aboutMe: {
         enabled: true,
         headline: `Sobre ${kit.profile.name}`,
-        paragraph: customMeta.aboutParagraph,
-        closingPhrase: customMeta.aboutClosing,
+        paragraph: safeMeta.aboutParagraph,
+        closingPhrase: safeMeta.aboutClosing,
       },
       faq: {
         enabled: true,
         headline: 'Perguntas Frequentes',
-        items: customMeta.faqs,
+        items: safeMeta.faqs,
       },
       seo: {
         metaTitle: `${kit.profile.name} — ${kit.profile.title}`,
@@ -9441,7 +10913,7 @@ COMO PUBLICAR NO SERVIDOR:
       setData(JSON.parse(JSON.stringify(existingSaved.data)));
       setEditingSiteId(existingSaved.id);
       setActiveTab('styling');
-      openCreatorSubdomain();
+      openCreatorSubdomain(true);
       showToast(`✏️ Modelo "${existingSaved.clientName}" aberto para edição no Painel!`);
       return;
     }
@@ -9450,7 +10922,7 @@ COMO PUBLICAR NO SERVIDOR:
       setData(JSON.parse(JSON.stringify(fallbackModel.realSiteData)));
       setEditingSiteId(null);
       setActiveTab('styling');
-      openCreatorSubdomain();
+      openCreatorSubdomain(true);
       showToast(`✏️ Modelo "${fallbackModel.personaName}" carregado no Criador!`);
     }
   };
@@ -9540,33 +11012,48 @@ COMO PUBLICAR NO SERVIDOR:
   };
 
   const getPlanCheckoutDetails = (planId: 'basic' | 'pro' | 'vip') => {
+    syncMaintenancePlansFromConfig(landingConfig);
+    const fmt = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const creationPriceStr =
+      planId === 'basic'
+        ? landingConfig.priceEssential || 'R$ 79,90'
+        : planId === 'vip'
+        ? landingConfig.priceScale || 'R$ 79,90'
+        : landingConfig.pricePro || 'R$ 79,90';
+
     if (planId === 'basic') {
+      const p = MAINTENANCE_PLANS.basic_1;
+      const updLabel = formatPlanUpdatesLabel(p.maxUpdates, false);
       return {
         id: 'basic' as const,
         name: 'Plano Básico',
-        price: landingConfig.priceEssential || 'R$ 79,90',
+        price: creationPriceStr,
         periodLabel: '/1º mês (criação)',
-        maintenanceInfo: 'Manutenção a partir do 2º mês: R$ 29,90/mês (1 alteração inclusa)',
-        fullPlanLabel: 'Plano Básico (R$ 29,90/mês · 1 alteração) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
+        maintenanceInfo: `Manutenção a partir do 2º mês: R$ ${fmt(p.price)}/mês (${updLabel})`,
+        fullPlanLabel: `Plano Básico (R$ ${fmt(p.price)}/mês · ${updLabel}) — Criação Promocional ${creationPriceStr} (1º mês s/ mensalidade)`,
       };
     }
     if (planId === 'vip') {
+      const p = MAINTENANCE_PLANS.vip_unlimited;
+      const updLabel = formatPlanUpdatesLabel(p.maxUpdates, false);
       return {
         id: 'vip' as const,
         name: 'Plano VIP',
-        price: landingConfig.priceScale || 'R$ 79,90',
+        price: creationPriceStr,
         periodLabel: '/1º mês (criação)',
-        maintenanceInfo: 'Manutenção a partir do 2º mês: R$ 79,90/mês (Alterações ilimitadas)',
-        fullPlanLabel: 'Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
+        maintenanceInfo: `Manutenção a partir do 2º mês: R$ ${fmt(p.price)}/mês (${updLabel})`,
+        fullPlanLabel: `Plano VIP (R$ ${fmt(p.price)}/mês · ${updLabel}) — Criação Promocional ${creationPriceStr} (1º mês s/ mensalidade)`,
       };
     }
+    const p = MAINTENANCE_PLANS.pro_4;
+    const updLabel = formatPlanUpdatesLabel(p.maxUpdates, false);
     return {
       id: 'pro' as const,
       name: 'Plano Pro',
-      price: landingConfig.pricePro || 'R$ 79,90',
+      price: creationPriceStr,
       periodLabel: '/1º mês (criação)',
-      maintenanceInfo: 'Manutenção a partir do 2º mês: R$ 49,90/mês (4 alterações inclusas)',
-      fullPlanLabel: 'Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)',
+      maintenanceInfo: `Manutenção a partir do 2º mês: R$ ${fmt(p.price)}/mês (${updLabel})`,
+      fullPlanLabel: `Plano Pro (R$ ${fmt(p.price)}/mês · ${updLabel}) — Criação Promocional ${creationPriceStr} (1º mês s/ mensalidade)`,
     };
   };
 
@@ -9931,6 +11418,98 @@ COMO PUBLICAR NO SERVIDOR:
                 />
               </div>
             </div>
+
+            {/* Recorrência Mensal & Quantidade de Alterações por Plano */}
+            <div className="pt-2 border-t border-neutral-800/80 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-400 block">
+                  Recorrência Mensal & Quantidade de Alterações nos Planos
+                </span>
+                <button
+                  type="button"
+                  onClick={applyConfiguredPlanPricesToExistingClients}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold cursor-pointer transition"
+                >
+                  Aplicar aos Clientes Atuais
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Plano Básico */}
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                  <span className="text-[10px] font-bold uppercase text-emerald-300 block">01 · Plano Básico</span>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-0.5">Recorrência (R$/mês)</label>
+                    <input
+                      type="text"
+                      value={landingConfig.recurringBasic ?? '29,90'}
+                      onChange={(e) => updateLandingConfig('recurringBasic', e.target.value)}
+                      placeholder="29,90"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-emerald-300 font-mono font-bold focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-0.5">Qtd. Alterações/mês</label>
+                    <input
+                      type="text"
+                      value={landingConfig.updatesBasic ?? '1'}
+                      onChange={(e) => updateLandingConfig('updatesBasic', e.target.value)}
+                      placeholder="Ex: 1"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Plano Pro */}
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-amber-400/30 space-y-2">
+                  <span className="text-[10px] font-bold uppercase text-amber-300 block">02 · Plano Pro</span>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-0.5">Recorrência (R$/mês)</label>
+                    <input
+                      type="text"
+                      value={landingConfig.recurringPro ?? '49,90'}
+                      onChange={(e) => updateLandingConfig('recurringPro', e.target.value)}
+                      placeholder="49,90"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-emerald-300 font-mono font-bold focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-0.5">Qtd. Alterações/mês</label>
+                    <input
+                      type="text"
+                      value={landingConfig.updatesPro ?? '4'}
+                      onChange={(e) => updateLandingConfig('updatesPro', e.target.value)}
+                      placeholder="Ex: 4"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Plano VIP */}
+                <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                  <span className="text-[10px] font-bold uppercase text-amber-400 block">03 · Plano VIP</span>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-0.5">Recorrência (R$/mês)</label>
+                    <input
+                      type="text"
+                      value={landingConfig.recurringVip ?? '79,90'}
+                      onChange={(e) => updateLandingConfig('recurringVip', e.target.value)}
+                      placeholder="79,90"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-emerald-300 font-mono font-bold focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-neutral-400 block mb-0.5">Qtd. Alterações/mês</label>
+                    <input
+                      type="text"
+                      value={landingConfig.updatesVip ?? 'Ilimitadas'}
+                      onChange={(e) => updateLandingConfig('updatesVip', e.target.value)}
+                      placeholder="Ilimitadas ou nº"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-neutral-100 font-mono focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-2 flex-wrap">
@@ -9973,24 +11552,29 @@ COMO PUBLICAR NO SERVIDOR:
   // TELA CHEIA DE GESTÃO DE CLIENTES & ASSINATURAS SAAS (SEM BARRA E SEM PREVIEW)
   // =========================================================================
   const renderClientsFullscreenView = () => {
-    const totalContractedRevenue = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
-    const activeRevenue = savedSites.reduce((acc, s) => {
+    // Microsites marcados como Modelo (isModelMicrosite) NÃO entram nos cálculos de faturamento
+    const billableSites = savedSites.filter(s => !isModelMicrosite(s));
+    const modelSitesCount = savedSites.filter(s => isModelMicrosite(s)).length;
+
+    const totalContractedRevenue = billableSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
+    const activeRevenue = billableSites.reduce((acc, s) => {
       const days = getDaysUntilDue(s.dueDate);
-      return acc + (s.status === 'active' && days >= 0 ? (s.monthlyFee || 0) : 0);
+      return acc + (s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0 ? (s.monthlyFee || 0) : 0);
     }, 0);
     const goal = revenueGoal > 0 ? revenueGoal : 5000;
     const progressPercent = Math.min(100, Math.round((activeRevenue / goal) * 100));
 
-    const inDayCount = savedSites.filter(s => {
+    const constructionCount = savedSites.filter(s => isSiteUnderConstruction(s)).length;
+    const inDayCount = billableSites.filter(s => {
       const days = getDaysUntilDue(s.dueDate);
-      return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0;
+      return !isSiteUnderConstruction(s) && s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0;
     }).length;
-    const overdueCount = savedSites.filter(s => {
+    const overdueCount = billableSites.filter(s => {
       const days = getDaysUntilDue(s.dueDate);
-      return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days < 0;
+      return !isSiteUnderConstruction(s) && s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days < 0;
     }).length;
-    const suspendedCount = savedSites.filter(s => isSiteSuspendedStatus(s)).length;
-    const disabledCount = savedSites.filter(s => s.status === 'disabled').length;
+    const suspendedCount = billableSites.filter(s => isSiteSuspendedStatus(s)).length;
+    const disabledCount = billableSites.filter(s => s.status === 'disabled').length;
 
     const filteredSites = savedSites.filter(s => {
       if (clientsFilterTerm.trim()) {
@@ -10006,19 +11590,25 @@ COMO PUBLICAR NO SERVIDOR:
         }
       }
 
+      if (clientsStatusFilter === 'model') {
+        return isModelMicrosite(s);
+      }
+      if (clientsStatusFilter === 'construction') {
+        return isSiteUnderConstruction(s);
+      }
       if (clientsStatusFilter === 'active') {
         const days = getDaysUntilDue(s.dueDate);
-        return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0;
+        return !isModelMicrosite(s) && !isSiteUnderConstruction(s) && s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0;
       }
       if (clientsStatusFilter === 'overdue') {
         const days = getDaysUntilDue(s.dueDate);
-        return s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days < 0;
+        return !isModelMicrosite(s) && !isSiteUnderConstruction(s) && s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days < 0;
       }
       if (clientsStatusFilter === 'suspended') {
-        return isSiteSuspendedStatus(s);
+        return !isModelMicrosite(s) && isSiteSuspendedStatus(s);
       }
       if (clientsStatusFilter === 'disabled') {
-        return s.status === 'disabled';
+        return !isModelMicrosite(s) && s.status === 'disabled';
       }
       return true;
     });
@@ -10039,8 +11629,8 @@ COMO PUBLICAR NO SERVIDOR:
         {/* 1. DEDICATED FULLSCREEN TOP BAR (SEM A BARRA DO STUDIO E SEM OS MÓDULOS) */}
         <header className="w-full border-b border-white/[0.08] bg-[#09090b]/90 backdrop-blur-xl sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+            <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+              <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -10080,6 +11670,29 @@ COMO PUBLICAR NO SERVIDOR:
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
               <span>+ Novo Microsite</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSubdomainModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
+              title="Configurar Domínio Principal, Subdomínio do Criador, Preços e Checkout"
+            >
+              <Globe className="w-3.5 h-3.5 text-amber-400" />
+              <span>Configurar Domínio</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPublishSiteId(editingSiteId || savedSites[0]?.id || null);
+                setPublishModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 border border-neutral-800 transition cursor-pointer"
+              title="Configurar Domínio & Apontamento DNS de Clientes"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Domínio & DNS</span>
             </button>
 
             <button
@@ -10198,7 +11811,7 @@ COMO PUBLICAR NO SERVIDOR:
                   R$ {totalContractedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
                 <div className="text-[10px] text-neutral-400 mt-0.5">
-                  {savedSites.length} contratos ativos
+                  {billableSites.filter(s => s.status !== 'disabled').length} pagantes · {modelSitesCount} modelos isentos
                 </div>
               </div>
 
@@ -10371,6 +11984,164 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
             </div>
 
+            {/* Configuração do Valor Cobrado no Asaas vs Recorrência e Quantidade de Alterações do Plano Escolhido */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pt-2.5 border-t border-neutral-800/80 text-xs">
+              <div className="lg:col-span-4 flex flex-col justify-between bg-neutral-950/60 p-3 rounded-xl border border-neutral-800">
+                <div>
+                  <label className="text-[10px] text-amber-400 font-mono uppercase font-bold block mb-1.5">
+                    Valor Cobrado no Asaas (Taxa de Criação / Entrada R$)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={landingConfig.pricePro || 'R$ 79,90'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLandingConfig(prev => {
+                          const updated = {
+                            ...prev,
+                            priceEssential: val,
+                            pricePro: val,
+                            priceScale: val,
+                          };
+                          try {
+                            localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
+                          } catch {}
+                          return updated;
+                        });
+                      }}
+                      placeholder="R$ 79,90"
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-amber-400/50 text-amber-300 font-mono font-bold text-xs focus:outline-none focus:border-amber-300"
+                    />
+                  </div>
+                  <span className="text-[10px] text-neutral-400 block mt-1.5">
+                    Valor cobrado no checkout Asaas no ato da contratação.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={applyConfiguredPlanPricesToExistingClients}
+                  className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition"
+                  title="Atualizar a mensalidade dos clientes atuais de acordo com o novo valor de recorrência do plano de cada um"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Aplicar Novos Preços aos Clientes Atuais</span>
+                </button>
+              </div>
+
+              <div className="lg:col-span-8 bg-neutral-950/60 p-3 rounded-xl border border-neutral-800">
+                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                  <label className="text-[10px] text-emerald-400 font-mono uppercase font-bold block">
+                    Editar Planos: Valor da Recorrência Mensal (R$) & Quantidade de Alterações Oferecidas
+                  </label>
+                  <span className="text-[10px] text-neutral-400 font-mono">
+                    Reflete na Landing Page, Checkout Asaas e Painel
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {/* Plano Básico */}
+                  <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-bold text-emerald-300">🛠️ Plano Básico</span>
+                      <span className="text-[9.5px] font-mono text-neutral-400">
+                        {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, true)}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] text-neutral-400 block mb-0.5">Valor da Recorrência (R$/mês)</label>
+                      <div className="flex items-center gap-1 bg-neutral-900 rounded-lg border border-neutral-800 px-2 py-1 focus-within:border-emerald-400">
+                        <span className="text-[10px] text-neutral-500 font-mono">R$</span>
+                        <input
+                          type="text"
+                          value={landingConfig.recurringBasic ?? '29,90'}
+                          onChange={(e) => updateLandingConfig('recurringBasic', e.target.value)}
+                          placeholder="29,90"
+                          className="w-full bg-transparent text-emerald-400 font-mono font-bold text-xs focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] text-neutral-400 block mb-0.5">Qtd. de Alterações no Plano</label>
+                      <input
+                        type="text"
+                        value={landingConfig.updatesBasic ?? '1'}
+                        onChange={(e) => updateLandingConfig('updatesBasic', e.target.value)}
+                        placeholder="Ex: 1 ou Ilimitadas"
+                        className="w-full px-2 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 font-mono text-xs focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Plano Pro */}
+                  <div className="p-2.5 rounded-xl bg-neutral-950 border border-amber-400/40 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-bold text-amber-300">⚡ Plano Pro</span>
+                      <span className="text-[9.5px] font-mono text-amber-300/80">
+                        {formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, true)}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] text-neutral-400 block mb-0.5">Valor da Recorrência (R$/mês)</label>
+                      <div className="flex items-center gap-1 bg-neutral-900 rounded-lg border border-neutral-800 px-2 py-1 focus-within:border-emerald-400">
+                        <span className="text-[10px] text-neutral-500 font-mono">R$</span>
+                        <input
+                          type="text"
+                          value={landingConfig.recurringPro ?? '49,90'}
+                          onChange={(e) => updateLandingConfig('recurringPro', e.target.value)}
+                          placeholder="49,90"
+                          className="w-full bg-transparent text-emerald-400 font-mono font-bold text-xs focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] text-neutral-400 block mb-0.5">Qtd. de Alterações no Plano</label>
+                      <input
+                        type="text"
+                        value={landingConfig.updatesPro ?? '4'}
+                        onChange={(e) => updateLandingConfig('updatesPro', e.target.value)}
+                        placeholder="Ex: 4 ou Ilimitadas"
+                        className="w-full px-2 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 font-mono text-xs focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Plano VIP */}
+                  <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-bold text-amber-400">👑 Plano VIP</span>
+                      <span className="text-[9.5px] font-mono text-neutral-400">
+                        {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, true)}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] text-neutral-400 block mb-0.5">Valor da Recorrência (R$/mês)</label>
+                      <div className="flex items-center gap-1 bg-neutral-900 rounded-lg border border-neutral-800 px-2 py-1 focus-within:border-emerald-400">
+                        <span className="text-[10px] text-neutral-500 font-mono">R$</span>
+                        <input
+                          type="text"
+                          value={landingConfig.recurringVip ?? '79,90'}
+                          onChange={(e) => updateLandingConfig('recurringVip', e.target.value)}
+                          placeholder="79,90"
+                          className="w-full bg-transparent text-emerald-400 font-mono font-bold text-xs focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] text-neutral-400 block mb-0.5">Qtd. de Alterações no Plano</label>
+                      <input
+                        type="text"
+                        value={landingConfig.updatesVip ?? 'Ilimitadas'}
+                        onChange={(e) => updateLandingConfig('updatesVip', e.target.value)}
+                        placeholder="Ilimitadas ou nº"
+                        className="w-full px-2 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 font-mono text-xs focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {asaasTestResult && (
               <div
                 className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 ${
@@ -10418,6 +12189,8 @@ COMO PUBLICAR NO SERVIDOR:
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: 'all' as const, label: `Todos (${savedSites.length})` },
+                { id: 'model' as const, label: `⭐ Modelos (${modelSitesCount})` },
+                { id: 'construction' as const, label: `🚧 Em Construção (${constructionCount})` },
                 { id: 'active' as const, label: `🟢 Em Dia (${inDayCount})` },
                 { id: 'overdue' as const, label: `🔒 Atrasados D+3 (${overdueCount})` },
                 { id: 'suspended' as const, label: `🛑 Suspensos D+7 (${suspendedCount})` },
@@ -10467,8 +12240,10 @@ COMO PUBLICAR NO SERVIDOR:
                 const billing = getSiteBillingSummary(site);
                 const daysDiff = getDaysUntilDue(site.dueDate);
                 const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (site.daysOverdue || 0);
-                const isEditsBlocked = isSiteEditsLocked(site, daysOverdue);
-                const isSuspended = isSiteSuspendedStatus(site);
+                const isModel = isModelMicrosite(site);
+                const isUnderConst = isSiteUnderConstruction(site);
+                const isEditsBlocked = !isModel && isSiteEditsLocked(site, daysOverdue);
+                const isSuspended = !isModel && isSiteSuspendedStatus(site);
                 const clicks = site.whatsappClicks || 0;
                 const views = site.pageViews || 100;
                 const rate = ((clicks / views) * 100).toFixed(1);
@@ -10478,7 +12253,11 @@ COMO PUBLICAR NO SERVIDOR:
                   <div
                     key={site.id}
                     className={`rounded-2xl p-5 bg-neutral-900/90 border transition-all duration-200 shadow-xl flex flex-col justify-between space-y-4 ${
-                      isSuspended
+                      isModel
+                        ? 'border-amber-400/40 hover:border-amber-400 bg-neutral-900/95'
+                        : isUnderConst
+                        ? 'border-amber-400/60 hover:border-amber-400 bg-amber-950/10'
+                        : isSuspended
                         ? 'border-red-500/50 hover:border-red-400 bg-red-950/10'
                         : isEditsBlocked
                         ? 'border-orange-500/50 hover:border-orange-400 bg-orange-950/10'
@@ -10496,21 +12275,37 @@ COMO PUBLICAR NO SERVIDOR:
                             <span className="px-2 py-0.5 rounded-full text-[9.5px] font-medium bg-neutral-800 text-neutral-300 border border-neutral-700">
                               {site.nicheCategory}
                             </span>
+                            {isModel && (
+                              <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                <span>Modelo (Sem Faturamento)</span>
+                              </span>
+                            )}
                           </div>
-                          <a
-                            href={`https://${domain}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-mono text-amber-400/90 hover:text-amber-300 flex items-center gap-1 mt-1 group"
+                          <button
+                            type="button"
+                            onClick={() => openPublicMicrosite(site.subdomain)}
+                            className="text-xs font-mono text-amber-400/90 hover:text-amber-300 flex items-center gap-1 mt-1 group cursor-pointer text-left"
+                            title="Acessar o link do cliente"
                           >
                             <span>https://{domain}</span>
                             <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 transition" />
-                          </a>
+                          </button>
                         </div>
 
                         {/* Status Badge */}
                         <div className="shrink-0">
-                          {isSuspended ? (
+                          {isModel ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span>Modelo Vitrine (Isento)</span>
+                            </span>
+                          ) : isUnderConst ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 animate-pulse">
+                              <span className="w-2 h-2 rounded-full bg-amber-400" />
+                              <span>Em Construção {site.briefingStatus === 'submitted' ? '(Briefing Enviado)' : '(Aguardando Dados)'}</span>
+                            </span>
+                          ) : isSuspended ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
                               <AlertCircle className="w-3 h-3 text-red-400" />
                               <span>Suspenso D+7 ({daysOverdue}d)</span>
@@ -10533,26 +12328,65 @@ COMO PUBLICAR NO SERVIDOR:
                         </div>
                       </div>
 
+                      {/* Under Construction Notice Banner */}
+                      {isUnderConst && (
+                        <div className="p-3 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-base shrink-0">🚧</span>
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-bold text-amber-200 truncate">
+                                {site.briefingStatus === 'submitted' ? '✅ Cliente já enviou dados do briefing!' : '⏳ Aguardando cliente enviar informações'}
+                              </div>
+                              <div className="text-[10px] text-amber-400/80 truncate">
+                                Link público exibe página em construção com solicitação de envio.
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleSiteConstructionMode(site.id)}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-[11px] shrink-0 flex items-center gap-1 shadow transition cursor-pointer"
+                            title="Concluir a construção e colocar o microsite oficial no ar"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Publicar Site</span>
+                          </button>
+                        </div>
+                      )}
+
                       {/* Client Details Row */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
                         <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
                           <span className="text-[10px] text-neutral-400 block font-medium">Vencimento</span>
                           <span className="font-mono font-bold text-neutral-200 block mt-0.5">
-                            {formatDueDateBr(site.dueDate)}
+                            {isModel ? 'Isento' : formatDueDateBr(site.dueDate)}
                           </span>
-                          <span className={`text-[9.5px] block font-semibold ${daysOverdue > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                            {daysOverdue > 0 ? `${daysOverdue}d de atraso` : 'Em dia'}
+                          <span className={`text-[9.5px] block font-semibold ${isModel ? 'text-amber-400' : daysOverdue > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {isModel ? 'Site Modelo' : daysOverdue > 0 ? `${daysOverdue}d de atraso` : 'Em dia'}
                           </span>
                         </div>
 
                         <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
                           <span className="text-[10px] text-neutral-400 block font-medium">Fatura Atual</span>
-                          <span className="font-mono font-bold text-emerald-400 block mt-0.5">
-                            R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
-                          <span className="text-[9.5px] text-neutral-400 block truncate">
-                            {billing.isFirstMonth ? '1º Mês Criação' : `Manut. R$ ${site.monthlyFee.toFixed(2)}`}
-                          </span>
+                          {isModel ? (
+                            <>
+                              <span className="font-mono font-bold text-amber-300 block mt-0.5">
+                                R$ 0,00 (Modelo)
+                              </span>
+                              <span className="text-[9.5px] text-neutral-400 block truncate">
+                                Fora do faturamento
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="font-mono font-bold text-emerald-400 block mt-0.5">
+                                R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                              <span className="text-[9.5px] text-neutral-400 block truncate">
+                                {billing.isFirstMonth ? '1º Mês Criação' : `Manut. R$ ${site.monthlyFee.toFixed(2)}`}
+                              </span>
+                            </>
+                          )}
                         </div>
 
                         <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
@@ -10591,30 +12425,90 @@ COMO PUBLICAR NO SERVIDOR:
                           <span>Editar Microsite</span>
                         </button>
 
-                        {/* 2. RÉGUA DE COBRANÇA WHATSAPP */}
+                        {/* 2. BOTÃO PARA DEFINIR / REMOVER COMO MODELO (SEM FATURAMENTO) */}
                         <button
                           type="button"
-                          onClick={() => openPixBillingModal(site)}
-                          className="py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer transition"
-                          title="Abrir Régua de Cobrança WhatsApp (D-3, D-0, D+3, D+7) com wa.me"
+                          onClick={() => toggleSiteLandingModel(site.id)}
+                          className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 border cursor-pointer transition ${
+                            isModel
+                              ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border-amber-400/60 shadow-sm'
+                              : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-amber-300 border-neutral-700'
+                          }`}
+                          title={
+                            isModel
+                              ? 'Este microsite está marcado como MODELO e NÃO entra no cálculo de faturamento. Clique para tornar cliente faturável.'
+                              : 'Marcar este microsite como MODELO (não será considerado nos cálculos de faturamento)'
+                          }
                         >
-                          <MessageCircle className="w-3.5 h-3.5 text-neutral-950" />
-                          <span>Régua WhatsApp</span>
+                          <Star className={`w-3.5 h-3.5 ${isModel ? 'fill-amber-400 text-amber-400' : 'text-amber-400'}`} />
+                          <span>{isModel ? '⭐ É Modelo (Sem Faturamento)' : 'Marcar como Modelo'}</span>
                         </button>
 
-                        {/* 3. GERAR COBRANÇA ASAAS / PIX */}
-                        <button
-                          type="button"
-                          onClick={() => openPixBillingModal(site)}
-                          className="py-2 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 cursor-pointer transition"
-                          title="Gerar Cobrança Oficial no Asaas / PIX e confirmar baixa"
-                        >
-                          <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Fatura Asaas & PIX</span>
-                        </button>
+                        {/* 3. RÉGUA DE COBRANÇA WHATSAPP */}
+                        {!isModel && (
+                          <button
+                            type="button"
+                            onClick={() => openPixBillingModal(site)}
+                            className="py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer transition"
+                            title="Abrir Régua de Cobrança WhatsApp (D-3, D-0, D+3, D+7) com wa.me"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-neutral-950" />
+                            <span>Régua WhatsApp</span>
+                          </button>
+                        )}
+
+                        {/* 4. GERAR COBRANÇA ASAAS / PIX */}
+                        {!isModel && (
+                          <button
+                            type="button"
+                            onClick={() => openPixBillingModal(site)}
+                            className="py-2 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 cursor-pointer transition"
+                            title="Gerar Cobrança Oficial no Asaas / PIX e confirmar baixa"
+                          >
+                            <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Fatura Asaas & PIX</span>
+                          </button>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                        {/* Ações Especiais de Página em Construção */}
+                        {isUnderConst && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setUnderConstructionPreviewSite(site)}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 text-[11px] font-bold flex items-center gap-1 border border-amber-400/30 transition cursor-pointer"
+                              title="Ver a página em construção exatamente como o cliente vê"
+                            >
+                              <Eye className="w-3 h-3 text-amber-400" />
+                              <span>Ver Em Construção</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const targetPhone = formatWhatsAppPhone(site.clientPhone || '');
+                                const domainUrl = site.customDomain || `${site.subdomain}.${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}`;
+                                const msg = encodeURIComponent(
+                                  `Olá ${site.clientName}! Vimos que seu pagamento no Asaas foi confirmado com sucesso e seu link https://${domainUrl} já foi reservado! 🚀\n\n` +
+                                  `Para colocarmos seu microsite no ar em tempo recorde, precisamos que nos envie:\n` +
+                                  `1) Foto de perfil / Logotipo em alta resolução\n` +
+                                  `2) Nome comercial e slogan\n` +
+                                  `3) Breve bio e diferenciais\n` +
+                                  `4) WhatsApp de atendimento\n` +
+                                  `5) Principais serviços e valores\n\n` +
+                                  `Nossa equipe de criação já está pronta para montar sua página!`
+                                );
+                                window.open(`https://wa.me/${targetPhone}?text=${msg}`, '_blank');
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[11px] font-semibold flex items-center gap-1 border border-emerald-500/30 transition cursor-pointer"
+                              title="Solicitar envio de informações no WhatsApp para montagem do site"
+                            >
+                              <MessageCircle className="w-3 h-3 text-emerald-400" />
+                              <span>Cobrar Dados WA</span>
+                            </button>
+                          </>
+                        )}
                         {/* Alternar Suspensão */}
                         <button
                           type="button"
@@ -10685,6 +12579,374 @@ COMO PUBLICAR NO SERVIDOR:
     );
   };
 
+  // Modal de celebração e instrução após pagamento confirmado via Asaas
+  const renderPaymentSuccessModal = () => {
+    if (!paymentSuccessSite) return null;
+    const cleanSub = paymentSuccessSite.subdomain;
+    const agencyWa = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
+    const briefingMsg = encodeURIComponent(
+      `Olá! Meu pagamento foi aprovado pelo Asaas para o microsite BioVip: biovip.com.br/${cleanSub}.\n\nMeus dados:\n- Nome: ${paymentSuccessSite.clientName}\n- Telefone: ${paymentSuccessSite.clientPhone}\n- E-mail: ${paymentSuccessSite.clientEmail}\n\nVou enviar agora as fotos e informações para a montagem!`
+    );
+
+    return (
+      <div className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+        <div className="bg-[#121215] border-2 border-amber-400/70 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl shadow-amber-500/20 text-neutral-100 relative overflow-hidden my-8">
+          <div
+            className="pointer-events-none absolute -top-20 -right-20 w-52 h-52 rounded-full opacity-25 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%)',
+            }}
+          />
+
+          {/* Header */}
+          <div className="text-center relative z-10">
+            <div className="w-36 h-22 rounded-2xl bg-[#1c1c1e] border border-amber-400/50 mx-auto mb-3.5 shadow-xl shadow-amber-500/20 flex items-center justify-center overflow-hidden">
+              <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip" className="w-full h-full object-cover scale-125" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Pagamento Confirmado no Asaas
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-black text-white mt-3">
+              Cliente Cadastrado com Sucesso!
+            </h2>
+            <p className="text-xs text-neutral-400 mt-1">
+              Microsite reservado para <strong className="text-amber-300">{paymentSuccessSite.clientName}</strong>
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-left bg-neutral-950/90 border border-white/[0.08] rounded-2xl p-3">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-neutral-400 block">Pago no Asaas (Criação)</span>
+                <span className="text-sm font-mono font-bold text-amber-400">
+                  R$ {(paymentSuccessSite.creationFee || 79.9).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase text-neutral-400 block">Recorrência (Plano Escolhido)</span>
+                <span className="text-sm font-mono font-bold text-emerald-400">
+                  R$ {(paymentSuccessSite.monthlyFee || 49.9).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Under construction alert box */}
+          <div className="mt-5 rounded-2xl bg-neutral-950/90 border border-amber-400/40 p-4 sm:p-5 space-y-3 relative z-10">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🚧</span>
+              <h3 className="text-sm font-bold text-amber-300">
+                Página em Construção Ativada
+              </h3>
+            </div>
+            <p className="text-xs text-neutral-300 leading-relaxed">
+              O seu endereço oficial <strong className="text-amber-400 font-mono">biovip.com.br/{cleanSub}</strong> foi criado no sistema!
+            </p>
+            <div className="p-3.5 rounded-xl bg-amber-400/10 border border-amber-400/25 text-xs text-amber-100/90 leading-relaxed">
+              Ao acessar o link, é exibida a nossa <strong className="text-white">Página em Construção</strong> oficial. A página final ainda não é exibida porque seus dados, fotos e serviços precisam ser enviados para a equipe BioVip finalizar a personalização de luxo.
+            </div>
+          </div>
+
+          {/* Checklist reminder */}
+          <div className="mt-4 rounded-xl bg-white/[0.03] border border-white/[0.08] p-3.5 text-xs text-neutral-300 space-y-2 relative z-10">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 block font-bold">
+              Envio Obrigatório de Informações:
+            </span>
+            <div className="flex items-center gap-2 text-neutral-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <span>Fotos profissionais de alta qualidade ou fotos de atendimento</span>
+            </div>
+            <div className="flex items-center gap-2 text-neutral-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <span>Logotipo ou foto de perfil profissional</span>
+            </div>
+            <div className="flex items-center gap-2 text-neutral-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <span>Lista de serviços com valores e link do WhatsApp</span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="mt-6 space-y-2.5 relative z-10">
+            <a
+              href={`https://wa.me/${agencyWa}?text=${briefingMsg}`}
+              className="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20"
+            >
+              <span>📲 Enviar Fotos & Informações via WhatsApp</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                const targetSlug = cleanSub;
+                setPaymentSuccessSite(null);
+                setAppSurface('microsite');
+                setActivePublicSlug(targetSlug);
+                window.history.pushState({}, '', `/?site=${targetSlug}`);
+              }}
+              className="w-full py-3 px-4 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>Ver Link do Site (Página em Construção)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentSuccessSite(null)}
+              className="w-full py-2.5 text-center text-xs text-neutral-400 hover:text-white transition cursor-pointer"
+            >
+              Fechar e Continuar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Modal para Administrador pré-visualizar a Página em Construção
+  const renderUnderConstructionPreviewModal = () => {
+    if (!underConstructionPreviewSite) return null;
+    const cleanSub = underConstructionPreviewSite.subdomain;
+    const isUnderConst = isSiteUnderConstruction(underConstructionPreviewSite);
+
+    return (
+      <div className="fixed inset-0 z-[160] bg-black/95 flex flex-col">
+        {/* Top Control Bar */}
+        <header className="h-16 px-4 sm:px-6 bg-neutral-950 border-b border-amber-400/30 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🚧</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white">
+                  Prévia: {underConstructionPreviewSite.clientName}
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold ${
+                  isUnderConst
+                    ? 'bg-amber-400/20 border border-amber-400/40 text-amber-300'
+                    : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                }`}>
+                  {isUnderConst ? '🚧 Modo Construção Ativo' : '✅ Publicado'}
+                </span>
+              </div>
+              <span className="text-[11px] font-mono text-neutral-400">
+                biovip.com.br/{cleanSub}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                toggleSiteConstructionMode(underConstructionPreviewSite.id);
+                setUnderConstructionPreviewSite((prev) =>
+                  prev ? { ...prev, isUnderConstruction: !prev.isUnderConstruction, underConstruction: !prev.underConstruction } : null
+                );
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                isUnderConst
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950 shadow-lg shadow-emerald-500/20'
+                  : 'bg-amber-400 hover:bg-amber-300 text-neutral-950'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{isUnderConst ? '🚀 Publicar Site Oficial (Desativar Construção)' : '🚧 Reativar Página em Construção'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const phone = (underConstructionPreviewSite.clientPhone || '').replace(/\D/g, '');
+                const cleanPhone = phone.length === 10 || phone.length === 11 ? `55${phone}` : phone;
+                const msg = encodeURIComponent(
+                  `Olá ${underConstructionPreviewSite.clientName}! 🌟\n\nSeu endereço oficial na BioVip já foi criado e está reservado: biovip.com.br/${cleanSub}\n\nNo momento ele exibe a nossa Página em Construção oficial aguardando o envio das suas informações.\n\nPor favor, nos envie fotos, logotipo e lista de serviços para colocarmos o seu site no ar!`
+                );
+                window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+              }}
+              className="px-3 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] text-white text-xs font-medium cursor-pointer transition flex items-center gap-1.5"
+            >
+              <span>📲 Cobrar Dados no WhatsApp</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUnderConstructionPreviewSite(null)}
+              className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/[0.08] cursor-pointer"
+              title="Fechar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        {/* Full Iframe rendering */}
+        <div className="flex-1 w-full bg-neutral-900 relative">
+          <iframe
+            title={`Prévia - ${underConstructionPreviewSite.clientName}`}
+            srcDoc={
+              isUnderConst
+                ? getUnderConstructionPageHtml(underConstructionPreviewSite, landingConfig)
+                : generateExportCode(underConstructionPreviewSite.data)
+            }
+            className="w-full h-full border-0"
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // RENDERIZAÇÃO DE MICROSITE PÚBLICO / PÁGINA EM CONSTRUÇÃO (QUANDO appSurface === 'microsite')
+  // =========================================================================
+  if (appSurface === 'microsite') {
+    const slug = (activePublicSlug || '').toLowerCase().trim();
+    const foundSite = savedSites.find(
+      (s) =>
+        (s.subdomain && s.subdomain.toLowerCase() === slug) ||
+        s.id === slug ||
+        (s.clientName && s.clientName.toLowerCase().replace(/[^a-z0-9]/g, '-') === slug)
+    );
+
+    if (foundSite) {
+      if (isSiteUnderConstruction(foundSite)) {
+        return (
+          <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
+            <div className="absolute top-3 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
+              <button
+                type="button"
+                onClick={() => {
+                  window.history.pushState({}, '', '/');
+                  setAppSurface('landing');
+                  setActivePublicSlug(null);
+                }}
+                className="pointer-events-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
+              >
+                <span>← BioVip Início</span>
+              </button>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono text-amber-300 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span>biovip.com.br/{foundSite.subdomain} · 🚧 Em Construção</span>
+              </div>
+            </div>
+            <iframe
+              title={`Página em Construção - ${foundSite.clientName}`}
+              srcDoc={getUnderConstructionPageHtml(foundSite, landingConfig)}
+              className="w-full h-full border-0"
+            />
+          </div>
+        );
+      }
+
+      if (foundSite.status === 'suspenso_d7' || foundSite.status === 'disabled') {
+        return (
+          <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
+            <iframe
+              title={`Microsite Suspenso - ${foundSite.clientName}`}
+              srcDoc={getSuspendedPageHtml(foundSite)}
+              className="w-full h-full border-0"
+            />
+          </div>
+        );
+      }
+
+      // Microsite Final / Publicado
+      return (
+        <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
+          <div className="absolute top-3 left-4 z-50">
+            <button
+              type="button"
+              onClick={() => {
+                window.history.pushState({}, '', '/');
+                setAppSurface('landing');
+                setActivePublicSlug(null);
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
+            >
+              <span>← BioVip Início</span>
+            </button>
+          </div>
+          <iframe
+            title={`Microsite - ${foundSite.clientName}`}
+            srcDoc={generateExportCode(foundSite.data)}
+            className="w-full h-full border-0"
+          />
+        </div>
+      );
+    }
+
+    // Modelo demonstrativo
+    const demoModel =
+      DYNAMIC_LANDING_MODELS.find(
+        (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+      ) ||
+      READY_MADE_MODELS.find(
+        (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+      );
+
+    if (demoModel) {
+      return (
+        <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
+          <div className="absolute top-3 left-4 z-50">
+            <button
+              type="button"
+              onClick={() => {
+                window.history.pushState({}, '', '/');
+                setAppSurface('landing');
+                setActivePublicSlug(null);
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
+            >
+              <span>← BioVip Início</span>
+            </button>
+          </div>
+          <iframe
+            title={`Modelo BioVip - ${demoModel.title}`}
+            srcDoc={demoModel.realHtml || generateExportCode(demoModel.realSiteData)}
+            className="w-full h-full border-0"
+          />
+        </div>
+      );
+    }
+
+    // Domínio não encontrado / em fase de ativação
+    return (
+      <div className="min-h-screen bg-[#09090b] text-[#fafaf9] flex flex-col items-center justify-center p-6 text-center font-sans selection:bg-amber-400 selection:text-neutral-950 relative overflow-hidden">
+        <div
+          className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] opacity-20 blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, transparent 70%)',
+          }}
+        />
+        <div className="w-36 h-24 rounded-2xl bg-[#1c1c1e] border border-amber-400/40 shadow-2xl shadow-amber-500/20 flex items-center justify-center mb-6 relative z-10 overflow-hidden">
+          <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip" className="w-full h-full object-cover scale-125" />
+        </div>
+        <span className="px-3.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 font-mono text-xs uppercase tracking-widest mb-3 relative z-10">
+          Endereço BioVip Reservado
+        </span>
+        <h1 className="font-serif text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neutral-100 via-amber-200 to-amber-400 mb-3 relative z-10">
+          biovip.com.br/{slug}
+        </h1>
+        <p className="text-neutral-400 max-w-md text-sm leading-relaxed mb-6 relative z-10">
+          Este endereço foi registrado na BioVip e está em fase de ativação e montagem. Se você realizou o pagamento pelo Asaas, aguarde o envio do briefing ou entre em contato com nossa equipe.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
+          <button
+            type="button"
+            onClick={() => {
+              window.history.pushState({}, '', '/');
+              setAppSurface('landing');
+              setActivePublicSlug(null);
+            }}
+            className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-lg shadow-amber-500/20"
+          >
+            ← Voltar para Início
+          </button>
+          <a
+            href={`https://wa.me/${(landingConfig.agencyWhatsapp || '5511999999999').replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Acabei de registrar o domínio biovip.com.br/${slug} e gostaria de acompanhar o status.`)}`}
+            className="px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] text-white font-semibold text-xs transition inline-flex items-center gap-2"
+          >
+            <span>Falar com Atendimento WhatsApp ↗</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // =========================================================================
   // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing')
   // =========================================================================
@@ -10714,8 +12976,8 @@ COMO PUBLICAR NO SERVIDOR:
                 onClick={() => setPaymentConfirmPlan(null)}
                 className="flex items-center gap-3 text-left cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
-                  <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+                <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
+                  <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
                 </div>
                 <div>
                   <span className="font-serif font-black tracking-[0.2em] text-base text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-amber-500 block leading-none">
@@ -10814,25 +13076,52 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 {/* Card Body */}
-                <div className="p-5 sm:p-7 space-y-4">
-                  {/* Box 1: Client Email Input (Mandatory) */}
-                  <div className="rounded-2xl bg-neutral-950/90 border border-white/[0.08] p-4 sm:p-5">
+                <div className="p-5 sm:p-7 space-y-5">
+                  {/* Customer Information Inputs */}
+                  <div className="rounded-2xl bg-neutral-950/90 border border-white/[0.08] p-4 sm:p-5 space-y-4">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5">
                         <ShieldCheck className="w-4 h-4 text-amber-400" />
                       </div>
                       <div>
                         <h2 className="text-sm sm:text-[15px] font-bold text-white">
-                          Informe o e-mail da sua conta {landingConfig.agencyBrandName}
+                          Dados de Identificação do Cliente
                         </h2>
                         <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                          O plano comprado agora será ativado automaticamente nesta conta após a aprovação do pagamento.
+                          Seu microsite oficial será provisionado com estes dados no sistema após a confirmação do pagamento.
                         </p>
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase tracking-widest text-amber-400/90 mb-1.5">
+                          Nome Profissional / Empresa *
+                        </label>
+                        <input
+                          type="text"
+                          value={landingOrderForm.clientName}
+                          onChange={(e) => setLandingOrderForm(prev => ({ ...prev, clientName: e.target.value }))}
+                          placeholder="Ex: Dra. Camila Mendes"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-white/[0.1] text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-amber-400 transition"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase tracking-widest text-amber-400/90 mb-1.5">
+                          WhatsApp com DDD *
+                        </label>
+                        <input
+                          type="tel"
+                          value={landingOrderForm.clientWhatsapp}
+                          onChange={(e) => setLandingOrderForm(prev => ({ ...prev, clientWhatsapp: e.target.value }))}
+                          placeholder="Ex: (11) 98765-4321"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-white/[0.1] text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-amber-400 transition"
+                        />
+                      </div>
+                    </div>
+
                     <div
-                      className={`mt-4 bg-neutral-900 rounded-xl px-4 py-3 border-2 transition ${
+                      className={`bg-neutral-900 rounded-xl px-4 py-3 border-2 transition ${
                         paymentEmailTouched && !emailValid
                           ? 'border-red-500/90 ring-2 ring-red-500/20'
                           : 'border-amber-400/80 focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-400/20'
@@ -10842,7 +13131,7 @@ COMO PUBLICAR NO SERVIDOR:
                         htmlFor="client-checkout-email-input"
                         className="block text-[10px] font-mono uppercase tracking-widest text-amber-400/90 mb-1"
                       >
-                        E-mail da sua conta
+                        E-mail para Acesso e Ativação *
                       </label>
                       <input
                         id="client-checkout-email-input"
@@ -10860,7 +13149,6 @@ COMO PUBLICAR NO SERVIDOR:
                         className="w-full text-base sm:text-lg font-extrabold text-white placeholder:text-neutral-600 placeholder:font-normal focus:outline-none bg-transparent"
                       />
                     </div>
-
                     {paymentEmailTouched && !emailValid && (
                       <p className="text-[11px] font-semibold text-red-400 mt-2">
                         {isForbiddenOwnerEmail
@@ -10870,43 +13158,176 @@ COMO PUBLICAR NO SERVIDOR:
                     )}
                   </div>
 
-                  {/* Box 2: Attention Box */}
-                  <div className="rounded-2xl bg-neutral-950/90 border border-amber-400/25 p-4 sm:p-5 space-y-3">
+                  {/* GATEWAY ASAAS: PIX Instantâneo com Criação Automática do Cliente */}
+                  <div className="rounded-2xl bg-gradient-to-b from-amber-500/10 to-neutral-950/90 border-2 border-amber-400/60 p-5 space-y-4 shadow-xl shadow-amber-500/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">⚡</span>
+                        <div>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block">
+                            Opção Recomendada · Pagamento Imediato
+                          </span>
+                          <h3 className="text-sm sm:text-base font-extrabold text-white">
+                            Pagar via PIX com Gateway Asaas
+                          </h3>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider">
+                        Ativação Instantânea
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-neutral-950/90 border border-white/[0.08] text-xs">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase text-neutral-400 block">
+                          Cobrado Hoje no Asaas (Criação)
+                        </span>
+                        <span className="font-mono font-bold text-amber-400 text-sm">
+                          R$ {getAdminAsaasCreationFee(paymentConfirmPlan.id).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono uppercase text-neutral-400 block">
+                          Recorrência ({paymentConfirmPlan.name})
+                        </span>
+                        <span className="font-mono font-bold text-emerald-400 text-sm">
+                          R$ {getSelectedPlanRecurringFee(paymentConfirmPlan.id).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-neutral-300 leading-relaxed">
+                      Ao pagar via PIX pelo Asaas, o sistema cria automaticamente seu cadastro com endereço oficial <strong className="text-amber-300 font-mono">biovip.com.br/seu-nome</strong> em modo <strong className="text-amber-300">Página em Construção</strong>, aguardando suas fotos e briefing.
+                    </p>
+
+                    {/* Botão de Geração ou Visualizador de PIX */}
+                    {!checkoutAsaasPix ? (
+                      <button
+                        type="button"
+                        onClick={handleGenerateCheckoutAsaasPix}
+                        className="w-full py-4 px-5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black text-sm uppercase tracking-wider cursor-pointer shadow-xl shadow-amber-500/25 transition flex items-center justify-center gap-2"
+                      >
+                        <span>
+                          ⚡ Gerar PIX Asaas Agora (R$ {getAdminAsaasCreationFee(paymentConfirmPlan.id).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                        </span>
+                      </button>
+                    ) : checkoutAsaasPix.loading ? (
+                      <div className="p-6 rounded-xl bg-neutral-900 border border-amber-400/30 flex flex-col items-center justify-center space-y-2 text-center">
+                        <div className="w-7 h-7 border-3 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs font-semibold text-amber-300">Gerando cobrança PIX no Asaas...</span>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl bg-neutral-900/95 border border-amber-400/40 p-4 sm:p-5 space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                          <span className="text-xs font-bold text-amber-300 flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                            Aguardando Pagamento PIX (R$ {getAdminAsaasCreationFee(paymentConfirmPlan.id).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                          </span>
+                          <span className="text-[11px] font-mono text-neutral-400">
+                            ID: {checkoutAsaasPix.paymentId?.slice(0, 14)}...
+                          </span>
+                        </div>
+
+                        {/* QR Code image if available */}
+                        {checkoutAsaasPix.pixQrCode && (
+                          <div className="flex flex-col items-center justify-center py-2">
+                            <div className="p-3 bg-white rounded-2xl shadow-xl">
+                              <img
+                                src={`data:image/png;base64,${checkoutAsaasPix.pixQrCode}`}
+                                alt="QR Code PIX Asaas"
+                                className="w-44 h-44 sm:w-48 sm:h-48 object-contain"
+                              />
+                            </div>
+                            <span className="text-[11px] text-neutral-400 mt-2">
+                              Abra o app do seu banco e aponte a câmera para pagar
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Pix Copia e Cola */}
+                        {checkoutAsaasPix.pixPayload && (
+                          <div>
+                            <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-400 mb-1.5">
+                              PIX Copia e Cola:
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                readOnly
+                                value={checkoutAsaasPix.pixPayload}
+                                className="flex-1 px-3 py-2 rounded-lg bg-neutral-950 border border-white/[0.1] text-xs font-mono text-amber-200 truncate select-all"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (checkoutAsaasPix.pixPayload) {
+                                    navigator.clipboard.writeText(checkoutAsaasPix.pixPayload);
+                                    showToast('📋 Código PIX copiado para a área de transferência!');
+                                  }
+                                }}
+                                className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs shrink-0 cursor-pointer transition shadow"
+                              >
+                                Copiar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Action buttons during waiting for payment */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (checkoutAsaasPix.paymentId) {
+                                checkCheckoutAsaasPixStatus(checkoutAsaasPix.paymentId);
+                              }
+                            }}
+                            className="w-full py-2.5 px-3 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] text-white text-xs font-semibold cursor-pointer transition flex items-center justify-center gap-1.5"
+                          >
+                            <span>🔄 Verificar Status no Asaas</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (checkoutAsaasPix.paymentId) {
+                                const currentPlanId = paymentConfirmPlan?.id || 'pro';
+                                // Simula ou confirma o pagamento criando o cliente imediatamente
+                                handleAsaasPaymentConfirmed({
+                                  clientName: landingOrderForm.clientName.trim() || 'Novo Cliente BioVip',
+                                  clientPhone: landingOrderForm.clientWhatsapp.trim() || '11999999999',
+                                  clientEmail: paymentClientEmail.trim() || 'cliente@biovip.com.br',
+                                  selectedModel: landingOrderForm.selectedModel,
+                                  selectedPlan: landingOrderForm.selectedPlan,
+                                  instagramOrMaps: landingOrderForm.instagramOrMaps,
+                                  planId: currentPlanId,
+                                  paymentId: checkoutAsaasPix.paymentId,
+                                  chargedCreationFee: getAdminAsaasCreationFee(currentPlanId),
+                                });
+                              }
+                            }}
+                            className="w-full py-2.5 px-3 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1.5"
+                          >
+                            <span>🧪 Simular Pagamento Aprovado</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Opção Alternativa: Cartão / Portal Externo */}
+                  <div className="rounded-2xl bg-neutral-950/70 border border-white/[0.08] p-4 sm:p-5 space-y-3">
                     <div className="flex items-center gap-2.5">
-                      <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
-                      <h3 className="text-sm sm:text-[15px] font-bold text-white">
-                        Atenção: compre com EXATAMENTE este e-mail
+                      <span className="text-base">💳</span>
+                      <h3 className="text-xs sm:text-sm font-bold text-neutral-300">
+                        Ou pagar com Cartão de Crédito / Boleto via {portalName}
                       </h3>
                     </div>
 
-                    <ul className="space-y-2.5 text-xs text-neutral-300 pl-1">
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <span>
-                          Na página de pagamento da {portalName}, confirme que o e-mail preenchido é{' '}
-                          <strong className="inline-block px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 font-mono font-bold text-amber-300 break-all">
-                            {emailValid ? trimmedClientEmail : 'seu e-mail informado acima'}
-                          </strong>
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <span>
-                          Se você comprar com OUTRO e-mail, seu plano NÃO será ativado automaticamente.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <span>
-                          Nós já enviamos este e-mail pré-preenchido pra {portalName}, é só confirmar.
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
+                    <div className="rounded-xl bg-neutral-900/60 border border-white/[0.06] p-3 text-xs text-neutral-400">
+                      Na página da {portalName}, certifique-se de preencher o e-mail <strong className="text-amber-300">{emailValid ? trimmedClientEmail : 'informado acima'}</strong> para vinculação.
+                    </div>
 
-                  {/* Box 3: Mandatory Confirmation Checkbox */}
-                  <div className="rounded-2xl bg-neutral-950/90 border border-white/[0.08] hover:border-amber-400/40 transition p-4 sm:p-5">
-                    <label className="flex items-start gap-3 cursor-pointer select-none text-xs text-neutral-300 leading-relaxed">
+                    <label className="flex items-start gap-2.5 cursor-pointer select-none text-[11.5px] text-neutral-300 leading-relaxed pt-1">
                       <input
                         type="checkbox"
                         checked={paymentConfirmChecked}
@@ -10914,98 +13335,54 @@ COMO PUBLICAR NO SERVIDOR:
                         className="mt-0.5 w-4 h-4 rounded border-white/20 bg-neutral-900 text-amber-400 focus:ring-amber-400 shrink-0 cursor-pointer accent-amber-400"
                       />
                       <span>
-                        Eu entendo que a compra deve ser feita com o e-mail{' '}
-                        <strong className="inline-block px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 font-mono font-bold text-amber-300 break-all">
-                          {emailValid ? trimmedClientEmail : 'informado acima'}
-                        </strong>{' '}
-                        e que, se eu usar outro e-mail, terei que contatar o suporte manualmente para ativar o plano.
+                        Concordo com os termos do plano e confirmo a titularidade dos dados informados.
                       </span>
                     </label>
-                  </div>
 
-                  {/* Fallback Notice when Portal URL is not yet configured by owner */}
-                  {paymentPortalFallbackNotice && (
-                    <div className="rounded-2xl bg-amber-400/10 border border-amber-400/40 p-4 text-xs text-amber-100 space-y-3">
-                      <p className="leading-relaxed">{paymentPortalFallbackNotice}</p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSubdomainModalOpen(true)}
-                          className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs cursor-pointer transition"
-                        >
-                          Configurar Link do Portal Agora
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const targetAgencyPhone = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
-                            const msg = encodeURIComponent(
-                              `Olá! Confirmei a compra do *${paymentConfirmPlan.name}* (${paymentConfirmPlan.price}) com o e-mail de ativação: *${trimmedClientEmail}*.`
-                            );
-                            window.location.href = `https://wa.me/${targetAgencyPhone}?text=${msg}`;
-                          }}
-                          className="px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] text-white font-semibold text-xs cursor-pointer transition"
-                        >
-                          Finalizar via Atendimento WhatsApp ↗
-                        </button>
-                      </div>
+                    <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentClientEmail('');
+                          setPaymentConfirmChecked(false);
+                          setPaymentEmailTouched(false);
+                          setPaymentPortalFallbackNotice(null);
+                          setTimeout(() => {
+                            paymentEmailInputRef.current?.focus();
+                          }, 50);
+                        }}
+                        className="px-3.5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 text-xs border border-white/[0.08] transition cursor-pointer text-center"
+                      >
+                        Limpar Dados
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!canProceedToPayment || paymentPortalRedirecting}
+                        onClick={handleProceedToExternalPayment}
+                        className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition ${
+                          canProceedToPayment
+                            ? 'bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/[0.15] cursor-pointer'
+                            : 'bg-neutral-800 text-neutral-500 border border-white/[0.06] cursor-not-allowed'
+                        }`}
+                      >
+                        <span>
+                          {paymentPortalRedirecting ? 'Redirecionando...' : `Pagar no Cartão via ${portalName}`}
+                        </span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  )}
-
-                  {/* Action Buttons Row */}
-                  <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPaymentClientEmail('');
-                        setPaymentConfirmChecked(false);
-                        setPaymentEmailTouched(false);
-                        setPaymentPortalFallbackNotice(null);
-                        setTimeout(() => {
-                          paymentEmailInputRef.current?.focus();
-                        }, 50);
-                      }}
-                      className="px-4 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-neutral-200 hover:text-white font-semibold text-xs border border-white/[0.1] transition cursor-pointer text-center"
-                    >
-                      Ainda não é meu e-mail / quero trocar de conta
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={!canProceedToPayment || paymentPortalRedirecting}
-                      onClick={handleProceedToExternalPayment}
-                      className={`px-6 py-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
-                        canProceedToPayment
-                          ? 'bg-amber-400 hover:bg-amber-300 text-neutral-950 cursor-pointer shadow-xl shadow-amber-500/20'
-                          : 'bg-neutral-800 text-neutral-500 border border-white/[0.06] cursor-not-allowed'
-                      }`}
-                    >
-                      <span>
-                        {paymentPortalRedirecting ? 'Redirecionando...' : 'Ir para pagamento seguro'}
-                      </span>
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
                   </div>
-
-                  {/* Bottom Helper Text */}
-                  <p className="text-[11px] text-neutral-400 text-center pt-1">
-                    {!emailValid
-                      ? 'Digite seu e-mail acima e marque a confirmação para liberar o botão de pagamento.'
-                      : !paymentConfirmChecked
-                      ? 'Marque a confirmação acima para liberar o botão de pagamento.'
-                      : 'Confirmação concluída! Clique em "Ir para pagamento seguro" para prosseguir.'}
-                  </p>
                 </div>
               </div>
 
               {/* Footer Security Note */}
               <p className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 text-center mt-6">
-                Pagamento 100% seguro processado pela {portalName} · SSL / Criptografia
+                Pagamentos 100% seguros processados por Asaas & {portalName} · Criptografia SSL
               </p>
             </div>
           </div>
-
-          {renderSubdomainConfigModal()}
+          {renderPaymentSuccessModal()}
+          {renderUnderConstructionPreviewModal()}
         </div>
       );
     }
@@ -11044,16 +13421,13 @@ COMO PUBLICAR NO SERVIDOR:
         {/* TOP BAR CONTRACT: 1 Single Header Bar, 3 Zones (Brand Left, 4 Nav Links Center, 1 Primary CTA Right) */}
         <header className="sticky top-0 z-50 h-16 border-b border-white/[0.07] bg-[#09090b]/85 backdrop-blur-md">
           <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-            {/* Zone 1: Brand Left - Official BioVip Luxury Logo with GIF Animation */}
+            {/* Zone 1: Brand Left - Official BioVip Luxury Logo */}
             <a href="#topo" className="flex items-center gap-3 group" title="BioVip - Microsites de Alta Conversão">
-              <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
+              <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
                 <img 
-                  src="/biovip-logo.gif" 
-                  alt="BioVip Logo Animado" 
-                  className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/biovip-logo.svg';
-                  }}
+                  src="/assets/aistudio/1793152702953_02858b21.jpg" 
+                  alt="BioVip Logo" 
+                  className="w-full h-full object-cover scale-125"
                 />
               </div>
               <div className="flex flex-col">
@@ -11524,7 +13898,7 @@ COMO PUBLICAR NO SERVIDOR:
                 className="font-serif font-bold text-white tracking-tight"
                 style={{ fontSize: 'clamp(1.85rem, 3vw + 0.5rem, 2.75rem)' }}
               >
-                Por que trocar links amadores pelo Microsite LuxeBio multiplica suas vendas:
+                Por que trocar links amadores pelo Microsite BioVip multiplica suas vendas:
               </h2>
               <p className="text-sm text-neutral-400 leading-relaxed">
                 Projetado nos mínimos detalhes para eliminar objeções, qualificar contatos e valorizar o seu trabalho antes mesmo do primeiro &quot;olá&quot;.
@@ -11655,14 +14029,14 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
               </div>
 
-              {/* Coluna 2: Microsite LuxeBio (Destaque Campeão) */}
+              {/* Coluna 2: Microsite BioVip (Destaque Campeão) */}
               <div className="p-8 rounded-3xl bg-neutral-900 border-2 border-amber-400/80 space-y-6 flex flex-col justify-between shadow-2xl shadow-amber-500/10 relative overflow-hidden">
                 <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl" />
                 
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold">
-                      MICROSITE LUXEBIO DE ALTA CONVERSÃO
+                      MICROSITE BIOVIP DE ALTA CONVERSÃO
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-neutral-950 font-bold text-[10px] tracking-wide">
                       MÁXIMA CONVERSÃO
@@ -11814,28 +14188,30 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
                     <span>01 · PLANO BÁSICO</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-bold">1 ALTERAÇÃO/MÊS</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-bold uppercase">
+                      {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)}
+                    </span>
                   </div>
                   <h3 className="text-xl font-bold text-white">Presença Digital & Manutenção Básica</h3>
                   <div className="pt-2 space-y-1">
                     <div className="flex items-baseline gap-2">
                       <span className="line-through text-neutral-500 text-sm font-mono">De R$ 197</span>
-                      <span className="text-3xl font-serif font-bold text-white">R$ 79,90</span>
+                      <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceEssential || 'R$ 79,90'}</span>
                       <span className="text-xs text-emerald-400 font-semibold">criação (10 primeiros)</span>
                     </div>
                     <div className="text-xs text-emerald-300 font-semibold font-mono">
                       ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
                     </div>
                     <div className="text-xs text-amber-300 font-bold font-mono">
-                      Manutenção (a partir do 2º mês): R$ 29,90/mês
+                      Manutenção (a partir do 2º mês): R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês ({formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)})
                     </div>
                   </div>
                   <p className="text-xs text-neutral-400 leading-relaxed">
-                    Perfeito para quem quer eliminar o Linktree amador hoje mesmo, garantir a vaga promocional de R$ 79,90 e ter 1 atualização mensal inclusa.
+                    Perfeito para quem quer eliminar o Linktree amador hoje mesmo, garantir a vaga promocional de {landingConfig.priceEssential || 'R$ 79,90'} e ter {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)} inclusa(s).
                   </p>
                   <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês:</strong> Cobrada apenas a Taxa de Criação de R$ 79,90 (R$ 0 de mensalidade)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ 29,90/mês com 1 alteração mensal inclusa</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês:</strong> Cobrada apenas a Taxa de Criação de {landingConfig.priceEssential || 'R$ 79,90'} (R$ 0 de mensalidade)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês com {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)} inclusa(s)</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais avulsas quando precisar: R$ 14,90 cada</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Card de Localização com rota em 1 toque no Google Maps e Waze</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Hospedagem ultrarrápida e Certificado SSL oficial inclusos</li>
@@ -11847,7 +14223,7 @@ COMO PUBLICAR NO SERVIDOR:
                   onClick={() => openPaymentConfirmation('basic')}
                   className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
                 >
-                  Garantir Vaga por R$ 79,90 (Plano Básico R$ 29,90/mês)
+                  Garantir Vaga por {landingConfig.priceEssential || 'R$ 79,90'} (Plano Básico R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)
                 </button>
               </div>
 
@@ -11863,22 +14239,22 @@ COMO PUBLICAR NO SERVIDOR:
                   <div className="pt-2 space-y-1">
                     <div className="flex items-baseline gap-2">
                       <span className="line-through text-neutral-500 text-sm font-mono">De R$ 297</span>
-                      <span className="text-4xl font-serif font-bold text-amber-400">R$ 79,90</span>
+                      <span className="text-4xl font-serif font-bold text-amber-400">{landingConfig.pricePro || 'R$ 79,90'}</span>
                       <span className="text-xs text-emerald-300 font-semibold">criação (10 primeiros)</span>
                     </div>
                     <div className="text-xs text-emerald-300 font-semibold font-mono">
                       ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
                     </div>
                     <div className="text-xs text-amber-300 font-bold font-mono">
-                      Manutenção (a partir do 2º mês): R$ 49,90/mês (4 alterações)
+                      Manutenção (a partir do 2º mês): R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês ({formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)})
                     </div>
                   </div>
                   <p className="text-xs text-neutral-300 leading-relaxed">
                     A estrutura mais vendida para clínicas, estúdios, especialistas e advogados que atualizam procedimentos, fotos e promoções toda semana.
                   </p>
                   <ul className="space-y-2.5 pt-3 border-t border-white/[0.1] text-xs text-neutral-200">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas R$ 79,90 de criação (R$ 0 de mensalidade)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ 49,90/mês com 4 alterações mensais inclusas</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas {landingConfig.pricePro || 'R$ 79,90'} de criação (R$ 0 de mensalidade)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês com {formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)} inclusa(s)</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Alterações adicionais excedentes: apenas R$ 14,90 cada</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Funil Anti-Curiosos ativo + Catálogo visual com fotos e preços</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Galeria inteligente adaptativa (fotos em retrato e paisagem sem cortes)</li>
@@ -11891,7 +14267,7 @@ COMO PUBLICAR NO SERVIDOR:
                   onClick={() => openPaymentConfirmation('pro')}
                   className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center transition shadow-lg shadow-amber-500/20 cursor-pointer relative z-10"
                 >
-                  Quero o Plano Pro por R$ 79,90 (Manutenção R$ 49,90/mês)
+                  Quero o Plano Pro por {landingConfig.pricePro || 'R$ 79,90'} (Manutenção R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)
                 </button>
               </div>
 
@@ -11900,29 +14276,30 @@ COMO PUBLICAR NO SERVIDOR:
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400">
                     <span>03 · PLANO VIP</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold">ALTERAÇÕES ILIMITADAS</span>
+                    <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase">
+                      {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-white">Setup Concierge & Atualizações Ilimitadas</h3>
+                  <h3 className="text-xl font-bold text-white">Setup Concierge & Atualizações VIP</h3>
                   <div className="pt-2 space-y-1">
                     <div className="flex items-baseline gap-2">
                       <span className="line-through text-neutral-500 text-sm font-mono">De R$ 497</span>
-                      <span className="text-3xl font-serif font-bold text-white">R$ 79,90</span>
+                      <span className="text-3xl font-serif font-bold text-white">{landingConfig.priceScale || 'R$ 79,90'}</span>
                       <span className="text-xs text-emerald-400 font-semibold">criação (10 primeiros)</span>
                     </div>
                     <div className="text-xs text-emerald-300 font-semibold font-mono">
                       ✓ 1º Mês: R$ 0,00 de mensalidade (isento)
                     </div>
                     <div className="text-xs text-amber-300 font-bold font-mono">
-                      Manutenção (a partir do 2º mês): R$ 79,90/mês (ILIMITADO)
+                      Manutenção (a partir do 2º mês): R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês ({formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)})
                     </div>
                   </div>
                   <p className="text-xs text-neutral-400 leading-relaxed">
-                    Para marcas consolidadas e especialistas que demandam suporte prioritário e liberdade total para atualizar campanhas quantas vezes quiserem no mês.
+                    Para marcas consolidadas e especialistas que demandam suporte prioritário e amplo volume de atualizações no mês.
                   </p>
                   <ul className="space-y-2.5 pt-3 border-t border-white/[0.07] text-xs text-neutral-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas R$ 79,90 de criação (R$ 0 de mensalidade)</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ 79,90/mês com ALTERAÇÕES ILIMITADAS inclusas</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Zero custo de alteração extra — solicite quantas vezes precisar</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>1º Mês Promocional:</strong> Apenas {landingConfig.priceScale || 'R$ 79,90'} de criação (R$ 0 de mensalidade)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> <strong>A partir do 2º Mês:</strong> R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês com {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)} inclusa(s)</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte completo para Domínio Próprio (.com.br)</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Suporte concierge prioritário direto no WhatsApp</li>
                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400 shrink-0" /> Sem contrato de fidelidade — cancele quando quiser</li>
@@ -11933,7 +14310,7 @@ COMO PUBLICAR NO SERVIDOR:
                   onClick={() => openPaymentConfirmation('vip')}
                   className="w-full py-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-xs text-center border border-white/[0.1] transition cursor-pointer"
                 >
-                  Quero o Plano VIP por R$ 79,90 (Manutenção R$ 79,90/mês)
+                  Quero o Plano VIP por {landingConfig.priceScale || 'R$ 79,90'} (Manutenção R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês)
                 </button>
               </div>
             </div>
@@ -11942,23 +14319,23 @@ COMO PUBLICAR NO SERVIDOR:
             <div className="p-5 rounded-2xl bg-neutral-900/80 border border-amber-400/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-neutral-950 border border-emerald-500/30">
                 <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block">🎉 10 Primeiros Microsites</span>
-                <span className="font-bold text-white text-sm block mt-0.5">R$ 79,90 (1º Mês)</span>
+                <span className="font-bold text-white text-sm block mt-0.5">{landingConfig.pricePro || 'R$ 79,90'} (1º Mês)</span>
                 <span className="text-[11px] text-neutral-400 block">Só taxa de criação. Sem mensalidade no 1º mês!</span>
               </div>
               <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
                 <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Básico</span>
-                <span className="font-bold text-white text-sm block mt-0.5">R$ 29,90 /mês</span>
-                <span className="text-[11px] text-neutral-400 block">1 alteração mensal incluída</span>
+                <span className="font-bold text-white text-sm block mt-0.5">R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</span>
+                <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)} incluída(s)</span>
               </div>
               <div className="p-3 rounded-xl bg-neutral-950 border border-amber-400/40">
                 <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano Pro (Destaque)</span>
-                <span className="font-bold text-amber-300 text-sm block mt-0.5">R$ 49,90 /mês</span>
-                <span className="text-[11px] text-neutral-400 block">4 alterações mensais incluídas</span>
+                <span className="font-bold text-amber-300 text-sm block mt-0.5">R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</span>
+                <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)} incluída(s)</span>
               </div>
               <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
                 <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">Plano VIP Total</span>
-                <span className="font-bold text-white text-sm block mt-0.5">R$ 79,90 /mês</span>
-                <span className="text-[11px] text-neutral-400 block">Alterações mensais ilimitadas</span>
+                <span className="font-bold text-white text-sm block mt-0.5">R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</span>
+                <span className="text-[11px] text-neutral-400 block">{formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}</span>
               </div>
               <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
                 <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">ALTERAÇÃO EXTRA & SUPORTE</span>
@@ -12043,14 +14420,14 @@ COMO PUBLICAR NO SERVIDOR:
                       onChange={(e) => setLandingOrderForm(p => ({ ...p, selectedPlan: e.target.value }))}
                       className="w-full px-4 py-3 rounded-xl bg-neutral-950 border border-neutral-800 text-sm text-white focus:border-amber-400 focus:outline-none"
                     >
-                      <option value="Plano Pro (R$ 49,90/mês · 4 alterações) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)">
-                        Plano Pro (R$ 49,90/mês · 4 alterações) — Criação R$ 79,90 (Mais Escolhido)
+                      <option value={getPlanCheckoutDetails('pro').fullPlanLabel}>
+                        Plano Pro (R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)}) — Criação {landingConfig.pricePro || 'R$ 79,90'} (Mais Escolhido)
                       </option>
-                      <option value="Plano Básico (R$ 29,90/mês · 1 alteração) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)">
-                        Plano Básico (R$ 29,90/mês · 1 alteração) — Criação R$ 79,90
+                      <option value={getPlanCheckoutDetails('basic').fullPlanLabel}>
+                        Plano Básico (R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)}) — Criação {landingConfig.priceEssential || 'R$ 79,90'}
                       </option>
-                      <option value="Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação Promocional R$ 79,90 (1º mês s/ mensalidade)">
-                        Plano VIP (R$ 79,90/mês · Alterações Ilimitadas) — Criação R$ 79,90
+                      <option value={getPlanCheckoutDetails('vip').fullPlanLabel}>
+                        Plano VIP (R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês · {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}) — Criação {landingConfig.priceScale || 'R$ 79,90'}
                       </option>
                     </select>
                   </div>
@@ -12190,8 +14567,8 @@ COMO PUBLICAR NO SERVIDOR:
         <footer className="py-12 bg-[#060608] text-xs text-neutral-400">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-amber-400/30 p-1 flex items-center justify-center overflow-hidden shrink-0">
-                <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+              <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/30 flex items-center justify-center overflow-hidden shrink-0 shadow-md shadow-amber-500/10">
+                <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
               </div>
               <div className="space-y-0.5">
                 <div className="font-serif font-black tracking-widest text-sm text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500">
@@ -12203,17 +14580,8 @@ COMO PUBLICAR NO SERVIDOR:
               </div>
             </div>
 
-            {/* Owner Direct Subdomain Bar */}
+            {/* Acesso exclusivo ao Painel de Gestão (sem botão de configurar domínio na vitrine pública) */}
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSubdomainModalOpen(true)}
-                className="px-3.5 py-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-300 font-mono text-[11px] border border-neutral-800 cursor-pointer transition flex items-center gap-1.5"
-              >
-                <Globe className="w-3.5 h-3.5 text-amber-400" />
-                <span>Configurar Domínio ({cleanSub}.{cleanDomain})</span>
-              </button>
-
               <button
                 type="button"
                 onClick={openCreatorSubdomain}
@@ -12299,6 +14667,8 @@ COMO PUBLICAR NO SERVIDOR:
         )}
 
         {renderSubdomainConfigModal()}
+        {renderPaymentSuccessModal()}
+        {renderUnderConstructionPreviewModal()}
       </div>
     );
   }
@@ -12332,8 +14702,8 @@ COMO PUBLICAR NO SERVIDOR:
         <div className="relative z-10 w-full max-w-md rounded-3xl bg-neutral-900/95 border border-white/[0.1] p-7 sm:p-8 shadow-2xl space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-neutral-950 p-1 border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
-                <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+              <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+                <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
               </div>
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block font-bold">
@@ -12421,8 +14791,8 @@ COMO PUBLICAR NO SERVIDOR:
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-neutral-950 p-1 border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
-                <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+              <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+                <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
               </div>
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 block font-semibold">
@@ -12601,8 +14971,8 @@ COMO PUBLICAR NO SERVIDOR:
         {/* Header */}
         <header className="px-5 py-3.5 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 bg-neutral-950/70">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-neutral-900/90 border border-amber-400/40 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/biovip-logo.gif" alt="BioVip Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(212,175,55,0.5)]" />
+            <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
+              <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -12654,16 +15024,18 @@ COMO PUBLICAR NO SERVIDOR:
               <span>Vitrine de Vendas</span>
             </button>
 
-            {/* Botão para configurar o Subdomínio do Criador */}
-            <button
-              type="button"
-              onClick={() => setSubdomainModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-mono font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
-              title="Configurar subdomínio exclusivo do Criador"
-            >
-              <Globe className="w-3.5 h-3.5 text-amber-400" />
-              <span>{landingConfig.creatorSubdomain}.</span>
-            </button>
+            {/* Botão para configurar o Domínio / Subdomínio do Criador (Exibido apenas no Painel de Gestão) */}
+            {activeTab === 'dashboard' && (
+              <button
+                type="button"
+                onClick={() => setSubdomainModalOpen(true)}
+                className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-mono font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
+                title="Configurar Domínio Principal e Subdomínio do Criador"
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-400" />
+                <span>Configurar Domínio ({landingConfig.creatorSubdomain}.)</span>
+              </button>
+            )}
 
             {/* Central de Segurança & PIN Mestre */}
             <button
@@ -12794,17 +15166,19 @@ COMO PUBLICAR NO SERVIDOR:
               <span>Salvar Microsite</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedPublishSiteId(editingSiteId || savedSites[0]?.id || null);
-                setPublishModalOpen(true);
-              }}
-              className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-semibold text-xs flex items-center gap-1.5 border border-neutral-700 transition cursor-pointer"
-            >
-              <Globe className="w-3.5 h-3.5 text-amber-400" />
-              <span>Publicar & Domínio</span>
-            </button>
+            {activeTab === 'dashboard' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPublishSiteId(editingSiteId || savedSites[0]?.id || null);
+                  setPublishModalOpen(true);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-semibold text-xs flex items-center gap-1.5 border border-neutral-700 transition cursor-pointer"
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-400" />
+                <span>Publicar & Domínio</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -13571,8 +15945,8 @@ COMO PUBLICAR NO SERVIDOR:
                   <button
                     type="button"
                     onClick={() => {
-                      const targetPhone = (landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999').replace(/\D/g, '');
-                      const msg = encodeURIComponent(`Olá! Vi um microsite criado por ${landingConfig.agencyBrandName || 'LuxeBio Digital'} e quero encomendar o meu!`);
+                      const targetPhone = formatWhatsAppPhone(landingConfig.agencyWhatsapp || data.profile.whatsapp || '5511999999999');
+                      const msg = encodeURIComponent(`Olá! Vi um microsite criado por ${landingConfig.agencyBrandName || 'BioVip Digital'} e quero encomendar o meu!`);
                       updateLandingConfig('creatorFooterUrl', `https://wa.me/${targetPhone}?text=${msg}`);
                       showToast('✅ Link do rodapé configurado para o seu WhatsApp comercial!');
                     }}
@@ -13581,6 +15955,7 @@ COMO PUBLICAR NO SERVIDOR:
                     Usar meu WhatsApp
                   </button>
                 </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label className="text-[10px] text-neutral-400 block mb-1">Nome do Criador / Agência</label>
@@ -13588,7 +15963,7 @@ COMO PUBLICAR NO SERVIDOR:
                       type="text"
                       value={landingConfig.agencyBrandName}
                       onChange={(e) => updateLandingConfig('agencyBrandName', e.target.value)}
-                      placeholder="LuxeBio Digital"
+                      placeholder="BioVip Digital"
                       className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-100"
                     />
                   </div>
@@ -13603,6 +15978,7 @@ COMO PUBLICAR NO SERVIDOR:
                     />
                   </div>
                 </div>
+
                 <div>
                   <label className="text-[10px] text-neutral-400 block mb-1">
                     URL de Destino ao Clicar no Rodapé (Sua Landing Page ou WhatsApp)
@@ -13611,7 +15987,7 @@ COMO PUBLICAR NO SERVIDOR:
                     type="text"
                     value={landingConfig.creatorFooterUrl || ''}
                     onChange={(e) => updateLandingConfig('creatorFooterUrl', e.target.value)}
-                    placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://luxebio.site'}
+                    placeholder={typeof window !== 'undefined' ? window.location.origin : 'https://biovip.com.br'}
                     className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-amber-300 font-mono"
                   />
                 </div>
@@ -14135,12 +16511,41 @@ COMO PUBLICAR NO SERVIDOR:
                               Array.from(files).forEach((file) => {
                                 const reader = new FileReader();
                                 reader.onload = () => {
-                                  if (typeof reader.result === 'string') {
-                                    addGalleryPhoto(reader.result);
+                                  const rawResult = reader.result;
+                                  if (typeof rawResult === 'string') {
+                                    const img = new window.Image();
+                                    img.onload = () => {
+                                      try {
+                                        const maxDim = 800;
+                                        let { width, height } = img;
+                                        if (width > maxDim || height > maxDim) {
+                                          if (width > height) {
+                                            height = Math.round((height * maxDim) / width);
+                                            width = maxDim;
+                                          } else {
+                                            width = Math.round((width * maxDim) / height);
+                                            height = maxDim;
+                                          }
+                                        }
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = width;
+                                        canvas.height = height;
+                                        const ctx = canvas.getContext('2d');
+                                        if (ctx) {
+                                          ctx.drawImage(img, 0, 0, width, height);
+                                          addGalleryPhoto(canvas.toDataURL('image/jpeg', 0.8));
+                                          return;
+                                        }
+                                      } catch {}
+                                      addGalleryPhoto(rawResult);
+                                    };
+                                    img.onerror = () => addGalleryPhoto(rawResult);
+                                    img.src = rawResult;
                                   }
                                 };
                                 reader.readAsDataURL(file);
                               });
+                              e.target.value = '';
                             }}
                           />
                         </label>
@@ -16008,7 +18413,7 @@ COMO PUBLICAR NO SERVIDOR:
                         {data.seo?.metaDescription || data.profile.tagline}
                       </div>
                       <div className="text-[9.5px] text-[#8696a0] font-mono uppercase tracking-wider">
-                        {data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.luxebio.site
+                        {data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.biovip.com.br
                       </div>
                     </div>
                   </div>
@@ -16028,7 +18433,7 @@ COMO PUBLICAR NO SERVIDOR:
             const totalSourceHits = (sources.instagram || 0) + (sources.googleMaps || 0) + (sources.paidAds || 0) + (sources.tiktok || 0) + (sources.direct || 0);
             const calcPct = (count: number) => totalSourceHits > 0 ? Math.round((count / totalSourceHits) * 100) : 0;
             const currentSubdomain = activeSite?.subdomain || data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'cliente';
-            const fullDomain = activeSite?.customDomain || `${currentSubdomain}.luxebio.site`;
+            const fullDomain = activeSite?.customDomain || `${currentSubdomain}.biovip.com.br`;
 
             return (
               <div className="space-y-5">
@@ -16438,12 +18843,15 @@ COMO PUBLICAR NO SERVIDOR:
               {/* 1. BARRA DE PROGRESSO VISUAL DO FATURAMENTO MENSAL (MRR / META) */}
               {/* ============================================================== */}
               {(() => {
-                const totalContractedRevenue = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
-                const activeRevenue = savedSites.reduce((acc, s) => {
+                // Microsites Modelo NÃO entram no cálculo de faturamento (MRR)
+                const billableSites = savedSites.filter(s => !isModelMicrosite(s));
+                const modelSitesCount = savedSites.filter(s => isModelMicrosite(s)).length;
+                const totalContractedRevenue = billableSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
+                const activeRevenue = billableSites.reduce((acc, s) => {
                   const days = getDaysUntilDue(s.dueDate);
-                  return acc + (s.status === 'active' && days >= 0 ? (s.monthlyFee || 0) : 0);
+                  return acc + (s.status !== 'disabled' && !isSiteSuspendedStatus(s) && days >= 0 ? (s.monthlyFee || 0) : 0);
                 }, 0);
-                const overdueRevenue = savedSites.reduce((acc, s) => {
+                const overdueRevenue = billableSites.reduce((acc, s) => {
                   const days = getDaysUntilDue(s.dueDate);
                   return acc + (s.status !== 'disabled' && (s.status === 'overdue' || days < 0) ? (s.monthlyFee || 0) : 0);
                 }, 0);
@@ -16558,7 +18966,7 @@ COMO PUBLICAR NO SERVIDOR:
                           R$ {totalContractedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                         <div className="text-[10px] text-neutral-400 mt-0.5">
-                          {totalProgressPercent}% da meta
+                          {totalProgressPercent}% da meta · {modelSitesCount} modelo(s) isento(s)
                         </div>
                       </div>
 
@@ -16571,7 +18979,7 @@ COMO PUBLICAR NO SERVIDOR:
                           R$ {overdueRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                         <div className="text-[10px] text-amber-400/80 font-medium mt-0.5">
-                          {savedSites.filter(s => s.status !== 'disabled' && (s.status === 'overdue' || getDaysUntilDue(s.dueDate) < 0)).length} cliente(s)
+                          {billableSites.filter(s => s.status !== 'disabled' && (s.status === 'overdue' || getDaysUntilDue(s.dueDate) < 0)).length} cliente(s)
                         </div>
                       </div>
 
@@ -16750,7 +19158,7 @@ COMO PUBLICAR NO SERVIDOR:
                         type="text"
                         value={data.saasSettings?.pixName || ''}
                         onChange={(e) => setData(p => ({ ...p, saasSettings: { ...p.saasSettings, pixName: e.target.value } }))}
-                        placeholder="ex: Agência Digital LuxeBio"
+                        placeholder="ex: Agência Digital BioVip"
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold"
                       />
                     </div>
@@ -16932,20 +19340,77 @@ COMO PUBLICAR NO SERVIDOR:
                     <span className="text-neutral-200 font-semibold block mt-0.5">Sem Mensalidade (R$ 0)</span>
                     <span className="text-[9.5px] text-neutral-400 block">Cobra apenas taxa de criação</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="font-bold text-emerald-300 block">🛠️ Básico • R$ 29,90/mês</span>
-                    <span className="text-neutral-200 font-semibold block mt-0.5">1 alteração mensal</span>
-                    <span className="text-[9.5px] text-neutral-400 block">Hospedagem + SSL inclusos</span>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-1.5">
+                    <span className="font-bold text-emerald-300 block">🛠️ Plano Básico</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9.5px] text-neutral-400">R$</span>
+                      <input
+                        type="text"
+                        value={landingConfig.recurringBasic ?? '29,90'}
+                        onChange={(e) => updateLandingConfig('recurringBasic', e.target.value)}
+                        className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-emerald-300 font-mono font-bold text-[10.5px] focus:border-emerald-400 focus:outline-none"
+                        title="Valor da recorrência mensal do Plano Básico"
+                      />
+                      <span className="text-[9px] text-neutral-500">/mês</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-neutral-400 shrink-0">Alt.:</span>
+                      <input
+                        type="text"
+                        value={landingConfig.updatesBasic ?? '1'}
+                        onChange={(e) => updateLandingConfig('updatesBasic', e.target.value)}
+                        className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-neutral-200 font-mono text-[10px] focus:border-amber-400 focus:outline-none"
+                        title="Quantidade de alterações mensais oferecidas no Plano Básico"
+                      />
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="font-bold text-emerald-300 block">⚡ Pro • R$ 49,90/mês</span>
-                    <span className="text-neutral-200 font-semibold block mt-0.5">4 alterações mensais</span>
-                    <span className="text-[9.5px] text-neutral-400 block">Hospedagem + SSL inclusos</span>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-amber-400/30 space-y-1.5">
+                    <span className="font-bold text-amber-300 block">⚡ Plano Pro</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9.5px] text-neutral-400">R$</span>
+                      <input
+                        type="text"
+                        value={landingConfig.recurringPro ?? '49,90'}
+                        onChange={(e) => updateLandingConfig('recurringPro', e.target.value)}
+                        className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-emerald-300 font-mono font-bold text-[10.5px] focus:border-emerald-400 focus:outline-none"
+                        title="Valor da recorrência mensal do Plano Pro"
+                      />
+                      <span className="text-[9px] text-neutral-500">/mês</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-neutral-400 shrink-0">Alt.:</span>
+                      <input
+                        type="text"
+                        value={landingConfig.updatesPro ?? '4'}
+                        onChange={(e) => updateLandingConfig('updatesPro', e.target.value)}
+                        className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-neutral-200 font-mono text-[10px] focus:border-amber-400 focus:outline-none"
+                        title="Quantidade de alterações mensais oferecidas no Plano Pro"
+                      />
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
-                    <span className="font-bold text-amber-300 block">👑 VIP • R$ 79,90/mês</span>
-                    <span className="text-neutral-200 font-semibold block mt-0.5">Alterações ilimitadas</span>
-                    <span className="text-[9.5px] text-neutral-400 block">Zero custo por edição</span>
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 space-y-1.5">
+                    <span className="font-bold text-amber-300 block">👑 Plano VIP</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9.5px] text-neutral-400">R$</span>
+                      <input
+                        type="text"
+                        value={landingConfig.recurringVip ?? '79,90'}
+                        onChange={(e) => updateLandingConfig('recurringVip', e.target.value)}
+                        className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-emerald-300 font-mono font-bold text-[10.5px] focus:border-emerald-400 focus:outline-none"
+                        title="Valor da recorrência mensal do Plano VIP"
+                      />
+                      <span className="text-[9px] text-neutral-500">/mês</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-neutral-400 shrink-0">Alt.:</span>
+                      <input
+                        type="text"
+                        value={landingConfig.updatesVip ?? 'Ilimitadas'}
+                        onChange={(e) => updateLandingConfig('updatesVip', e.target.value)}
+                        className="w-full px-1.5 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-neutral-200 font-mono text-[10px] focus:border-amber-400 focus:outline-none"
+                        title="Quantidade de alterações mensais oferecidas no Plano VIP"
+                      />
+                    </div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-800">
                     <span className="font-bold text-neutral-200 block">➕ Alteração Adicional</span>
@@ -17180,7 +19645,7 @@ COMO PUBLICAR NO SERVIDOR:
                   <span className="text-[10px] text-neutral-500 font-semibold px-2">Status:</span>
                   {[
                     { id: 'all', label: 'Todos' },
-                    { id: 'landing', label: '⭐ Modelos na Landing' },
+                    { id: 'landing', label: '⭐ Modelos (Sem Faturamento)' },
                     { id: 'active', label: '🟢 Pago / Em dia' },
                     { id: 'overdue', label: '🟡 Pendente / Atrasado D+3' },
                     { id: 'disabled', label: '🛑 Suspenso D+7 (Manutenção)' },
@@ -17220,14 +19685,15 @@ COMO PUBLICAR NO SERVIDOR:
                         site.nicheCategory.toLowerCase().includes(dashboardSearch.toLowerCase());
 
                       // 2. Status Filter (compatível com 'pago' | 'pendente' | 'atrasado_d3' | 'suspenso_d7' e legados)
-                      const suspended = isSiteSuspendedStatus(site);
-                      const overdue = isSiteOverdueStatus(site);
+                      const isModel = isModelMicrosite(site);
+                      const suspended = !isModel && isSiteSuspendedStatus(site);
+                      const overdue = !isModel && isSiteOverdueStatus(site);
                       const matchesStatus =
                         dashboardStatusFilter === 'all' ||
-                        (dashboardStatusFilter === 'landing' && Boolean(site.isLandingModel)) ||
-                        (dashboardStatusFilter === 'active' && !suspended && !overdue) ||
-                        (dashboardStatusFilter === 'overdue' && overdue) ||
-                        (dashboardStatusFilter === 'disabled' && suspended);
+                        (dashboardStatusFilter === 'landing' && isModel) ||
+                        (dashboardStatusFilter === 'active' && !isModel && !suspended && !overdue) ||
+                        (dashboardStatusFilter === 'overdue' && !isModel && overdue) ||
+                        (dashboardStatusFilter === 'disabled' && !isModel && suspended);
 
                       // 3. Exact Date Filter (if set)
                       const matchesExactDate = !dashboardDueDateExact || site.dueDate === dashboardDueDateExact;
@@ -17238,15 +19704,15 @@ COMO PUBLICAR NO SERVIDOR:
                       if (dashboardDueDateExact) {
                         matchesDueDate = matchesExactDate;
                       } else if (dashboardDueDateFilter === 'today') {
-                        matchesDueDate = days === 0;
+                        matchesDueDate = !isModel && days === 0;
                       } else if (dashboardDueDateFilter === '7days') {
-                        matchesDueDate = days >= 0 && days <= 7;
+                        matchesDueDate = !isModel && days >= 0 && days <= 7;
                       } else if (dashboardDueDateFilter === '15days') {
-                        matchesDueDate = days >= 0 && days <= 15;
+                        matchesDueDate = !isModel && days >= 0 && days <= 15;
                       } else if (dashboardDueDateFilter === 'this_month') {
-                        matchesDueDate = (site.dueDate || '').startsWith(currentMonthPrefix);
+                        matchesDueDate = !isModel && (site.dueDate || '').startsWith(currentMonthPrefix);
                       } else if (dashboardDueDateFilter === 'overdue') {
-                        matchesDueDate = days < 0 && !suspended;
+                        matchesDueDate = !isModel && days < 0 && !suspended;
                       }
 
                       return matchesSearch && matchesStatus && matchesDueDate;
@@ -17272,7 +19738,10 @@ COMO PUBLICAR NO SERVIDOR:
                       return 0;
                     });
 
-                  const filteredTotalFee = filteredList.reduce((acc, s) => acc + (!isSiteSuspendedStatus(s) ? (s.monthlyFee || 0) : 0), 0);
+                  const filteredTotalFee = filteredList.reduce(
+                    (acc, s) => acc + (!isModelMicrosite(s) && !isSiteSuspendedStatus(s) ? (s.monthlyFee || 0) : 0),
+                    0
+                  );
 
                   return (
                     <div className="space-y-3">
@@ -17318,7 +19787,7 @@ COMO PUBLICAR NO SERVIDOR:
                           const linkStatus: 'ativo' | 'manutencao' = isSuspended ? 'manutencao' : (site.linkStatus || 'ativo');
                           const isDueToday = daysDiff === 0;
                           const isDueSoon = daysDiff > 0 && daysDiff <= 7;
-                          const currentFullDomain = site.customDomain || `${site.subdomain}.luxebio.site`;
+                          const currentFullDomain = site.customDomain || `${site.subdomain}.biovip.com.br`;
                           const clicks = site.whatsappClicks || 0;
                           const views = site.pageViews || 100;
                           const rate = Number(((clicks / views) * 100).toFixed(1));
@@ -17351,10 +19820,10 @@ COMO PUBLICAR NO SERVIDOR:
                                     <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-neutral-900 text-neutral-400 border border-neutral-800">
                                       {site.nicheCategory}
                                     </span>
-                                    {site.isLandingModel && (
+                                    {isModelMicrosite(site) && (
                                       <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
                                         <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                        Modelo na Landing Page
+                                        Modelo (Fora do Faturamento)
                                       </span>
                                     )}
                                     {editingSiteId === site.id && (
@@ -17642,9 +20111,9 @@ COMO PUBLICAR NO SERVIDOR:
                                         onChange={(e) => updateSiteMaintenancePlan(site.id, e.target.value as MaintenancePlanId)}
                                         className="mt-1 w-full px-2 py-1 rounded bg-neutral-950 border border-neutral-800 text-[11px] text-neutral-200 font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
                                       >
-                                        <option value="basic_1">R$ 29,90/mês — 1 alteração mensal</option>
-                                        <option value="pro_4">R$ 49,90/mês — 4 alterações mensais</option>
-                                        <option value="vip_unlimited">R$ 79,90/mês — Alterações ilimitadas</option>
+                                        <option value="basic_1">R$ {MAINTENANCE_PLANS.basic_1.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês — {formatPlanUpdatesLabel(MAINTENANCE_PLANS.basic_1.maxUpdates, false)}</option>
+                                        <option value="pro_4">R$ {MAINTENANCE_PLANS.pro_4.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês — {formatPlanUpdatesLabel(MAINTENANCE_PLANS.pro_4.maxUpdates, false)}</option>
+                                        <option value="vip_unlimited">R$ {MAINTENANCE_PLANS.vip_unlimited.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês — {formatPlanUpdatesLabel(MAINTENANCE_PLANS.vip_unlimited.maxUpdates, false)}</option>
                                       </select>
                                     </div>
 
@@ -17761,19 +20230,35 @@ COMO PUBLICAR NO SERVIDOR:
                                         </div>
                                       ) : (
                                         <div className="mt-0.5">
-                                          <div className="flex items-center gap-1.5">
-                                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-                                            <span className="font-bold text-emerald-300 font-mono">
-                                              R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                            </span>
-                                          </div>
-                                          <span className="text-[9.5px] text-neutral-400 block">
-                                            {billing.isFirstMonth
-                                              ? `Criação R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • Mensalidade R$ 0,00`
-                                              : billing.extraUpdatesCount > 0
-                                              ? `Manut. R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} extras`
-                                              : `Manut. R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês`}
-                                          </span>
+                                          {isModelMicrosite(site) ? (
+                                            <>
+                                              <div className="flex items-center gap-1.5">
+                                                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                                <span className="font-bold text-amber-300 font-mono">
+                                                  R$ 0,00 (Modelo)
+                                                </span>
+                                              </div>
+                                              <span className="text-[9.5px] text-neutral-400 block">
+                                                Excluído do cálculo de faturamento (MRR)
+                                              </span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <div className="flex items-center gap-1.5">
+                                                <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                                                <span className="font-bold text-emerald-300 font-mono">
+                                                  R$ {billing.totalDueThisMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </span>
+                                              </div>
+                                              <span className="text-[9.5px] text-neutral-400 block">
+                                                {billing.isFirstMonth
+                                                  ? `Criação R$ ${billing.creationFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • Mensalidade R$ 0,00`
+                                                  : billing.extraUpdatesCount > 0
+                                                  ? `Manut. R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + R$ ${billing.extraUpdatesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} extras`
+                                                  : `Manut. R$ ${billing.maintenanceFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês`}
+                                              </span>
+                                            </>
+                                          )}
                                         </div>
                                       )}
                                     </div>
@@ -17811,24 +20296,24 @@ COMO PUBLICAR NO SERVIDOR:
                                     <span>Alterar Valor</span>
                                   </button>
 
-                                  {/* MARCADOR PARA EXIBIR O SITE DO CLIENTE COMO MODELO NO CARROSSEL DA LANDING PAGE */}
+                                  {/* BOTÃO PARA DEFINIR O MICROSITE COMO MODELO (EXCLUÍDO DO FATURAMENTO) */}
                                   <button
                                     type="button"
                                     onClick={() => toggleSiteLandingModel(site.id)}
                                     className={`px-3 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1.5 cursor-pointer border transition ${
-                                      site.isLandingModel
+                                      isModelMicrosite(site)
                                         ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-500/20'
                                         : 'bg-neutral-800 hover:bg-neutral-700 text-amber-300 border-amber-500/40'
                                     }`}
                                     title={
-                                      site.isLandingModel
-                                        ? 'Este microsite está visível no Carrossel de Modelos da Landing Page. Clique para remover.'
-                                        : 'Marcar este site de cliente para aparecer no Carrossel de Modelos da Landing Page'
+                                      isModelMicrosite(site)
+                                        ? 'Este microsite é considerado um MODELO e NÃO entra nos cálculos de faturamento. Clique para tornar cliente faturável.'
+                                        : 'Marcar este microsite como MODELO (não será usado nos cálculos de faturamento)'
                                     }
                                   >
-                                    <Star className={`w-3 h-3 ${site.isLandingModel ? 'fill-neutral-950 text-neutral-950' : 'text-amber-400'}`} />
+                                    <Star className={`w-3 h-3 ${isModelMicrosite(site) ? 'fill-neutral-950 text-neutral-950' : 'text-amber-400'}`} />
                                     <span>
-                                      {site.isLandingModel ? '⭐ No Carrossel da Landing' : 'Colocar como Modelo na Landing'}
+                                      {isModelMicrosite(site) ? '⭐ É Modelo (Sem Faturamento)' : 'Marcar como Modelo (Sem Faturamento)'}
                                     </span>
                                   </button>
 
@@ -18213,7 +20698,10 @@ COMO PUBLICAR NO SERVIDOR:
                 className="relative z-20 py-2 px-3 text-center text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shrink-0"
                 style={{
                   backgroundColor: data.moduleColors?.announcement?.bgColor || theme.accent,
-                  color: data.moduleColors?.announcement?.titleColor || data.moduleColors?.announcement?.textColor || '#000',
+                  color:
+                    data.moduleColors?.announcement?.titleColor ||
+                    data.moduleColors?.announcement?.textColor ||
+                    getSafeContrastText(data.moduleColors?.announcement?.bgColor || theme.accent, '#0a0a0c', '#ffffff'),
                 }}
                 onClick={() => setBookingModalOpen(true)}
               >
@@ -18412,27 +20900,27 @@ COMO PUBLICAR NO SERVIDOR:
                     background:
                       data.moduleColors?.qualifierFunnel?.bgColor ||
                       `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
-                    color: data.moduleColors?.qualifierFunnel?.titleColor || '#000',
+                    color: data.moduleColors?.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff'),
                     boxShadow: '0 10px 25px -4px rgba(0,0,0,0.5)',
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-full bg-black/15 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
-                      style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || '#000' }}
+                      style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') }}
                     >
                       <Filter className="w-5 h-5" />
                     </div>
                     <div>
                       <div
                         className="text-[11px] font-black tracking-[1.5px] uppercase"
-                        style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || '#000' }}
+                        style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') }}
                       >
                         {data.qualifierFunnel.triggerButtonLabel}
                       </div>
                       <div
                         className="text-[9.5px] line-clamp-1 mt-0.5"
-                        style={{ color: data.moduleColors?.qualifierFunnel?.textColor || 'rgba(0,0,0,0.8)' }}
+                        style={{ color: data.moduleColors?.qualifierFunnel?.textColor || (getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)') }}
                       >
                         {data.qualifierFunnel.triggerButtonSubtitle}
                       </div>
@@ -18441,7 +20929,7 @@ COMO PUBLICAR NO SERVIDOR:
                   <div className="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5">
                     <ChevronRight
                       className="w-4 h-4"
-                      style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || '#000' }}
+                      style={{ color: data.moduleColors?.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') }}
                     />
                   </div>
                 </button>
@@ -18453,7 +20941,7 @@ COMO PUBLICAR NO SERVIDOR:
                 const isCatalogo = card.linkType === 'catalogo' || card.url === '#catalogo';
                 const resolvedHref =
                   card.linkType === 'whatsapp'
-                    ? `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(card.whatsappMessage || 'Olá!')}`
+                    ? `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(card.whatsappMessage || 'Olá!')}`
                     : isCatalogo
                     ? '#catalogo'
                     : card.url;
@@ -18471,11 +20959,12 @@ COMO PUBLICAR NO SERVIDOR:
 
                 if (card.variant === 'accent') {
                   cardBgStyle = modBtnColors.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`;
-                  cardTextStyle = modBtnColors.titleColor || '#000000';
-                  cardSubtextStyle = modBtnColors.textColor || 'rgba(0,0,0,0.75)';
+                  const safeAccentText = getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff');
+                  cardTextStyle = modBtnColors.titleColor || safeAccentText;
+                  cardSubtextStyle = modBtnColors.textColor || (safeAccentText === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)');
                   cardBorderStyle = `1px solid ${theme.accent}`;
-                  iconBgStyle = 'rgba(0,0,0,0.14)';
-                  iconColorStyle = modBtnColors.titleColor || '#000000';
+                  iconBgStyle = safeAccentText === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)';
+                  iconColorStyle = modBtnColors.titleColor || safeAccentText;
                 } else if (card.variant === 'outline') {
                   cardBgStyle = modBtnColors.bgColor || 'rgba(255,255,255,0.04)';
                   cardTextStyle = modBtnColors.titleColor || theme.textMain;
@@ -18555,8 +21044,8 @@ COMO PUBLICAR NO SERVIDOR:
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
                         color: card.bgImage ? '#ffffff' : cardTextStyle,
-                        border: cardBorderStyle,
-                        boxShadow: theme.pillShadow,
+                        border: 'none',
+                        boxShadow: `${theme.pillShadow}, 0 0 14px -3px color-mix(in srgb, ${theme.accent} 32%, transparent)`,
                         minHeight: `${Math.max(88, imgSize - 4)}px`,
                         ['--theme-accent' as string]: theme.accent,
                       }}
@@ -18567,14 +21056,13 @@ COMO PUBLICAR NO SERVIDOR:
                             isImageLeft ? 'right-3' : 'left-3'
                           } px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow-md z-20`}
                           style={{
-                            backgroundColor: card.variant === 'accent' ? '#000' : theme.accent,
-                            color: card.variant === 'accent' ? theme.accent : '#000',
+                            backgroundColor: card.variant === 'accent' ? (getLuminance(theme.accent) > 0.4 ? '#0a0a0c' : '#ffffff') : theme.accent,
+                            color: card.variant === 'accent' ? (getLuminance(theme.accent) > 0.4 ? theme.accent : '#0a0a0c') : getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff'),
                           }}
                         >
                           {card.badgeText}
                         </span>
                       )}
-
                       {/* Text Column (automatically opposite to the image) */}
                       <div
                         className={`flex-1 min-w-0 z-10 ${
@@ -18599,8 +21087,9 @@ COMO PUBLICAR NO SERVIDOR:
                           <div
                             className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider shadow-sm transition-transform group-hover:scale-105`}
                             style={{
-                              backgroundColor: 'rgba(10, 10, 10, 0.85)',
+                              backgroundColor: getLuminance(cardTextStyle) > 0.4 ? 'rgba(255, 255, 255, 0.16)' : 'rgba(10, 10, 10, 0.85)',
                               color: '#ffffff',
+                              border: getLuminance(cardTextStyle) > 0.4 ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
                             }}
                           >
                             <span className="underline">{card.ctaActionText}</span>
@@ -18677,8 +21166,8 @@ COMO PUBLICAR NO SERVIDOR:
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat',
                       color: card.bgImage ? '#ffffff' : cardTextStyle,
-                      border: cardBorderStyle,
-                      boxShadow: theme.pillShadow,
+                      border: 'none',
+                      boxShadow: `${theme.pillShadow}, 0 0 14px -3px color-mix(in srgb, ${theme.accent} 32%, transparent)`,
                       ['--theme-accent' as string]: theme.accent,
                     }}
                   >
@@ -18686,8 +21175,8 @@ COMO PUBLICAR NO SERVIDOR:
                       <span
                         className="absolute top-1.5 right-3 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow-sm"
                         style={{
-                          backgroundColor: card.variant === 'accent' ? '#000' : theme.accent,
-                          color: card.variant === 'accent' ? theme.accent : '#000',
+                          backgroundColor: card.variant === 'accent' ? (getLuminance(theme.accent) > 0.4 ? '#0a0a0c' : '#ffffff') : theme.accent,
+                          color: card.variant === 'accent' ? (getLuminance(theme.accent) > 0.4 ? theme.accent : '#0a0a0c') : getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff'),
                         }}
                       >
                         {card.badgeText}
@@ -18726,7 +21215,11 @@ COMO PUBLICAR NO SERVIDOR:
                         {card.ctaActionText && (
                           <div
                             className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider"
-                            style={{ backgroundColor: 'rgba(10,10,10,0.82)', color: '#fff' }}
+                            style={{
+                              backgroundColor: getLuminance(cardTextStyle) > 0.4 ? 'rgba(255, 255, 255, 0.16)' : 'rgba(10, 10, 10, 0.82)',
+                              color: '#fff',
+                              border: getLuminance(cardTextStyle) > 0.4 ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
+                            }}
                           >
                             <span className="underline">{card.ctaActionText}</span>
                             <span>👆</span>
@@ -19221,8 +21714,18 @@ COMO PUBLICAR NO SERVIDOR:
                           {data.locationCard.headline}
                         </span>
                         {data.locationCard.showHours !== false && data.locationCard.openStatus && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold"
+                            style={{
+                              backgroundColor: getLuminance(theme.bg) > 0.6 ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.2)',
+                              color: getLuminance(theme.bg) > 0.6 ? '#047857' : '#34d399',
+                              border: getLuminance(theme.bg) > 0.6 ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                            }}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full animate-pulse"
+                              style={{ backgroundColor: getLuminance(theme.bg) > 0.6 ? '#047857' : '#34d399' }}
+                            />
                             {data.locationCard.openStatus}
                           </span>
                         )}
@@ -19274,7 +21777,7 @@ COMO PUBLICAR NO SERVIDOR:
                 recordWhatsappClick();
                 if (srv.actionType === 'whatsapp') {
                   const msg = `Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`;
-                  const url = `https://wa.me/${data.profile.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+                  const url = `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(msg)}`;
                   window.open(url, '_blank', 'noopener,noreferrer');
                 } else if (srv.actionType === 'link' && srv.customUrl) {
                   window.open(srv.customUrl, '_blank', 'noopener,noreferrer');
@@ -19325,7 +21828,7 @@ COMO PUBLICAR NO SERVIDOR:
                           style={{
                             borderRadius: `${Math.round(data.styling.borderRadius / 1.2)}px`,
                             backgroundColor:
-                              srvCardBg || (data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg),
+                              srvCardBg || (getLuminance(theme.bg) > 0.6 ? '#ffffff' : (data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg)),
                             border: srv.featured ? `1.5px solid ${srvAccentColor}` : `1px solid ${theme.socialBorder}`,
                             boxShadow: srv.featured ? `0 8px 24px -4px ${theme.glowColor}` : 'none',
                             backdropFilter: data.styling.glassmorphism ? 'blur(12px)' : 'none',
@@ -19342,7 +21845,7 @@ COMO PUBLICAR NO SERVIDOR:
                             {srv.badge && (
                               <span
                                 className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shadow z-20"
-                                style={{ backgroundColor: srvAccentColor, color: '#000' }}
+                                style={{ backgroundColor: srvAccentColor, color: getSafeContrastText(srvAccentColor, '#0a0a0c', '#ffffff') }}
                               >
                                 {srv.badge}
                               </span>
@@ -19381,7 +21884,7 @@ COMO PUBLICAR NO SERVIDOR:
                                 type="button"
                                 onClick={() => handleServiceAction(srv)}
                                 className="px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full transition hover:scale-105 cursor-pointer shadow"
-                                style={{ backgroundColor: srvAccentColor, color: '#000' }}
+                                style={{ backgroundColor: srvAccentColor, color: getSafeContrastText(srvAccentColor, '#0a0a0c', '#ffffff') }}
                               >
                                 {srv.ctaLabel || 'Reservar'} ›
                               </button>
@@ -19402,7 +21905,7 @@ COMO PUBLICAR NO SERVIDOR:
                           style={{
                             borderRadius: `${Math.round(data.styling.borderRadius / 1.3)}px`,
                             backgroundColor:
-                              srvCardBg || (data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg),
+                              srvCardBg || (getLuminance(theme.bg) > 0.6 ? '#ffffff' : (data.styling.glassmorphism ? 'rgba(255,255,255,0.04)' : theme.socialBg)),
                             border: srv.featured ? `1.5px solid ${srvAccentColor}` : `1px solid ${theme.socialBorder}`,
                             backdropFilter: data.styling.glassmorphism ? 'blur(12px)' : 'none',
                           }}
@@ -19419,7 +21922,7 @@ COMO PUBLICAR NO SERVIDOR:
                               {srv.badge && (
                                 <span
                                   className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider shadow z-20"
-                                  style={{ backgroundColor: srvAccentColor, color: '#000' }}
+                                  style={{ backgroundColor: srvAccentColor, color: getSafeContrastText(srvAccentColor, '#0a0a0c', '#ffffff') }}
                                 >
                                   {srv.badge}
                                 </span>
@@ -19454,7 +21957,7 @@ COMO PUBLICAR NO SERVIDOR:
                               type="button"
                               onClick={() => handleServiceAction(srv)}
                               className="w-full py-1.5 text-[9.5px] font-extrabold uppercase tracking-wider rounded-lg transition hover:scale-[1.02] cursor-pointer"
-                              style={{ backgroundColor: srvAccentColor, color: '#000' }}
+                              style={{ backgroundColor: srvAccentColor, color: getSafeContrastText(srvAccentColor, '#0a0a0c', '#ffffff') }}
                             >
                               {srv.ctaLabel || 'Reservar'}
                             </button>
@@ -19474,7 +21977,7 @@ COMO PUBLICAR NO SERVIDOR:
                           style={{
                             borderRadius: `${Math.round(data.styling.borderRadius / 1.4)}px`,
                             backgroundColor:
-                              srvCardBg || (data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : 'transparent'),
+                              srvCardBg || (getLuminance(theme.bg) > 0.6 ? '#ffffff' : (data.styling.glassmorphism ? 'rgba(255,255,255,0.03)' : 'transparent')),
                             border: srv.featured ? `1.5px solid ${srvAccentColor}` : `1px solid ${theme.socialBorder}`,
                             boxShadow: srv.featured ? `0 6px 18px -4px ${theme.glowColor}` : 'none',
                             backdropFilter: data.styling.glassmorphism ? 'blur(12px)' : 'none',
@@ -19494,7 +21997,7 @@ COMO PUBLICAR NO SERVIDOR:
                               {srv.badge && (
                                 <span
                                   className="px-1.5 py-0.2 rounded-full text-[7.5px] font-black uppercase tracking-wider"
-                                  style={{ backgroundColor: srvAccentColor, color: '#000' }}
+                                  style={{ backgroundColor: srvAccentColor, color: getSafeContrastText(srvAccentColor, '#0a0a0c', '#ffffff') }}
                                 >
                                   {srv.badge}
                                 </span>
@@ -19526,7 +22029,7 @@ COMO PUBLICAR NO SERVIDOR:
                                 type="button"
                                 onClick={() => handleServiceAction(srv)}
                                 className="px-2.5 py-1 text-[10px] font-bold rounded-full transition hover:scale-105 cursor-pointer"
-                                style={{ backgroundColor: srvAccentColor, color: '#000' }}
+                                style={{ backgroundColor: srvAccentColor, color: getSafeContrastText(srvAccentColor, '#0a0a0c', '#ffffff') }}
                               >
                                 {srv.ctaLabel || 'Reservar'}
                               </button>
@@ -19934,6 +22437,8 @@ COMO PUBLICAR NO SERVIDOR:
       )}
 
       {renderSubdomainConfigModal()}
+      {renderPaymentSuccessModal()}
+      {renderUnderConstructionPreviewModal()}
 
       {/* Toast Notification Banner */}
       {toastMsg && (
@@ -20101,7 +22606,7 @@ COMO PUBLICAR NO SERVIDOR:
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-neutral-400 block mb-1">Subdomínio (.luxebio.site)</label>
+                  <label className="text-[10px] text-neutral-400 block mb-1">Subdomínio (.biovip.com.br)</label>
                   <div className="flex items-center rounded-xl bg-neutral-950 border border-neutral-800 overflow-hidden">
                     <input
                       type="text"
@@ -20188,7 +22693,7 @@ COMO PUBLICAR NO SERVIDOR:
           : `${(targetSite.subdomain || 'seucliente').replace(/[^a-z0-9-]/g, '')}.com.br`;
         const effectiveCnameHost = domainValidation.isValid ? domainValidation.cnameHost : 'www';
         const aRecordIp = '76.76.21.21';
-        const cnameTargetValue = 'cname.luxebio.site';
+        const cnameTargetValue = 'cname.biovip.com.br';
         const cleanSlugSuggestion = (targetSite.subdomain || data.profile.name || 'cliente')
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '')
@@ -20874,7 +23379,7 @@ COMO PUBLICAR NO SERVIDOR:
                     showToast(
                       finalCustomDom
                         ? `🚀 Domínio personalizado ${finalCustomDom} vinculado e publicado com sucesso!`
-                        : `🚀 Microsite publicado em https://${targetSite.subdomain || 'meusite'}.luxebio.site!`
+                        : `🚀 Microsite publicado em https://${targetSite.subdomain || 'meusite'}.biovip.com.br!`
                     );
                     setPublishModalOpen(false);
                   }}
@@ -20892,7 +23397,8 @@ COMO PUBLICAR NO SERVIDOR:
       {/* Executive PDF Performance & Financial Summary Modal */}
       {pdfReportModalOpen && (() => {
         const todayStr = new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const totalMrr = savedSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0);
+        const billableSites = savedSites.filter(s => !isModelMicrosite(s));
+        const totalMrr = billableSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? s.monthlyFee : 0), 0);
         const totalClicks = savedSites.reduce((acc, s) => acc + (s.whatsappClicks || 0), 0);
         const totalViews = savedSites.reduce((acc, s) => acc + (s.pageViews || 100), 0);
         const avgConversion = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
@@ -20937,7 +23443,7 @@ COMO PUBLICAR NO SERVIDOR:
                   <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-center space-y-1">
                     <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider">Microsites</span>
                     <div className="text-lg font-black text-amber-400">{savedSites.length} páginas</div>
-                    <span className="text-[9px] text-neutral-500">{savedSites.filter(s => s.status === 'active').length} ativas</span>
+                    <span className="text-[9px] text-neutral-500">{billableSites.length} faturáveis · {savedSites.length - billableSites.length} modelos</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-center space-y-1">
@@ -20945,7 +23451,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="text-lg font-black text-emerald-400">
                       R$ {totalMrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
-                    <span className="text-[9px] text-neutral-500">Recorrente mensal</span>
+                    <span className="text-[9px] text-neutral-500">Recorrente mensal (s/ modelos)</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-center space-y-1">
@@ -20979,7 +23485,8 @@ COMO PUBLICAR NO SERVIDOR:
                         const clicks = s.whatsappClicks || 0;
                         const views = s.pageViews || 100;
                         const rate = ((clicks / views) * 100).toFixed(1);
-                        const domain = s.customDomain || `${s.subdomain}.luxebio.site`;
+                        const domain = s.customDomain || `${s.subdomain}.biovip.com.br`;
+                        const isModel = isModelMicrosite(s);
 
                         return (
                           <tr key={s.id} className="hover:bg-neutral-800/50 transition">
@@ -20991,7 +23498,11 @@ COMO PUBLICAR NO SERVIDOR:
                               https://{domain}
                             </td>
                             <td className="p-3 text-center">
-                              {s.status === 'disabled' ? (
+                              {isModel ? (
+                                <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                  Modelo (Isento)
+                                </span>
+                              ) : s.status === 'disabled' ? (
                                 <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
                                   Desativado
                                 </span>
@@ -21005,12 +23516,16 @@ COMO PUBLICAR NO SERVIDOR:
                                 </span>
                               )}
                             </td>
-                            <td className="p-3 text-center font-mono text-neutral-300">{s.dueDate}</td>
+                            <td className="p-3 text-center font-mono text-neutral-300">{isModel ? '—' : s.dueDate}</td>
                             <td className="p-3 text-center font-mono font-bold text-emerald-300">
                               {rate}% <span className="text-[10px] font-normal text-neutral-400">({clicks}/{views})</span>
                             </td>
                             <td className="p-3 text-right font-bold text-emerald-300">
-                              R$ {s.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              {isModel ? (
+                                <span className="text-amber-300 text-[11px]">Isento (Modelo)</span>
+                              ) : (
+                                `R$ ${s.monthlyFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              )}
                             </td>
                           </tr>
                         );
@@ -21065,7 +23580,7 @@ COMO PUBLICAR NO SERVIDOR:
         const clicks = site.whatsappClicks || 0;
         const views = site.pageViews || 100;
         const rate = Number(((clicks / views) * 100).toFixed(1));
-        const domain = site.customDomain || `${site.subdomain}.luxebio.site`;
+        const domain = site.customDomain || `${site.subdomain}.biovip.com.br`;
 
         return (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -21440,10 +23955,10 @@ COMO PUBLICAR NO SERVIDOR:
         const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (pixModalSite.daysOverdue || 0);
         const editsBlocked = isSiteEditsLocked(pixModalSite, daysOverdue);
         const isSuspended = isSiteSuspendedStatus(pixModalSite);
-        const activePixKey = (pixCustomCode || data.saasSettings?.pixKey || 'contato@luxebio.com.br').trim();
+        const activePixKey = (pixCustomCode || data.saasSettings?.pixKey || 'contato@biovip.com.br').trim();
         const currentWaMessage =
           pixWhatsappMessage || buildReguaCobrancaMessage(pixModalSite, pixBillingStage, activePixKey);
-        const cleanClientPhone = (pixModalSite.clientPhone || pixModalSite.data?.profile?.whatsapp || '').replace(/\D/g, '');
+        const cleanClientPhone = formatWhatsAppPhone(pixModalSite.clientPhone || pixModalSite.data?.profile?.whatsapp || '');
         const waDispatchHref = cleanClientPhone
           ? `https://wa.me/${cleanClientPhone}?text=${encodeURIComponent(currentWaMessage)}`
           : `https://wa.me/?text=${encodeURIComponent(currentWaMessage)}`;
@@ -21642,7 +24157,7 @@ COMO PUBLICAR NO SERVIDOR:
                     <div className="flex justify-between items-center">
                       <span className="text-neutral-400">Favorecido:</span>
                       <span className="font-semibold text-neutral-200 truncate max-w-[110px]">
-                        {data.saasSettings?.pixName || 'LuxeBio Studio'}
+                        {data.saasSettings?.pixName || 'BioVip Studio'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -22295,7 +24810,7 @@ COMO PUBLICAR NO SERVIDOR:
       {/* VALORES, LINKS PARA REDES SOCIAIS & PASSO A PASSO BIO DO INSTAGRAM)      */}
       {/* ========================================================================= */}
       {clientWaPromptSite && (() => {
-        const primaryDomain = (clientWaPromptSite.customDomain || '').trim() || `${clientWaPromptSite.subdomain || 'meusite'}.luxebio.site`;
+        const primaryDomain = (clientWaPromptSite.customDomain || '').trim() || `${clientWaPromptSite.subdomain || 'meusite'}.biovip.com.br`;
         const primaryUrl = `https://${primaryDomain}`;
         const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
         const billing = getSiteBillingSummary(clientWaPromptSite);
@@ -22507,7 +25022,7 @@ COMO PUBLICAR NO SERVIDOR:
                 <button
                   type="button"
                   onClick={() => {
-                    const cleanPhone = (clientWaPromptPhone || '').replace(/\D/g, '');
+                    const cleanPhone = formatWhatsAppPhone(clientWaPromptPhone || '');
                     const waUrl = cleanPhone
                       ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(clientWaPromptText)}`
                       : `https://api.whatsapp.com/send?text=${encodeURIComponent(clientWaPromptText)}`;
@@ -22825,7 +25340,7 @@ COMO PUBLICAR NO SERVIDOR:
                     Defina um <strong className="text-white">código de 6 dígitos numéricos</strong> exclusivo. O PIN é armazenado em formato criptográfico <strong className="text-amber-300 font-mono">SHA-256</strong> com salt exclusivo.
                   </p>
                   <p className="text-[11px] text-neutral-400">
-                    PIN padrão inicial do sistema: <code className="text-amber-300 font-mono font-bold">849201</code>
+                    PIN padrão inicial do sistema: <code className="text-amber-300 font-mono font-bold">230217</code>
                   </p>
                 </div>
 
@@ -22844,7 +25359,7 @@ COMO PUBLICAR NO SERVIDOR:
                         setChangePinCurrent(e.target.value.replace(/\D/g, '').slice(0, 6));
                         setChangePinError(null);
                       }}
-                      placeholder="Ex: 849201"
+                      placeholder="Ex: 230217"
                       className="w-full tracking-widest text-base font-mono py-2.5 px-3 rounded-xl bg-neutral-950 border border-neutral-800 text-amber-300 focus:outline-none focus:border-amber-400"
                     />
                   </div>
