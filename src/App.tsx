@@ -1688,6 +1688,7 @@ export interface SavedMicrosite {
     direct: number;
   };
   isLandingModel?: boolean;
+  isCustomized?: boolean; // True quando o site foi editado e salvo pelo usuário, protegendo de sobrescritas por modelos predefinidos
   isUnderConstruction?: boolean; // True quando o site foi pago mas ainda está em fase de construção
   underConstruction?: boolean; // Alias compatível
   briefingStatus?: 'pending' | 'submitted'; // Status de envio das informações pelo cliente
@@ -4740,7 +4741,9 @@ export default function App() {
                 ((rm.id === 'site-1' || rm.subdomain === 'doncorleone') &&
                   rm.data?.profile?.avatarUrl?.includes('1573496359142'));
 
-              if (isRemoteStale && existing) {
+              if (existing?.isCustomized) {
+                byId.set(rm.id, { ...rm, ...existing, data: existing.data, isLandingModel: true });
+              } else if (isRemoteStale && existing) {
                 byId.set(rm.id, { ...rm, data: existing.data, isLandingModel: existing.isLandingModel ?? true });
               } else {
                 byId.set(rm.id, existing ? { ...existing, ...rm, isLandingModel: true } : rm);
@@ -7488,6 +7491,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
           updatesThisMonth: newUpdates,
           lastUpdated: dataChanged ? todayStr : s.lastUpdated,
           isLandingModel: saveForm.isLandingModel,
+          isCustomized: true,
           data: JSON.parse(JSON.stringify(data)),
         };
         savedTargetSite = updatedSite;
@@ -7532,6 +7536,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
         whatsappClicks: 0,
         pageViews: 100,
         isLandingModel: saveForm.isLandingModel,
+        isCustomized: true,
         data: JSON.parse(JSON.stringify(data)),
       };
       const newList = [newSite, ...savedSites];
@@ -12416,6 +12421,12 @@ COMO PUBLICAR NO SERVIDOR:
   // Helper to check if a saved site's images are outdated/mismatched relative to its niche preset
   const isModelSiteImagesStale = (site: SavedMicrosite, matchedPreset?: (typeof RAW_READY_MADE_MODELS)[number]): boolean => {
     if (!site?.data) return true;
+    // CRITICAL: User-customized sites are protected and must NEVER be overwritten by preset defaults
+    if (site.isCustomized) return false;
+    // Non-preset client sites created by users must never be overwritten
+    if (!site.id.startsWith('real-niche-') && site.id !== 'site-1' && site.id !== 'site-2' && site.id !== 'site-3') {
+      return false;
+    }
     // Check if site-1 (Don Corleone Barber) or site-3 (Larissa Nails) still has the default lawyer avatar
     if (
       (site.id === 'site-1' || site.subdomain === 'doncorleone' || site.nicheCategory === 'Barbearia & Grooming') &&
@@ -12432,29 +12443,11 @@ COMO PUBLICAR NO SERVIDOR:
     if (!matchedPreset) return false;
     const currentPhotos = site.data.studentGrid?.photos || [];
     if (currentPhotos.length < 6) return true;
-    if (site.data.profile?.avatarUrl !== matchedPreset.realSiteData.profile.avatarUrl) return true;
-    if (site.data.profile?.aboutPhotoUrl !== matchedPreset.realSiteData.profile.aboutPhotoUrl) return true;
-    const expectedFirstGallery = matchedPreset.realSiteData.studentGrid?.photos?.[0];
-    if (expectedFirstGallery && currentPhotos[0] !== expectedFirstGallery) return true;
     return false;
   };
 
   // Ensure all 8 real niche microsites are automatically present in savedSites and have 100% niche-accurate images
   useEffect(() => {
-    const matchedCurrentPreset = RAW_READY_MADE_MODELS.find(
-      (m) => m.personaName.toUpperCase() === data?.profile?.name?.toUpperCase()
-    );
-    if (
-      matchedCurrentPreset &&
-      ((data?.studentGrid?.photos?.length || 0) < 6 ||
-        data?.studentGrid?.photos?.some((p) => p.includes('1517841905240') || p.includes('1507003211169')) ||
-        data?.profile?.avatarUrl?.includes('1594824476967') ||
-        data?.profile?.avatarUrl?.includes('1544005313') ||
-        data?.profile?.avatarUrl?.includes('1580489944761'))
-    ) {
-      setData(JSON.parse(JSON.stringify(matchedCurrentPreset.realSiteData)));
-    }
-
     setSavedSites((prev) => {
       let deletedIds: string[] = [];
       try {
@@ -12473,8 +12466,8 @@ COMO PUBLICAR NO SERVIDOR:
 
       let changed = false;
       const updated = prev.map((s) => {
-        // Fix site-1 (Don Corleone Barber) if it had lawyer images from old INITIAL_SAVED_SITES
-        if (s.id === 'site-1' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
+        // Fix site-1 (Don Corleone Barber) if unedited and had lawyer images from old INITIAL_SAVED_SITES
+        if (!s.isCustomized && s.id === 'site-1' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
           const defaultSite1 = INITIAL_SAVED_SITES.find((is) => is.id === 'site-1');
           if (defaultSite1) {
             changed = true;
@@ -12485,16 +12478,16 @@ COMO PUBLICAR NO SERVIDOR:
             };
           }
         }
-        // Fix site-2 (Dra. Marina Advocacia) if it had random street portraits in studentGrid
-        if (s.id === 'site-2' && s.data?.studentGrid?.photos?.some((p: string) => p.includes('1517841905240'))) {
+        // Fix site-2 (Dra. Marina Advocacia) if unedited and had random street portraits in studentGrid
+        if (!s.isCustomized && s.id === 'site-2' && s.data?.studentGrid?.photos?.some((p: string) => p.includes('1517841905240'))) {
           changed = true;
           return {
             ...s,
             data: JSON.parse(JSON.stringify(INITIAL_DATA)),
           };
         }
-        // Fix site-3 (Larissa Almeida Nails) if it had lawyer images from old INITIAL_SAVED_SITES
-        if (s.id === 'site-3' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
+        // Fix site-3 (Larissa Almeida Nails) if unedited and had lawyer images from old INITIAL_SAVED_SITES
+        if (!s.isCustomized && s.id === 'site-3' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
           const defaultSite3 = INITIAL_SAVED_SITES.find((is) => is.id === 'site-3');
           if (defaultSite3) {
             changed = true;
