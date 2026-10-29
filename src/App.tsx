@@ -157,6 +157,33 @@ function escapeHtmlAttr(val?: string | number | null): string {
 }
 
 /**
+ * Safely converts any image input (string URL, object with url/src/photoUrl, or undefined)
+ * into a valid image URL string with fallback protection against empty or broken strings.
+ */
+function sanitizeImageUrl(val: any, fallback: string): string {
+  if (!val) return fallback;
+  if (typeof val === 'object' && val !== null) {
+    const extracted = val.url || val.imageUrl || val.photoUrl || val.src || val.link || '';
+    if (typeof extracted === 'string' && extracted.trim().startsWith('http')) {
+      return extracted.trim();
+    }
+    return fallback;
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('data:image/') ||
+      trimmed.startsWith('/')
+    ) {
+      return trimmed;
+    }
+  }
+  return fallback;
+}
+
+/**
  * Serializes payloads for Firestore while guaranteeing the string stays within the security rule maxLength (950KB).
  */
 function serializeSafeFirestorePayload(obj: unknown, maxLen = 920000): string {
@@ -2721,7 +2748,8 @@ function SimulatorImage({
   style,
   skeletonClassName = '',
   accentColor = '#d4af37',
-  referrerPolicy,
+  referrerPolicy = 'no-referrer',
+  fallbackUrl = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
 }: {
   src: string;
   alt: string;
@@ -2730,14 +2758,17 @@ function SimulatorImage({
   skeletonClassName?: string;
   accentColor?: string;
   referrerPolicy?: React.HTMLAttributeReferrerPolicy;
+  fallbackUrl?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
   const imgRef = React.useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     setLoaded(false);
     setErrored(false);
+    setCurrentSrc(src);
     const imgEl = imgRef.current;
     if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
       const timer = setTimeout(() => setLoaded(true), 120);
@@ -2767,12 +2798,16 @@ function SimulatorImage({
       )}
       <img
         ref={imgRef}
-        src={src}
+        src={currentSrc}
         alt={alt}
         referrerPolicy={referrerPolicy}
         onLoad={() => setLoaded(true)}
         onError={() => {
-          setErrored(true);
+          if (currentSrc !== fallbackUrl) {
+            setCurrentSrc(fallbackUrl);
+          } else {
+            setErrored(true);
+          }
           setLoaded(true);
         }}
         className={`${className} transition-opacity duration-500 ease-out ${
@@ -5524,7 +5559,7 @@ export default function App() {
             customText: c.customText || '#0f172a',
             bgImage: c.bgImage || '',
             imagePosition: c.imagePosition || 'none',
-            cardImage: c.cardImage || '',
+            cardImage: sanitizeImageUrl(c.cardImage, ''),
             imageFitStyle: c.imageFitStyle || 'framed',
             imageSize: c.imageSize || 88,
             ctaActionText: c.ctaActionText || 'SAIBA MAIS',
@@ -5545,9 +5580,10 @@ export default function App() {
             actionType: (srv.actionType as 'booking' | 'whatsapp' | 'link') || 'booking',
             customUrl: srv.customUrl || '',
             featured: srv.featured ?? idx === 0,
-            imageUrl:
-              srv.imageUrl ||
-              'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=300',
+            imageUrl: sanitizeImageUrl(
+              srv.imageUrl,
+              'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400'
+            ),
           }))
         : INITIAL_DATA.services.items;
 
@@ -5559,10 +5595,14 @@ export default function App() {
       .trim();
     const cleanMaps = (aiForm.googleMaps || '').trim();
 
-    const finalGalleryPhotos =
+    const rawGalleryPhotos =
       Array.isArray(generated?.studentGrid?.photos) && generated.studentGrid.photos.length > 0
         ? generated.studentGrid.photos
         : INITIAL_DATA.studentGrid.photos;
+
+    const finalGalleryPhotos = rawGalleryPhotos.map((p: any, idx: number) =>
+      sanitizeImageUrl(p, INITIAL_DATA.studentGrid.photos[idx % INITIAL_DATA.studentGrid.photos.length])
+    );
 
     const finalGalleryCaptions = finalGalleryPhotos.map((_: string, idx: number) =>
       Array.isArray(generated?.studentGrid?.captions)
@@ -5586,6 +5626,8 @@ export default function App() {
       profile: {
         ...INITIAL_DATA.profile,
         ...(generated?.profile || {}),
+        avatarUrl: sanitizeImageUrl(generated?.profile?.avatarUrl, INITIAL_DATA.profile.avatarUrl),
+        aboutPhotoUrl: sanitizeImageUrl(generated?.profile?.aboutPhotoUrl, INITIAL_DATA.profile.aboutPhotoUrl),
         name:
           generated?.profile?.name ||
           (aiForm.businessName ? aiForm.businessName.toUpperCase() : data.profile.name),
@@ -5876,6 +5918,7 @@ Assim que tiver os dados do cliente, pesquise na internet e no Google Maps tudo 
 - Os **4 a 6 serviços/procedimentos reais** trabalhados pelo cliente (baseados nas informações coletadas do perfil, legendas e nicho), criando descrições persuasivas e elegantes.
 - Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
 - 6 legendas curtas e impactantes baseadas nos posts mais curtidos do Instagram para a galeria.
+- **ATENÇÃO CRÍTICA PARA IMAGENS:** Todas as chaves de imagem (avatarUrl, aboutPhotoUrl, cardImage, imageUrl, photos) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web (ex: https://images.unsplash.com/photo-...). NUNCA envie objetos nem chaves aninhadas para as imagens.
 
 ---
 
@@ -10276,6 +10319,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <title>${escapeHtmlAttr(siteData.seo?.metaTitle || `${siteData.profile.name} - ${siteData.profile.title}`)}</title>
   <meta name="description" content="${escapeHtmlAttr(siteData.seo?.metaDescription || siteData.profile.tagline || '')}">
   <meta name="keywords" content="${escapeHtmlAttr(siteData.seo?.keywords || '')}">
@@ -10899,7 +10943,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
     </a>` : ''}
 
     <div class="hero">
-      <img src="${data.profile.avatarUrl}" alt="${data.profile.name}" class="hero-img avatar-img" />
+      <img src="${data.profile.avatarUrl}" alt="${escapeHtmlAttr(data.profile.name)}" class="hero-img avatar-img" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900';" />
       <div class="hero-fade">
         <span class="badge-sub">${data.profile.title}</span>
         <h1 class="name">${data.profile.name}</h1>
@@ -11014,7 +11058,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
           <div class="cta-sub" style="margin-top: 4px; color: ${resolvedSubColor};">${c.subtitle}</div>
           ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: ${ctaBtnBg}; ${ctaBtnBorder} color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
         </div>
-        <img src="${c.cardImage}" alt="${c.title}" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" />
+        <img src="${c.cardImage}" alt="${escapeHtmlAttr(c.title)}" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
       </a>`;
         }
 
@@ -11094,7 +11138,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
           const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
           return `
           <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
-            <img src="${p}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" />
+            <img src="${p}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700';" />
             ${caption ? `<div class="gallery-caption">${escapeHtmlAttr(caption)}</div>` : ''}
           </div>`;
         }).join('')}
@@ -11109,11 +11153,11 @@ Inicie agora fazendo a **Solicitação 1**!`;
       ${data.beforeAfter.subtitle ? `<p style="font-size: 11px; color: ${mc.beforeAfter?.textColor || theme.textMuted}; margin-bottom: 10px;">${data.beforeAfter.subtitle}</p>` : ''}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${data.beforeAfter.beforeUrl}" alt="Antes" style="width:100%; height:100%; object-fit:cover; display:block;" />
+          <img src="${data.beforeAfter.beforeUrl}" alt="Antes" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
           <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Antes</span>
         </div>
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${data.beforeAfter.afterUrl}" alt="Depois" style="width:100%; height:100%; object-fit:cover; display:block;" />
+          <img src="${data.beforeAfter.afterUrl}" alt="Depois" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500';" />
           <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Depois</span>
         </div>
       </div>
@@ -11160,7 +11204,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
             return `
             <div class="service-card ${srv.featured ? 'featured' : ''}">
               <div style="position:relative; height:145px; width:100%; overflow:hidden; background:#000;">
-                <img src="${srv.imageUrl}" alt="${srv.name}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" />
+                <img src="${srv.imageUrl}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
                 ${srv.badge ? `<span class="service-badge" style="position:absolute; top:10px; left:10px;">${srv.badge}</span>` : ''}
                 ${srv.duration ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:3px 8px; border-radius:999px;">⏱ ${srv.duration}</span>` : ''}
               </div>
@@ -11183,7 +11227,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
             <div class="service-card ${srv.featured ? 'featured' : ''}" style="display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="position:relative; aspect-ratio:4/3; width:100%; overflow:hidden; background:#000;">
-                  <img src="${srv.imageUrl}" alt="${srv.name}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" />
+                  <img src="${srv.imageUrl}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
                   ${srv.badge ? `<span class="service-badge" style="position:absolute; top:6px; left:6px; font-size:7px;">${srv.badge}</span>` : ''}
                 </div>
                 <div style="padding:10px;">
@@ -11205,7 +11249,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
           return `
           <div class="service-card ${srv.featured ? 'featured' : ''}" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
-              <img src="${srv.imageUrl}" alt="${srv.name}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" />
+              <img src="${srv.imageUrl}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
             </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -11251,7 +11295,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
       </h3>
       ${data.profile.aboutPhotoUrl ? `
       <div style="width: 100%; height: 170px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img src="${data.profile.aboutPhotoUrl}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" />
+        <img src="${data.profile.aboutPhotoUrl}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700';" />
       </div>` : ''}
       <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe.paragraph}
@@ -11303,7 +11347,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
     </div>
     <div style="position:relative; max-width:92vw; max-height:82vh; display:flex; align-items:center; justify-content:center;" onclick="event.stopPropagation()">
       <button onclick="navGalleryLightbox(-1)" style="position:absolute; left:-20px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%; font-size:22px; cursor:pointer; z-index:5;">‹</button>
-      <img id="lb-img" src="" style="max-width:90vw; max-height:76vh; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.15);" />
+      <img id="lb-img" src="" style="max-width:90vw; max-height:76vh; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.15);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=900';" />
       <button onclick="navGalleryLightbox(1)" style="position:absolute; right:-20px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%; font-size:22px; cursor:pointer; z-index:5;">›</button>
     </div>
     <div id="lb-caption" style="display:none; margin-top:12px; max-width:85vw; padding:8px 16px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); color:#fff; font-size:13px; font-weight:500; text-align:center;" onclick="event.stopPropagation()"></div>
