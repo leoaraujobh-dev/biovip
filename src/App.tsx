@@ -4926,6 +4926,29 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const openLivePreviewTab = () => {
+    try {
+      const currentSite = savedSites.find(s => s.id === editingSiteId);
+      const rawSub = currentSite?.subdomain || saveForm.subdomain || data?.profile?.instagram || data?.profile?.name || 'meusite';
+      const cleanSub = String(rawSub).toLowerCase().trim().replace(/[^a-z0-9-]/g, '') || 'meusite';
+      const customDomain = currentSite?.customDomain || saveForm.customDomain;
+      const targetUrl = getPublicMicrositeUrl(cleanSub, customDomain);
+
+      // Tenta abrir a prévia do microsite em nova aba
+      const newWin = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+        // Se bloqueado por pop-up ou política de iframe, carrega a prévia no próprio app sem deslogar
+        openPublicMicrosite(cleanSub, customDomain);
+      } else {
+        showToast(`👁️ Abrindo prévia em tela cheia do microsite "${currentSite?.clientName || data?.profile?.name || 'BioVip'}"!`);
+      }
+    } catch (err) {
+      console.error('Error opening live preview tab:', err);
+      const fallbackSlug = (saveForm.subdomain || data?.profile?.instagram || 'meusite').toLowerCase().replace(/[^a-z0-9-]/g, '');
+      openPublicMicrosite(fallbackSlug);
+    }
+  };
+
   // AI Copywriting Optimizer State
   const [aiCopyModalOpen, setAiCopyModalOpen] = useState(false);
   const [aiCopyTarget, setAiCopyTarget] = useState<{ fieldLabel: string; currentVal: string; applyFn: (text: string) => void } | null>(null);
@@ -11516,25 +11539,6 @@ Inicie agora fazendo a **Solicitação 1**!`;
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
-
-  const openLivePreviewTab = () => {
-    const fallbackSlug = (data.profile.name || 'dramarina')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '');
-    const matchedModel =
-      DYNAMIC_LANDING_MODELS.find(
-        (m) => m.realSiteData?.profile?.name === data?.profile?.name || m.personaName === data?.profile?.name
-      ) ||
-      READY_MADE_MODELS.find(
-        (m) => m.realSiteData?.profile?.name === data?.profile?.name || m.personaName === data?.profile?.name
-      );
-    const resolvedSub = currentEditingSite?.subdomain || matchedModel?.subdomain || fallbackSlug || 'dramarina';
-    const targetUrl = getPublicMicrositeUrl(resolvedSub, currentEditingSite?.customDomain);
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-    showToast(`🌐 Microsite aberto em ${targetUrl}!`);
   };
 
   // ==============================================================
