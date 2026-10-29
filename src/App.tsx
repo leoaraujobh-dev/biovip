@@ -4583,7 +4583,11 @@ export default function App() {
       const safeSubdomain = (site.subdomain || 'modelo').slice(0, 120);
       const safeCustomDomain = (site.customDomain || '').slice(0, 180);
       const safeStatus: 'active' | 'overdue' | 'disabled' =
-        site.status === 'overdue' || site.status === 'disabled' ? site.status : 'active';
+        site.status === 'disabled' || site.status === 'suspenso_d7'
+          ? 'disabled'
+          : site.status === 'overdue' || site.status === 'atrasado_d3' || site.status === 'pendente'
+          ? 'overdue'
+          : 'active';
 
       try {
         const recordPayload = serializeSafeFirestorePayload(site);
@@ -8190,14 +8194,37 @@ Inicie agora fazendo a **Solicitação 1**!`;
     setSuspendedPreviewSite(site);
   };
 
+  function addDaysToDateString(dateStr: string, daysToAdd: number = 30): string {
+    const parts = dateStr ? dateStr.split('-') : [];
+    let baseDate: Date;
+    if (parts.length === 3 && parts[0].length === 4) {
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      baseDate = new Date(y, m, day);
+    } else {
+      baseDate = new Date();
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    baseDate.setHours(0, 0, 0, 0);
+
+    const effectiveBase = baseDate.getTime() > today.getTime() ? baseDate : today;
+    effectiveBase.setDate(effectiveBase.getDate() + daysToAdd);
+
+    const year = effectiveBase.getFullYear();
+    const month = String(effectiveBase.getMonth() + 1).padStart(2, '0');
+    const dateNum = String(effectiveBase.getDate()).padStart(2, '0');
+    return `${year}-${month}-${dateNum}`;
+  }
+
   const extendDueDate = (siteId: string) => {
+    let updatedTarget: SavedMicrosite | null = null;
     const updated = savedSites.map(s => {
       if (s.id !== siteId) return s;
-      const currentDue = new Date(s.dueDate > new Date().toISOString().split('T')[0] ? s.dueDate : new Date());
-      currentDue.setDate(currentDue.getDate() + 30);
-      const newDueDateStr = currentDue.toISOString().split('T')[0];
-      // Ao confirmar o pagamento: status 'pago', daysOverdue 0, edicoesBloqueadas false, linkStatus 'ativo'
-      return {
+      const newDueDateStr = addDaysToDateString(s.dueDate, 30);
+      // Ao confirmar o pagamento: status 'pago', daysOverdue 0, edicoesBloqueadas false, linkStatus 'ativo', reativa modo construção
+      updatedTarget = {
         ...s,
         dueDate: newDueDateStr,
         status: 'pago' as const,
@@ -8207,14 +8234,18 @@ Inicie agora fazendo a **Solicitação 1**!`;
         autoDisabledByOverdue: false,
         manualOverrideUntil: undefined,
         isFirstMonth: false,
+        isUnderConstruction: false,
+        underConstruction: false,
         updatesThisMonth: 0,
+        lastUpdated: new Date().toISOString().split('T')[0],
       };
+      return updatedTarget;
     });
     setSavedSites(updated);
     persistSavedSitesToStorage(updated);
-    const target = updated.find(s => s.id === siteId);
-    if (target) syncSiteToFirestore(target);
-    showToast(`💳 Pagamento de "${target?.clientName}" confirmado! Link reativado, edições liberadas e vencimento estendido para ${formatDueDateBr(target?.dueDate || '')}.`);
+    if (updatedTarget) syncSiteToFirestore(updatedTarget);
+    const targetObj = updatedTarget as SavedMicrosite | null;
+    showToast(`💳 Renovação manual de "${targetObj?.clientName}" confirmada! +30 dias de acesso (vencimento: ${formatDueDateBr(targetObj?.dueDate || '')}), edições liberadas e franquia de alterações zerada.`);
   };
 
   const updateSiteMonthlyFee = (siteId: string, newFee: number) => {
@@ -22968,6 +22999,17 @@ COMO PUBLICAR NO SERVIDOR:
                               {/* Action Buttons Row */}
                               <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                                 <div className="flex items-center gap-1.5 flex-wrap">
+                                  {/* BOTÃO PRINCIPAL DE RENOVAÇÃO MANUAL DE PAGAMENTO (+30 DIAS) */}
+                                  <button
+                                    type="button"
+                                    onClick={() => extendDueDate(site.id)}
+                                    className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-[11px] flex items-center gap-1.5 cursor-pointer border border-emerald-300 shadow-md shadow-emerald-500/20 transition"
+                                    title="Confirmar renovação manual de pagamento: estende vencimento em +30 dias, libera edições bloqueadas, reativa o link e zera contador mensal de alterações"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5 text-neutral-950" />
+                                    <span>Renovar (+30d)</span>
+                                  </button>
+
                                   <button
                                     type="button"
                                     onClick={() => loadSiteForEditing(site)}
