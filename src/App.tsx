@@ -4611,6 +4611,7 @@ export default function App() {
             createdAt: site.createdAt,
             dueDate: site.dueDate,
             monthlyFee: site.monthlyFee,
+            isCustomized: Boolean(site.isCustomized),
           });
           await setDoc(doc(firebaseDb, 'public_models', safeId), {
             id: safeId,
@@ -4714,6 +4715,7 @@ export default function App() {
               dnsConfigured: true,
               sslActive: true,
               isLandingModel: true,
+              isCustomized: Boolean(parsedPayload.isCustomized || raw.isCustomized),
               data: siteData,
             });
           }
@@ -4795,6 +4797,7 @@ export default function App() {
               nicheCategory: raw.nicheCategory || parsedRecord.nicheCategory,
               status: raw.status || parsedRecord.status || 'active',
               isLandingModel: typeof raw.isLandingModel === 'boolean' ? raw.isLandingModel : parsedRecord.isLandingModel,
+              isCustomized: Boolean(parsedRecord.isCustomized || raw.isCustomized),
             });
           }
         });
@@ -4814,7 +4817,13 @@ export default function App() {
             remoteAdminSites.forEach((rs) => {
               if (deletedIds.includes(rs.id)) return;
               const existing = byId.get(rs.id);
-              byId.set(rs.id, existing ? { ...existing, ...rs } : rs);
+              if (existing?.isCustomized && !rs.isCustomized) {
+                byId.set(rs.id, { ...rs, ...existing, data: existing.data, isCustomized: true });
+              } else if (rs.isCustomized) {
+                byId.set(rs.id, { ...existing, ...rs, data: rs.data, isCustomized: true });
+              } else {
+                byId.set(rs.id, existing ? { ...existing, ...rs } : rs);
+              }
             });
             const merged = Array.from(byId.values());
             persistSavedSitesToStorage(merged);
@@ -4828,6 +4837,28 @@ export default function App() {
     );
     return () => unsub();
   }, [adminUser]);
+
+  // Auto-sync active edited site data in savedSites and mark isCustomized: true whenever data or editingSiteId changes
+  useEffect(() => {
+    if (!editingSiteId || !data) return;
+    setSavedSites((prev) => {
+      const idx = prev.findIndex((s) => s.id === editingSiteId);
+      if (idx === -1) return prev;
+      const existing = prev[idx];
+      const dataString = JSON.stringify(data);
+      if (existing.isCustomized && JSON.stringify(existing.data) === dataString) {
+        return prev;
+      }
+      const updated = [...prev];
+      updated[idx] = {
+        ...existing,
+        isCustomized: true,
+        data: JSON.parse(dataString),
+      };
+      persistSavedSitesToStorage(updated);
+      return updated;
+    });
+  }, [data, editingSiteId]);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -5805,6 +5836,7 @@ export default function App() {
       whatsappClicks: 0,
       pageViews: 120,
       isLandingModel: false,
+      isCustomized: true,
       data: JSON.parse(JSON.stringify(builtMicrositeData)),
     };
 
@@ -6441,6 +6473,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
           whatsappClicks: 0,
           pageViews: 100,
           isLandingModel: isModel,
+          isCustomized: true,
           data: JSON.parse(JSON.stringify(builtData)),
         };
 
@@ -14709,8 +14742,11 @@ COMO PUBLICAR NO SERVIDOR:
           return;
         }
       }
-      window.history.pushState({}, '', '/');
-      setAppSurface('landing');
+      const targetSurface = adminUser ? 'studio' : 'landing';
+      try {
+        window.history.pushState({ surface: targetSurface }, '', targetSurface === 'studio' ? '/#studio' : '/');
+      } catch {}
+      setAppSurface(targetSurface);
       setActivePublicSlug(null);
     };
 
@@ -14733,6 +14769,8 @@ COMO PUBLICAR NO SERVIDOR:
       : [];
 
     const foundSite =
+      (editingSiteId ? matchingSites.find((s) => s.id === editingSiteId) : undefined) ||
+      matchingSites.find((s) => s.isCustomized) ||
       matchingSites.find((s) => s.isLandingModel && s.status !== 'disabled') ||
       matchingSites.find((s) => s.id.startsWith('real-niche-')) ||
       matchingSites.find((s) => s.status !== 'disabled') ||
@@ -14748,7 +14786,7 @@ COMO PUBLICAR NO SERVIDOR:
                 onClick={goBackToMainDomain}
                 className="pointer-events-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-300 text-xs font-semibold border border-amber-400/40 backdrop-blur-md shadow-lg transition cursor-pointer"
               >
-                <span>← BioVip Início</span>
+                <span>{adminUser ? '← Voltar ao Painel Studio' : '← BioVip Início'}</span>
               </button>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono text-amber-300 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
@@ -14777,7 +14815,7 @@ COMO PUBLICAR NO SERVIDOR:
       }
 
       const resolvedData =
-        foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data;
+        foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data);
 
       return (
         <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
