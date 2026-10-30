@@ -5,13 +5,10 @@ import sendBulkEmailHandler from '../../api/send-bulk-email.ts';
 import asaasHandler from '../../api/asaas.ts';
 
 /**
- * Cloudflare Pages Function Adapter:
- * Permite que todas as rotas de backend (/api/*) rodem nativamente
- * como Cloudflare Workers na borda da Cloudflare.
+ * Universal Cloudflare Handler (Pages Functions + Workers with Static Assets)
+ * Compatível tanto com "wrangler pages deploy" quanto com "wrangler deploy".
  */
-export async function onRequest(context: any) {
-  const { request, env } = context;
-
+export async function handleCloudflareRequest(request: Request, env: any): Promise<Response> {
   // Injeta as variáveis de ambiente cadastradas no painel da Cloudflare em process.env
   if (env && typeof process !== 'undefined') {
     Object.assign(process.env, env);
@@ -19,6 +16,15 @@ export async function onRequest(context: any) {
 
   const url = new URL(request.url);
   const path = url.pathname;
+
+  // Se a requisição NÃO for para a API (/api/...) e o binding de ASSETS existir, serve os arquivos estáticos do dist
+  if (!path.startsWith('/api') && env?.ASSETS) {
+    try {
+      return await env.ASSETS.fetch(request);
+    } catch {
+      // Segue para fallback
+    }
+  }
 
   let body: any = {};
   if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -80,6 +86,9 @@ export async function onRequest(context: any) {
       await sendBulkEmailHandler(req, res);
     } else if (path.includes('asaas')) {
       await asaasHandler(req, res);
+    } else if (env?.ASSETS) {
+      // Rota não-API delegada para assets estáticos
+      return await env.ASSETS.fetch(request);
     } else {
       return new Response(JSON.stringify({ error: 'Endpoint não encontrado na Cloudflare' }), {
         status: 404,
@@ -96,3 +105,15 @@ export async function onRequest(context: any) {
     });
   }
 }
+
+// 1) Exportação para Cloudflare Pages Functions
+export async function onRequest(context: any) {
+  return handleCloudflareRequest(context.request, context.env);
+}
+
+// 2) Exportação padrão para Cloudflare Workers with Assets (wrangler deploy)
+export default {
+  async fetch(request: Request, env: any) {
+    return handleCloudflareRequest(request, env);
+  },
+};
