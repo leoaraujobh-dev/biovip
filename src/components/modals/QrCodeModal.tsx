@@ -31,7 +31,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
   };
   const liveUrl = targetSite.customDomain
     ? `https://${targetSite.customDomain}`
-    : `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${targetSite.subdomain || 'meusite'}`;
+    : `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/?site=${targetSite.subdomain || 'meusite'}`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(liveUrl)}`;
 
   return (

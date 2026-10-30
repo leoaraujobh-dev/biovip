@@ -144,6 +144,8 @@ import {
   getLuminance,
   getSafeContrastText,
   optimizeImageUrl,
+  cleanMicrositeSlug,
+  getPublicMicrositeUrl as formattersGetPublicUrl,
 } from './utils/formatters';
 
 import {
@@ -1468,10 +1470,12 @@ export default function App() {
     const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
     const search = new URLSearchParams(window.location.search);
     const host = window.location.hostname.toLowerCase();
+    const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
 
-    if (search.get('site')) return search.get('site')!.toLowerCase();
-    if (search.get('p')) return search.get('p')!.toLowerCase();
-    if (search.get('microsite')) return search.get('microsite')!.toLowerCase();
+    if (search.get('site')) return search.get('site')!.toLowerCase().trim();
+    if (search.get('p')) return search.get('p')!.toLowerCase().trim();
+    if (search.get('microsite')) return search.get('microsite')!.toLowerCase().trim();
+    if (search.get('m')) return search.get('m')!.toLowerCase().trim();
 
     const configuredSub = (landingConfig?.creatorSubdomain || 'criador').toLowerCase();
     const baseDomain = (landingConfig?.baseDomain || 'biovip.com.br')
@@ -1502,6 +1506,14 @@ export default function App() {
 
     if (path && !reservedPaths.includes(path) && !path.includes('.')) {
       return path;
+    }
+
+    if (hash && hash.startsWith('site=')) {
+      const val = hash.replace('site=', '').trim();
+      if (val) return val;
+    }
+    if (hash && !reservedPaths.includes(hash) && !hash.includes('.') && !hash.includes('?') && !hash.includes('&')) {
+      return hash;
     }
 
     if (
@@ -1556,6 +1568,19 @@ export default function App() {
 
   const [appSurface, setAppSurface] = useState<'landing' | 'studio' | 'microsite'>(() => detectCreatorSurface());
   const [activePublicSlug, setActivePublicSlug] = useState<string | null>(() => detectPublicMicrositeSlug());
+
+  // Automatically cleans up the address bar to show '/slug' without triggering 404 or page reload
+  useEffect(() => {
+    if (appSurface === 'microsite' && activePublicSlug && typeof window !== 'undefined') {
+      const clean = cleanMicrositeSlug(activePublicSlug);
+      const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+      if (clean && currentPath !== clean) {
+        try {
+          window.history.replaceState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
+        } catch {}
+      }
+    }
+  }, [appSurface, activePublicSlug]);
   const [underConstructionPreviewSite, setUnderConstructionPreviewSite] = useState<SavedMicrosite | null>(null);
   const [paymentSuccessSite, setPaymentSuccessSite] = useState<SavedMicrosite | null>(null);
   const [checkoutAsaasPix, setCheckoutAsaasPix] = useState<{
@@ -2374,48 +2399,18 @@ export default function App() {
   };
 
   const getPublicMicrositeUrl = (subdomain: string, customDomain?: string) => {
-    const baseDomain = getCleanBaseDomain();
-    const cleanSub = (subdomain || 'dramarina').toLowerCase().trim().replace(/[^a-z0-9-]/g, '') || 'dramarina';
-    const cleanCustom = (customDomain || '')
-      .toLowerCase()
-      .trim()
-      .replace(/^https?:\/\//, '')
-      .replace(/\/.*$/, '');
-
-    const isFakeSeedDomain =
-      cleanCustom === `www.${cleanSub}.com.br` ||
-      cleanCustom === `${cleanSub}.com.br` ||
-      cleanCustom === 'www.dramarinaalmeida.com.br' ||
-      cleanCustom === 'www.doncorleonebarber.com.br';
-
-    if (cleanCustom && !isFakeSeedDomain) {
-      return `https://${cleanCustom}`;
-    }
-
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname.toLowerCase();
-      if (host === baseDomain || host === `www.${baseDomain}` || host.endsWith(`.${baseDomain}`)) {
-        return `https://${baseDomain}/${cleanSub}`;
-      }
-      return `${window.location.origin}/${cleanSub}`;
-    }
-
-    return `https://${baseDomain}/${cleanSub}`;
+    return formattersGetPublicUrl(subdomain, customDomain, landingConfig.baseDomain || 'biovip.com.br');
   };
 
   const openPublicMicrosite = (slug: string, customDomain?: string) => {
-    const clean = (slug || 'dramarina').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'dramarina';
+    const clean = cleanMicrositeSlug(slug);
     const targetUrl = getPublicMicrositeUrl(clean, customDomain);
     if (typeof window !== 'undefined') {
-      const host = window.location.hostname.toLowerCase();
-      const baseDomain = getCleanBaseDomain();
-      if (host === baseDomain || host === `www.${baseDomain}` || host.endsWith(`.${baseDomain}`)) {
-        window.open(targetUrl, '_blank', 'noopener,noreferrer');
-        return;
-      }
+      const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      if (opened) return;
     }
     try {
-      window.history.pushState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
+      window.history.pushState({ surface: 'microsite', slug: clean }, '', `/?site=${clean}`);
     } catch {}
     setActivePublicSlug(clean);
     setAppSurface('microsite');
@@ -2546,9 +2541,9 @@ export default function App() {
     site: SavedMicrosite,
     templateType: 'complete_kit' | 'onboarding_bio' | 'renewal_details' = 'complete_kit'
   ) => {
-    const primaryDomain = (site.customDomain || '').trim() || `biovip.com.br/${site.subdomain || 'meusite'}`;
-    const primaryUrl = `https://${primaryDomain}`;
-    const subdomainUrl = `https://biovip.com.br/${site.subdomain || 'meusite'}`;
+    const primaryDomain = (site.customDomain || '').trim() || `biovip.com.br/?site=${site.subdomain || 'meusite'}`;
+    const primaryUrl = site.customDomain ? `https://${site.customDomain}` : `https://biovip.com.br/?site=${site.subdomain || 'meusite'}`;
+    const subdomainUrl = getPublicMicrositeUrl(site.subdomain || 'meusite');
     const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
     const billing = getSiteBillingSummary(site);
     const dueBr = formatDueDateBr(site.dueDate);
@@ -8644,9 +8639,9 @@ COMO PUBLICAR NO SERVIDOR:
       nicheKitKey: 'Barbearia & Grooming',
       category: 'Barbearia & Negócios',
       code: 'NICHO 05 · BARBEARIA VIP',
-      subdomain: 'dombarber',
+      subdomain: 'doncorleone',
       title: 'Barbearia Clássica & Clube de Assinatura',
-      personaName: 'DOM BARBER CLUB',
+      personaName: 'DON CORLEONE BARBER',
       personaRole: 'Corte Executivo, Barboterapia & Clube VIP Masculino',
       accentHex: '#d97706',
       conversionStat: '41.6% conv. Horários',
@@ -9402,10 +9397,18 @@ COMO PUBLICAR NO SERVIDOR:
 
     const demoModel = slug
       ? DYNAMIC_LANDING_MODELS.find(
-          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+          (m) =>
+            m.id.toLowerCase() === slug ||
+            m.subdomain?.toLowerCase() === slug ||
+            m.code?.toLowerCase() === slug ||
+            ((slug === 'doncorleone' || slug === 'dombarber') && (m.id === 'barber' || m.subdomain === 'dombarber' || m.subdomain === 'doncorleone'))
         ) ||
         READY_MADE_MODELS.find(
-          (m) => m.id.toLowerCase() === slug || m.subdomain?.toLowerCase() === slug || m.code?.toLowerCase() === slug
+          (m) =>
+            m.id.toLowerCase() === slug ||
+            m.subdomain?.toLowerCase() === slug ||
+            m.code?.toLowerCase() === slug ||
+            ((slug === 'doncorleone' || slug === 'dombarber') && (m.id === 'barber' || m.subdomain === 'dombarber' || m.subdomain === 'doncorleone'))
         )
       : undefined;
 
@@ -9416,6 +9419,7 @@ COMO PUBLICAR NO SERVIDOR:
           const sSub = (s.subdomain || '').toLowerCase().trim();
           const sCleanSub = sSub.replace(/[^a-z0-9]/g, '');
           const sId = (s.id || '').toLowerCase().trim();
+          const sCleanId = sId.replace(/[^a-z0-9]/g, '');
           const sClient = (s.clientName || '').toLowerCase().trim();
           const sCleanClient = sClient.replace(/[^a-z0-9]/g, '');
           const sProfileName = (s.data?.profile?.name || '').toLowerCase().trim();
@@ -9423,25 +9427,40 @@ COMO PUBLICAR NO SERVIDOR:
           const sInsta = (s.data?.profile?.instagram || '').toLowerCase().trim().replace(/@/g, '');
           const sCleanInsta = sInsta.replace(/[^a-z0-9]/g, '');
 
+          const clientTokens = `${sClient} ${sProfileName}`
+            .toLowerCase()
+            .split(/[^a-z0-9]+/)
+            .filter((t) => t.length >= 3);
+          const hasTokenMatch = clientTokens.some((t) => cleanSlug.includes(t) || t.includes(cleanSlug));
+
           return (
             sSub === slug ||
             sCleanSub === cleanSlug ||
             sId === slug ||
+            sCleanId === cleanSlug ||
             sClient === slug ||
             sCleanClient === cleanSlug ||
             sCleanProfileName === cleanSlug ||
             sCleanInsta === cleanSlug ||
             (sCleanClient.length > 3 && cleanSlug.includes(sCleanClient)) ||
-            (cleanSlug.length > 3 && sCleanClient.includes(cleanSlug))
+            (cleanSlug.length > 3 && sCleanClient.includes(cleanSlug)) ||
+            (sCleanSub && cleanSlug.includes(sCleanSub)) ||
+            hasTokenMatch ||
+            ((slug === 'doncorleone' || slug === 'dombarber') && (sSub === 'dombarber' || sSub === 'doncorleone' || sId === 'site-1'))
           );
         })
       : [];
 
+    const currentEditorTokens = `${data?.profile?.name || ''} ${data?.profile?.title || ''}`
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length >= 3);
     const currentDataMatches =
       Boolean(cleanSlug) &&
       ((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanSlug) ||
        cleanSlug.includes((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-       (saveForm?.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '') === cleanSlug);
+       (saveForm?.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '') === cleanSlug ||
+       currentEditorTokens.some((t) => cleanSlug.includes(t) || t.includes(cleanSlug)));
 
     const foundSite =
       (editingSiteId ? matchingSites.find((s) => s.id === editingSiteId) : undefined) ||
@@ -9535,6 +9554,40 @@ COMO PUBLICAR NO SERVIDOR:
         </div>
       );
     }
+
+    return (
+      <div className="min-h-screen w-full bg-[#09090b] text-neutral-100 flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="max-w-md w-full bg-neutral-900/90 border border-amber-500/30 rounded-2xl p-6 sm:p-8 text-center space-y-4 shadow-2xl relative z-10 backdrop-blur-md">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-lg shadow-amber-500/10">
+            💎
+          </div>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            Microsite BioVip em Preparação
+          </h1>
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            O endereço oficial <span className="font-mono text-amber-300 font-semibold">{getCleanBaseDomain()}/{slug}</span> está reservado em nossa infraestrutura e sua publicação está sendo finalizada pela equipe.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+            <button
+              type="button"
+              onClick={goBackToMainDomain}
+              className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-lg shadow-amber-400/20"
+            >
+              Conhecer a BioVip
+            </button>
+            <a
+              href={`https://wa.me/${(landingConfig.agencyWhatsapp || '5531991390202').replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Acessei o microsite ${getCleanBaseDomain()}/${slug} e gostaria de informações.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-neutral-200 border border-white/[0.1] font-semibold text-xs transition"
+            >
+              Falar com Suporte
+            </a>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // =========================================================================

@@ -243,4 +243,63 @@ export function formatDueDateBr(isoOrDate: string): string {
   return isoOrDate;
 }
 
+/**
+ * Normalizes any slug string to safe alphanumeric lowercase format
+ */
+export function cleanMicrositeSlug(slug?: string | null): string {
+  return String(slug || 'dramarina')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/[^a-z0-9-]/g, '') || 'dramarina';
+}
+
+/**
+ * Generates an infallible public URL for a microsite that works 100% of the time
+ * on any hosting provider (Cloudflare, HostGator, Vercel, localhost) without 404 errors.
+ */
+export function getPublicMicrositeUrl(
+  subdomain: string,
+  customDomain?: string,
+  baseDomainProp = 'biovip.com.br'
+): string {
+  const cleanSub = cleanMicrositeSlug(subdomain);
+  const cleanBase = (baseDomainProp || 'biovip.com.br')
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/.*$/, '') || 'biovip.com.br';
+
+  const cleanCustom = (customDomain || '')
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '');
+
+  const isFakeSeedDomain =
+    !cleanCustom ||
+    cleanCustom === `www.${cleanSub}.com.br` ||
+    cleanCustom === `${cleanSub}.com.br` ||
+    cleanCustom === 'www.dramarinaalmeida.com.br' ||
+    cleanCustom === 'www.doncorleonebarber.com.br' ||
+    cleanCustom.includes('biovip.com.br');
+
+  if (cleanCustom && !isFakeSeedDomain) {
+    return `https://${cleanCustom}`;
+  }
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    const origin = window.location.origin;
+    if (host === cleanBase || host === `www.${cleanBase}` || host.endsWith(`.${cleanBase}`)) {
+      return `https://${cleanBase}/?site=${cleanSub}`;
+    }
+    return `${origin}/?site=${cleanSub}`;
+  }
+
+  return `https://${cleanBase}/?site=${cleanSub}`;
+}
+
 

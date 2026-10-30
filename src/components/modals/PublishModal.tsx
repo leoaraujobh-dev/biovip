@@ -207,7 +207,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       type="button"
                       onClick={() =>
                         copyDnsValue(
-                          `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${targetSite.subdomain || 'meusite'}`,
+                          `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/?site=${targetSite.subdomain || 'meusite'}`,
                           'subdomain-url',
                           'Link do BioSite'
                         )
@@ -219,7 +219,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       <span>{copiedDnsField === 'subdomain-url' ? 'Copiado!' : 'Copiar'}</span>
                     </button>
                     <a
-                      href={`https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${targetSite.subdomain || 'meusite'}`}
+                      href={`https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/?site=${targetSite.subdomain || 'meusite'}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition border-l border-neutral-700 no-underline"
