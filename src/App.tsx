@@ -2694,7 +2694,7 @@ export default function App() {
     conversionGoal: 'whatsapp_booking' as 'whatsapp_booking' | 'catalog_sales' | 'vip_triage' | 'courses_mentorship',
     visualStyle: 'auto' as 'auto' | 'rose_luxury' | 'dark_gold' | 'clean_minimal' | 'vibrant_glam',
   });
-  const [quickCreationMode, setQuickCreationMode] = useState<'instant_ai' | 'gemini_script' | 'manual_quick'>('instant_ai');
+  const [quickCreationMode, setQuickCreationMode] = useState<'instant_ai' | 'gemini_script' | 'manual_quick' | 'niche_templates'>('instant_ai');
   const [lastExtractedMeta, setLastExtractedMeta] = useState<any | null>(null);
   const [aiCreationMode, setAiCreationMode] = useState<'auto_api' | 'gemini_script'>('instant_ai' as any);
   const [geminiPastedCode, setGeminiPastedCode] = useState('');

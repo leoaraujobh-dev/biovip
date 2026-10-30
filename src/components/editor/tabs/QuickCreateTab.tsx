@@ -18,6 +18,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
+import { NICHE_TEMPLATES, NicheTemplate } from '../../../constants/templates';
 
 export interface QuickCreateTabProps {
   data: typeof INITIAL_DATA;
@@ -25,8 +26,8 @@ export interface QuickCreateTabProps {
   editingSiteId: string | null;
   setActiveTab: (tabId: string) => void;
   handleStartNewMicrosite: () => void;
-  quickCreationMode: 'instant_ai' | 'gemini_script' | 'manual_quick';
-  setQuickCreationMode: React.Dispatch<React.SetStateAction<'instant_ai' | 'gemini_script' | 'manual_quick'>>;
+  quickCreationMode: 'instant_ai' | 'gemini_script' | 'manual_quick' | 'niche_templates';
+  setQuickCreationMode: React.Dispatch<React.SetStateAction<'instant_ai' | 'gemini_script' | 'manual_quick' | 'niche_templates'>>;
   aiForm: {
     businessName: string;
     whatsapp: string;
@@ -135,44 +136,119 @@ export function QuickCreateTab({
       </div>
 
       {/* Seletor de Modo de Criação Simplificado */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-neutral-900/90 rounded-2xl border border-neutral-800">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 bg-neutral-900/90 rounded-2xl border border-neutral-800">
         <button
           type="button"
-          onClick={() => setQuickCreationMode('instant_ai')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
-            quickCreationMode === 'instant_ai'
-              ? 'bg-amber-400 text-neutral-950 shadow-md'
+          onClick={() => setQuickCreationMode('niche_templates')}
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            quickCreationMode === 'niche_templates'
+              ? 'bg-amber-400 text-neutral-950 shadow-md font-black'
               : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
-          <span>⚡ Instantâneo com IA</span>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>💎 Modelos Prontos</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setQuickCreationMode('instant_ai')}
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            quickCreationMode === 'instant_ai'
+              ? 'bg-amber-400 text-neutral-950 shadow-md font-black'
+              : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>⚡ Criar com IA</span>
         </button>
         <button
           type="button"
           onClick={() => setQuickCreationMode('gemini_script')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
             quickCreationMode === 'gemini_script'
-              ? 'bg-amber-400 text-neutral-950 shadow-md'
+              ? 'bg-amber-400 text-neutral-950 shadow-md font-black'
               : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
           }`}
         >
-          <Copy className="w-4 h-4" />
-          <span>📋 Script para o Gemini</span>
+          <Copy className="w-3.5 h-3.5" />
+          <span>📋 Script Gemini</span>
         </button>
         <button
           type="button"
           onClick={() => setQuickCreationMode('manual_quick')}
-          className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
             quickCreationMode === 'manual_quick'
-              ? 'bg-amber-400 text-neutral-950 shadow-md'
+              ? 'bg-amber-400 text-neutral-950 shadow-md font-black'
               : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
           }`}
         >
-          <Edit3 className="w-4 h-4" />
-          <span>✍️ Manual Rápido</span>
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>✍️ Manual</span>
         </button>
       </div>
+
+      {/* ========================================================================= */}
+      {/* MODO 0: CATÁLOGO DE MODELOS PRONTOS POR NICHO (1 CLIQUE)                 */}
+      {/* ========================================================================= */}
+      {quickCreationMode === 'niche_templates' && (
+        <div className="space-y-4 p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800 shadow-xl">
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Modelos Profissionais Prontos por Nicho</span>
+            </h3>
+            <p className="text-xs text-neutral-400 mt-1">
+              Escolha um nicho abaixo para carregar imediatamente a paleta, copywriting, imagens e serviços validados para alta conversão.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {NICHE_TEMPLATES.map((tmpl) => (
+              <div
+                key={tmpl.id}
+                className="group p-3.5 rounded-2xl bg-neutral-950/80 border border-neutral-800 hover:border-amber-400/60 transition-all flex flex-col justify-between gap-3 shadow-md hover:shadow-amber-500/10"
+              >
+                <div className="space-y-2">
+                  <div className="relative h-28 w-full rounded-xl overflow-hidden border border-white/10">
+                    <img
+                      src={tmpl.previewImage}
+                      alt={tmpl.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-400 text-neutral-950 shadow">
+                      {tmpl.badge}
+                    </span>
+                    <span className="absolute bottom-2 left-2 text-xs font-bold text-white drop-shadow">
+                      {tmpl.nicheName}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-white truncate">{tmpl.title}</h4>
+                    <p className="text-[11px] text-neutral-400 line-clamp-2 mt-0.5 leading-relaxed">
+                      {tmpl.description}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setData(JSON.parse(JSON.stringify(tmpl.sampleData)));
+                    applyThemePreset(tmpl.theme);
+                    handleSaveMicrosite(false);
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-amber-500/30 hover:border-amber-300 transition cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Carregar este Modelo</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODO 1: CRIAÇÃO INSTANTÂNEA POR IA (3 CAMPOS ESSENCIAIS + BOTÃO) */}

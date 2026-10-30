@@ -1045,6 +1045,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   <span className="text-[10px] text-neutral-500 font-semibold px-2">Status:</span>
                   {[
                     { id: 'all', label: 'Todos' },
+                    { id: 'prospects', label: '🎯 Leads & Prospecção (CRM)' },
                     { id: 'landing', label: '⭐ Modelos (Sem Faturamento)' },
                     { id: 'active', label: '🟢 Pago / Em dia' },
                     { id: 'overdue', label: '🟡 Pendente / Atrasado D+3' },
@@ -1086,14 +1087,16 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
 
                       // 2. Status Filter (compatível com 'pago' | 'pendente' | 'atrasado_d3' | 'suspenso_d7' e legados)
                       const isModel = isModelMicrosite(site);
+                      const isProspect = Boolean(site.isTemporaryDemo || site.crmStage);
                       const suspended = !isModel && isSiteSuspendedStatus(site);
                       const overdue = !isModel && isSiteOverdueStatus(site);
                       const matchesStatus =
                         dashboardStatusFilter === 'all' ||
+                        (dashboardStatusFilter === 'prospects' && isProspect) ||
                         (dashboardStatusFilter === 'landing' && isModel) ||
-                        (dashboardStatusFilter === 'active' && !isModel && !suspended && !overdue) ||
-                        (dashboardStatusFilter === 'overdue' && !isModel && overdue) ||
-                        (dashboardStatusFilter === 'disabled' && !isModel && suspended);
+                        (dashboardStatusFilter === 'active' && !isModel && !suspended && !overdue && !isProspect) ||
+                        (dashboardStatusFilter === 'overdue' && !isModel && overdue && !isProspect) ||
+                        (dashboardStatusFilter === 'disabled' && !isModel && suspended && !isProspect);
 
                       // 3. Exact Date Filter (if set)
                       const matchesExactDate = !dashboardDueDateExact || site.dueDate === dashboardDueDateExact;
@@ -1363,8 +1366,13 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                                           </span>
                                         </button>
 
-                                        {/* Dynamic Progressive Delinquency Badge (Pago / Pendente / Atrasado D+3 / Suspenso D+7) */}
-                                        {isSuspended ? (
+                                        {/* Status Especial CRM ou Delinquency Badge */}
+                                        {site.isTemporaryDemo || site.crmStage ? (
+                                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1 shadow-sm">
+                                            <Target className="w-3 h-3 text-purple-400" />
+                                            CRM • {(site.crmStage || 'demonstracao') === 'demonstracao' ? 'Degustação / Demonstração' : (site.crmStage || '') === 'proposta_enviada' ? 'Proposta Enviada' : (site.crmStage || '') === 'negociacao' ? 'Em Negociação' : site.crmStage}
+                                          </span>
+                                        ) : isSuspended ? (
                                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
                                             <Power className="w-3 h-3 text-red-400" />
                                             {daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS || site.autoDisabledByOverdue
