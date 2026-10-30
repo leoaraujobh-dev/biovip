@@ -282,13 +282,36 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<strin
   return null;
 }
 
-function cleanInstagramHandle(input?: string): string {
-  if (!input) return '';
+function cleanInstagramHandleVariants(input?: string): string[] {
+  if (!input) return [];
   let str = input.trim();
   str = str.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '');
   str = str.split('/')[0].split('?')[0];
   str = str.replace(/^@/, '').trim();
-  return str;
+  if (!str) return [];
+
+  const variants = new Set<string>();
+  // 1) Se já for um handle sem espaços (ex: lorrayne_ramos)
+  if (!/\s/.test(str)) {
+    variants.add(str.toLowerCase());
+  }
+
+  // 2) Se o usuário digitou com espaços (ex: "lorrayne ramos" -> "lorrayne_ramos", "lorrayneramos", "lorrayne.ramos")
+  const withUnderscore = str.replace(/\s+/g, '_').toLowerCase();
+  if (withUnderscore) variants.add(withUnderscore);
+
+  const withoutSpaces = str.replace(/\s+/g, '').toLowerCase();
+  if (withoutSpaces) variants.add(withoutSpaces);
+
+  const withDot = str.replace(/\s+/g, '.').toLowerCase();
+  if (withDot) variants.add(withDot);
+
+  return Array.from(variants);
+}
+
+function cleanInstagramHandle(input?: string): string {
+  const variants = cleanInstagramHandleVariants(input);
+  return variants[0] || '';
 }
 
 function splitFullNameAndSpecialty(rawFullName?: string): {
@@ -590,10 +613,11 @@ function parseInstagramMetaFromHtml(html: string): {
 }
 
 async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedInstagramData> {
-  const username = cleanInstagramHandle(rawInstagram);
+  const usernameVariants = cleanInstagramHandleVariants(rawInstagram);
+  const primaryUsername = usernameVariants[0] || '';
   const result: ExtractedInstagramData = {
     found: false,
-    username,
+    username: primaryUsername,
     postPhotos: [],
     postCaptions: [],
     postLikes: [],
@@ -602,47 +626,77 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
     externalBioServices: [],
   };
 
-  if (!username) return result;
+  if (usernameVariants.length === 0) return result;
 
   let rawAvatarUrl = '';
   const allPostsMap = new Map<string, ExtractedInstagramPost>();
   const fallbackExtraPhotoUrls: string[] = [];
 
-  // 1) Busca em paralelo o Embed oficial (_fb_noscript=1 com graphql_media + likes + legendas) e o HTML OpenGraph (com bio + menções)
-  const [embedProfile, primaryHtml] = await Promise.all([
-    fetchInstagramEmbedProfile(username),
-    fetchInstagramHtmlMultiSocket(username),
-  ]);
+  let mentionedHandles: string[] = [];
+  let successfulHtml: string | null = null;
 
-  if (embedProfile.found) {
-    result.found = true;
-    if (embedProfile.fullName) {
-      result.fullName = embedProfile.fullName;
-      const splitInfo = splitFullNameAndSpecialty(embedProfile.fullName);
-      if (splitInfo.cleanName) result.cleanBusinessName = splitInfo.cleanName;
-      if (splitInfo.specialty && !result.category) result.category = splitInfo.specialty;
+  // 1) Itera sobre as variantes possíveis do nome de usuário (ex: lorrayne_ramos, lorrayneramos, etc)
+  for (const username of usernameVariants) {
+    const [embedProfile, primaryHtml] = await Promise.all([
+      fetchInstagramEmbedProfile(username),
+      fetchInstagramHtmlMultiSocket(username),
+    ]);
+
+    if (embedProfile.found) {
+      result.found = true;
+      result.username = username;
+      if (embedProfile.fullName) {
+        result.fullName = embedProfile.fullName;
+        const splitInfo = splitFullNameAndSpecialty(embedProfile.fullName);
+        if (splitInfo.cleanName) result.cleanBusinessName = splitInfo.cleanName;
+        if (splitInfo.specialty && !result.category) result.category = splitInfo.specialty;
+      }
+      if (embedProfile.followersCount !== undefined) {
+        result.followers = formatFollowerCount(embedProfile.followersCount);
+      }
+      if (embedProfile.postsCount !== undefined) {
+        result.postsCount = String(embedProfile.postsCount);
+      }
+      if (embedProfile.avatarUrl) {
+        rawAvatarUrl = embedProfile.avatarUrl;
+      }
+      for (const post of embedProfile.posts) {
+        allPostsMap.set(post.shortcode || post.imageUrl, post);
+        if (post.locationName && !result.detectedLocation) {
+          result.detectedLocation = post.locationName;
+        }
+      }
+      successfulHtml = primaryHtml;
+      break; // Encontrou o perfil com sucesso, interrompe busca por variantes
     }
-    if (embedProfile.followersCount !== undefined) {
-      result.followers = formatFollowerCount(embedProfile.followersCount);
-    }
-    if (embedProfile.postsCount !== undefined) {
-      result.postsCount = String(embedProfile.postsCount);
-    }
-    if (embedProfile.avatarUrl) {
-      rawAvatarUrl = embedProfile.avatarUrl;
-    }
-    for (const post of embedProfile.posts) {
-      allPostsMap.set(post.shortcode || post.imageUrl, post);
-      if (post.locationName && !result.detectedLocation) {
-        result.detectedLocation = post.locationName;
+
+    if (primaryHtml) {
+      const parsed = parseInstagramMetaFromHtml(primaryHtml);
+      if (parsed.fullName || parsed.bio || parsed.ogImage) {
+        result.found = true;
+        result.username = username;
+        if (parsed.fullName && !result.fullName) {
+          result.fullName = parsed.fullName;
+          const splitInfo = splitFullNameAndSpecialty(parsed.fullName);
+          if (splitInfo.cleanName) result.cleanBusinessName = splitInfo.cleanName;
+          if (splitInfo.specialty && !result.category) result.category = splitInfo.specialty;
+        }
+        if (parsed.bio) result.bio = parsed.bio;
+        if (parsed.followers) result.followers = parsed.followers;
+        if (parsed.postsCount) result.postsCount = parsed.postsCount;
+        if (parsed.externalUrl) result.externalUrl = parsed.externalUrl;
+        if (parsed.ogImage && !rawAvatarUrl) rawAvatarUrl = parsed.ogImage;
+        for (const ep of parsed.extraPhotos) {
+          if (!fallbackExtraPhotoUrls.includes(ep)) fallbackExtraPhotoUrls.push(ep);
+        }
+        successfulHtml = primaryHtml;
+        break; // Encontrou pelo HTML OpenGraph
       }
     }
   }
 
-  let mentionedHandles: string[] = [];
-
-  if (primaryHtml) {
-    const parsed = parseInstagramMetaFromHtml(primaryHtml);
+  if (successfulHtml) {
+    const parsed = parseInstagramMetaFromHtml(successfulHtml);
     if (parsed.fullName && !result.fullName) {
       result.fullName = parsed.fullName;
       result.found = true;
@@ -650,7 +704,7 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
       if (splitInfo.cleanName) result.cleanBusinessName = splitInfo.cleanName;
       if (splitInfo.specialty && !result.category) result.category = splitInfo.specialty;
     }
-    if (parsed.bio) {
+    if (parsed.bio && !result.bio) {
       result.bio = parsed.bio;
       result.found = true;
     }
@@ -660,7 +714,7 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
     if (parsed.postsCount && !result.postsCount) {
       result.postsCount = parsed.postsCount;
     }
-    if (parsed.externalUrl) {
+    if (parsed.externalUrl && !result.externalUrl) {
       result.externalUrl = parsed.externalUrl;
     }
     if (parsed.ogImage && !rawAvatarUrl) {
@@ -673,11 +727,11 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
     mentionedHandles = parsed.mentionedHandles;
 
     const phoneInBio = extractPhoneFromText(parsed.bio || '');
-    if (phoneInBio) {
+    if (phoneInBio && !result.whatsappPhone) {
       result.whatsappPhone = phoneInBio;
     }
     const hoursInBio = extractBusinessHoursFromText(parsed.bio || '');
-    if (hoursInBio) {
+    if (hoursInBio && !result.businessHours) {
       result.businessHours = hoursInBio;
     }
   }
@@ -705,7 +759,7 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
 
   // 2) Se a bio referencia um perfil profissional secundário (ex: "CEO: @studiolorrayneramos"), busca o Embed e HTML dele também!
   const secondaryHandle = mentionedHandles.find(
-    (h) => h.toLowerCase() !== username.toLowerCase()
+    (h) => h.toLowerCase() !== result.username.toLowerCase()
   );
   if (secondaryHandle && allPostsMap.size === 0) {
     result.secondaryUsername = secondaryHandle;
@@ -766,8 +820,9 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
+    const targetUsername = result.username || primaryUsername;
     const apiRes = await fetch(
-      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(targetUsername)}`,
       {
         signal: controller.signal,
         headers: {
@@ -775,7 +830,7 @@ async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedIns
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           'x-ig-app-id': '936619743392459',
           Accept: '*/*',
-          Referer: `https://www.instagram.com/${username}/`,
+          Referer: `https://www.instagram.com/${targetUsername}/`,
         },
       }
     );
