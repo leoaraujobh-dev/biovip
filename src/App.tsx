@@ -9409,14 +9409,39 @@ COMO PUBLICAR NO SERVIDOR:
         )
       : undefined;
 
+    const cleanSlug = slug.replace(/[^a-z0-9]/g, '');
+
     const matchingSites = slug
-      ? savedSites.filter(
-          (s) =>
-            (s.subdomain && s.subdomain.toLowerCase() === slug) ||
-            s.id.toLowerCase() === slug ||
-            (s.clientName && s.clientName.toLowerCase().replace(/[^a-z0-9]/g, '-') === slug)
-        )
+      ? savedSites.filter((s) => {
+          const sSub = (s.subdomain || '').toLowerCase().trim();
+          const sCleanSub = sSub.replace(/[^a-z0-9]/g, '');
+          const sId = (s.id || '').toLowerCase().trim();
+          const sClient = (s.clientName || '').toLowerCase().trim();
+          const sCleanClient = sClient.replace(/[^a-z0-9]/g, '');
+          const sProfileName = (s.data?.profile?.name || '').toLowerCase().trim();
+          const sCleanProfileName = sProfileName.replace(/[^a-z0-9]/g, '');
+          const sInsta = (s.data?.profile?.instagram || '').toLowerCase().trim().replace(/@/g, '');
+          const sCleanInsta = sInsta.replace(/[^a-z0-9]/g, '');
+
+          return (
+            sSub === slug ||
+            sCleanSub === cleanSlug ||
+            sId === slug ||
+            sClient === slug ||
+            sCleanClient === cleanSlug ||
+            sCleanProfileName === cleanSlug ||
+            sCleanInsta === cleanSlug ||
+            (sCleanClient.length > 3 && cleanSlug.includes(sCleanClient)) ||
+            (cleanSlug.length > 3 && sCleanClient.includes(cleanSlug))
+          );
+        })
       : [];
+
+    const currentDataMatches =
+      Boolean(cleanSlug) &&
+      ((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanSlug) ||
+       cleanSlug.includes((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+       (saveForm?.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '') === cleanSlug);
 
     const foundSite =
       (editingSiteId ? matchingSites.find((s) => s.id === editingSiteId) : undefined) ||
@@ -9424,7 +9449,28 @@ COMO PUBLICAR NO SERVIDOR:
       matchingSites.find((s) => s.isLandingModel && s.status !== 'disabled') ||
       matchingSites.find((s) => s.id.startsWith('real-niche-')) ||
       matchingSites.find((s) => s.status !== 'disabled') ||
-      matchingSites[0];
+      matchingSites[0] ||
+      (currentDataMatches
+        ? ({
+            id: editingSiteId || 'current-preview',
+            clientName: data.profile.name || 'Cliente BioVip',
+            subdomain: slug,
+            isLandingModel: true,
+            isCustomized: true,
+            data: data,
+            status: 'active' as const,
+            monthlyFee: 49.9,
+            creationFee: 79.9,
+            updatesThisMonth: 0,
+            lastUpdated: new Date().toISOString().split('T')[0],
+            createdAt: new Date().toISOString().split('T')[0],
+            dueDate: new Date().toISOString().split('T')[0],
+            domainType: 'subdomain' as const,
+            dnsConfigured: true,
+            sslActive: true,
+            nicheCategory: data.profile.title || 'Geral',
+          } as SavedMicrosite)
+        : undefined);
 
     if (foundSite) {
       if (isSiteUnderConstruction(foundSite)) {

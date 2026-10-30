@@ -65,15 +65,19 @@ export const PublishModal: React.FC<PublishModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-        const targetSite = savedSites.find(s => s.id === selectedPublishSiteId) || savedSites[0] || {
-          id: 'temp',
-          subdomain: data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'meusite',
-          customDomain: '',
-          clientName: data.profile.name,
-          dnsConfigured: false,
-          sslActive: true,
-          domainType: 'subdomain' as const,
-        };
+  const targetSite =
+    savedSites.find((s) => s.id === selectedPublishSiteId) ||
+    savedSites.find((s) => s.clientName?.toLowerCase() === data.profile.name?.toLowerCase()) ||
+    savedSites.find((s) => s.subdomain && data.profile.name?.toLowerCase().includes(s.subdomain.toLowerCase())) ||
+    savedSites[0] || {
+      id: 'temp',
+      subdomain: data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'meusite',
+      customDomain: '',
+      clientName: data.profile.name,
+      dnsConfigured: false,
+      sslActive: true,
+      domainType: 'subdomain' as const,
+    };
 
         const rawCustomDomain = targetSite.customDomain || '';
         const domainValidation = validateCustomDomain(rawCustomDomain);
@@ -214,6 +218,16 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       {copiedDnsField === 'subdomain-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
                       <span>{copiedDnsField === 'subdomain-url' ? 'Copiado!' : 'Copiar'}</span>
                     </button>
+                    <a
+                      href={`https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/${targetSite.subdomain || 'meusite'}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition border-l border-neutral-700 no-underline"
+                      title="Abrir página do BioSite em nova guia"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Abrir</span>
+                    </a>
                   </div>
                 </div>
 
@@ -923,10 +937,14 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                       s.id === targetSite.id
                         ? {
                             ...s,
+                            subdomain: targetSite.subdomain || s.subdomain,
                             customDomain: finalCustomDom,
                             domainType: finalCustomDom ? ('custom' as const) : ('subdomain' as const),
                             dnsConfigured: Boolean(finalCustomDom) || s.dnsConfigured,
                             sslActive: true,
+                            isLandingModel: true,
+                            status: 'active' as const,
+                            data: JSON.parse(JSON.stringify(data)),
                           }
                         : s
                     );

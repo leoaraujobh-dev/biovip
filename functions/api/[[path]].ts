@@ -20,7 +20,16 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
   // Se a requisição NÃO for para a API (/api/...) e o binding de ASSETS existir, serve os arquivos estáticos do dist
   if (!path.startsWith('/api') && env?.ASSETS) {
     try {
-      return await env.ASSETS.fetch(request);
+      const assetRes = await env.ASSETS.fetch(request);
+      if (assetRes.status !== 404) {
+        return assetRes;
+      }
+      // Se não for um arquivo com extensão (ex: .js, .css, .png, etc.), faz fallback para index.html (SPA)
+      if (!path.includes('.')) {
+        const indexUrl = new URL('/index.html', request.url);
+        return await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
+      }
+      return assetRes;
     } catch {
       // Segue para fallback
     }

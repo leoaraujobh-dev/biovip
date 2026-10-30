@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BioVip · Carregando...</title>
+    <script>
+      (function() {
+        var path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+        if (path && !path.includes('.')) {
+          var redirectUrl = '/?site=' + encodeURIComponent(path) + (window.location.search ? '&' + window.location.search.replace(/^\?/, '') : '') + window.location.hash;
+          window.location.replace(redirectUrl);
+        } else {
+          window.location.replace('/' + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+  </head>
+  <body style="margin: 0; background-color: #09090b; color: #d4af37; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div style="text-align: center;">
+      <h2 style="font-size: 1.25rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.5rem;">BIOVIP STUDIO</h2>
+      <p style="color: #a8a29e; font-size: 0.875rem;">Carregando microsite...</p>
+    </div>
+  </body>
+</html>
