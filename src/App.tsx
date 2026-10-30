@@ -3011,6 +3011,9 @@ export default function App() {
       ? 'Moda & Juventude'
       : 'Consultoria & Estética';
     const kit = NICHE_KITS[fallbackCat] || NICHE_KITS['Beleza & Unhas'];
+    const cachedProfile = (aiForm as any)?.cachedProfile;
+    const cachedPhotos: string[] = Array.isArray(cachedProfile?.photos) && cachedProfile.photos.length > 0 ? cachedProfile.photos : [];
+    const cachedAvatar: string = cachedProfile?.avatarUrl || '';
 
     return {
       theme: kit.defaultTheme,
@@ -3023,11 +3026,24 @@ export default function App() {
       profile: {
         ...INITIAL_DATA.profile,
         ...kit.profile,
+        avatarUrl: cachedAvatar || kit.profile.avatarUrl,
+        aboutPhotoUrl: cachedPhotos[0] || cachedAvatar || kit.profile.aboutPhotoUrl,
         name: nameUpper,
         title: (aiForm.businessNiche || kit.profile.title).toUpperCase(),
         tagline: aiForm.additionalInfo?.trim() || kit.profile.tagline,
         instagram: cleanInsta,
         mapsUrl,
+      },
+      studentGrid: {
+        ...INITIAL_DATA.studentGrid,
+        enabled: true,
+        headline: 'Destaques & Trabalhos Mais Curtidos',
+        subtitle: `Registros reais do trabalho de @${cleanInsta}`,
+        badge: 'MAIS CURTIDAS NO INSTA',
+        photos: cachedPhotos.length > 0 ? cachedPhotos.slice(0, 6) : INITIAL_DATA.studentGrid.photos,
+        captions: cachedProfile?.posts?.length
+          ? cachedProfile.posts.slice(0, 6).map((p: any) => p.caption?.slice(0, 60) || '')
+          : INITIAL_DATA.studentGrid.captions,
       },
       metrics: {
         enabled: true,
@@ -3121,18 +3137,26 @@ export default function App() {
       .trim();
     const cleanMaps = (aiForm.googleMaps || '').trim();
 
+    const cachedProfile = (aiForm as any)?.cachedProfile;
+    const cachedPhotos: string[] = Array.isArray(cachedProfile?.photos) && cachedProfile.photos.length > 0 ? cachedProfile.photos : [];
+    const cachedAvatar: string = cachedProfile?.avatarUrl || '';
+
     const rawGalleryPhotos =
       Array.isArray(generated?.studentGrid?.photos) && generated.studentGrid.photos.length > 0
         ? generated.studentGrid.photos
+        : cachedPhotos.length > 0
+        ? cachedPhotos
         : INITIAL_DATA.studentGrid.photos;
 
     const finalGalleryPhotos = rawGalleryPhotos.map((p: any, idx: number) =>
-      sanitizeImageUrl(p, INITIAL_DATA.studentGrid.photos[idx % INITIAL_DATA.studentGrid.photos.length])
+      sanitizeImageUrl(p, cachedPhotos[idx] || INITIAL_DATA.studentGrid.photos[idx % INITIAL_DATA.studentGrid.photos.length])
     );
 
     const finalGalleryCaptions = finalGalleryPhotos.map((_: string, idx: number) =>
-      Array.isArray(generated?.studentGrid?.captions)
-        ? String(generated.studentGrid.captions[idx] || '')
+      Array.isArray(generated?.studentGrid?.captions) && generated.studentGrid.captions[idx]
+        ? String(generated.studentGrid.captions[idx])
+        : cachedProfile?.posts?.[idx]?.caption
+        ? String(cachedProfile.posts[idx].caption).slice(0, 80)
         : ''
     );
 
@@ -3152,8 +3176,15 @@ export default function App() {
       profile: {
         ...INITIAL_DATA.profile,
         ...(generated?.profile || {}),
-        avatarUrl: sanitizeImageUrl(generated?.profile?.avatarUrl, INITIAL_DATA.profile.avatarUrl),
-        aboutPhotoUrl: sanitizeImageUrl(generated?.profile?.aboutPhotoUrl, INITIAL_DATA.profile.aboutPhotoUrl),
+        avatarUrl:
+          sanitizeImageUrl(generated?.profile?.avatarUrl, '') ||
+          cachedAvatar ||
+          INITIAL_DATA.profile.avatarUrl,
+        aboutPhotoUrl:
+          sanitizeImageUrl(generated?.profile?.aboutPhotoUrl, '') ||
+          cachedPhotos[0] ||
+          cachedAvatar ||
+          INITIAL_DATA.profile.aboutPhotoUrl,
         name:
           generated?.profile?.name ||
           (aiForm.businessName ? aiForm.businessName.toUpperCase() : data.profile.name),
@@ -3188,8 +3219,10 @@ export default function App() {
       studentGrid: {
         ...INITIAL_DATA.studentGrid,
         ...(generated?.studentGrid || {}),
+        enabled: true,
         photos: finalGalleryPhotos,
         captions: finalGalleryCaptions,
+        badge: generated?.studentGrid?.badge || (cleanInsta ? 'MAIS CURTIDAS NO INSTA' : INITIAL_DATA.studentGrid.badge),
       },
       locationCard: {
         ...INITIAL_DATA.locationCard,
@@ -4106,6 +4139,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...aiForm,
+          cachedProfile: (aiForm as any)?.cachedProfile,
           geminiApiKey:
             (import.meta as any).env?.VITE_GEMINI_API_KEY ||
             (import.meta as any).env?.GEMINI_API_KEY ||

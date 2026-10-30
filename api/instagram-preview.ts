@@ -56,8 +56,11 @@ export default async function instagramPreviewHandler(req: any, res: any) {
     );
 
     const postsList = (data.topPosts && data.topPosts.length > 0)
-      ? data.topPosts.slice(0, 6).map((p) => ({
-          displayUrl: p.imageUrl,
+      ? data.topPosts.slice(0, 6).map((p, idx) => ({
+          displayUrl:
+            p.dataUrl ||
+            data.postPhotos?.[idx] ||
+            (p.imageUrl ? `https://images.weserv.nl/?url=${encodeURIComponent(p.imageUrl)}&output=jpg&q=90&w=1080` : ''),
           likesCount: p.likes,
           caption: p.caption,
         }))

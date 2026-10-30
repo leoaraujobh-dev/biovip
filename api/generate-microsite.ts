@@ -227,9 +227,46 @@ async function inspectExternalBioLink(rawUrl?: string): Promise<{
   }
 }
 
-async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<string | null> {
+function safeBufferToBase64(arrayBuffer: ArrayBuffer): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(arrayBuffer).toString('base64');
+  }
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i += 8192) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + 8192, len)) as unknown as number[]);
+  }
+  return btoa(binary);
+}
+
+async function fetchImageAsDataUrl(url: string, timeoutMs = 7000, isAvatar = false): Promise<string | null> {
   if (!url || !url.startsWith('http')) return null;
-  const cleanUrl = decodeHtmlEntities(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
+  const cleanUrl = decodeHtmlEntities(url.replace(/\\u0026/g, '&').replace(/&amp;/g, '&').replace(/\\\//g, '/'));
+
+  // Se for avatar ou contiver thumbnail 150x150, prioriza a extração em Alta Definição (HD 800x800) com nitidez
+  if (isAvatar || /s150x150|150x150|t51\.82787-19/i.test(cleanUrl)) {
+    try {
+      const hdProxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=800&h=800&fit=cover&q=95&sharp=1&output=jpg`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(hdProxyUrl, {
+        signal: controller.signal,
+        headers: { Accept: 'image/jpeg,image/webp,image/*,*/*;q=0.8' },
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || 'image/jpeg';
+        const arrayBuffer = await res.arrayBuffer();
+        if (arrayBuffer.byteLength >= 1000) {
+          const base64 = safeBufferToBase64(arrayBuffer);
+          return `data:${contentType.split(';')[0]};base64,${base64}`;
+        }
+      }
+    } catch {
+      // prossegue para as outras tentativas se falhar
+    }
+  }
 
   // 1) Tentativa direta com User-Agent bot oficial
   try {
@@ -249,7 +286,7 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<strin
       if (contentType.startsWith('image/')) {
         const arrayBuffer = await res.arrayBuffer();
         if (arrayBuffer.byteLength >= 600 && arrayBuffer.byteLength <= 5 * 1024 * 1024) {
-          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          const base64 = safeBufferToBase64(arrayBuffer);
           return `data:${contentType.split(';')[0]};base64,${base64}`;
         }
       }
@@ -260,7 +297,7 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<strin
 
   // 2) Fallback resiliente usando CDN proxy de imagens (Weserv) para contornar restrições de IP/CORS da Meta
   try {
-    const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&q=85&w=900`;
+    const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&q=90&w=1080`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const res = await fetch(proxyUrl, {
@@ -275,7 +312,7 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<strin
       if (contentType.startsWith('image/')) {
         const arrayBuffer = await res.arrayBuffer();
         if (arrayBuffer.byteLength >= 600) {
-          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          const base64 = safeBufferToBase64(arrayBuffer);
           return `data:${contentType.split(';')[0]};base64,${base64}`;
         }
       }
@@ -528,9 +565,11 @@ function parseInstagramMetaFromHtml(html: string): {
     cleanHtml.match(/<meta[^>]+content="([^"]+)"[^>]+name=["']description["']/i)?.[1];
 
   const ogImageRaw =
+    cleanHtml.match(/"profile_pic_url_hd"\s*:\s*"([^"]+)"/)?.[1] ||
+    cleanHtml.match(/"profile_pic_url_hd_large"\s*:\s*"([^"]+)"/)?.[1] ||
+    cleanHtml.match(/"profile_pic_url"\s*:\s*"([^"]+)"/)?.[1] ||
     cleanHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
-    cleanHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1] ||
-    cleanHtml.match(/"profile_pic_url"\s*:\s*"([^"]+)"/)?.[1];
+    cleanHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
 
   let fullName: string | undefined;
   let bio: string | undefined;
@@ -1073,31 +1112,39 @@ export async function extractInstagramInfo(rawInstagram?: string): Promise<Extra
 
   // 6) Converte avatar e as fotos mais curtidas para Data URL (base64) em paralelo mantendo a ordem de curtidas
   const [avatarDataUrl, ...convertedGalleryPhotos] = await Promise.all([
-    rawAvatarUrl ? fetchImageAsDataUrl(rawAvatarUrl) : Promise.resolve(null),
-    ...galleryCandidates.slice(0, 6).map((c) => fetchImageAsDataUrl(c.rawUrl)),
+    rawAvatarUrl ? fetchImageAsDataUrl(rawAvatarUrl, 7000, true) : Promise.resolve(null),
+    ...galleryCandidates.slice(0, 6).map((c) => fetchImageAsDataUrl(c.rawUrl, 7000, false)),
   ]);
+
+  const hdAvatarFallback = rawAvatarUrl
+    ? `https://images.weserv.nl/?url=${encodeURIComponent(rawAvatarUrl)}&w=800&h=800&fit=cover&q=95&sharp=1&output=jpg`
+    : '';
 
   if (avatarDataUrl) {
     result.avatarUrl = avatarDataUrl;
+    result.found = true;
+  } else if (hdAvatarFallback) {
+    result.avatarUrl = hdAvatarFallback;
     result.found = true;
   }
 
   const shortcodeToDataUrl = new Map<string, string>();
 
-  convertedGalleryPhotos.forEach((dataUrl, idx) => {
-    if (dataUrl) {
-      const candidate = galleryCandidates[idx];
-      result.postPhotos.push(dataUrl);
-      result.postLikes.push(candidate.likes);
-      if (candidate.caption) {
-        result.postCaptions.push(candidate.caption.slice(0, 320));
-      }
-      result.galleryShortCaptions.push(
-        summarizePostCaptionForGallery(candidate.caption, candidate.likes)
-      );
-      if (candidate.shortcode && !shortcodeToDataUrl.has(candidate.shortcode)) {
-        shortcodeToDataUrl.set(candidate.shortcode, dataUrl);
-      }
+  galleryCandidates.slice(0, 6).forEach((candidate, idx) => {
+    const dataUrl = convertedGalleryPhotos[idx];
+    const fallbackWeserv = `https://images.weserv.nl/?url=${encodeURIComponent(candidate.rawUrl)}&output=jpg&q=90&w=1080`;
+    const finalPhoto = dataUrl || fallbackWeserv || candidate.rawUrl;
+
+    result.postPhotos.push(finalPhoto);
+    result.postLikes.push(candidate.likes);
+    if (candidate.caption) {
+      result.postCaptions.push(candidate.caption.slice(0, 320));
+    }
+    result.galleryShortCaptions.push(
+      summarizePostCaptionForGallery(candidate.caption, candidate.likes)
+    );
+    if (candidate.shortcode && !shortcodeToDataUrl.has(candidate.shortcode)) {
+      shortcodeToDataUrl.set(candidate.shortcode, finalPhoto);
     }
   });
 
@@ -1960,6 +2007,7 @@ function applyExtractedAssetsToMicrosite(
     additionalInfo?: string;
     conversionGoal?: string;
     visualStyle?: string;
+    cachedProfile?: any;
   }
 ) {
   if (!microsite || typeof microsite !== 'object') return microsite;
@@ -1980,6 +2028,19 @@ function applyExtractedAssetsToMicrosite(
     }
   });
 
+  // Se o instaData tinha menos de 6 fotos, complementa com fotos do cachedProfile pré-carregado
+  if (galleryPhotosOrderedByLikes.length < 6 && Array.isArray(rawParams.cachedProfile?.photos)) {
+    rawParams.cachedProfile.photos.forEach((cPhoto: string, idx: number) => {
+      if (galleryPhotosOrderedByLikes.length >= 6) return;
+      if (cPhoto && !galleryPhotosOrderedByLikes.includes(cPhoto)) {
+        galleryPhotosOrderedByLikes.push(cPhoto);
+        galleryCaptionsOrderedByLikes.push(
+          rawParams.cachedProfile?.posts?.[idx]?.caption?.slice(0, 80) || ''
+        );
+      }
+    });
+  }
+
   // Se o Instagram tinha menos de 6 fotos de posts, complementa com fotos reais do Google Meu Negócio
   for (const mapPhoto of mapsData.photos) {
     if (galleryPhotosOrderedByLikes.length >= 6) break;
@@ -1992,21 +2053,25 @@ function applyExtractedAssetsToMicrosite(
   }
 
   // Apenas se não houver nenhuma foto de post nem do Maps, usa o avatar
-  if (galleryPhotosOrderedByLikes.length === 0 && instaData.avatarUrl) {
-    galleryPhotosOrderedByLikes.push(instaData.avatarUrl);
+  if (galleryPhotosOrderedByLikes.length === 0 && (instaData.avatarUrl || rawParams.cachedProfile?.avatarUrl)) {
+    const fallbackAvatar = instaData.avatarUrl || rawParams.cachedProfile?.avatarUrl;
+    galleryPhotosOrderedByLikes.push(fallbackAvatar);
     galleryCaptionsOrderedByLikes.push(instaData.cleanBusinessName || instaData.fullName || '');
   }
 
-  // Foto de Perfil (Cabeçalho): utiliza ESTRITAMENTE o avatar real do Instagram
+  // Foto de Perfil (Cabeçalho): utiliza ESTRITAMENTE o avatar real em Alta Definição (HD)
   const primaryAvatar =
     instaData.avatarUrl ||
+    rawParams.cachedProfile?.avatarUrl ||
     mapsData.photos[0] ||
     microsite.profile?.avatarUrl;
 
   // Foto de Sobre / Destaque: foto do post mais curtido do Instagram
   const mostLikedPostPhoto =
     instaData.postPhotos[0] ||
+    rawParams.cachedProfile?.photos?.[0] ||
     instaData.avatarUrl ||
+    rawParams.cachedProfile?.avatarUrl ||
     mapsData.photos[0] ||
     microsite.profile?.aboutPhotoUrl;
 
@@ -2130,14 +2195,13 @@ function applyExtractedAssetsToMicrosite(
         captions: [],
       };
     }
+    microsite.studentGrid.enabled = true;
     microsite.studentGrid.photos = galleryPhotosOrderedByLikes.slice(0, 6);
     microsite.studentGrid.captions = galleryCaptionsOrderedByLikes.slice(
       0,
       microsite.studentGrid.photos.length
     );
-    if (instaData.postPhotos.length > 0) {
-      microsite.studentGrid.badge = 'MAIS CURTIDAS NO INSTA';
-    }
+    microsite.studentGrid.badge = 'MAIS CURTIDAS NO INSTA';
   }
 
   // SERVIÇOS BASEADOS NAS INFORMAÇÕES COLETADAS DO CLIENTE
@@ -2834,6 +2898,7 @@ export default async function handler(req: any, res: any) {
     additionalInfo,
     conversionGoal,
     visualStyle,
+    cachedProfile,
   } = req.body || {};
 
   // 1) Busca em paralelo os dados e imagens reais (ordenadas por mais curtidas) do Instagram e do Google Meu Negócio
@@ -2934,6 +2999,7 @@ export default async function handler(req: any, res: any) {
           additionalInfo,
           conversionGoal,
           visualStyle,
+          cachedProfile,
         }
       );
       return res.status(200).json({
@@ -3336,6 +3402,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
         additionalInfo,
         conversionGoal,
         visualStyle,
+        cachedProfile,
       }
     );
 
@@ -3370,6 +3437,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
         additionalInfo,
         conversionGoal,
         visualStyle,
+        cachedProfile,
       }
     );
     return res.status(200).json({

@@ -114,10 +114,12 @@ export function QuickCreateTab({
           const json = await res.json();
           if (json.success && json.profile) {
             setLivePreviewData(json.profile);
-            // Se o usuário ainda não digitou o nome do negócio, preenche com o nome real
-            if (!aiForm.businessName && json.profile.fullName) {
-              setAiForm((p: any) => ({ ...p, businessName: json.profile.fullName }));
-            }
+            // Salva perfil em cache para geração instantânea e preenche nome caso vazio
+            setAiForm((p: any) => ({
+              ...p,
+              cachedProfile: json.profile,
+              ...(p.businessName ? {} : { businessName: json.profile.fullName || json.profile.cleanBusinessName }),
+            }));
             // Sugestão automática de paleta
             if (json.profile.suggestedPalette?.paletteId && !aiForm.selectedPalette) {
               setAiForm((p: any) => ({ ...p, selectedPalette: json.profile.suggestedPalette.paletteId }));
