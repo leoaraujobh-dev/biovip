@@ -45,6 +45,11 @@ export default defineConfig(() => {
               return 'view-fullscreen-clients';
             }
 
+            // PWA Components
+            if (id.includes('src/components/pwa/')) {
+              return 'pwa-install';
+            }
+
             // Modals Chunks
             if (id.includes('src/components/modals/PublishModal')) {
               return 'modal-publish';

@@ -17,6 +17,7 @@ import {
   PaymentSuccessModal,
   UnderConstructionPreviewModal,
 } from './components/modals';
+import { PwaInstallPrompt } from './components/pwa/PwaInstallPrompt';
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
@@ -12420,6 +12421,9 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
           <span>{toastMsg}</span>
         </div>
       )}
+
+      {/* PWA Offline Indicator & Native App Install Prompt */}
+      <PwaInstallPrompt />
 
             {/* ========================================================================= */}
       {/* MODAIS DO SISTEMA MODULARIZADOS (src/components/modals/)                   */}

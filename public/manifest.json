@@ -1,0 +1,70 @@
+{
+  "id": "/?source=pwa",
+  "name": "BioVip Studio - Microsites de Alta Conversão",
+  "short_name": "BioVip Studio",
+  "description": "Plataforma de criação, edição e gestão de microsites de alta conversão para Instagram e WhatsApp.",
+  "start_url": "/#studio",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Novo Microsite",
+      "short_name": "Criar",
+      "description": "Criar um novo microsite com IA ou manualmente",
+      "url": "/#quickCreate",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Gestão de Clientes",
+      "short_name": "Clientes",
+      "description": "Abrir o painel de clientes e faturamento",
+      "url": "/#clients",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Painel de Vendas",
+      "short_name": "Vendas",
+      "description": "Visualizar landing page e faturamento",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

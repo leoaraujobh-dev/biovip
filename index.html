@@ -46,6 +46,17 @@
     <link rel="alternate icon" type="image/jpeg" href="/assets/aistudio/1793152702953_02858b21.jpg" />
     <meta name="theme-color" content="#09090b" />
 
+    <!-- PWA Web App Manifest & Mobile App Capabilities -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BioVip Studio" />
+    <meta name="application-name" content="BioVip Studio" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+
     <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
     <meta property="og:site_name" content="BioVip" />
     <meta property="og:title" content="BioVip · Microsites de Alta Conversão para Bio do Instagram" />
@@ -229,6 +240,29 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function (reg) {
+              console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+              reg.onupdatefound = function () {
+                var installing = reg.installing;
+                if (installing) {
+                  installing.onstatechange = function () {
+                    if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('[PWA] Nova versão do BioVip Studio pronta para uso.');
+                    }
+                  };
+                }
+              };
+            })
+            .catch(function (err) {
+              console.warn('[PWA] Service Worker falhou ao registrar:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
 
