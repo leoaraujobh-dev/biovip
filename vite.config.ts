@@ -45,6 +45,23 @@ export default defineConfig(() => {
               return 'view-fullscreen-clients';
             }
 
+            // Modals Chunks
+            if (id.includes('src/components/modals/PublishModal')) {
+              return 'modal-publish';
+            }
+            if (id.includes('src/components/modals/PdfReportModal')) {
+              return 'modal-pdf';
+            }
+            if (id.includes('src/components/modals/AiGeneratorModal')) {
+              return 'modal-ai';
+            }
+            if (id.includes('src/components/modals/PixBillingModal')) {
+              return 'modal-pix';
+            }
+            if (id.includes('src/components/modals/')) {
+              return 'modals-core';
+            }
+
             // Editor Tab Chunks
             if (id.includes('src/components/editor/tabs/DashboardTab')) {
               return 'tab-dashboard';
