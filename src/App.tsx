@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import JSZip from 'jszip';
 import {
   Sparkles,
   Smartphone,
@@ -8053,6 +8052,7 @@ OPÇÃO 3: Subdomínio Dedicado (ex: ${slug}.seusite.com.br)
   ) => {
     try {
       showToast('⏳ Empacotando pasta independente do microsite...');
+      const { default: JSZip } = await import('jszip');
       const zip = new JSZip();
 
       let siteData: typeof INITIAL_DATA;
@@ -8165,6 +8165,7 @@ OPÇÃO 3: Subdomínio Dedicado (ex: ${slug}.seusite.com.br)
     }
     try {
       showToast(`⏳ Gerando servidor multi-pastas para ${savedSites.length} clientes...`);
+      const { default: JSZip } = await import('jszip');
       const zip = new JSZip();
       const serverRoot = zip.folder('servidor-hospedagem-microsites') || zip;
 
