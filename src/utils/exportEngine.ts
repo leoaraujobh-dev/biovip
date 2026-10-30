@@ -1087,9 +1087,9 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
       <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.aboutMe?.titleColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
         ${data.aboutMe.headline}
       </h3>
-      ${data.profile.aboutPhotoUrl ? `
+      ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
       <div style="width: 100%; height: 170px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img src="${data.profile.aboutPhotoUrl}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700';" />
+        <img src="${(data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700';" />
       </div>` : ''}
       <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe.paragraph}

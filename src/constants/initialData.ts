@@ -343,6 +343,7 @@ export const INITIAL_DATA = {
   aboutMe: {
     enabled: true,
     headline: 'Sobre mim',
+    photoUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
     paragraph: 'Com mais de 8 anos de atuação, acredito que a prestação de serviços deve unir excelência técnica e acolhimento humano. Cada pessoa traz uma história única que merece atenção dedicada e soluções assertivas.',
     closingPhrase: 'Sua segurança jurídica, meu compromisso.',
   },

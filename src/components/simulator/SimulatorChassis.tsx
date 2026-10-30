@@ -1672,10 +1672,10 @@ export function SimulatorChassis({
                   <div className="flex-1 h-px bg-neutral-800/30" />
                 </div>
 
-                {data.profile.aboutPhotoUrl && (
+                {((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) && (
                   <div className="relative w-full h-40 rounded-2xl overflow-hidden shadow bg-black">
                     <SimulatorImage
-                      src={data.profile.aboutPhotoUrl}
+                      src={(data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl}
                       alt="Sobre"
                       referrerPolicy="no-referrer"
                       accentColor={theme.accent}
