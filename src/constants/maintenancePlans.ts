@@ -1,5 +1,6 @@
-import { MaintenancePlanId, SavedMicrosite } from '../types/microsite';
+import { MaintenancePlanId, SavedMicrosite, CustomerDelinquencyStatus } from '../types/microsite';
 import { parseBrlCurrency } from '../utils/formatters';
+import { isModelMicrosite } from '../utils/htmlGenerators';
 
 // Regras Oficiais de Taxa de Manutenção, Criação & Desativação Automática dos Biosites:
 // - 1º Mês: Cobrada apenas a Taxa de Criação (NÃO há mensalidade no 1º mês).
@@ -163,4 +164,177 @@ export const getSiteBillingSummary = (site: SavedMicrosite) => {
     monthlyMaintenanceChargeThisMonth,
     totalDueThisMonth,
   };
+};
+
+export const getDaysUntilDue = (dueDateStr: string): number => {
+  if (!dueDateStr) return 999;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const parts = dueDateStr.split('-');
+  if (parts.length < 3) return 999;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const due = new Date(y, m, d);
+  due.setHours(0, 0, 0, 0);
+  const diffTime = due.getTime() - today.getTime();
+  return Math.round(diffTime / (1000 * 60 * 60 * 24));
+};
+
+export const isSiteSuspendedStatus = (site: SavedMicrosite): boolean => {
+  return (
+    site.linkStatus === 'manutencao' ||
+    site.status === 'suspenso_d7' ||
+    site.status === 'disabled'
+  );
+};
+
+export const isSiteOverdueStatus = (site: SavedMicrosite, daysDiffVal?: number): boolean => {
+  const d = typeof daysDiffVal === 'number' ? daysDiffVal : getDaysUntilDue(site.dueDate);
+  return (
+    !isSiteSuspendedStatus(site) &&
+    (d < 0 || site.status === 'overdue' || site.status === 'atrasado_d3' || site.status === 'pendente')
+  );
+};
+
+export const isSiteEditsLocked = (site: SavedMicrosite, daysOverdueVal?: number): boolean => {
+  if (typeof site.edicoesBloqueadas === 'boolean') return site.edicoesBloqueadas;
+  const dOverdue =
+    typeof daysOverdueVal === 'number'
+      ? daysOverdueVal
+      : typeof site.daysOverdue === 'number'
+      ? site.daysOverdue
+      : Math.max(0, -getDaysUntilDue(site.dueDate));
+  return (
+    dOverdue >= 3 ||
+    site.status === 'atrasado_d3' ||
+    site.status === 'suspenso_d7' ||
+    site.status === 'disabled'
+  );
+};
+
+export const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
+  normalized: SavedMicrosite[];
+  changed: boolean;
+  newlyAutoDisabled: string[];
+} => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  let changed = false;
+  const newlyAutoDisabled: string[] = [];
+
+  const normalized = sitesList.map((site) => {
+    if (isModelMicrosite(site)) {
+      return site;
+    }
+    const daysDiff = getDaysUntilDue(site.dueDate);
+    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+    const hasActiveManualOverride = Boolean(site.manualOverrideUntil && site.manualOverrideUntil >= todayStr);
+
+    if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS && !hasActiveManualOverride) {
+      if (
+        site.status !== 'suspenso_d7' ||
+        !site.autoDisabledByOverdue ||
+        site.daysOverdue !== daysOverdue ||
+        site.edicoesBloqueadas !== true ||
+        site.linkStatus !== 'manutencao'
+      ) {
+        changed = true;
+        if (site.status !== 'suspenso_d7' && site.status !== 'disabled') {
+          newlyAutoDisabled.push(`${site.clientName} (${daysOverdue} dias em atraso)`);
+        }
+        return {
+          ...site,
+          status: 'suspenso_d7' as const,
+          daysOverdue,
+          edicoesBloqueadas: true,
+          linkStatus: 'manutencao' as const,
+          autoDisabledByOverdue: true,
+        };
+      }
+      return site;
+    }
+
+    if (daysOverdue >= 3 && daysOverdue < AUTO_DISABLE_OVERDUE_DAYS) {
+      const targetLinkStatus: 'ativo' | 'manutencao' =
+        site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
+      if (
+        site.status !== 'atrasado_d3' ||
+        site.daysOverdue !== daysOverdue ||
+        site.edicoesBloqueadas !== true ||
+        site.linkStatus !== targetLinkStatus ||
+        site.autoDisabledByOverdue
+      ) {
+        changed = true;
+        return {
+          ...site,
+          status: 'atrasado_d3' as const,
+          daysOverdue,
+          edicoesBloqueadas: true,
+          linkStatus: targetLinkStatus,
+          autoDisabledByOverdue: false,
+        };
+      }
+      return site;
+    }
+
+    if (daysOverdue > 0 && daysOverdue < 3) {
+      const targetLinkStatus: 'ativo' | 'manutencao' =
+        site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
+      if (
+        site.status !== 'pendente' ||
+        site.daysOverdue !== daysOverdue ||
+        site.edicoesBloqueadas !== false ||
+        site.linkStatus !== targetLinkStatus ||
+        site.autoDisabledByOverdue
+      ) {
+        changed = true;
+        return {
+          ...site,
+          status: 'pendente' as const,
+          daysOverdue,
+          edicoesBloqueadas: false,
+          linkStatus: targetLinkStatus,
+          autoDisabledByOverdue: false,
+        };
+      }
+      return site;
+    }
+
+    if (daysDiff >= 0) {
+      const expectedStatus: CustomerDelinquencyStatus =
+        site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue
+          ? site.status
+          : daysDiff === 0
+          ? 'pendente'
+          : 'pago';
+      const expectedLinkStatus: 'ativo' | 'manutencao' =
+        site.autoDisabledByOverdue ? 'ativo' : (site.linkStatus || 'ativo');
+      const expectedEdicoes =
+        site.autoDisabledByOverdue ? false : Boolean(site.edicoesBloqueadas && site.linkStatus === 'manutencao');
+
+      if (
+        site.daysOverdue !== 0 ||
+        site.status === 'overdue' ||
+        site.status === 'atrasado_d3' ||
+        site.status === 'active' ||
+        ((site.status === 'disabled' || site.status === 'suspenso_d7') && site.autoDisabledByOverdue) ||
+        site.linkStatus !== expectedLinkStatus
+      ) {
+        changed = true;
+        return {
+          ...site,
+          status: expectedStatus,
+          daysOverdue: 0,
+          edicoesBloqueadas: expectedEdicoes,
+          linkStatus: expectedLinkStatus,
+          autoDisabledByOverdue: false,
+          manualOverrideUntil: undefined,
+        };
+      }
+    }
+
+    return site;
+  });
+
+  return { normalized, changed, newlyAutoDisabled };
 };
