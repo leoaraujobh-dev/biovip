@@ -234,3 +234,13 @@ export function toSafeHexColor(colorStr?: string, fallback = '#ffffff'): string 
   return fallback;
 }
 
+export function formatDueDateBr(isoOrDate: string): string {
+  if (!isoOrDate) return '—';
+  const parts = isoOrDate.split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return isoOrDate;
+}
+
+

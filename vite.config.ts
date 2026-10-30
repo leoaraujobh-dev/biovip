@@ -40,6 +40,11 @@ export default defineConfig(() => {
               return 'vendor-libs';
             }
 
+            // Application Views
+            if (id.includes('src/components/views/FullscreenClientsView')) {
+              return 'view-fullscreen-clients';
+            }
+
             // Editor Tab Chunks
             if (id.includes('src/components/editor/tabs/DashboardTab')) {
               return 'tab-dashboard';
