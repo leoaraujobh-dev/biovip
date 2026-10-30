@@ -55,6 +55,18 @@ export default async function instagramPreviewHandler(req: any, res: any) {
       data.fullName || data.cleanBusinessName || ''
     );
 
+    const postsList = (data.topPosts && data.topPosts.length > 0)
+      ? data.topPosts.slice(0, 6).map((p) => ({
+          displayUrl: p.imageUrl,
+          likesCount: p.likes,
+          caption: p.caption,
+        }))
+      : (data.postPhotos || []).slice(0, 6).map((url, idx) => ({
+          displayUrl: url,
+          likesCount: data.postLikes?.[idx] || (250 - idx * 20),
+          caption: data.galleryShortCaptions?.[idx] || data.postCaptions?.[idx] || '',
+        }));
+
     return res.status(200).json({
       success: true,
       found: true,
@@ -65,14 +77,16 @@ export default async function instagramPreviewHandler(req: any, res: any) {
         category: data.category,
         bio: data.bio,
         followers: data.followers,
+        followersCount: data.followers,
         postsCount: data.postsCount,
         avatarUrl: data.avatarUrl,
         whatsappPhone: data.whatsappPhone,
         externalUrl: data.externalUrl,
         detectedLocation: data.detectedLocation,
         businessHours: data.businessHours,
-        photos: data.postPhotos.slice(0, 6),
-        photoLikes: data.postLikes.slice(0, 6),
+        photos: (data.postPhotos || []).slice(0, 6),
+        photoLikes: (data.postLikes || []).slice(0, 6),
+        posts: postsList,
         externalServices: data.externalBioServices || [],
         suggestedPalette,
       },
