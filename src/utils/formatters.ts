@@ -215,3 +215,22 @@ export function optimizeImageUrl(url: string, targetWidth = 800): string {
   }
   return trimmed;
 }
+
+/**
+ * Validates and normalizes color strings to valid 6-character hex format (#rrggbb)
+ * for use in HTML color pickers.
+ */
+export function toSafeHexColor(colorStr?: string, fallback = '#ffffff'): string {
+  if (!colorStr || typeof colorStr !== 'string') return fallback;
+  const trimmed = colorStr.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed;
+  if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+    const r = trimmed[1];
+    const g = trimmed[2];
+    const b = trimmed[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  if (/^#[0-9a-fA-F]{8}$/.test(trimmed)) return trimmed.slice(0, 7);
+  return fallback;
+}
+
