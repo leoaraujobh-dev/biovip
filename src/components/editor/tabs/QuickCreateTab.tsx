@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Plus,
@@ -16,6 +16,10 @@ import {
   Save,
   User,
   Tag,
+  Loader2,
+  CheckCircle2,
+  Send,
+  Wand2,
 } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
 import { NICHE_TEMPLATES, NicheTemplate } from '../../../constants/templates';
@@ -86,6 +90,75 @@ export function QuickCreateTab({
   handleImportGeminiCode,
   handleSaveMicrosite,
 }: QuickCreateTabProps) {
+  const [livePreviewLoading, setLivePreviewLoading] = useState(false);
+  const [livePreviewData, setLivePreviewData] = useState<any>(null);
+  const [copiedProposal, setCopiedProposal] = useState(false);
+
+  // Busca a prévia visual instantânea do Instagram com debounce de 600ms
+  useEffect(() => {
+    const rawInput = (aiForm.instagram || '').trim();
+    if (!rawInput || rawInput.length < 3) {
+      setLivePreviewData(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setLivePreviewLoading(true);
+        const res = await fetch('/api/instagram-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instagram: rawInput }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.profile) {
+            setLivePreviewData(json.profile);
+            // Se o usuário ainda não digitou o nome do negócio, preenche com o nome real
+            if (!aiForm.businessName && json.profile.fullName) {
+              setAiForm((p: any) => ({ ...p, businessName: json.profile.fullName }));
+            }
+            // Sugestão automática de paleta
+            if (json.profile.suggestedPalette?.paletteId && !aiForm.selectedPalette) {
+              setAiForm((p: any) => ({ ...p, selectedPalette: json.profile.suggestedPalette.paletteId }));
+              applyThemePreset(json.profile.suggestedPalette.paletteId);
+            }
+          } else {
+            setLivePreviewData(null);
+          }
+        }
+      } catch {
+        setLivePreviewData(null);
+      } finally {
+        setLivePreviewLoading(false);
+      }
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [aiForm.instagram]);
+
+  const generateWhatsappProposalText = () => {
+    const clientName = aiForm.businessName || livePreviewData?.fullName || data.profile.name || 'Empresa';
+    const cleanPhone = (aiForm.whatsapp || '').replace(/\D/g, '');
+    const previewUrl = window.location.origin;
+
+    return `Olá ${clientName}! Tudo bem?
+
+Estava acompanhando o trabalho impecável de vocês no Instagram e vi o quanto o atendimento e procedimentos de vocês são diferenciados.
+
+Percebi que o link atual da bio de vocês não valoriza a autoridade da marca no celular. Como desenvolvo microsites de alta conversão, preparei uma versão exclusiva com as fotos reais e serviços de vocês pronta para você ver:
+
+👉 ${previewUrl}
+
+A página conta com agendamento direto no seu WhatsApp, galeria de destaques e carregamento instantâneo. Dá uma olhadinha no seu celular e me conta o que achou! Não tem custo nenhum para visualizar.`;
+  };
+
+  const handleCopyProposal = () => {
+    const text = generateWhatsappProposalText();
+    navigator.clipboard.writeText(text);
+    setCopiedProposal(true);
+    setTimeout(() => setCopiedProposal(false), 3000);
+  };
   return (
     <div className="space-y-6">
       {/* Card de Status do Microsite Ativo */}
@@ -319,6 +392,105 @@ export function QuickCreateTab({
               <span className="text-[10px] text-neutral-500 block mt-1">
                 Puxa automaticamente a bio, o nicho e as <strong>6 fotos com mais curtidas</strong> para a galeria.
               </span>
+
+              {/* Indicador de carregamento da prévia */}
+              {livePreviewLoading && (
+                <div className="mt-2.5 p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 flex items-center gap-2.5 text-xs text-amber-300 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-400 shrink-0" />
+                  <span>Buscando perfil e fotos no Instagram em tempo real...</span>
+                </div>
+              )}
+
+              {/* Card de Prévia Visual Instantânea do Instagram */}
+              {livePreviewData && !livePreviewLoading && (
+                <div className="mt-3 p-3.5 rounded-xl bg-gradient-to-br from-neutral-900/90 via-neutral-900 to-neutral-950 border border-amber-500/30 space-y-3 shadow-lg">
+                  {/* Cabeçalho do Perfil Localizado */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative">
+                        <img
+                          src={livePreviewData.avatarUrl}
+                          alt={livePreviewData.fullName || livePreviewData.username}
+                          className="w-11 h-11 rounded-full object-cover border-2 border-amber-400/80 shadow-md bg-neutral-900"
+                          onError={(e: any) => { e.target.style.display = 'none'; }}
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-neutral-950 flex items-center justify-center text-[10px] font-black border border-neutral-900">
+                          ✓
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-white truncate">
+                            {livePreviewData.fullName || `@${livePreviewData.username}`}
+                          </span>
+                          <span className="text-[10px] text-pink-400 font-mono">@{livePreviewData.username}</span>
+                        </div>
+                        <div className="text-[11px] text-neutral-400 truncate flex items-center gap-2">
+                          {livePreviewData.followersCount > 0 && (
+                            <span><strong>{livePreviewData.followersCount.toLocaleString('pt-BR')}</strong> seguidores</span>
+                          )}
+                          {livePreviewData.bio && (
+                            <span className="text-[10px] text-neutral-500 truncate max-w-[200px]" title={livePreviewData.bio}>
+                              • {livePreviewData.bio}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="shrink-0 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Localizado</span>
+                    </span>
+                  </div>
+
+                  {/* Sugestão de Paleta Harmônica */}
+                  {livePreviewData.suggestedPalette && (
+                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-neutral-950/70 border border-neutral-800 text-[11px]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Wand2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="text-neutral-300">
+                          Paleta Recomendada: <strong className="text-amber-300">{livePreviewData.suggestedPalette.paletteName}</strong>
+                        </span>
+                        <span className="text-[10px] text-neutral-500 truncate hidden sm:inline">({livePreviewData.suggestedPalette.reason})</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAiForm((p: any) => ({ ...p, selectedPalette: livePreviewData.suggestedPalette.paletteId }));
+                          applyThemePreset(livePreviewData.suggestedPalette.paletteId);
+                        }}
+                        className="shrink-0 px-2.5 py-1 rounded-md bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-[10px] font-bold cursor-pointer transition"
+                      >
+                        Aplicar Cores
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 6 Fotos Mais Curtidas para a Galeria */}
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-1.5">
+                      <span className="font-semibold text-neutral-300">
+                        📸 6 Fotos Mais Curtidas (Galeria do Microsite):
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-medium">Foto de perfil no cabeçalho</span>
+                    </div>
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {(livePreviewData.posts || []).slice(0, 6).map((post: any, idx: number) => (
+                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-neutral-800 bg-neutral-950 group">
+                          <img
+                            src={post.displayUrl}
+                            alt={`Foto ${idx + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-110 transition duration-200"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-[9px] text-white font-bold">
+                            ❤️ {post.likesCount ? (post.likesCount >= 1000 ? `${(post.likesCount/1000).toFixed(1)}k` : post.likesCount) : idx + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Seleção rápida de Paleta de Cores em 1 Clique */}
@@ -440,6 +612,39 @@ export function QuickCreateTab({
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 mt-2">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Cadastra automaticamente o cliente no Painel Administrativo com mensalidade e link pronto.</span>
+            </div>
+
+            {/* Gerador de Abordagem WhatsApp em 1 Clique */}
+            <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-neutral-950 to-neutral-950 border border-emerald-500/30 space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                    📲
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Proposta Pronta para o WhatsApp</h4>
+                    <p className="text-[10px] text-neutral-400">Texto persuasivo de apresentação sem falar de preço</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyProposal}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow ${
+                    copiedProposal
+                      ? 'bg-emerald-500 text-neutral-950 font-black'
+                      : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                  }`}
+                >
+                  {copiedProposal ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>{copiedProposal ? 'Copiado para o WhatsApp!' : 'Copiar Mensagem Pronta'}</span>
+                </button>
+              </div>
+              <textarea
+                readOnly
+                rows={4}
+                value={generateWhatsappProposalText()}
+                className="w-full p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] font-sans text-neutral-300 focus:outline-none resize-none"
+              />
             </div>
           </div>
         </div>

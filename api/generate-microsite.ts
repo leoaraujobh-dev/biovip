@@ -282,7 +282,7 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<strin
   return null;
 }
 
-function cleanInstagramHandleVariants(input?: string): string[] {
+export function cleanInstagramHandleVariants(input?: string): string[] {
   if (!input) return [];
   let str = input.trim();
   str = str.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '');
@@ -612,7 +612,7 @@ function parseInstagramMetaFromHtml(html: string): {
   };
 }
 
-async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedInstagramData> {
+export async function extractInstagramInfo(rawInstagram?: string): Promise<ExtractedInstagramData> {
   const usernameVariants = cleanInstagramHandleVariants(rawInstagram);
   const primaryUsername = usernameVariants[0] || '';
   const result: ExtractedInstagramData = {
