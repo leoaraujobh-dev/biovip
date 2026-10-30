@@ -224,8 +224,10 @@ async function inspectExternalBioLink(rawUrl?: string): Promise<{
 
 async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<string | null> {
   if (!url || !url.startsWith('http')) return null;
+  const cleanUrl = decodeHtmlEntities(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
+
+  // 1) Tentativa direta com User-Agent bot oficial
   try {
-    const cleanUrl = decodeHtmlEntities(url.replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const res = await fetch(cleanUrl, {
@@ -233,19 +235,51 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 4500): Promise<strin
       headers: {
         'User-Agent': 'TelegramBot (like TwitterBot)',
         Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        Referer: 'https://www.instagram.com/',
       },
     });
     clearTimeout(timer);
-    if (!res.ok) return null;
-    const contentType = res.headers.get('content-type') || 'image/jpeg';
-    if (!contentType.startsWith('image/')) return null;
-    const arrayBuffer = await res.arrayBuffer();
-    if (arrayBuffer.byteLength < 600 || arrayBuffer.byteLength > 5 * 1024 * 1024) return null;
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    return `data:${contentType.split(';')[0]};base64,${base64}`;
+    if (res.ok) {
+      const contentType = res.headers.get('content-type') || 'image/jpeg';
+      if (contentType.startsWith('image/')) {
+        const arrayBuffer = await res.arrayBuffer();
+        if (arrayBuffer.byteLength >= 600 && arrayBuffer.byteLength <= 5 * 1024 * 1024) {
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          return `data:${contentType.split(';')[0]};base64,${base64}`;
+        }
+      }
+    }
   } catch {
-    return null;
+    // Falha silenciosa para prosseguir para o fallback de CDN
   }
+
+  // 2) Fallback resiliente usando CDN proxy de imagens (Weserv) para contornar restrições de IP/CORS da Meta
+  try {
+    const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&q=85&w=900`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(proxyUrl, {
+      signal: controller.signal,
+      headers: {
+        Accept: 'image/jpeg,image/webp,image/*,*/*;q=0.8',
+      },
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const contentType = res.headers.get('content-type') || 'image/jpeg';
+      if (contentType.startsWith('image/')) {
+        const arrayBuffer = await res.arrayBuffer();
+        if (arrayBuffer.byteLength >= 600) {
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          return `data:${contentType.split(';')[0]};base64,${base64}`;
+        }
+      }
+    }
+  } catch {
+    // Retorna null caso nenhum proxy consiga baixar
+  }
+
+  return null;
 }
 
 function cleanInstagramHandle(input?: string): string {
@@ -534,7 +568,7 @@ function parseInstagramMetaFromHtml(html: string): {
   const ogImage = ogImageRaw ? decodeHtmlEntities(ogImageRaw) : undefined;
 
   const scontentMatches = html.matchAll(
-    /https:\/\/scontent[^"'\s\\]+cdninstagram\.com\/v\/[^"'\s\\]+/g
+    /https:\/\/[^"'\s\\]*(?:cdninstagram\.com|fbcdn\.net)\/v\/[^"'\s\\]+/g
   );
   for (const m of scontentMatches) {
     const decoded = decodeHtmlEntities(m[0].replace(/\\u0026/g, '&').replace(/\\\//g, '/'));
