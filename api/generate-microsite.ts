@@ -1905,16 +1905,17 @@ function applyExtractedAssetsToMicrosite(
     galleryCaptionsOrderedByLikes.push(instaData.cleanBusinessName || instaData.fullName || '');
   }
 
+  // Foto de Perfil (Cabeçalho): utiliza ESTRITAMENTE o avatar real do Instagram
   const primaryAvatar =
     instaData.avatarUrl ||
-    instaData.postPhotos[0] ||
     mapsData.photos[0] ||
     microsite.profile?.avatarUrl;
 
+  // Foto de Sobre / Destaque: foto do post mais curtido do Instagram
   const mostLikedPostPhoto =
     instaData.postPhotos[0] ||
-    mapsData.photos[0] ||
     instaData.avatarUrl ||
+    mapsData.photos[0] ||
     microsite.profile?.aboutPhotoUrl;
 
   if (!microsite.profile) microsite.profile = {};
