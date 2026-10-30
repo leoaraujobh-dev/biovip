@@ -1,6 +1,11 @@
 import { GoogleGenAI } from '@google/genai';
 
-const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
+const GEMINI_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-flash-latest',
+];
 
 interface ExtractedInstagramPost {
   shortcode: string;
@@ -3282,7 +3287,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
             },
           }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Timeout calling ${modelName}`)), 8500)
+            setTimeout(() => reject(new Error(`Timeout calling ${modelName}`)), 20000)
           ),
         ]);
 
