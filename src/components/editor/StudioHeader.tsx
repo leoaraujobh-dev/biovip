@@ -112,7 +112,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
     { id: 'highConversion', label: 'Gatilhos de Alta Conversão', icon: Wand2, category: 'conversion' },
     { id: 'seo', label: 'SEO & Card WhatsApp', icon: Globe, category: 'seo' },
     { id: 'tracking', label: 'Pixels & Rastreamento', icon: Target, category: 'seo' },
-    { id: 'dashboard', label: `Painel de Clientes (${savedSites.length})`, icon: Server, category: 'management', isHighlight: true },
+    { id: 'dashboard', label: `CRM & Clientes (${savedSites.length})`, icon: Server, category: 'management', isHighlight: true },
     { id: 'export', label: 'Exportar Código HTML', icon: Code, category: 'management' },
   ];
 
@@ -249,7 +249,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
 
         {/* Zona Direita: Ações Principais com Hierarquia Perfeita */}
         <div className="flex items-center gap-2">
-          {/* Botão Clientes / CRM */}
+          {/* Botão CRM & Clientes */}
           <button
             type="button"
             onClick={() => setActiveTab('dashboard')}
@@ -258,10 +258,10 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 ? 'bg-amber-400 text-neutral-950 border-amber-300 font-bold shadow'
                 : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border-neutral-800'
             }`}
-            title="Abrir Painel de Gestão dos Clientes"
+            title="Abrir CRM de Prospecção, Gestão de Leads e Clientes"
           >
             <Server className="w-3.5 h-3.5 text-amber-400" />
-            <span>Clientes</span>
+            <span>CRM & Clientes</span>
             <span className="px-1.5 py-0.2 text-[9.5px] rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
               {savedSites.length}
             </span>

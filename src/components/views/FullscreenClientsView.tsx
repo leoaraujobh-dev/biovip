@@ -128,11 +128,12 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
   editingSiteId,
 }) => {
   const [clientsFilterTerm, setClientsFilterTerm] = useState<string>('');
-  const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'active' | 'overdue' | 'suspended' | 'disabled' | 'construction' | 'model'>('all');
+  const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'leads' | 'active' | 'overdue' | 'suspended' | 'disabled' | 'construction' | 'model'>('all');
 
     // Microsites marcados como Modelo (isModelMicrosite) NÃO entram nos cálculos de faturamento
     const billableSites = savedSites.filter(s => !isModelMicrosite(s));
     const modelSitesCount = savedSites.filter(s => isModelMicrosite(s)).length;
+    const leadsProspectCount = savedSites.filter(s => Boolean(s.isTemporaryDemo || s.crmStage)).length;
 
     const totalContractedRevenue = billableSites.reduce((acc, s) => acc + (s.status !== 'disabled' ? (s.monthlyFee || 0) : 0), 0);
     const activeRevenue = billableSites.reduce((acc, s) => {
@@ -168,6 +169,9 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
         }
       }
 
+      if (clientsStatusFilter === 'leads') {
+        return Boolean(s.isTemporaryDemo || s.crmStage);
+      }
       if (clientsStatusFilter === 'model') {
         return isModelMicrosite(s);
       }
@@ -786,6 +790,7 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: 'all' as const, label: `Todos (${savedSites.length})` },
+                { id: 'leads' as const, label: `🎯 Leads & CRM (${leadsProspectCount})` },
                 { id: 'model' as const, label: `⭐ Modelos (${modelSitesCount})` },
                 { id: 'construction' as const, label: `🚧 Em Construção (${constructionCount})` },
                 { id: 'active' as const, label: `🟢 Em Dia (${inDayCount})` },
