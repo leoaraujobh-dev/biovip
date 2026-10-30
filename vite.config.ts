@@ -44,6 +44,9 @@ export default defineConfig(() => {
             if (id.includes('src/components/views/FullscreenClientsView')) {
               return 'view-fullscreen-clients';
             }
+            if (id.includes('src/components/landing/')) {
+              return 'view-sales-landing';
+            }
 
             // PWA Components
             if (id.includes('src/components/pwa/')) {
