@@ -226,6 +226,7 @@ import { QuickCreateTab } from './components/editor/tabs/QuickCreateTab';
 import { ModulesTab } from './components/editor/tabs/ModulesTab';
 import { DashboardTab } from './components/editor/tabs/DashboardTab';
 import { FullscreenClientsView } from './components/views/FullscreenClientsView';
+import { StudioHeader } from './components/editor/StudioHeader';
 import { generateExportCode as generateExportCodeEngine } from './utils/exportEngine';
 
 // Re-exports for backward compatibility
@@ -10396,294 +10397,38 @@ COMO PUBLICAR NO SERVIDOR:
           {/* LEFT COLUMN: BUILDER SAAS PRO CONTROLS                         */}
           {/* ============================================================== */}
           <aside className={`w-full lg:w-[620px] xl:w-[680px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
-        {/* Header */}
-        <header className="px-5 py-3.5 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 bg-neutral-950/70">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-11 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/assets/aistudio/1793152702953_02858b21.jpg" alt="BioVip Logo" className="w-full h-full object-cover scale-125" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-serif font-black text-neutral-100 text-sm tracking-wider">
-                  BIOVIP STUDIO <span className="text-amber-400 font-bold font-mono">SAAS ENGINE</span>
-                </h1>
-                {currentEditingSite ? (() => {
-                  const hasUnsavedChanges = JSON.stringify(currentEditingSite.data) !== JSON.stringify(data);
-                  return (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 border ${
-                        hasUnsavedChanges
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse'
-                          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                      }`}>
-                        <Edit3 className="w-2.5 h-2.5" />
-                        Editando: {currentEditingSite.clientName}
-                        {hasUnsavedChanges ? ' (Alterações Pendentes)' : ' (Salvo)'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={startNewDraftMicrosite}
-                        className="text-[9px] font-semibold text-neutral-400 hover:text-amber-300 underline cursor-pointer"
-                        title="Sair da edição e voltar ao Modo Rascunho Livre"
-                      >
-                        (Desvincular)
-                      </button>
-                    </div>
-                  );
-                })() : (
-                  <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                    MODO RASCUNHO (Nenhum Cliente Vinculado)
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-neutral-400">Gerador de Microsites & Painel de Gestão · Admin: {adminUser?.email}</p>
-            </div>
-          </div>
+        <StudioHeader
+          data={data}
+          currentEditingSite={currentEditingSite}
+          startNewDraftMicrosite={startNewDraftMicrosite}
+          handleStartNewMicrosite={handleStartNewMicrosite}
+          openPublicSalesLanding={openPublicSalesLanding}
+          openCreatorSubdomain={() => setSubdomainModalOpen(true)}
+          openLivePreviewTab={openLivePreviewTab}
+          setQrModalOpen={setQrModalOpen}
+          setAiModalOpen={setAiModalOpen}
+          openSaveDialog={openSaveDialog}
+          setPublishModalOpen={setPublishModalOpen}
+          setSelectedPublishSiteId={setSelectedPublishSiteId}
+          savedSites={savedSites}
+          editingSiteId={editingSiteId}
+          setIsClientsFullscreen={setIsClientsFullscreen}
+          copyExportCode={copyExportCode}
+          copiedCode={copiedCode}
+          openBulkEmailModal={() => openBulkEmailModal()}
+          setSecurityModalTab={setSecurityModalTab}
+          setSecurityModalOpen={setSecurityModalOpen}
+          handleLockAdminPanel={handleLockAdminPanel}
+          handleAdminLogout={handleAdminLogout}
+          adminUser={adminUser}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          landingConfig={landingConfig}
+        />
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Botão para voltar à Landing Page Inicial de Vendas */}
-            <button
-              type="button"
-              onClick={openPublicSalesLanding}
-              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 font-semibold text-xs flex items-center gap-1.5 border border-neutral-700 transition cursor-pointer"
-              title="Visualizar a Landing Page pública de venda de microsites prontos"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
-              <span>Vitrine de Vendas</span>
-            </button>
-
-            {/* Botão para configurar o Domínio / Subdomínio do Criador (Exibido apenas no Painel de Gestão) */}
-            {activeTab === 'dashboard' && (
-              <button
-                type="button"
-                onClick={() => setSubdomainModalOpen(true)}
-                className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-mono font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
-                title="Configurar Domínio Principal e Subdomínio do Criador"
-              >
-                <Globe className="w-3.5 h-3.5 text-amber-400" />
-                <span>Configurar Domínio ({landingConfig.creatorSubdomain}.)</span>
-              </button>
-            )}
-
-            {/* Central de Segurança & PIN Mestre */}
-            <button
-              type="button"
-              onClick={() => {
-                setSecurityModalTab('pin');
-                setSecurityModalOpen(true);
-              }}
-              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer"
-              title="Central de Segurança: Alterar PIN Mestre e Histórico de Acessos"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-              <span>Segurança</span>
-            </button>
-
-            {/* Botão de Bloquear Painel Imediatamente */}
-            <button
-              type="button"
-              onClick={handleLockAdminPanel}
-              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/15 text-neutral-300 hover:text-red-300 font-semibold text-xs flex items-center gap-1 border border-neutral-800 hover:border-red-500/30 transition cursor-pointer"
-              title="Bloquear o painel agora (exigirá o PIN de 6 dígitos)"
-            >
-              <Lock className="w-3.5 h-3.5 text-red-400" />
-              <span>Bloquear</span>
-            </button>
-
-            {/* Botão de Logout do Firebase Admin */}
-            <button
-              type="button"
-              onClick={handleAdminLogout}
-              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-red-500/15 text-neutral-300 hover:text-red-300 font-semibold text-xs flex items-center gap-1 border border-neutral-800 hover:border-red-500/30 transition cursor-pointer"
-              title={`Sair da sessão de administrador (${adminUser?.email})`}
-            >
-              <LogOut className="w-3.5 h-3.5 text-red-400" />
-              <span>Sair</span>
-            </button>
-
-            {/* Toggle Editor vs. Preview (iPhone) visível apenas em telas menores < 1024px */}
-            <div className="flex lg:hidden items-center bg-neutral-900 p-1 rounded-xl border border-neutral-800 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setViewMode('editor')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                  viewMode === 'editor'
-                    ? 'bg-amber-400 text-neutral-950 shadow'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Editar</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('preview')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                  viewMode === 'preview'
-                    ? 'bg-amber-400 text-neutral-950 shadow'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span>Ver Página</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={handleStartNewMicrosite}
-              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 hover:brightness-110 text-neutral-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/25 transition cursor-pointer"
-              title="Iniciar um novo microsite em branco ou criar com IA"
-            >
-              <Plus className="w-3.5 h-3.5 text-neutral-950 stroke-[3]" />
-              <span>Novo Microsite</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('quickCreate');
-                setAiModalOpen(true);
-              }}
-              className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 hover:border-amber-400 transition cursor-pointer"
-              title="Gerar Microsite automaticamente usando IA a partir do Instagram e Google Meu Negócio"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
-              <span>Criar com IA</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={openLivePreviewTab}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer shadow"
-              title="Ver resultado do microsite em tela cheia numa nova aba"
-            >
-              <Eye className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ver Resultado</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setQrModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-500/30 transition cursor-pointer shadow"
-              title="Gerar QR Code para testar no celular"
-            >
-              <QrCode className="w-3.5 h-3.5 text-emerald-400" />
-              <span>📱 QR Code Celular</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer border ${
-                activeTab === 'dashboard'
-                  ? 'bg-amber-400 text-neutral-950 border-amber-300 ring-2 ring-amber-400/30'
-                  : 'bg-neutral-800 hover:bg-neutral-700 text-amber-300 border-amber-500/40 hover:border-amber-400'
-              }`}
-              title="Abrir Painel de Gestão dos Microsites e Mensalidades dos Clientes"
-            >
-              <Server className="w-3.5 h-3.5 text-amber-400" />
-              <span>Painel & Clientes</span>
-              <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                {savedSites.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsClientsFullscreen(true)}
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 hover:from-amber-400 hover:to-amber-300 text-amber-300 hover:text-neutral-950 font-bold text-xs flex items-center gap-1.5 border border-amber-500/40 hover:border-amber-300 shadow-md transition cursor-pointer group"
-              title="Abrir a tela de Gestão de Clientes em tela cheia (sem a barra do estúdio e sem o preview lateral)"
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-amber-400 group-hover:text-neutral-950 transition" />
-              <span>Gestão em Tela Cheia</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={openSaveDialog}
-              className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Salvar Microsite</span>
-            </button>
-
-            {activeTab === 'dashboard' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedPublishSiteId(editingSiteId || savedSites[0]?.id || null);
-                  setPublishModalOpen(true);
-                }}
-                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-semibold text-xs flex items-center gap-1.5 border border-neutral-700 transition cursor-pointer"
-              >
-                <Globe className="w-3.5 h-3.5 text-amber-400" />
-                <span>Publicar & Domínio</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={copyExportCode}
-              className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer ${
-                copiedCode
-                  ? 'bg-emerald-500 text-neutral-950 ring-2 ring-emerald-400'
-                  : 'bg-amber-500 hover:bg-amber-400 text-neutral-950'
-              }`}
-            >
-              {copiedCode ? <Check className="w-3.5 h-3.5 text-neutral-950" /> : <Download className="w-3.5 h-3.5" />}
-              <span>{copiedCode ? 'Código Copiado com Sucesso!' : 'Exportar HTML'}</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Tab Navigation */}
-        <div
-          onWheel={(e) => {
-            if (e.deltaY !== 0) {
-              e.currentTarget.scrollLeft += e.deltaY;
-            }
-          }}
-          className="px-4 py-2.5 border-b border-neutral-800 bg-neutral-900 flex items-center gap-1.5 overflow-x-auto text-xs tab-scrollbar shrink-0 scroll-smooth"
-        >
-          {[
-            { id: 'quickCreate', label: '⚡ Criação Rápida & IA', icon: Sparkles, isHighlight: true },
-            { id: 'styling', label: '🎨 Cores & Paletas', icon: Palette },
-            { id: 'identity', label: '👤 Perfil & Fotos', icon: User },
-            { id: 'services', label: '🛍️ Serviços & Catálogo', icon: Tag },
-            { id: 'buttons', label: '🔗 Botões & WhatsApp', icon: Briefcase },
-            { id: 'modules', label: '✨ Prova Social & Avaliações', icon: Layers },
-            { id: 'qualifier', label: '🎯 Funil & Conversão', icon: Filter },
-            { id: 'highConversion', label: 'Alta Conversão [ON/OFF]', icon: Wand2 },
-            { id: 'seo', label: 'SEO & Card WhatsApp', icon: Globe },
-            { id: 'tracking', label: 'Pixels & Origem de Tráfego', icon: Target },
-            { id: 'dashboard', label: `Painel & Clientes (${savedSites.length})`, icon: Server, isHighlight: true },
-            { id: 'export', label: 'Exportar & Código', icon: Code },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={(e) => {
-                  setActiveTab(tab.id);
-                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                    : tab.isHighlight
-                    ? 'bg-amber-400/10 text-amber-200 border border-amber-500/20 hover:bg-amber-400/20'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : tab.isHighlight ? 'text-amber-400' : 'text-neutral-400'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Panels */}
+{/* Tab Panels */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* TAB 0: CRIAÇÃO RÁPIDA & IA (SIMPLIFICADA) */}
           {activeTab === 'quickCreate' && (

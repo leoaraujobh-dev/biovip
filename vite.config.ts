@@ -47,6 +47,9 @@ export default defineConfig(() => {
             if (id.includes('src/components/landing/')) {
               return 'view-sales-landing';
             }
+            if (id.includes('src/components/editor/StudioHeader')) {
+              return 'editor-header';
+            }
 
             // PWA Components
             if (id.includes('src/components/pwa/')) {
