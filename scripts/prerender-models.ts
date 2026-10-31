@@ -70,7 +70,7 @@ if (estheticsTemplate?.sampleData) {
 console.log(`[Pre-render] Generating ultra-fast static HTML for ${modelsToPrerender.length} models...`);
 
 for (const model of modelsToPrerender) {
-  const html = generateExportCode(model.data);
+  const html = generateExportCode(model.data, { demoWhatsAppPhone: '5531991390202' });
   const targets = [model.slug, ...(model.aliases || [])];
 
   for (const t of targets) {
