@@ -237,7 +237,7 @@ import { ModulesTab } from './components/editor/tabs/ModulesTab';
 import { DashboardTab } from './components/editor/tabs/DashboardTab';
 import { FullscreenClientsView } from './components/views/FullscreenClientsView';
 import { StudioHeader } from './components/editor/StudioHeader';
-import { generateExportCode as generateExportCodeEngine } from './utils/exportEngine';
+import { generateExportCode as generateExportCodeEngine, getNicheFallbackImage } from './utils/exportEngine';
 
 // Re-exports for backward compatibility
 export {
@@ -3252,7 +3252,7 @@ export default function App() {
           sanitizeImageUrl(generated?.profile?.aboutPhotoUrl, '') ||
           cachedPhotos[1] ||
           cachedPhotos[0] ||
-          INITIAL_DATA.aboutMe.photoUrl,
+          getNicheFallbackImage(generated?.profile?.title || aiForm.businessNiche || '', 3),
         paragraph:
           generated?.aboutMe?.paragraph ||
           generated?.aboutMe?.bioText ||
@@ -3270,14 +3270,31 @@ export default function App() {
       },
       faq: {
         ...INITIAL_DATA.faq,
-        ...(generated?.faq || {}),
+        headline: generated?.faq?.headline || 'Dúvidas Frequentes',
         items:
           Array.isArray(generated?.faq?.items) && generated.faq.items.length > 0
             ? generated.faq.items
-            : INITIAL_DATA.faq.items,
+            : [
+                {
+                  id: 'faq-1',
+                  question: 'Como funciona o agendamento?',
+                  answer: 'O agendamento é feito de forma rápida e prática diretamente pelo WhatsApp. Basta clicar no botão e escolher o melhor dia e horário.',
+                },
+                {
+                  id: 'faq-2',
+                  question: 'Quais as formas de pagamento aceitas?',
+                  answer: 'Aceitamos PIX, cartões de crédito e débito, com facilidades especiais conforme o procedimento.',
+                },
+                {
+                  id: 'faq-3',
+                  question: 'Onde fica localizado o espaço?',
+                  answer: 'Contamos com espaço exclusivo, ambiente climatizado, seguro e com todo o conforto para o seu atendimento.',
+                },
+              ],
       },
       conversion: {
         ...INITIAL_DATA.conversion,
+        defaultWhatsappMsg: 'Olá {nome}! Acessei seu link oficial e gostaria de agendar um horário para {servico}.',
         ...(generated?.conversion || {}),
       },
       seo: {
@@ -3382,7 +3399,7 @@ export default function App() {
       isLandingModel: isModel,
       isTemporaryDemo: isDemo,
       demoDurationDays: isDemo ? demoDays : undefined,
-      proposalValue: isDemo ? proposalVal : undefined,
+      proposalValue: isDemo ? parseBrlCurrency(proposalVal, 197.00) : undefined,
       crmStage: crmStageVal,
       prospectNotes: adminOverrides?.prospectNotes || '',
       isCustomized: true,
@@ -3412,13 +3429,23 @@ export default function App() {
 
     if (!adminOverrides?.skipAdminSave) {
       setSavedSites((prev) => {
-        // Busca inteligente e rigorosa para evitar QUALQUER duplicação por id, subdomain ou clientName
-        const existingIdx = prev.findIndex(
-          (s) =>
-            s.id === newId ||
-            (Boolean(s.subdomain) && Boolean(autoClient.subdomain) && s.subdomain.toLowerCase() === autoClient.subdomain.toLowerCase()) ||
-            (Boolean(s.clientName) && Boolean(autoClient.clientName) && s.clientName.trim().toLowerCase() === autoClient.clientName.trim().toLowerCase())
-        );
+        // Busca inteligente e rigorosa para evitar QUALQUER duplicação por id, subdomain, clientName ou instagram
+        const cleanNameA = (autoClient.clientName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cleanSlugA = (autoClient.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cleanInstaA = (autoClient.data?.profile?.instagram || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        const existingIdx = prev.findIndex((s) => {
+          if (s.id === newId) return true;
+          const cleanNameB = (s.clientName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cleanSlugB = (s.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cleanInstaB = (s.data?.profile?.instagram || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+          if (cleanSlugA && cleanSlugB && cleanSlugA === cleanSlugB) return true;
+          if (cleanNameA && cleanNameB && cleanNameA === cleanNameB) return true;
+          if (cleanInstaA && cleanInstaB && cleanInstaA === cleanInstaB) return true;
+          if (cleanNameA.length >= 8 && cleanNameB.length >= 8 && (cleanNameA.includes(cleanNameB) || cleanNameB.includes(cleanNameA))) return true;
+          return false;
+        });
         let updatedList: SavedMicrosite[];
         if (existingIdx >= 0) {
           const existing = prev[existingIdx];

@@ -148,10 +148,12 @@ export default async function createProspectMicrositeHandler(req: any, res: any)
   // 6. Lê configuração de domínio base
   let baseDomain = 'biovip.com.br';
   try {
-    const configPath = path.resolve(ROOT_DIR, '.landing-config.json');
-    if (fs.existsSync(configPath)) {
-      const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      if (cfg?.baseDomain) baseDomain = cfg.baseDomain.toLowerCase().trim();
+    if (typeof fs !== 'undefined' && fs.existsSync && fs.readFileSync) {
+      const configPath = path.resolve(getRootDir(), '.landing-config.json');
+      if (fs.existsSync(configPath)) {
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        if (cfg?.baseDomain) baseDomain = cfg.baseDomain.toLowerCase().trim();
+      }
     }
   } catch {}
 
