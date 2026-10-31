@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import generateMicrositeHandler from './api/generate-microsite.ts';
+import createProspectMicrositeHandler from './api/create-prospect-microsite.ts';
 import instagramPreviewHandler from './api/instagram-preview.ts';
 import optimizeCopyHandler from './api/optimize-copy.ts';
 import sendBulkEmailHandler from './api/send-bulk-email.ts';
@@ -108,6 +109,14 @@ app.post('/api/asaas/webhook', (req, res) => {
 // Express API route for AI Microsite Generation (shared with Vercel /api/generate-microsite)
 app.post('/api/generate-microsite', async (req, res) => {
   await generateMicrositeHandler(req, res);
+});
+
+// Express API routes for External CRM Temporary Prospecting Microsite Creation
+app.post('/api/create-prospect-microsite', async (req, res) => {
+  await createProspectMicrositeHandler(req, res);
+});
+app.post('/api/prospect-site', async (req, res) => {
+  await createProspectMicrositeHandler(req, res);
 });
 
 // Express API route for Live Instagram Preview & Profile Lookup
