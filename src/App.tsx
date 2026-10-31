@@ -8511,6 +8511,7 @@ COMO PUBLICAR NO SERVIDOR:
       aboutMe: {
         enabled: true,
         headline: `Sobre ${kit.profile.name}`,
+        photoUrl: kit.profile.aboutPhotoUrl || '',
         paragraph: safeMeta.aboutParagraph,
         closingPhrase: safeMeta.aboutClosing,
       },
@@ -9612,9 +9613,9 @@ COMO PUBLICAR NO SERVIDOR:
   }
 
   // =========================================================================
-  // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing' OU SLUG NÃO ENCONTRADO)
+  // RENDERIZAÇÃO DA LANDING PAGE INICIAL DE VENDAS (QUANDO appSurface === 'landing')
   // =========================================================================
-  if (appSurface === 'landing' || appSurface === 'microsite') {
+  if (appSurface === 'landing') {
     if (paymentConfirmPlan) {
       const portalName = (landingConfig.checkoutPortalName || 'Kiwify').trim();
       const trimmedClientEmail = paymentClientEmail.trim();
