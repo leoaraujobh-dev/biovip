@@ -1478,13 +1478,12 @@ export default function App() {
     return true;
   });
 
-  // Editor Studio Layout: 3 Colunas Studio Pro vs 2 Colunas Clássico
+  // Editor Studio Layout: 3 Colunas Studio Pro (Padrão Ativo)
   const [editorLayoutMode, setEditorLayoutMode] = useState<'3col' | '2col'>(() => {
     try {
-      return (localStorage.getItem('biovip_editor_layout_mode') as '3col' | '2col') || '3col';
-    } catch {
-      return '3col';
-    }
+      localStorage.setItem('biovip_editor_layout_mode', '3col');
+    } catch {}
+    return '3col';
   });
 
   const handleSetEditorLayoutMode = (mode: '3col' | '2col') => {
