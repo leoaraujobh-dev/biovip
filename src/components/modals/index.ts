@@ -15,3 +15,4 @@ export { SecurityModal } from './SecurityModal';
 export { SubdomainModal } from './SubdomainModal';
 export { PaymentSuccessModal } from './PaymentSuccessModal';
 export { UnderConstructionPreviewModal } from './UnderConstructionPreviewModal';
+export { TermsModal } from './TermsModal';

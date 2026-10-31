@@ -5073,7 +5073,12 @@ Inicie agora fazendo a **Solicitação 1**!`;
     const selectedPlanObj = MAINTENANCE_PLANS[saveForm.maintenancePlan] || MAINTENANCE_PLANS.pro_4;
     const feeNum = parseBrlCurrency(saveForm.monthlyFee, selectedPlanObj.price);
     const creationFeeNum = parseBrlCurrency(saveForm.creationFee || '79,90', 79.90);
+    const proposalFeeNum = parseBrlCurrency(saveForm.proposalValue || '197,00', 197.00);
     const todayStr = new Date().toISOString().split('T')[0];
+    const demoDays = saveForm.demoDurationDays || 7;
+    const demoExpiresDate = new Date();
+    demoExpiresDate.setDate(demoExpiresDate.getDate() + demoDays);
+    const demoExpiresAtStr = demoExpiresDate.toISOString();
 
     if (editingSiteId && !asNew) {
       let isDataModified = false;
@@ -5092,7 +5097,10 @@ Inicie agora fazendo a **Solicitação 1**!`;
           Boolean(s.isFirstMonth) !== Boolean(saveForm.isFirstMonth) ||
           s.subdomain !== slug ||
           s.customDomain !== saveForm.customDomain.trim() ||
-          Boolean(s.isLandingModel) !== Boolean(saveForm.isLandingModel);
+          Boolean(s.isLandingModel) !== Boolean(saveForm.isLandingModel) ||
+          Boolean(s.isTemporaryDemo) !== Boolean(saveForm.isTemporaryDemo) ||
+          s.prospectNotes !== saveForm.prospectNotes ||
+          s.prospectInstagram !== saveForm.prospectInstagram;
 
         isDataModified = dataChanged;
         const newUpdates = contentChanged ? s.updatesThisMonth + 1 : s.updatesThisMonth;
@@ -5111,6 +5119,14 @@ Inicie agora fazendo a **Solicitação 1**!`;
           updatesThisMonth: newUpdates,
           lastUpdated: dataChanged ? todayStr : s.lastUpdated,
           isLandingModel: saveForm.isLandingModel,
+          isTemporaryDemo: Boolean(saveForm.isTemporaryDemo),
+          demoDurationDays: demoDays,
+          demoExpiresAt: saveForm.isTemporaryDemo ? (s.demoExpiresAt || demoExpiresAtStr) : undefined,
+          crmStage: saveForm.crmStage || (saveForm.isTemporaryDemo ? 'demonstracao' : undefined),
+          proposalValue: proposalFeeNum,
+          prospectNotes: saveForm.prospectNotes || '',
+          prospectInstagram: saveForm.prospectInstagram || '',
+          prospectSituation: saveForm.prospectSituation || 'wa_direto',
           isCustomized: true,
           data: JSON.parse(JSON.stringify(data)),
         };
@@ -5156,6 +5172,14 @@ Inicie agora fazendo a **Solicitação 1**!`;
         whatsappClicks: 0,
         pageViews: 100,
         isLandingModel: saveForm.isLandingModel,
+        isTemporaryDemo: Boolean(saveForm.isTemporaryDemo),
+        demoDurationDays: demoDays,
+        demoExpiresAt: saveForm.isTemporaryDemo ? demoExpiresAtStr : undefined,
+        crmStage: saveForm.crmStage || (saveForm.isTemporaryDemo ? 'demonstracao' : undefined),
+        proposalValue: proposalFeeNum,
+        prospectNotes: saveForm.prospectNotes || '',
+        prospectInstagram: saveForm.prospectInstagram || '',
+        prospectSituation: saveForm.prospectSituation || 'wa_direto',
         isCustomized: true,
         data: JSON.parse(JSON.stringify(data)),
       };
@@ -5190,6 +5214,13 @@ Inicie agora fazendo a **Solicitação 1**!`;
       subdomain: currentSite ? currentSite.subdomain : data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       customDomain: currentSite ? currentSite.customDomain : '',
       isLandingModel: currentSite ? Boolean(currentSite.isLandingModel) : true,
+      isTemporaryDemo: currentSite ? Boolean(currentSite.isTemporaryDemo) : false,
+      demoDurationDays: currentSite?.demoDurationDays || 7,
+      proposalValue: currentSite?.proposalValue ? currentSite.proposalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '197,00',
+      crmStage: currentSite?.crmStage || 'demonstracao',
+      prospectNotes: currentSite?.prospectNotes || '',
+      prospectInstagram: currentSite?.prospectInstagram || data.profile.instagram || '',
+      prospectSituation: currentSite?.prospectSituation || 'wa_direto',
     });
     setSaveModalOpen(true);
   };
@@ -10125,7 +10156,7 @@ COMO PUBLICAR NO SERVIDOR:
         openCreatorSubdomain={openCreatorSubdomain}
         showToast={showToast}
         onSelectPlanForPayment={(planId) => {
-          setPaymentConfirmPlan(getPlanCheckoutDetails(planId));
+          redirectClientToPurchaseWhatsapp(planId);
         }}
         getPlanCheckoutDetails={getPlanCheckoutDetails}
         landingOrderForm={landingOrderForm}
@@ -11041,6 +11072,10 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
         setSaveEmailError={setSaveEmailError}
         editingSiteId={editingSiteId}
         handleSaveMicrosite={handleSaveMicrosite}
+        niche={data.profile.title}
+        defaultInstagram={data.profile.instagram}
+        baseDomain={landingConfig.baseDomain}
+        showToast={showToast}
       />
 
       <PublishModal

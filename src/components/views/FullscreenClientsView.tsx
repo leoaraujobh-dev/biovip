@@ -25,6 +25,7 @@ import {
   Trash2,
   TrendingUp,
   Users,
+  Zap,
 } from 'lucide-react';
 import type { SavedMicrosite } from '../../types/microsite';
 import {
@@ -37,6 +38,7 @@ import {
 } from '../../constants/maintenancePlans';
 import { isModelMicrosite, isSiteUnderConstruction } from '../../utils/htmlGenerators';
 import { formatDueDateBr, formatWhatsAppPhone, safeCopyText, parseBrlCurrency } from '../../utils/formatters';
+import { generateProspectProposalMessage } from '../../utils/prospectProposal';
 
 export interface FullscreenClientsViewProps {
   savedSites: SavedMicrosite[];
@@ -883,6 +885,12 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
                                 <span>Modelo (Sem Faturamento)</span>
                               </span>
                             )}
+                            {site.isTemporaryDemo && (
+                              <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                                <Zap className="w-2.5 h-2.5 text-amber-400" />
+                                <span>Degustação CRM ({site.demoDurationDays || 7}d)</span>
+                              </span>
+                            )}
                           </div>
                           <button
                             type="button"
@@ -1111,6 +1119,58 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
                             </button>
                           </>
                         )}
+                        {/* Ações Especiais de Prospecção CRM / Degustação */}
+                        {Boolean(site.isTemporaryDemo || site.crmStage) && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const msg = generateProspectProposalMessage({
+                                  clientName: site.clientName,
+                                  niche: site.nicheCategory,
+                                  instagram: site.prospectInstagram || site.data?.profile?.instagram || '',
+                                  subdomain: site.subdomain,
+                                  demoDurationDays: site.demoDurationDays || 7,
+                                  proposalValue: site.proposalValue ? site.proposalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '197,00',
+                                  situation: site.prospectSituation || 'wa_direto',
+                                  baseDomain: landingConfig.baseDomain || 'biovip.com.br',
+                                });
+                                await safeCopyText(msg);
+                                showToast(`📋 Proposta comercial personalizada de "${site.clientName}" copiada para o WhatsApp!`);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 text-[11px] font-bold flex items-center gap-1 border border-amber-400/40 transition cursor-pointer"
+                              title="Copiar texto de proposta comercial personalizada para enviar no WhatsApp do prospect"
+                            >
+                              <Copy className="w-3 h-3 text-amber-400" />
+                              <span>Copiar Proposta WA</span>
+                            </button>
+                            {Boolean(site.clientPhone) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const targetPhone = formatWhatsAppPhone(site.clientPhone || '');
+                                  const msg = generateProspectProposalMessage({
+                                    clientName: site.clientName,
+                                    niche: site.nicheCategory,
+                                    instagram: site.prospectInstagram || site.data?.profile?.instagram || '',
+                                    subdomain: site.subdomain,
+                                    demoDurationDays: site.demoDurationDays || 7,
+                                    proposalValue: site.proposalValue ? site.proposalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '197,00',
+                                    situation: site.prospectSituation || 'wa_direto',
+                                    baseDomain: landingConfig.baseDomain || 'biovip.com.br',
+                                  });
+                                  window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-500/40 transition cursor-pointer"
+                                title="Abrir WhatsApp com a proposta personalizada pronta para envio"
+                              >
+                                <MessageCircle className="w-3 h-3 text-emerald-400" />
+                                <span>Enviar Proposta WA</span>
+                              </button>
+                            )}
+                          </>
+                        )}
+
                         {/* Alternar Suspensão */}
                         <button
                           type="button"

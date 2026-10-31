@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { formatCreationPriceDisplay, parsePlanMaxUpdates, formatPlanUpdatesLabel } from '../../constants/maintenancePlans';
 import { parseBrlCurrency } from '../../utils/formatters';
+import { TermsModal } from '../modals/TermsModal';
 
 export interface SalesLandingPageProps {
   landingConfig: any;
@@ -75,6 +76,13 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [termsModalTab, setTermsModalTab] = useState<'terms' | 'privacy' | 'guarantee'>('terms');
+
+  const openTermsTab = (tab: 'terms' | 'privacy' | 'guarantee') => {
+    setTermsModalTab(tab);
+    setTermsModalOpen(true);
+  };
 
   // Monitor scroll for mobile sticky conversion bar
   useEffect(() => {
@@ -216,13 +224,14 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
             >
               {cleanSub}.{cleanDomain} ↗
             </button>
-            <a
-              href="#investimento"
+            <button
+              type="button"
+              onClick={() => onSelectPlanForPayment('pro')}
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 hover:brightness-110 text-neutral-950 font-bold text-xs tracking-wide transition shadow-lg shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 fill-neutral-950" />
               <span>Garantir Vaga R$ 79,90</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -845,9 +854,10 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectPlanForPayment('basic')}
-                className="w-full py-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white font-bold text-xs tracking-wide transition border border-white/[0.1] cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white font-bold text-xs tracking-wide transition border border-white/[0.1] cursor-pointer flex items-center justify-center gap-2"
               >
-                Garantir Plano Básico
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <span>Garantir Plano Básico no WhatsApp</span>
               </button>
             </div>
 
@@ -895,9 +905,10 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectPlanForPayment('pro')}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 hover:brightness-110 text-neutral-950 font-black text-xs tracking-wide transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 hover:brightness-110 text-neutral-950 font-black text-xs tracking-wide transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
               >
-                Garantir Plano Pro (R$ 79,90)
+                <MessageCircle className="w-4 h-4 fill-neutral-950 text-neutral-950" />
+                <span>Garantir Plano Pro no WhatsApp (R$ 79,90)</span>
               </button>
             </div>
 
@@ -938,9 +949,10 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectPlanForPayment('vip')}
-                className="w-full py-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white font-bold text-xs tracking-wide transition border border-white/[0.1] cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white font-bold text-xs tracking-wide transition border border-white/[0.1] cursor-pointer flex items-center justify-center gap-2"
               >
-                Garantir Plano VIP
+                <MessageCircle className="w-4 h-4 text-amber-400" />
+                <span>Garantir Plano VIP no WhatsApp</span>
               </button>
             </div>
           </div>
@@ -958,7 +970,14 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
                 </span>
               </h3>
               <p className="text-xs text-neutral-300 leading-relaxed max-w-3xl">
-                Nós confiamos tanto na qualidade e no retorno do BioVip que você pode testar o seu microsite por 7 dias inteiros. Se você achar que ele não valorizou sua marca ou não gerou contatos, basta nos mandar uma mensagem no WhatsApp que devolvemos 100% do seu dinheiro, sem perguntas.
+                Nós confiamos tanto na qualidade e no retorno do BioVip que você pode testar o seu microsite por 7 dias inteiros. Se você achar que ele não valorizou sua marca ou não gerou contatos, basta nos mandar uma mensagem no WhatsApp que devolvemos 100% do seu dinheiro, sem perguntas.{' '}
+                <button
+                  type="button"
+                  onClick={() => openTermsTab('guarantee')}
+                  className="text-amber-400 hover:text-amber-300 underline font-semibold cursor-pointer inline-flex items-center gap-1"
+                >
+                  Ver termos da garantia →
+                </button>
               </p>
             </div>
           </div>
@@ -1091,6 +1110,33 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
                   <MessageCircle className="w-5 h-5 fill-neutral-950" />
                   <span>Enviar Pedido e Receber no WhatsApp</span>
                 </button>
+
+                <p className="text-[11px] text-center text-neutral-400 pt-1">
+                  Ao solicitar seu microsite, você concorda com nossos{' '}
+                  <button
+                    type="button"
+                    onClick={() => openTermsTab('terms')}
+                    className="text-amber-400 hover:underline cursor-pointer font-medium"
+                  >
+                    Termos de Uso
+                  </button>
+                  ,{' '}
+                  <button
+                    type="button"
+                    onClick={() => openTermsTab('privacy')}
+                    className="text-amber-400 hover:underline cursor-pointer font-medium"
+                  >
+                    Política de Privacidade (LGPD)
+                  </button>{' '}
+                  e{' '}
+                  <button
+                    type="button"
+                    onClick={() => openTermsTab('guarantee')}
+                    className="text-emerald-400 hover:underline cursor-pointer font-medium"
+                  >
+                    Garantia de 7 Dias
+                  </button>.
+                </p>
               </form>
             )}
           </div>
@@ -1166,8 +1212,28 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-6 text-xs text-neutral-400">
-              <a href="#topo" className="hover:text-amber-300 transition">Voltar ao Topo ↑</a>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-neutral-400">
+              <button
+                type="button"
+                onClick={() => openTermsTab('terms')}
+                className="hover:text-amber-300 transition cursor-pointer"
+              >
+                Termos de Uso
+              </button>
+              <button
+                type="button"
+                onClick={() => openTermsTab('privacy')}
+                className="hover:text-amber-300 transition cursor-pointer"
+              >
+                Política de Privacidade
+              </button>
+              <button
+                type="button"
+                onClick={() => openTermsTab('guarantee')}
+                className="hover:text-emerald-300 transition cursor-pointer"
+              >
+                Garantia de 7 Dias
+              </button>
               <a href="#investimento" className="hover:text-amber-300 transition">Planos</a>
               <a href="#faq" className="hover:text-amber-300 transition">Dúvidas</a>
               <button
@@ -1202,13 +1268,14 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
             </div>
             <div className="text-sm font-extrabold text-white font-mono">{creationProStr}</div>
           </div>
-          <a
-            href="#investimento"
+          <button
+            type="button"
+            onClick={() => onSelectPlanForPayment('pro')}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-300 text-neutral-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
           >
-            <span>Quero Meu Site</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
+            <MessageCircle className="w-3.5 h-3.5 fill-neutral-950" />
+            <span>Pedir no WhatsApp</span>
+          </button>
         </div>
       )}
 
@@ -1246,19 +1313,21 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               >
                 Fechar
               </button>
-              <a
-                href="#investimento"
+              <button
+                type="button"
                 onClick={() => {
                   setLandingOrderForm((p: any) => ({
                     ...p,
                     selectedModel: `${previewModalModel.title} (${previewModalModel.personaName})`,
                   }));
                   setPreviewModalModelId(null);
+                  onSelectPlanForPayment('pro');
                 }}
-                className="flex-1 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center flex items-center justify-center cursor-pointer"
+                className="flex-1 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Quero Encomendar
-              </a>
+                <MessageCircle className="w-3.5 h-3.5 fill-neutral-950" />
+                <span>Quero no WhatsApp</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1266,6 +1335,11 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
 
       {renderSubdomainConfigModal && renderSubdomainConfigModal()}
       {renderPaymentSuccessModal && renderPaymentSuccessModal()}
+      <TermsModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        initialTab={termsModalTab}
+      />
     </div>
   );
 };

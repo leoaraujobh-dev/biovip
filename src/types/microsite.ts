@@ -61,6 +61,8 @@ export interface SaveFormState {
   proposalValue?: string;
   crmStage?: CrmStage;
   prospectNotes?: string;
+  prospectInstagram?: string;
+  prospectSituation?: 'wa_direto' | 'sem_link' | 'linktree' | 'primeiro_contato';
 }
 
 export interface ActionCardItem {
@@ -143,6 +145,8 @@ export interface SavedMicrosite {
   crmStage?: CrmStage; // Estágio do lead no funil CRM
   proposalValue?: number; // Valor proposto para fechamento do microsite (ex: R$ 197,00)
   prospectNotes?: string; // Anotações do consultor/vendedor sobre a negociação
+  prospectInstagram?: string; // Instagram do cliente para prospecção personalizada
+  prospectSituation?: 'wa_direto' | 'sem_link' | 'linktree' | 'primeiro_contato';
   activationDate?: string; // Data em que o cliente aceitou e o microsite foi ativado definitivamente
   data: any; // Type of INITIAL_DATA
 }
