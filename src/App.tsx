@@ -2402,12 +2402,18 @@ export default function App() {
     return formattersGetPublicUrl(subdomain, customDomain, landingConfig.baseDomain || 'biovip.com.br');
   };
 
-  const openPublicMicrosite = (slug: string, customDomain?: string) => {
+  const openPublicMicrosite = (slug: string, customDomain?: string, inNewTab = true) => {
     const clean = cleanMicrositeSlug(slug);
     const targetUrl = getPublicMicrositeUrl(clean, customDomain);
-    if (typeof window !== 'undefined') {
-      const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
-      if (opened) return;
+    if (inNewTab && typeof document !== 'undefined') {
+      const link = document.createElement('a');
+      link.href = targetUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
     }
     try {
       window.history.pushState({ surface: 'microsite', slug: clean }, '', `/?site=${clean}`);
@@ -2425,18 +2431,25 @@ export default function App() {
       const customDomain = currentSite?.customDomain || saveForm.customDomain;
       const targetUrl = getPublicMicrositeUrl(cleanSub, customDomain);
 
-      // Tenta abrir a prévia do microsite em nova aba
-      const newWin = window.open(targetUrl, '_blank', 'noopener,noreferrer');
-      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-        // Se bloqueado por pop-up ou política de iframe, carrega a prévia no próprio app sem deslogar
-        openPublicMicrosite(cleanSub, customDomain);
+      // Abrir o microsite estritamente em UMA nova aba, mantendo o editor aberto na aba atual
+      if (typeof document !== 'undefined') {
+        const link = document.createElement('a');
+        link.href = targetUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        showToast(`👁️ Abrindo prévia em tela cheia do microsite "${currentSite?.clientName || data?.profile?.name || 'BioVip'}"!`);
+        window.open(targetUrl, '_blank');
       }
+
+      showToast(`👁️ Prévia aberta em nova aba: ${targetUrl}`);
     } catch (err) {
       console.error('Error opening live preview tab:', err);
       const fallbackSlug = (saveForm.subdomain || data?.profile?.instagram || 'meusite').toLowerCase().replace(/[^a-z0-9-]/g, '');
-      openPublicMicrosite(fallbackSlug);
+      const targetUrl = getPublicMicrositeUrl(fallbackSlug);
+      window.open(targetUrl, '_blank');
     }
   };
 
@@ -9086,7 +9099,17 @@ COMO PUBLICAR NO SERVIDOR:
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9-]/g, '');
     const targetUrl = getPublicMicrositeUrl(cleanSub);
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    if (typeof document !== 'undefined') {
+      const link = document.createElement('a');
+      link.href = targetUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      window.open(targetUrl, '_blank');
+    }
   };
 
   const syncAllEightRealMicrositesToStudio = () => {

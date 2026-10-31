@@ -72,7 +72,7 @@ export interface FullscreenClientsViewProps {
   toggleSiteSuspensionMode: (siteId: string) => void;
   openPixBillingModal: (site: SavedMicrosite) => void;
   openSuspendedPagePreview: (site: SavedMicrosite) => void;
-  openPublicMicrosite: (slug: string) => void;
+  openPublicMicrosite: (slug: string, customDomain?: string) => void;
   setUnderConstructionPreviewSite: (site: SavedMicrosite | null) => void;
   setPublishModalOpen: (val: boolean) => void;
   setSelectedPublishSiteId: (id: string | null) => void;
@@ -886,7 +886,7 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
                           </div>
                           <button
                             type="button"
-                            onClick={() => openPublicMicrosite(site.subdomain)}
+                            onClick={() => openPublicMicrosite(site.subdomain, site.customDomain)}
                             className="text-xs font-mono text-amber-400/90 hover:text-amber-300 flex items-center gap-1 mt-1 group cursor-pointer text-left"
                             title="Acessar o link do cliente"
                           >
