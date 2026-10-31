@@ -188,6 +188,13 @@ import {
   formatCreationPriceDisplay,
   syncMaintenancePlansFromConfig,
   getSiteBillingSummary,
+  getDaysUntilDue,
+  isSiteSuspendedStatus,
+  isSiteOverdueStatus,
+  isSiteEditsLocked,
+  enforceAutoSevenDayOverdueRule,
+  addDaysToDateString,
+  parseSafeDate,
 } from './constants/maintenancePlans';
 
 import {
@@ -356,142 +363,6 @@ export default function App() {
       site.status === 'suspenso_d7' ||
       site.status === 'disabled'
     );
-  };
-
-  // Regra Oficial: Régua de Cobrança e Gestão de Inadimplência com Suspensão Progressiva (D+3 Bloqueio de Edições / D+7 Modo Manutenção)
-  const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
-    normalized: SavedMicrosite[];
-    changed: boolean;
-    newlyAutoDisabled: string[];
-  } => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    let changed = false;
-    const newlyAutoDisabled: string[] = [];
-
-    const normalized = sitesList.map((site) => {
-      if (isModelMicrosite(site)) {
-        return site;
-      }
-      const daysDiff = getDaysUntilDue(site.dueDate);
-      const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
-      const hasActiveManualOverride = Boolean(site.manualOverrideUntil && site.manualOverrideUntil >= todayStr);
-
-      // Estágio D+7 (daysOverdue >= 7): Suspensão Temporária Automática -> status 'suspenso_d7', edicoesBloqueadas: true, linkStatus: 'manutencao'
-      if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS && !hasActiveManualOverride) {
-        if (
-          site.status !== 'suspenso_d7' ||
-          !site.autoDisabledByOverdue ||
-          site.daysOverdue !== daysOverdue ||
-          site.edicoesBloqueadas !== true ||
-          site.linkStatus !== 'manutencao'
-        ) {
-          changed = true;
-          if (site.status !== 'suspenso_d7' && site.status !== 'disabled') {
-            newlyAutoDisabled.push(`${site.clientName} (${daysOverdue} dias em atraso)`);
-          }
-          return {
-            ...site,
-            status: 'suspenso_d7' as const,
-            daysOverdue,
-            edicoesBloqueadas: true,
-            linkStatus: 'manutencao' as const,
-            autoDisabledByOverdue: true,
-          };
-        }
-        return site;
-      }
-
-      // Estágio D+3 a D+6 (daysOverdue >= 3 e < 7): Atraso Leve -> status 'atrasado_d3', edicoesBloqueadas: true, link continua 'ativo' (salvo suspensão manual)
-      if (daysOverdue >= 3 && daysOverdue < AUTO_DISABLE_OVERDUE_DAYS) {
-        const targetLinkStatus: 'ativo' | 'manutencao' =
-          site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
-        if (
-          site.status !== 'atrasado_d3' ||
-          site.daysOverdue !== daysOverdue ||
-          site.edicoesBloqueadas !== true ||
-          site.linkStatus !== targetLinkStatus ||
-          site.autoDisabledByOverdue
-        ) {
-          changed = true;
-          return {
-            ...site,
-            status: 'atrasado_d3' as const,
-            daysOverdue,
-            edicoesBloqueadas: true,
-            linkStatus: targetLinkStatus,
-            autoDisabledByOverdue: false,
-          };
-        }
-        return site;
-      }
-
-      // Entre 1 e 2 dias de atraso ou vencendo hoje (D-0): status 'pendente', edicoesBloqueadas: false
-      if (daysOverdue > 0 && daysOverdue < 3) {
-        const targetLinkStatus: 'ativo' | 'manutencao' =
-          site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
-        if (
-          site.status !== 'pendente' ||
-          site.daysOverdue !== daysOverdue ||
-          site.edicoesBloqueadas !== false ||
-          site.linkStatus !== targetLinkStatus ||
-          site.autoDisabledByOverdue
-        ) {
-          changed = true;
-          return {
-            ...site,
-            status: 'pendente' as const,
-            daysOverdue,
-            edicoesBloqueadas: false,
-            linkStatus: targetLinkStatus,
-            autoDisabledByOverdue: false,
-          };
-        }
-        return site;
-      }
-
-      // Em dia (daysDiff >= 0)
-      if (daysDiff >= 0) {
-        const isManuallyDisabled = site.status === 'disabled' && !site.autoDisabledByOverdue;
-        const expectedStatus: CustomerDelinquencyStatus = isManuallyDisabled
-          ? 'disabled'
-          : daysDiff === 0
-          ? 'pendente'
-          : 'pago';
-        const expectedLinkStatus: 'ativo' | 'manutencao' =
-          isManuallyDisabled || (site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue)
-            ? 'manutencao'
-            : 'ativo';
-        const expectedEdicoes =
-          isManuallyDisabled ? Boolean(site.edicoesBloqueadas) : false;
-
-        if (
-          site.daysOverdue !== 0 ||
-          site.status === 'overdue' ||
-          site.status === 'atrasado_d3' ||
-          site.status === 'suspenso_d7' ||
-          site.status === 'active' ||
-          site.status !== expectedStatus ||
-          site.autoDisabledByOverdue ||
-          site.linkStatus !== expectedLinkStatus ||
-          site.edicoesBloqueadas !== expectedEdicoes
-        ) {
-          changed = true;
-          return {
-            ...site,
-            status: expectedStatus,
-            daysOverdue: 0,
-            edicoesBloqueadas: expectedEdicoes,
-            linkStatus: expectedLinkStatus,
-            autoDisabledByOverdue: false,
-            manualOverrideUntil: undefined,
-          };
-        }
-      }
-
-      return site;
-    });
-
-    return { normalized, changed, newlyAutoDisabled };
   };
 
   // Saved Microsites Management State (já aplica a desativação automática de 7 dias ao inicializar)
@@ -5714,114 +5585,129 @@ Inicie agora fazendo a **Solicitação 1**!`;
   };
 
   const updateSiteDueDate = (siteId: string, newDueDateStr: string) => {
-    if (!newDueDateStr || !/^\d{4}-\d{2}-\d{2}$/.test(newDueDateStr)) {
+    if (!newDueDateStr) {
       showToast('⚠️ Selecione uma data de vencimento válida!');
       return;
     }
     const daysDiff = getDaysUntilDue(newDueDateStr);
     const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
 
-    let updatedTarget: SavedMicrosite | null = null;
-    let newSitesList: SavedMicrosite[] = [];
+    const siteIndex = savedSites.findIndex(
+      (s) => s.id === siteId || (Boolean(s.subdomain) && s.subdomain === siteId)
+    );
+    if (siteIndex === -1) return;
 
-    setSavedSites((prev) => {
-      const updated = prev.map((s) => {
-        const isMatch = s.id === siteId || (Boolean(s.subdomain) && s.subdomain === siteId);
-        if (!isMatch) return s;
-        // Aplica automaticamente a Régua Progressiva (Pago -> Pendente -> Atrasado D+3 -> Suspenso D+7)
-        const nextStatus: SavedMicrosite['status'] =
-          daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
-            ? 'suspenso_d7'
-            : daysOverdue >= 3
-            ? 'atrasado_d3'
-            : daysOverdue > 0 || daysDiff === 0
-            ? 'pendente'
-            : 'pago';
+    const currentSite = savedSites[siteIndex];
 
-        const nextEdicoesBloqueadas = daysOverdue >= 3;
-        const nextLinkStatus: 'ativo' | 'manutencao' =
-          daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS ? 'manutencao' : 'ativo';
+    const nextStatus: SavedMicrosite['status'] =
+      daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS
+        ? 'suspenso_d7'
+        : daysOverdue >= 3
+        ? 'atrasado_d3'
+        : daysOverdue > 0 || daysDiff === 0
+        ? 'pendente'
+        : 'pago';
 
-        updatedTarget = {
-          ...s,
-          dueDate: newDueDateStr,
-          status: nextStatus,
-          daysOverdue,
-          edicoesBloqueadas: nextEdicoesBloqueadas,
-          linkStatus: nextLinkStatus,
-          autoDisabledByOverdue: daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS,
-          manualOverrideUntil: undefined,
-        };
-        return updatedTarget;
-      });
-      newSitesList = updated;
-      return updated;
-    });
+    const nextEdicoesBloqueadas = daysOverdue >= 3;
+    const nextLinkStatus: 'ativo' | 'manutencao' =
+      daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS ? 'manutencao' : 'ativo';
 
-    if (updatedTarget) {
-      persistSavedSitesToStorage(newSitesList);
-      syncSiteToFirestore(updatedTarget);
-      setPixModalSite(updatedTarget);
-      const targetObj = updatedTarget as SavedMicrosite;
-      if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS) {
-        showToast(
-          `🛑 "${targetObj.clientName}" (${daysOverdue}d de atraso — D+7): Página em Modo Manutenção e Edições Bloqueadas!`
-        );
-      } else if (daysOverdue >= 3) {
-        showToast(
-          `🔒 "${targetObj.clientName}" (${daysOverdue}d de atraso — D+3): Link continua ativo, porém Edições Bloqueadas!`
-        );
-      } else if (daysOverdue > 0) {
-        showToast(
-          `🟡 "${targetObj.clientName}" (${daysOverdue}d de atraso): Status Pendente. Bloqueio de edições em ${3 - daysOverdue}d.`
-        );
-      } else {
-        showToast(`📅 Vencimento de "${targetObj.clientName}" atualizado para ${formatDueDateBr(newDueDateStr)} (Status: Em Dia / Edições Liberadas)!`);
-      }
+    const updatedTarget: SavedMicrosite = {
+      ...currentSite,
+      dueDate: newDueDateStr,
+      status: nextStatus,
+      daysOverdue,
+      edicoesBloqueadas: nextEdicoesBloqueadas,
+      linkStatus: nextLinkStatus,
+      autoDisabledByOverdue: daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS,
+      manualOverrideUntil: undefined,
+    };
+
+    const newSitesList = [...savedSites];
+    newSitesList[siteIndex] = updatedTarget;
+
+    const { normalized } = enforceAutoSevenDayOverdueRule(newSitesList);
+
+    setSavedSites(normalized);
+    persistSavedSitesToStorage(normalized);
+    syncSiteToFirestore(updatedTarget);
+    setPixModalSite(updatedTarget);
+
+    if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS) {
+      showToast(
+        `🛑 "${updatedTarget.clientName}" (${daysOverdue}d de atraso — D+7): Página em Modo Manutenção e Edições Bloqueadas!`
+      );
+    } else if (daysOverdue >= 3) {
+      showToast(
+        `🔒 "${updatedTarget.clientName}" (${daysOverdue}d de atraso — D+3): Link continua ativo, porém Edições Bloqueadas!`
+      );
+    } else if (daysOverdue > 0) {
+      showToast(
+        `🟡 "${updatedTarget.clientName}" (${daysOverdue}d de atraso): Status Pendente. Bloqueio de edições em ${3 - daysOverdue}d.`
+      );
+    } else {
+      showToast(`📅 Vencimento de "${updatedTarget.clientName}" atualizado para ${formatDueDateBr(newDueDateStr)} (Status: Em Dia / Edições Liberadas)!`);
     }
   };
 
   // Botão "Alternar Suspensão": Permite colocar a página em "Modo Manutenção" ou "Reativar"
   const toggleSiteSuspensionMode = (siteId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    let targetSite: SavedMicrosite | null = null;
-    const updated = savedSites.map(s => {
-      if (s.id !== siteId) return s;
-      const currentlyInMaintenance = isSiteSuspendedStatus(s);
-      const nextLinkStatus: 'ativo' | 'manutencao' = currentlyInMaintenance ? 'ativo' : 'manutencao';
-      const daysDiff = getDaysUntilDue(s.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+
+    const siteIndex = savedSites.findIndex(s => s.id === siteId);
+    if (siteIndex === -1) return;
+
+    const currentSite = savedSites[siteIndex];
+    const currentlyInMaintenance = isSiteSuspendedStatus(currentSite);
+
+    if (currentlyInMaintenance) {
+      // REATIVAR: Tirar de suspensão/manutenção e dar carência de 7 dias
+      const graceDate = new Date(today.getTime());
+      graceDate.setDate(graceDate.getDate() + 7);
+      const graceStr = graceDate.toISOString().split('T')[0];
+
+      const daysDiff = getDaysUntilDue(currentSite.dueDate);
       const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
 
-      const nextStatus: CustomerDelinquencyStatus =
-        nextLinkStatus === 'manutencao'
-          ? 'suspenso_d7'
-          : daysOverdue >= 3
-          ? 'atrasado_d3'
-          : daysOverdue > 0 || daysDiff === 0
-          ? 'pendente'
-          : 'pago';
-
-      targetSite = {
-        ...s,
-        status: nextStatus,
+      const targetSite: SavedMicrosite = {
+        ...currentSite,
+        linkStatus: 'ativo',
+        status: daysOverdue > 0 ? 'pendente' : 'pago',
         daysOverdue,
-        linkStatus: nextLinkStatus,
-        edicoesBloqueadas: nextLinkStatus === 'manutencao' ? true : daysOverdue >= 3,
-        autoDisabledByOverdue: nextLinkStatus === 'manutencao' ? Boolean(s.autoDisabledByOverdue) : false,
-        manualOverrideUntil: nextLinkStatus === 'ativo' ? todayStr : undefined,
+        edicoesBloqueadas: false,
+        autoDisabledByOverdue: false,
+        manualOverrideUntil: graceStr,
       };
-      return targetSite;
-    });
-    setSavedSites(updated);
-    persistSavedSitesToStorage(updated);
-    if (targetSite) {
-      const t = targetSite as SavedMicrosite;
-      syncSiteToFirestore(t);
-      if (t.linkStatus === 'manutencao') {
-        showToast(`🛠️ "${t.clientName}" colocado em MODO MANUTENÇÃO (Tela Neutra de Atualização Técnica ativa)!`);
-      } else {
-        showToast(`🟢 "${t.clientName}" REATIVADO com sucesso! Link público 100% no ar.`);
-      }
+
+      const newSitesList = [...savedSites];
+      newSitesList[siteIndex] = targetSite;
+
+      setSavedSites(newSitesList);
+      persistSavedSitesToStorage(newSitesList);
+      syncSiteToFirestore(targetSite);
+      setPixModalSite(targetSite);
+      showToast(`🟢 "${targetSite.clientName}" REATIVADO com sucesso! Link público no ar e carência de 7 dias concedida.`);
+    } else {
+      // SUSPENDER: Colocar em Modo Manutenção
+      const targetSite: SavedMicrosite = {
+        ...currentSite,
+        linkStatus: 'manutencao',
+        status: 'suspenso_d7',
+        edicoesBloqueadas: true,
+        autoDisabledByOverdue: false,
+        manualOverrideUntil: undefined,
+      };
+
+      const newSitesList = [...savedSites];
+      newSitesList[siteIndex] = targetSite;
+
+      setSavedSites(newSitesList);
+      persistSavedSitesToStorage(newSitesList);
+      syncSiteToFirestore(targetSite);
+      setPixModalSite(targetSite);
+      showToast(`🛠️ "${targetSite.clientName}" colocado em MODO MANUTENÇÃO (Tela Neutra de Atualização Técnica ativa)!`);
     }
   };
 
@@ -5830,29 +5716,32 @@ Inicie agora fazendo a **Solicitação 1**!`;
   };
 
   const toggleSiteEditsLock = (siteId: string) => {
-    let targetSite: SavedMicrosite | null = null;
-    const updated = savedSites.map(s => {
-      if (s.id !== siteId) return s;
-      const daysDiff = getDaysUntilDue(s.dueDate);
-      const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
-      const currentlyLocked = isSiteEditsLocked(s, daysOverdue);
-      const nextLocked = !currentlyLocked;
-      targetSite = {
-        ...s,
-        edicoesBloqueadas: nextLocked,
-      };
-      return targetSite;
-    });
-    setSavedSites(updated);
-    persistSavedSitesToStorage(updated);
-    if (targetSite) {
-      const t = targetSite as SavedMicrosite;
-      syncSiteToFirestore(t);
-      if (t.edicoesBloqueadas) {
-        showToast(`🔒 Edições de "${t.clientName}" foram BLOQUEADAS por inadimplência.`);
-      } else {
-        showToast(`🔓 Edições de "${t.clientName}" foram LIBERADAS manualmente!`);
-      }
+    const siteIndex = savedSites.findIndex(s => s.id === siteId);
+    if (siteIndex === -1) return;
+
+    const currentSite = savedSites[siteIndex];
+    const daysDiff = getDaysUntilDue(currentSite.dueDate);
+    const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+    const currentlyLocked = isSiteEditsLocked(currentSite, daysOverdue);
+    const nextLocked = !currentlyLocked;
+
+    const targetSite: SavedMicrosite = {
+      ...currentSite,
+      edicoesBloqueadas: nextLocked,
+    };
+
+    const newSitesList = [...savedSites];
+    newSitesList[siteIndex] = targetSite;
+
+    setSavedSites(newSitesList);
+    persistSavedSitesToStorage(newSitesList);
+    syncSiteToFirestore(targetSite);
+    setPixModalSite(targetSite);
+
+    if (targetSite.edicoesBloqueadas) {
+      showToast(`🔒 Edições de "${targetSite.clientName}" foram BLOQUEADAS.`);
+    } else {
+      showToast(`🔓 Edições de "${targetSite.clientName}" foram LIBERADAS manualmente!`);
     }
   };
 
@@ -5860,74 +5749,50 @@ Inicie agora fazendo a **Solicitação 1**!`;
     setSuspendedPreviewSite(site);
   };
 
-  function addDaysToDateString(dateStr: string, daysToAdd: number = 30): string {
-    const parts = dateStr ? dateStr.split('-') : [];
-    let baseDate: Date;
-    if (parts.length === 3 && parts[0].length === 4) {
-      const y = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      baseDate = new Date(y, m, day);
-    } else {
-      baseDate = new Date();
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    baseDate.setHours(0, 0, 0, 0);
-
-    // Se a data de vencimento já passou (cliente estava atrasado), calcula os +30 dias a partir de HOJE!
-    // Se a data de vencimento ainda é futura, estende a partir da data atual de vencimento.
-    const effectiveBase = new Date(baseDate.getTime() > today.getTime() ? baseDate.getTime() : today.getTime());
-    effectiveBase.setDate(effectiveBase.getDate() + (daysToAdd || 30));
-
-    const year = effectiveBase.getFullYear();
-    const month = String(effectiveBase.getMonth() + 1).padStart(2, '0');
-    const dateNum = String(effectiveBase.getDate()).padStart(2, '0');
-    return `${year}-${month}-${dateNum}`;
-  }
-
   const extendDueDate = (siteId: string, daysToAdd: number = 30) => {
-    let updatedTarget: SavedMicrosite | null = null;
-    let newSitesList: SavedMicrosite[] = [];
-
-    setSavedSites((prev) => {
-      const updated = prev.map((s) => {
-        const isMatch = s.id === siteId || (Boolean(s.subdomain) && s.subdomain === siteId);
-        if (!isMatch) return s;
-        const newDueDateStr = addDaysToDateString(s.dueDate, daysToAdd);
-        // Ao confirmar o pagamento: status 'pago', daysOverdue 0, edicoesBloqueadas false, linkStatus 'ativo', reativa modo construção
-        updatedTarget = {
-          ...s,
-          dueDate: newDueDateStr,
-          status: 'pago' as const,
-          daysOverdue: 0,
-          edicoesBloqueadas: false,
-          linkStatus: 'ativo' as const,
-          autoDisabledByOverdue: false,
-          manualOverrideUntil: undefined,
-          isFirstMonth: false,
-          isUnderConstruction: false,
-          underConstruction: false,
-          updatesThisMonth: 0,
-          lastUpdated: new Date().toISOString().split('T')[0],
-        };
-        return updatedTarget;
-      });
-      newSitesList = updated;
-      return updated;
-    });
-
-    if (updatedTarget) {
-      persistSavedSitesToStorage(newSitesList);
-      syncSiteToFirestore(updatedTarget);
-      setPixModalSite(updatedTarget);
-      const targetObj = updatedTarget as SavedMicrosite;
-      showToast(
-        `💳 Renovação confirmada para "${targetObj.clientName}"! +${daysToAdd} dias (vencimento: ${formatDueDateBr(
-          targetObj.dueDate || ''
-        )}), edições liberadas e status Em Dia.`
-      );
+    const siteIndex = savedSites.findIndex(
+      (s) => s.id === siteId || (Boolean(s.subdomain) && s.subdomain === siteId)
+    );
+    if (siteIndex === -1) {
+      console.warn(`[extendDueDate] Site ${siteId} não encontrado.`);
+      return;
     }
+
+    const currentSite = savedSites[siteIndex];
+    const newDueDateStr = addDaysToDateString(currentSite.dueDate, daysToAdd);
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const renewedSite: SavedMicrosite = {
+      ...currentSite,
+      dueDate: newDueDateStr,
+      status: 'pago',
+      daysOverdue: 0,
+      edicoesBloqueadas: false,
+      linkStatus: 'ativo',
+      autoDisabledByOverdue: false,
+      manualOverrideUntil: undefined,
+      isFirstMonth: false,
+      isUnderConstruction: false,
+      underConstruction: false,
+      updatesThisMonth: 0,
+      lastUpdated: todayStr,
+    };
+
+    const newSitesList = [...savedSites];
+    newSitesList[siteIndex] = renewedSite;
+
+    const { normalized } = enforceAutoSevenDayOverdueRule(newSitesList);
+
+    setSavedSites(normalized);
+    persistSavedSitesToStorage(normalized);
+    syncSiteToFirestore(renewedSite);
+    setPixModalSite(renewedSite);
+
+    showToast(
+      `💳 Renovação confirmada para "${renewedSite.clientName}"! +${daysToAdd} dias (vencimento: ${formatDueDateBr(
+        renewedSite.dueDate || ''
+      )}), edições liberadas e status Em Dia.`
+    );
   };
 
   const updateSiteMonthlyFee = (siteId: string, newFee: number) => {

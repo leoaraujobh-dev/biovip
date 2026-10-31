@@ -166,17 +166,70 @@ export const getSiteBillingSummary = (site: SavedMicrosite) => {
   };
 };
 
+export function parseSafeDate(raw: any): Date {
+  if (!raw) {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now;
+  }
+  if (raw instanceof Date && !isNaN(raw.getTime())) {
+    const d = new Date(raw.getTime());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  const str = String(raw).trim();
+  // Formato brasileiro DD/MM/YYYY ou DD-MM-YYYY
+  const brMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (brMatch) {
+    const d = parseInt(brMatch[1], 10);
+    const m = parseInt(brMatch[2], 10) - 1;
+    const y = parseInt(brMatch[3], 10);
+    const parsed = new Date(y, m, d);
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  }
+  // Formato ISO YYYY-MM-DD ou YYYY/MM/DD
+  const isoMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (isoMatch) {
+    const y = parseInt(isoMatch[1], 10);
+    const m = parseInt(isoMatch[2], 10) - 1;
+    const d = parseInt(isoMatch[3], 10);
+    const parsed = new Date(y, m, d);
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  }
+  const fallback = new Date();
+  fallback.setHours(0, 0, 0, 0);
+  return fallback;
+}
+
+export function addDaysToDateString(dateStr: string, daysToAdd: number = 30): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const baseDate = parseSafeDate(dateStr);
+
+  // Se a data de vencimento já passou (cliente estava atrasado, suspenso ou desativado),
+  // calcula os +30 dias a partir de HOJE para conceder 30 dias integrais de acesso.
+  // Se ainda estiver no futuro, adiciona ao vencimento existente.
+  const effectiveBase = new Date(baseDate.getTime() > today.getTime() ? baseDate.getTime() : today.getTime());
+  effectiveBase.setDate(effectiveBase.getDate() + (daysToAdd || 30));
+
+  const year = effectiveBase.getFullYear();
+  const month = String(effectiveBase.getMonth() + 1).padStart(2, '0');
+  const dateNum = String(effectiveBase.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dateNum}`;
+}
+
 export const getDaysUntilDue = (dueDateStr: string): number => {
   if (!dueDateStr) return 999;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const parts = dueDateStr.split('-');
-  if (parts.length < 3) return 999;
-  const y = parseInt(parts[0], 10);
-  const m = parseInt(parts[1], 10) - 1;
-  const d = parseInt(parts[2], 10);
-  const due = new Date(y, m, d);
-  due.setHours(0, 0, 0, 0);
+  const due = parseSafeDate(dueDateStr);
   const diffTime = due.getTime() - today.getTime();
   return Math.round(diffTime / (1000 * 60 * 60 * 24));
 };
@@ -301,18 +354,18 @@ export const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
     }
 
     if (daysDiff >= 0) {
-      const isManuallyDisabled = site.status === 'disabled' && !site.autoDisabledByOverdue;
-      const expectedStatus: CustomerDelinquencyStatus = isManuallyDisabled
+      // Quando a data de vencimento está no futuro (daysDiff >= 0), o site está adimplente.
+      // Se estava suspenso ou desativado por atraso, a renovação limpa a suspensão automaticamente.
+      const isManualMaintenance = site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue && site.status === 'disabled';
+      const expectedStatus: CustomerDelinquencyStatus = isManualMaintenance
         ? 'disabled'
         : daysDiff === 0
         ? 'pendente'
         : 'pago';
-      const expectedLinkStatus: 'ativo' | 'manutencao' =
-        isManuallyDisabled || (site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue)
-          ? 'manutencao'
-          : 'ativo';
-      const expectedEdicoes =
-        isManuallyDisabled ? Boolean(site.edicoesBloqueadas) : false;
+      const expectedLinkStatus: 'ativo' | 'manutencao' = isManualMaintenance
+        ? 'manutencao'
+        : 'ativo';
+      const expectedEdicoes = isManualMaintenance ? Boolean(site.edicoesBloqueadas) : false;
 
       if (
         site.daysOverdue !== 0 ||
