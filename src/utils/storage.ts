@@ -122,6 +122,55 @@ export async function saveImageToIdbCache(url: string, dataUrl: string): Promise
   } catch {}
 }
 
+export function purgeSiteFromStorage(siteId: string, siteData?: any): void {
+  if (typeof window === 'undefined') return;
+
+  const urlsToPurge: string[] = [];
+  if (siteData) {
+    if (siteData.profile?.avatarUrl) urlsToPurge.push(siteData.profile.avatarUrl);
+    if (siteData.profile?.aboutPhotoUrl) urlsToPurge.push(siteData.profile.aboutPhotoUrl);
+    if (Array.isArray(siteData.studentGrid?.photos)) {
+      urlsToPurge.push(...siteData.studentGrid.photos);
+    }
+    if (Array.isArray(siteData.services?.items)) {
+      siteData.services.items.forEach((item: any) => {
+        if (item?.imageUrl) urlsToPurge.push(item.imageUrl);
+      });
+    }
+    if (Array.isArray(siteData.actionCards)) {
+      siteData.actionCards.forEach((card: any) => {
+        if (card?.cardImage) urlsToPurge.push(card.cardImage);
+      });
+    }
+    if (siteData.beforeAfter?.beforeImage) urlsToPurge.push(siteData.beforeAfter.beforeImage);
+    if (siteData.beforeAfter?.afterImage) urlsToPurge.push(siteData.beforeAfter.afterImage);
+    if (siteData.locationCard?.imageUrl) urlsToPurge.push(siteData.locationCard.imageUrl);
+  }
+
+  // Purge from memory cache
+  urlsToPurge.forEach((u) => memoryImageCache.delete(u));
+
+  // Purge image store records from IndexedDB to free disk/browser space
+  if ('indexedDB' in window) {
+    try {
+      const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
+      req.onupgradeneeded = () => setupDbStores(req.result);
+      req.onsuccess = () => {
+        try {
+          const db = req.result;
+          if (db.objectStoreNames.contains(IDB_IMAGE_STORE)) {
+            const tx = db.transaction(IDB_IMAGE_STORE, 'readwrite');
+            const store = tx.objectStore(IDB_IMAGE_STORE);
+            urlsToPurge.forEach((u) => {
+              try { store.delete(u); } catch {}
+            });
+          }
+        } catch {}
+      };
+    } catch {}
+  }
+}
+
 export function persistSavedSitesToStorage(sites: any[]): void {
   saveSitesToIndexedDb(sites);
   try {

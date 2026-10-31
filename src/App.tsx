@@ -159,6 +159,7 @@ import {
   saveSitesToIndexedDb,
   loadSitesFromIndexedDb,
   persistSavedSitesToStorage,
+  purgeSiteFromStorage,
 } from './utils/storage';
 
 import {
@@ -2129,14 +2130,32 @@ export default function App() {
     let active = true;
     loadSitesFromIndexedDb().then((idbSites) => {
       if (!active || !Array.isArray(idbSites) || idbSites.length === 0) return;
+      let deletedIds: string[] = [];
+      let deletedSlugs: string[] = [];
+      try {
+        const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
+        if (deletedRaw) {
+          const parsed = JSON.parse(deletedRaw);
+          if (Array.isArray(parsed)) deletedIds = parsed;
+        }
+        const delSlugsRaw = localStorage.getItem('luxebio_deleted_slugs_v1');
+        if (delSlugsRaw) {
+          const parsed = JSON.parse(delSlugsRaw);
+          if (Array.isArray(parsed)) deletedSlugs = parsed;
+        }
+      } catch {}
+
       setSavedSites((prev) => {
         const byId = new Map(prev.map((s) => [s.id, s]));
         idbSites.forEach((idbSite: SavedMicrosite) => {
-          if (idbSite && idbSite.id && idbSite.data) {
-            const existing = byId.get(idbSite.id);
-            if (!existing) {
-              byId.set(idbSite.id, idbSite);
-            } else {
+          if (!idbSite || !idbSite.id || !idbSite.data) return;
+          if (deletedIds.includes(idbSite.id) || (idbSite.subdomain && deletedSlugs.includes(idbSite.subdomain))) {
+            return;
+          }
+          const existing = byId.get(idbSite.id);
+          if (!existing) {
+            byId.set(idbSite.id, idbSite);
+          } else {
               const existingData = existing.data || {};
               const idbData = idbSite.data || {};
               const mergedData = {
@@ -2171,7 +2190,6 @@ export default function App() {
                 data: mergedData,
               });
             }
-          }
         });
         return Array.from(byId.values());
       });
@@ -5988,16 +6006,33 @@ Inicie agora fazendo a **Solicitação 1**!`;
     const target = savedSites.find(s => s.id === siteId);
     const filtered = savedSites.filter(s => s.id !== siteId);
     setSavedSites(filtered);
-    if (editingSiteId === siteId) setEditingSiteId(null);
+
+    // Purge cached images and assets from memory & IndexedDB to immediately free storage space
+    purgeSiteFromStorage(siteId, target?.data);
+
+    if (editingSiteId === siteId) {
+      setEditingSiteId(null);
+      setData(INITIAL_DATA);
+    }
     setDeleteModalSite(null);
     persistSavedSitesToStorage(filtered);
+
     try {
       const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
       const prevDeleted: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
       if (!prevDeleted.includes(siteId)) {
         localStorage.setItem('luxebio_deleted_site_ids_v1', JSON.stringify([...prevDeleted, siteId]));
       }
+
+      if (target?.subdomain) {
+        const deletedSubRaw = localStorage.getItem('luxebio_deleted_slugs_v1');
+        const prevSubs: string[] = deletedSubRaw ? JSON.parse(deletedSubRaw) : [];
+        if (!prevSubs.includes(target.subdomain)) {
+          localStorage.setItem('luxebio_deleted_slugs_v1', JSON.stringify([...prevSubs, target.subdomain]));
+        }
+      }
     } catch {}
+
     if (firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
       try {
         await deleteDoc(doc(firebaseDb, 'admin_sites', siteId));
@@ -6006,7 +6041,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
         handleFirestoreError(err, OperationType.DELETE, `admin_sites/${siteId}`);
       }
     }
-    showToast(`🗑️ Microsite de "${target?.clientName || 'Cliente'}" excluído com sucesso!`);
+    showToast(`🗑️ Microsite de "${target?.clientName || 'Cliente'}" excluído e arquivos removidos com sucesso!`);
   };
   
   // Interactive Mobile Preview Controls
