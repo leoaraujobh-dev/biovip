@@ -2235,7 +2235,26 @@ export default function App() {
             remoteAdminSites.forEach((rs) => {
               if (deletedIds.includes(rs.id)) return;
               const existing = byId.get(rs.id);
-              if (existing?.isCustomized && !rs.isCustomized) {
+              // Proteção contra sobrescrita: se o registro local já foi renovado ou atualizado com data mais recente, manter a renovação local
+              const isLocalRenewed = Boolean(
+                existing && (
+                  (existing.dueDate && rs.dueDate && existing.dueDate > rs.dueDate) ||
+                  (existing.status === 'pago' && rs.status !== 'pago' && (existing.dueDate || '') >= (rs.dueDate || ''))
+                )
+              );
+
+              if (isLocalRenewed && existing) {
+                byId.set(rs.id, {
+                  ...rs,
+                  ...existing,
+                  dueDate: existing.dueDate,
+                  status: existing.status,
+                  daysOverdue: existing.daysOverdue,
+                  linkStatus: existing.linkStatus,
+                  edicoesBloqueadas: existing.edicoesBloqueadas,
+                  data: existing.data || rs.data,
+                });
+              } else if (existing?.isCustomized && !rs.isCustomized) {
                 byId.set(rs.id, { ...rs, ...existing, data: existing.data, isCustomized: true });
               } else if (rs.isCustomized) {
                 byId.set(rs.id, { ...existing, ...rs, data: rs.data, isCustomized: true });
@@ -5663,19 +5682,21 @@ Inicie agora fazendo a **Solicitação 1**!`;
     const currentlyInMaintenance = isSiteSuspendedStatus(currentSite);
 
     if (currentlyInMaintenance) {
-      // REATIVAR: Tirar de suspensão/manutenção e dar carência de 7 dias
+      // REATIVAR: Tirar de suspensão/manutenção, estender vencimento caso estivesse atrasado e conceder carência
       const graceDate = new Date(today.getTime());
       graceDate.setDate(graceDate.getDate() + 7);
       const graceStr = graceDate.toISOString().split('T')[0];
 
       const daysDiff = getDaysUntilDue(currentSite.dueDate);
       const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
+      const targetDueDate = daysOverdue > 0 ? addDaysToDateString(currentSite.dueDate, 30) : currentSite.dueDate;
 
       const targetSite: SavedMicrosite = {
         ...currentSite,
+        dueDate: targetDueDate,
         linkStatus: 'ativo',
-        status: daysOverdue > 0 ? 'pendente' : 'pago',
-        daysOverdue,
+        status: 'pago',
+        daysOverdue: 0,
         edicoesBloqueadas: false,
         autoDisabledByOverdue: false,
         manualOverrideUntil: graceStr,
@@ -5684,11 +5705,17 @@ Inicie agora fazendo a **Solicitação 1**!`;
       const newSitesList = [...savedSites];
       newSitesList[siteIndex] = targetSite;
 
-      setSavedSites(newSitesList);
-      persistSavedSitesToStorage(newSitesList);
+      const { normalized } = enforceAutoSevenDayOverdueRule(newSitesList);
+
+      setSavedSites(normalized);
+      persistSavedSitesToStorage(normalized);
       syncSiteToFirestore(targetSite);
       setPixModalSite(targetSite);
-      showToast(`🟢 "${targetSite.clientName}" REATIVADO com sucesso! Link público no ar e carência de 7 dias concedida.`);
+      showToast(
+        `🟢 "${targetSite.clientName}" REATIVADO com sucesso! Link público no ar, vencimento para ${formatDueDateBr(
+          targetSite.dueDate || ''
+        )} e edições liberadas.`
+      );
     } else {
       // SUSPENDER: Colocar em Modo Manutenção
       const targetSite: SavedMicrosite = {
@@ -5750,8 +5777,9 @@ Inicie agora fazendo a **Solicitação 1**!`;
   };
 
   const extendDueDate = (siteId: string, daysToAdd: number = 30) => {
+    const effectiveDays = daysToAdd > 0 ? daysToAdd : 30;
     const siteIndex = savedSites.findIndex(
-      (s) => s.id === siteId || (Boolean(s.subdomain) && s.subdomain === siteId)
+      (s) => s.id === siteId || (Boolean(s.subdomain) && s.subdomain === siteId) || s.clientName === siteId
     );
     if (siteIndex === -1) {
       console.warn(`[extendDueDate] Site ${siteId} não encontrado.`);
@@ -5759,7 +5787,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
     }
 
     const currentSite = savedSites[siteIndex];
-    const newDueDateStr = addDaysToDateString(currentSite.dueDate, daysToAdd);
+    const newDueDateStr = addDaysToDateString(currentSite.dueDate, effectiveDays);
     const todayStr = new Date().toISOString().split('T')[0];
 
     const renewedSite: SavedMicrosite = {
@@ -5789,7 +5817,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
     setPixModalSite(renewedSite);
 
     showToast(
-      `💳 Renovação confirmada para "${renewedSite.clientName}"! +${daysToAdd} dias (vencimento: ${formatDueDateBr(
+      `💳 Renovação confirmada para "${renewedSite.clientName}"! +${effectiveDays} dias (vencimento: ${formatDueDateBr(
         renewedSite.dueDate || ''
       )}), edições liberadas e status Em Dia.`
     );
@@ -10493,6 +10521,7 @@ COMO PUBLICAR NO SERVIDOR:
           toggleSiteSuspensionMode={toggleSiteSuspensionMode}
           openPixBillingModal={openPixBillingModal}
           extendDueDate={extendDueDate}
+          updateSiteDueDate={updateSiteDueDate}
           openSuspendedPagePreview={openSuspendedPagePreview}
           openPublicMicrosite={openPublicMicrosite}
           setUnderConstructionPreviewSite={setUnderConstructionPreviewSite}

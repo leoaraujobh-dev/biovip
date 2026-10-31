@@ -75,6 +75,7 @@ export interface FullscreenClientsViewProps {
   toggleSiteSuspensionMode: (siteId: string) => void;
   openPixBillingModal: (site: SavedMicrosite) => void;
   extendDueDate?: (siteId: string, days?: number) => void;
+  updateSiteDueDate?: (siteId: string, newDueDate: string) => void;
   openSuspendedPagePreview: (site: SavedMicrosite) => void;
   openPublicMicrosite: (slug: string, customDomain?: string) => void;
   setUnderConstructionPreviewSite: (site: SavedMicrosite | null) => void;
@@ -121,6 +122,7 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
   toggleSiteSuspensionMode,
   openPixBillingModal,
   extendDueDate,
+  updateSiteDueDate,
   openSuspendedPagePreview,
   openPublicMicrosite,
   setUnderConstructionPreviewSite,
@@ -134,6 +136,8 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
 }) => {
   const [clientsFilterTerm, setClientsFilterTerm] = useState<string>('');
   const [clientsStatusFilter, setClientsStatusFilter] = useState<'all' | 'leads' | 'active' | 'overdue' | 'suspended' | 'disabled' | 'construction' | 'model'>('all');
+  const [editingDueDateSiteId, setEditingDueDateSiteId] = useState<string | null>(null);
+  const [tempDueDateInput, setTempDueDateInput] = useState<string>('');
 
     // Microsites marcados como Modelo (isModelMicrosite) NÃO entram nos cálculos de faturamento
     const billableSites = savedSites.filter(s => !isModelMicrosite(s));
@@ -970,13 +974,56 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
                       {/* Client Details Row */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
                         <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
-                          <span className="text-[10px] text-neutral-400 block font-medium">Vencimento</span>
-                          <span className="font-mono font-bold text-neutral-200 block mt-0.5">
-                            {isModel ? 'Isento' : formatDueDateBr(site.dueDate)}
-                          </span>
-                          <span className={`text-[9.5px] block font-semibold ${isModel ? 'text-amber-400' : daysOverdue > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                            {isModel ? 'Site Modelo' : daysOverdue > 0 ? `${daysOverdue}d de atraso` : 'Em dia'}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-neutral-400 block font-medium">Vencimento</span>
+                            {!isModel && updateSiteDueDate && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (editingDueDateSiteId === site.id) {
+                                    setEditingDueDateSiteId(null);
+                                  } else {
+                                    setEditingDueDateSiteId(site.id);
+                                    setTempDueDateInput(site.dueDate || '');
+                                  }
+                                }}
+                                className="text-[9.5px] text-amber-400 hover:text-amber-300 font-semibold underline cursor-pointer"
+                                title="Alterar data de vencimento manualmente"
+                              >
+                                {editingDueDateSiteId === site.id ? '✕' : '✏️ Alterar'}
+                              </button>
+                            )}
+                          </div>
+                          {editingDueDateSiteId === site.id && updateSiteDueDate ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              <input
+                                type="date"
+                                value={tempDueDateInput}
+                                onChange={(e) => setTempDueDateInput(e.target.value)}
+                                className="w-full px-1.5 py-0.5 text-[11px] bg-neutral-900 rounded border border-amber-500 text-amber-200 font-mono focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  updateSiteDueDate(site.id, tempDueDateInput);
+                                  setEditingDueDateSiteId(null);
+                                }}
+                                className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-[10px] font-bold cursor-pointer transition shrink-0"
+                                title="Confirmar nova data de vencimento"
+                              >
+                                ✓
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="font-mono font-bold text-neutral-200 block mt-0.5">
+                                {isModel ? 'Isento' : formatDueDateBr(site.dueDate)}
+                              </span>
+                              <span className={`text-[9.5px] block font-semibold ${isModel ? 'text-amber-400' : daysOverdue > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                {isModel ? 'Site Modelo' : daysOverdue > 0 ? `${daysOverdue}d de atraso` : 'Em dia'}
+                              </span>
+                            </>
+                          )}
                         </div>
 
                         <div className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800/80">
