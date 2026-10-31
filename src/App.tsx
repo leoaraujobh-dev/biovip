@@ -3010,9 +3010,9 @@ export default function App() {
       studentGrid: {
         ...INITIAL_DATA.studentGrid,
         enabled: true,
-        headline: 'Destaques & Trabalhos Mais Curtidos',
-        subtitle: `Registros reais do trabalho de @${cleanInsta}`,
-        badge: 'MAIS CURTIDAS NO INSTA',
+        headline: 'Procedimentos & Resultados Reais',
+        subtitle: `Registros reais de procedimentos e trabalhos de @${cleanInsta}`,
+        badge: 'PORTFÓLIO & RESULTADOS',
         photos: cachedPhotos.length > 0 ? cachedPhotos.slice(0, 6) : INITIAL_DATA.studentGrid.photos,
         captions: cachedProfile?.posts?.length
           ? cachedProfile.posts.slice(0, 6).map((p: any) => p.caption?.slice(0, 60) || '')
@@ -3203,7 +3203,7 @@ export default function App() {
         enabled: true,
         photos: finalGalleryPhotos,
         captions: finalGalleryCaptions,
-        badge: generated?.studentGrid?.badge || (cleanInsta ? 'MAIS CURTIDAS NO INSTA' : INITIAL_DATA.studentGrid.badge),
+        badge: generated?.studentGrid?.badge || (cleanInsta ? 'PORTFÓLIO & RESULTADOS' : INITIAL_DATA.studentGrid.badge),
       },
       locationCard: {
         ...INITIAL_DATA.locationCard,
@@ -3575,7 +3575,7 @@ Assim que tiver os dados do cliente, pesquise na internet e no Google Maps tudo 
 - Os **4 a 6 serviços/procedimentos reais** trabalhados pelo cliente (baseados nas informações coletadas do perfil, legendas e nicho), criando descrições persuasivas e elegantes.
 - Seção **Sobre a Especialista & Nosso Espaço (aboutMe)**: Redija uma apresentação profunda, acolhedora e comovente sobre a trajetória, anos de experiência, especialização técnica, padrão de atendimento e amor pelo ofício para preencher \`paragraph\` e a frase marcante \`closingPhrase\`.
 - Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
-- 6 legendas curtas e impactantes baseadas nos posts mais curtidos do Instagram para a galeria.
+- 6 legendas curtas e impactantes baseadas nos posts de procedimentos, resultados de antes/depois e serviços reais do Instagram para a galeria (priorizando afinidade técnica com o catálogo de serviços ao invés de meras curtidas).
 - **ATENÇÃO CRÍTICA PARA IMAGENS:** Todas as chaves de imagem (avatarUrl, aboutPhotoUrl, photoUrl, cardImage, imageUrl, photos) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web (ex: https://images.unsplash.com/photo-...). NUNCA envie objetos nem chaves aninhadas para as imagens.
 
 ---
@@ -3906,7 +3906,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
         .replace('@', '')
         .trim();
 
-      // Se ativado e houver @instagram, busca no servidor as 6 fotos reais mais curtidas e o avatar oficial para combinar com o código do Gemini!
+      // Se ativado e houver @instagram, busca no servidor as 6 fotos reais de portfólio/serviços e o avatar oficial para combinar com o código do Gemini!
       if (geminiAutoFetchInstaPhotos && cleanInsta) {
         try {
           const res = await fetch('/api/generate-microsite', {
@@ -3948,7 +3948,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
                   avatarUrl: serverData.profile.avatarUrl,
                 };
               }
-              // Injeta as 6 fotos mais curtidas reais do Instagram na galeria
+              // Injeta as 6 fotos reais de procedimentos/portfólio do Instagram na galeria
               if (
                 Array.isArray(serverData?.studentGrid?.photos) &&
                 serverData.studentGrid.photos.length > 0
@@ -11005,7 +11005,7 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
                 <span>
                   Extraído:{' '}
                   <strong>
-                    {(lastExtractedMeta.instagramPhotosCount || 0) + (lastExtractedMeta.mapsPhotosCount || 0)} fotos mais curtidas
+                    {(lastExtractedMeta.instagramPhotosCount || 0) + (lastExtractedMeta.mapsPhotosCount || 0)} fotos de portfólio/serviços
                   </strong>
                   {lastExtractedMeta.instagramMaxLikes ? ` (até ${lastExtractedMeta.instagramMaxLikes} ❤️)` : ''}
                   {lastExtractedMeta.servicesExtractedCount ? ` · ${lastExtractedMeta.servicesExtractedCount} serviços do cliente` : ''}

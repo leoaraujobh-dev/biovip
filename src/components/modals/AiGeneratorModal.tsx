@@ -212,7 +212,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                         className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
                       />
                       <span>
-                        📸 Puxar automaticamente as <strong>6 fotos mais curtidas e avatar real do Instagram</strong>
+                        📸 Puxar automaticamente as <strong>fotos de portfólio/serviços e avatar real do Instagram</strong>
                       </span>
                     </label>
                     <label className="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer select-none">
@@ -259,18 +259,18 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 <div className="space-y-2">
                   <h4 className="font-bold text-sm text-neutral-100 animate-pulse">
                     {aiStepIndex === 0
-                      ? '1/3 · Buscando perfil, bio e as fotos mais curtidas no Instagram...'
+                      ? '1/3 · Buscando perfil, bio e fotos de procedimentos no Instagram...'
                       : aiStepIndex === 1
                       ? '2/3 · Extraindo serviços das legendas, endereço e dados do negócio...'
-                      : '3/3 · Montando galeria mais curtida e catálogo personalizado com IA...'}
+                      : '3/3 · Montando galeria de resultados reais e catálogo personalizado com IA...'}
                   </h4>
                   <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                    A IA seleciona automaticamente as fotos com mais curtidas do Instagram para a galeria e cria os serviços com base nas informações reais coletadas do cliente.
+                    A IA prioriza fotos com maior afinidade técnica aos procedimentos e serviços oferecidos pelo cliente para a galeria e catálogo.
                   </p>
                   <div className="max-w-xs mx-auto pt-2 space-y-1.5 text-left">
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 0 ? 'bg-pink-500/10 border-pink-500/30 text-pink-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <Instagram className="w-3.5 h-3.5 shrink-0" />
-                      <span>Fotos Mais Curtidas & Bio (@{(aiForm.instagram || 'perfil').replace('@', '')})</span>
+                      <span>Fotos de Procedimentos & Bio (@{(aiForm.instagram || 'perfil').replace('@', '')})</span>
                     </div>
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 1 ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -278,7 +278,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                     </div>
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 2 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                      <span>Galeria Ordenada por Curtidas & Catálogo VIP</span>
+                      <span>Galeria de Portfólio & Catálogo VIP</span>
                     </div>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 text-[11px] flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>
-                    A IA seleciona as <strong>imagens com mais curtidas no Instagram</strong> para a galeria e monta o <strong>catálogo de serviços baseado nos dados reais coletados do cliente</strong>.
+                    A IA prioriza as <strong>fotos com maior afinidade aos serviços e procedimentos reais</strong> para a galeria e monta o <strong>catálogo com base nos dados reais coletados do cliente</strong>.
                   </span>
                 </div>
 

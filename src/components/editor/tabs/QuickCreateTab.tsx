@@ -336,7 +336,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
               <span>Crie o Microsite em 3 Campos Rápidos</span>
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
-              A inteligência artificial extrai as 6 fotos com mais curtidas do Instagram, mapeia os serviços e gera todo o design pronto.
+              A inteligência artificial seleciona as fotos de maior relevância para o portfólio e serviços, mapeia procedimentos e gera todo o design pronto.
             </p>
           </div>
 
@@ -392,7 +392,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
                 />
               </div>
               <span className="text-[10px] text-neutral-500 block mt-1">
-                Puxa automaticamente a bio, o nicho e as <strong>6 fotos com mais curtidas</strong> para a galeria.
+                Puxa automaticamente a bio, o nicho e as <strong>fotos com maior afinidade para serviços e galeria</strong>.
               </span>
 
               {/* Indicador de carregamento da prévia */}
@@ -472,7 +472,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
                   <div>
                     <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-1.5">
                       <span className="font-semibold text-neutral-300">
-                        📸 6 Fotos Mais Curtidas (Galeria do Microsite):
+                        📸 6 Fotos de Portfólio & Procedimentos (Galeria do Microsite):
                       </span>
                       <span className="text-[10px] text-emerald-400 font-medium">Foto de perfil no cabeçalho</span>
                     </div>
@@ -754,7 +754,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
                   className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
                 />
                 <span>
-                  📸 Puxar automaticamente as <strong>6 fotos mais curtidas e avatar real do Instagram</strong>
+                  📸 Puxar automaticamente as <strong>fotos de portfólio/serviços e avatar real do Instagram</strong>
                 </span>
               </label>
               <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer select-none">

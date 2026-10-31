@@ -1046,13 +1046,104 @@ export async function extractInstagramInfo(rawInstagram?: string): Promise<Extra
     }
   }
 
-  // 5) ORDENA OS POSTS DO INSTAGRAM ESTRITAMENTE PELO MAIOR NÚMERO DE CURTIDAS (MAIS CURTIDAS PRIMEIRO)
+  // 5) PONTUAÇÃO INTELIGENTE: ORDENA OS POSTS PELA MAIOR AFINIDADE COM SERVIÇOS, RESULTADOS REAIS E PORTFÓLIO
+  // Ao invés de buscar apenas curtidas brutas (que costumam ser memes ou posts pessoais),
+  // pontua os posts que mostram procedimentos, técnicas, antes e depois e o catálogo de serviços do negócio.
+  const calculatePostServiceScore = (post: { caption?: string; sidecarUrls?: string[]; likes?: number }): number => {
+    let score = 0;
+    const caption = (post.caption || '').toLowerCase();
+
+    // Palavras-chave técnicas e de procedimentos (+45 pontos cada)
+    const procedureKeywords = [
+      'antes e depois', 'antesedepois', 'beforeandafter', 'resultado', 'resultados',
+      'procedimento', 'procedimentos', 'transforma', 'transformação', 'transformacao',
+      'técnica', 'tecnica', 'atendimento', 'atendimentos', 'aplicação', 'aplicacao',
+      'manutenção', 'manutencao', 'retoque', 'sessão', 'sessao', 'protocolo', 'protocolos',
+      'alongamento', 'alongamentos', 'volume', 'extensão', 'extensao', 'fios', 'cílios', 'cilios', 'lash',
+      'sobrancelha', 'sobrancelhas', 'brow', 'lamination', 'nanoblading', 'micropigmenta',
+      'unha', 'unhas', 'nail', 'nails', 'fibra de vidro', 'gel moldado', 'blindagem', 'esmalta', 'manicure',
+      'corte', 'cortes', 'barba', 'fade', 'degradê', 'degrade', 'navalha', 'navalhado', 'barboterapia',
+      'clareamento', 'implante', 'ortodontia', 'odonto', 'dente', 'dentes', 'sorriso',
+      'botox', 'toxina', 'harmoniza', 'harmonização', 'bioestimulador', 'preenchimento',
+      'limpeza de pele', 'peeling', 'rejuvenescimento', 'lipo', 'drenagem', 'massagem',
+      'agenda', 'agendamento', 'agende', 'vagas', 'horários', 'horarios', 'sessões',
+      'especialista', 'paciente', 'cliente', 'studio'
+    ];
+
+    for (const kw of procedureKeywords) {
+      if (caption.includes(kw)) {
+        score += 45;
+      }
+    }
+
+    // Afinidade direta com os serviços extraídos da bio externa (+60 pontos)
+    if (Array.isArray(result.externalBioServices) && result.externalBioServices.length > 0) {
+      for (const extSrv of result.externalBioServices) {
+        const srvWords = extSrv.toLowerCase().replace(/[^a-z0-9\u00C0-\u017F\s]/gi, ' ').split(/\s+/).filter(w => w.length >= 4);
+        for (const w of srvWords) {
+          if (caption.includes(w)) {
+            score += 60;
+          }
+        }
+      }
+    }
+
+    // Afinidade com a categoria e palavras-chave da bio
+    const bioCategoryWords = `${result.category || ''} ${result.bio || ''}`
+      .toLowerCase()
+      .replace(/[^a-z0-9\u00C0-\u017F\s]/gi, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 4 && !/atendimento|especialista|profissional|agende|horario/.test(w));
+
+    for (const bw of bioCategoryWords) {
+      if (caption.includes(bw)) {
+        score += 35;
+      }
+    }
+
+    // Penalização severa de posts pessoais, memes, feriados ou frases que NÃO são de serviço (-80 pontos)
+    const nonServiceKeywords = [
+      'sextou', 'bom dia', 'boa tarde', 'boa noite', 'tbt', 'feriado', 'praia', 'piscina',
+      'viagem', 'férias', 'ferias', 'aniversário', 'aniversario', 'parabéns', 'parabens',
+      'frase do dia', 'pensamento', 'reflexão', 'reflexao', 'meme', 'humor', 'engraçado',
+      'cafezinho', 'almoço', 'jantar', 'look do dia', 'look', 'motivação', 'motivacao',
+      'treino', 'academia', 'pôr do sol', 'por do sol', 'sunset', 'domingo', 'fds'
+    ];
+
+    for (const nsk of nonServiceKeywords) {
+      if (caption.includes(nsk)) {
+        score -= 80;
+      }
+    }
+
+    // Legendas explicativas longas normalmente descrevem procedimentos (+30 pontos)
+    if (caption.length >= 60) {
+      score += 30;
+    } else if (caption.length < 15) {
+      score -= 25;
+    }
+
+    // Carrosséis quase sempre exibem antes e depois ou detalhes do trabalho (+40 pontos)
+    if (Array.isArray(post.sidecarUrls) && post.sidecarUrls.length > 0) {
+      score += 40;
+    }
+
+    // Curtidas entram apenas como peso de desempate moderado (máximo 40 pontos)
+    const likesWeight = Math.min(Math.log10(Math.max(post.likes || 0, 1) + 1) * 12, 40);
+    score += likesWeight;
+
+    return score;
+  };
+
   const sortedPosts = Array.from(allPostsMap.values()).sort((a, b) => {
+    const scoreA = calculatePostServiceScore(a);
+    const scoreB = calculatePostServiceScore(b);
+    if (scoreB !== scoreA) return scoreB - scoreA;
     if (b.likes !== a.likes) return b.likes - a.likes;
     return b.comments - a.comments;
   });
 
-  // Monta a fila de fotos candidatas para a Galeria priorizando as mais curtidas
+  // Monta a fila de fotos candidatas para a Galeria priorizando os posts mais relevantes de serviços
   interface GalleryCandidate {
     rawUrl: string;
     likes: number;
@@ -1063,7 +1154,7 @@ export async function extractInstagramInfo(rawInstagram?: string): Promise<Extra
   const galleryCandidates: GalleryCandidate[] = [];
   const seenCandidateUrls = new Set<string>();
 
-  // Primeiro: foto principal de cada post na ordem exata de mais curtidas
+  // Primeiro: foto principal de cada post na ordem exata de relevância técnica
   for (const post of sortedPosts) {
     if (post.imageUrl && !seenCandidateUrls.has(post.imageUrl)) {
       seenCandidateUrls.add(post.imageUrl);
@@ -1076,7 +1167,7 @@ export async function extractInstagramInfo(rawInstagram?: string): Promise<Extra
     }
   }
 
-  // Segundo: se houver menos de 6 posts, complementa com fotos adicionais de carrosséis (sidecar) dos posts mais curtidos
+  // Segundo: se houver menos de 6 posts, complementa com fotos adicionais de carrosséis (sidecar)
   if (galleryCandidates.length < 6) {
     for (const post of sortedPosts) {
       for (const sideUrl of post.sidecarUrls) {
@@ -1370,28 +1461,45 @@ async function extractGoogleMapsInfo(rawMapsInput?: string): Promise<ExtractedGo
 
 /**
  * Seleciona a melhor foto do Instagram do cliente para ilustrar um serviço específico,
- * buscando primeiro um post cuja legenda mencione a palavra-chave daquele serviço,
- * ou utilizando as fotos mais curtidas em sequência.
+ * priorizando posts com legenda diretamente relacionada à técnica daquele serviço,
+ * e garantindo que cada serviço receba uma foto distinta do portfólio.
  */
 function pickBestPhotoForService(
   keywordRegex: RegExp | null,
   fallbackIndex: number,
   instaData: ExtractedInstagramData,
   mapsData: ExtractedGoogleMapsData,
-  defaultPhotoUrl: string
+  defaultPhotoUrl: string,
+  usedUrls?: Set<string>
 ): string {
+  // 1. Busca primeiro um post não-utilizado cuja legenda mencione a palavra-chave do serviço
   if (keywordRegex && instaData.topPosts.length > 0) {
-    const matchingPost = instaData.topPosts.find(
+    const matchingUnused = instaData.topPosts.find(
+      (p) => p.dataUrl && !usedUrls?.has(p.dataUrl) && keywordRegex.test(p.caption)
+    );
+    if (matchingUnused?.dataUrl) {
+      return matchingUnused.dataUrl;
+    }
+
+    // Se já tiver usado todas, aceita qualquer post que case com o serviço
+    const matchingAny = instaData.topPosts.find(
       (p) => p.dataUrl && keywordRegex.test(p.caption)
     );
-    if (matchingPost?.dataUrl) {
-      return matchingPost.dataUrl;
+    if (matchingAny?.dataUrl) {
+      return matchingAny.dataUrl;
     }
   }
-  const allClientPhotos = [...instaData.postPhotos, ...mapsData.photos];
+
+  // 2. Busca entre todas as fotos reais do cliente priorizando fotos ainda não alocadas
+  const allClientPhotos = [...instaData.postPhotos, ...mapsData.photos].filter(Boolean);
   if (allClientPhotos.length > 0) {
+    const unusedPhoto = allClientPhotos.find((url) => !usedUrls?.has(url));
+    if (unusedPhoto) {
+      return unusedPhoto;
+    }
     return allClientPhotos[fallbackIndex % allClientPhotos.length];
   }
+
   return instaData.avatarUrl || defaultPhotoUrl;
 }
 
@@ -2017,7 +2125,7 @@ function applyExtractedAssetsToMicrosite(
     microsite.theme = resolvePreferredTheme(rawParams.visualStyle, microsite.theme, nicheText);
   }
 
-  // As fotos da galeria priorizam ESTRITAMENTE as fotos dos posts mais curtidos do Instagram informado!
+  // As fotos da galeria priorizam ESTRITAMENTE as fotos com maior afinidade de serviços, procedimentos e portfólio real!
   const galleryPhotosOrderedByLikes: string[] = [];
   const galleryCaptionsOrderedByLikes: string[] = [];
 
@@ -2178,16 +2286,16 @@ function applyExtractedAssetsToMicrosite(
     }
   }
 
-  // Galeria de Fotos (studentGrid) com as fotos mais curtidas do Instagram informado!
+  // Galeria de Fotos (studentGrid) com as fotos de maior relevância para portfólio e serviços reais!
   if (galleryPhotosOrderedByLikes.length > 0) {
     if (!microsite.studentGrid) {
       microsite.studentGrid = {
         enabled: true,
-        headline: 'Destaques & Resultados Mais Curtidos',
+        headline: 'Procedimentos & Resultados Reais',
         subtitle: instaData.username
-          ? `Registros em destaque no Instagram @${instaData.username}`
-          : 'Confira registros reais do nosso trabalho',
-        badge: 'MAIS CURTIDAS NO INSTA',
+          ? `Portfólio técnico e registros reais no Instagram @${instaData.username}`
+          : 'Confira procedimentos e resultados reais do nosso trabalho',
+        badge: 'PORTFÓLIO & RESULTADOS',
         layout: 'smart_masonry',
         aspectRatio: 'auto',
         enableLightbox: true,
@@ -2201,7 +2309,7 @@ function applyExtractedAssetsToMicrosite(
       0,
       microsite.studentGrid.photos.length
     );
-    microsite.studentGrid.badge = 'MAIS CURTIDAS NO INSTA';
+    microsite.studentGrid.badge = 'PORTFÓLIO & RESULTADOS';
   }
 
   // SERVIÇOS BASEADOS NAS INFORMAÇÕES COLETADAS DO CLIENTE
@@ -2238,6 +2346,7 @@ function applyExtractedAssetsToMicrosite(
     });
 
     const finalServiceList = filteredAiItems.length > 0 ? filteredAiItems : detectedServices;
+    const usedServicePhotos = new Set<string>();
     microsite.services.items = finalServiceList.map((item: any, idx: number) => {
       const itemWords = String(item.name || '')
         .toLowerCase()
@@ -2247,19 +2356,23 @@ function applyExtractedAssetsToMicrosite(
       const wordRegex =
         itemWords.length > 0 ? new RegExp(itemWords.slice(0, 2).join('|'), 'i') : null;
 
+      const chosenPhoto = pickBestPhotoForService(
+        wordRegex,
+        idx,
+        instaData,
+        mapsData,
+        detectedServices[idx]?.imageUrl || item.imageUrl,
+        usedServicePhotos
+      );
+      if (chosenPhoto) usedServicePhotos.add(chosenPhoto);
+
       return {
         ...item,
         id: item.id || `srv-${idx + 1}`,
         ctaLabel: item.ctaLabel || 'Agendar',
         actionType: item.actionType || 'booking',
         featured: item.featured ?? idx < 2,
-        imageUrl: pickBestPhotoForService(
-          wordRegex,
-          idx,
-          instaData,
-          mapsData,
-          detectedServices[idx]?.imageUrl || item.imageUrl
-        ),
+        imageUrl: chosenPhoto,
       };
     });
   }
@@ -2518,8 +2631,8 @@ function buildSmartFallbackMicrosite(
       studentGrid: {
         enabled: true,
         headline: 'Portfólio & Transformações Reais',
-        subtitle: 'Confira os trabalhos mais curtidos de nossas clientes no studio',
-        badge: 'MAIS CURTIDAS NO INSTA',
+        subtitle: 'Confira os procedimentos e transformações de nossas clientes no studio',
+        badge: 'PORTFÓLIO & RESULTADOS',
         layout: 'smart_masonry',
         aspectRatio: 'auto',
         enableLightbox: true,
@@ -2779,9 +2892,9 @@ function buildSmartFallbackMicrosite(
     },
     studentGrid: {
       enabled: true,
-      headline: 'Portfólio & Destaques Mais Curtidos',
-      subtitle: 'Confira registros do nosso trabalho e espaço',
-      badge: 'MAIS CURTIDAS NO INSTA',
+      headline: 'Portfólio & Procedimentos em Destaque',
+      subtitle: 'Confira registros técnicos do nosso trabalho e espaço',
+      badge: 'PORTFÓLIO & RESULTADOS',
       layout: 'smart_masonry',
       aspectRatio: 'auto',
       enableLightbox: true,
@@ -2901,7 +3014,7 @@ export default async function handler(req: any, res: any) {
     cachedProfile,
   } = req.body || {};
 
-  // 1) Busca em paralelo os dados e imagens reais (ordenadas por mais curtidas) do Instagram e do Google Meu Negócio
+  // 1) Busca em paralelo os dados e imagens reais (ordenadas por relevância técnica e de procedimentos) do Instagram e do Google Meu Negócio
   const [instaData, mapsData] = await Promise.all([
     extractInstagramInfo(instagram),
     extractGoogleMapsInfo(googleMaps),
@@ -2974,7 +3087,7 @@ export default async function handler(req: any, res: any) {
 
     if (!apiKey) {
       extractedMeta.warning =
-        'Chave GEMINI_API_KEY não configurada no painel da sua hospedagem. Todos os dados reais (fotos mais curtidas do Instagram, serviços, endereço e WhatsApp) foram extraídos e aplicados com sucesso pelo motor inteligente!';
+        'Chave GEMINI_API_KEY não configurada no painel da sua hospedagem. Todos os dados reais (portfólio de procedimentos do Instagram, serviços, endereço e WhatsApp) foram extraídos e aplicados com sucesso pelo motor inteligente!';
       const fallbackData = applyExtractedAssetsToMicrosite(
         buildSmartFallbackMicrosite(
           {
@@ -3078,7 +3191,7 @@ DADOS REAIS EXTRAÍDOS DO INSTAGRAM:
 - Link Externo da Bio: ${instaData.externalUrl || 'Não detectado'}
 - Botões do Link da Bio: ${instaData.externalBioServices.join(' | ') || 'Nenhum'}
 - WhatsApp/Telefone detectado: ${instaData.whatsappPhone || mapsData.phone || 'Não detectado'}
-- POSTS MAIS CURTIDOS DO INSTAGRAM (em ordem decrescente de curtidas):
+- POSTS DO INSTAGRAM COM MAIOR RELEVÂNCIA PARA PORTFÓLIO E PROCEDIMENTOS (ordenados por pontuação de afinidade com serviços reais):
 ${topPostsContext}
 
 SERVIÇOS E PROCEDIMENTOS IDENTIFICADOS NAS INFORMAÇÕES COLETADAS DO CLIENTE:
@@ -3230,8 +3343,8 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
   },
   "studentGrid": {
     "enabled": true,
-    "headline": "Resultados & Galeria Mais Curtida",
-    "subtitle": "Confira os trabalhos de maior destaque no nosso Instagram",
+    "headline": "Resultados & Galeria de Procedimentos",
+    "subtitle": "Confira os registros de procedimentos e trabalhos no nosso Instagram",
     "photos": []
   },
   "locationCard": {

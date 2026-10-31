@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, '../dist');
 
 // MIME types
-const mimeMap = {
+const mimeMap: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -83,7 +83,7 @@ server.listen(0, '127.0.0.1', async () => {
 
   for (const page of pagesToTest) {
     const fullUrl = `${baseUrl}${page.path}`;
-    const times = [];
+    const times: number[] = [];
     let bytesRaw = 0;
     let bytesGzip = 0;
     let statusCode = 0;
@@ -92,11 +92,11 @@ server.listen(0, '127.0.0.1', async () => {
     // Warmup + 5 measurement iterations
     for (let i = 0; i < 5; i++) {
       const start = process.hrtime.bigint();
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         const req = http.get(fullUrl, { headers: { 'Accept-Encoding': 'gzip' } }, (res) => {
           statusCode = res.statusCode || 0;
           contentType = res.headers['content-type'] || '';
-          const chunks = [];
+          const chunks: Buffer[] = [];
           res.on('data', (c) => chunks.push(c));
           res.on('end', () => {
             const end = process.hrtime.bigint();
