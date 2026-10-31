@@ -23,12 +23,30 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
     try {
       const assetRes = await env.ASSETS.fetch(request);
       if (assetRes.status !== 404) {
+        // Se for um asset compilado (/assets/*), aplica cache imutável de máxima velocidade (365 dias)
+        if (path.startsWith('/assets/')) {
+          const fastHeaders = new Headers(assetRes.headers);
+          fastHeaders.set('Cache-Control', 'public, max-age=31536000, immutable');
+          fastHeaders.set('X-Content-Type-Options', 'nosniff');
+          return new Response(assetRes.body, {
+            status: assetRes.status,
+            statusText: assetRes.statusText,
+            headers: fastHeaders,
+          });
+        }
         return assetRes;
       }
       // Se não for um arquivo com extensão (ex: .js, .css, .png, etc.), faz fallback para index.html (SPA)
       if (!path.includes('.')) {
         const indexUrl = new URL('/index.html', request.url);
-        return await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
+        const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
+        const indexHeaders = new Headers(indexRes.headers);
+        indexHeaders.set('Cache-Control', 'public, max-age=0, must-revalidate');
+        indexHeaders.set('X-Content-Type-Options', 'nosniff');
+        return new Response(indexRes.body, {
+          status: 200,
+          headers: indexHeaders,
+        });
       }
       return assetRes;
     } catch {

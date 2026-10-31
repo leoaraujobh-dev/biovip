@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build",
-    "vercel-build": "vite build",
+    "build": "tsx scripts/prerender-models.ts && vite build",
+    "vercel-build": "tsx scripts/prerender-models.ts && vite build",
     "start": "node server.ts",
     "preview": "vite preview",
     "clean": "node -e \"const fs=require('fs');['dist','server.js'].forEach(p=>fs.rmSync(p,{recursive:true,force:true}))\"",

@@ -82,6 +82,8 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
 
     return ((data: typeof INITIAL_DATA, theme: typeof siteTheme) => {
       const mc = data.moduleColors || {};
+      const avatarOptimized = optimizeImageUrl(data.profile.avatarUrl, 700);
+      const aboutPhotoOptimized = optimizeImageUrl((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl, 700);
       return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -94,7 +96,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
   <!-- OpenGraph Meta Tags para Card do WhatsApp & Redes Sociais -->
   <meta property="og:title" content="${escapeHtmlAttr(siteData.seo?.metaTitle || siteData.profile.name)}">
   <meta property="og:description" content="${escapeHtmlAttr(siteData.seo?.metaDescription || siteData.profile.tagline)}">
-  <meta property="og:image" content="${escapeHtmlAttr(siteData.seo?.ogImageUrl || siteData.profile.avatarUrl)}">
+  <meta property="og:image" content="${escapeHtmlAttr(siteData.seo?.ogImageUrl || avatarOptimized)}">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   ${siteData.conversion?.metaPixelId ? `
@@ -109,9 +111,17 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
   fbq('track', 'PageView');
   </script>
   ` : ''}
+  <!-- Fast Edge Preconnects & High-Speed Asset Preloads -->
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Italianno&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="dns-prefetch" href="https://images.unsplash.com">
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  ${avatarOptimized ? `<link rel="preload" as="image" href="${avatarOptimized}" fetchpriority="high">` : ''}
+  <!-- Non-blocking asynchronous font loading (Eliminates render blocking delay) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Italianno&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Italianno&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"></noscript>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -737,7 +747,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
     </a>` : ''}
 
     <div class="hero">
-      <img src="${data.profile.avatarUrl}" alt="${escapeHtmlAttr(data.profile.name)}" class="hero-img avatar-img" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900';" />
+      <img src="${avatarOptimized}" alt="${escapeHtmlAttr(data.profile.name)}" class="hero-img avatar-img" fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700';" />
       <div class="hero-fade">
         <span class="badge-sub">${data.profile.title}</span>
         <h1 class="name">${data.profile.name}</h1>
@@ -852,7 +862,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
           <div class="cta-sub" style="margin-top: 4px; color: ${resolvedSubColor};">${c.subtitle}</div>
           ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: ${ctaBtnBg}; ${ctaBtnBorder} color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
         </div>
-        <img src="${c.cardImage}" alt="${escapeHtmlAttr(c.title)}" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
+        <img src="${optimizeImageUrl(c.cardImage, 360)}" alt="${escapeHtmlAttr(c.title)}" loading="lazy" decoding="async" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
       </a>`;
         }
 
@@ -932,7 +942,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
           const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
           return `
           <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
-            <img src="${p}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700';" />
+            <img src="${optimizeImageUrl(p, 420)}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700';" />
             ${caption ? `<div class="gallery-caption">${escapeHtmlAttr(caption)}</div>` : ''}
           </div>`;
         }).join('')}
@@ -947,11 +957,11 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
       ${data.beforeAfter.subtitle ? `<p style="font-size: 11px; color: ${mc.beforeAfter?.textColor || theme.textMuted}; margin-bottom: 10px;">${data.beforeAfter.subtitle}</p>` : ''}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${data.beforeAfter.beforeUrl}" alt="Antes" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+          <img src="${optimizeImageUrl(data.beforeAfter.beforeUrl, 420)}" alt="Antes" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
           <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Antes</span>
         </div>
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${data.beforeAfter.afterUrl}" alt="Depois" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500';" />
+          <img src="${optimizeImageUrl(data.beforeAfter.afterUrl, 420)}" alt="Depois" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500';" />
           <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Depois</span>
         </div>
       </div>
@@ -998,7 +1008,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
             return `
             <div class="service-card ${srv.featured ? 'featured' : ''}">
               <div style="position:relative; height:145px; width:100%; overflow:hidden; background:#000;">
-                <img src="${srv.imageUrl}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+                <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
                 ${srv.badge ? `<span class="service-badge" style="position:absolute; top:10px; left:10px;">${srv.badge}</span>` : ''}
                 ${srv.duration ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:3px 8px; border-radius:999px;">⏱ ${srv.duration}</span>` : ''}
               </div>
@@ -1021,7 +1031,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
             <div class="service-card ${srv.featured ? 'featured' : ''}" style="display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="position:relative; aspect-ratio:4/3; width:100%; overflow:hidden; background:#000;">
-                  <img src="${srv.imageUrl}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+                  <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
                   ${srv.badge ? `<span class="service-badge" style="position:absolute; top:6px; left:6px; font-size:7px;">${srv.badge}</span>` : ''}
                 </div>
                 <div style="padding:10px;">
@@ -1043,7 +1053,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
           return `
           <div class="service-card ${srv.featured ? 'featured' : ''}" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
-              <img src="${srv.imageUrl}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+              <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
             </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -1089,7 +1099,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
       </h3>
       ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
       <div style="width: 100%; height: 170px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img src="${(data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700';" />
+        <img src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700';" />
       </div>` : ''}
       <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe.paragraph}
