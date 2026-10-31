@@ -49,6 +49,73 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
   return { brandName, ctaLabel, href };
 }
 
+export function getNicheFallbackImage(nicheCategory: string = '', index: number = 0): string {
+  const n = String(nicheCategory).toLowerCase();
+
+  if (n.includes('lash') || n.includes('cilio') || n.includes('cílio') || n.includes('olhar') || n.includes('sobrancelha') || n.includes('olhos')) {
+    const lashImages = [
+      'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=600',
+    ];
+    return lashImages[Math.abs(index) % lashImages.length];
+  }
+
+  if (n.includes('barber') || n.includes('barba') || n.includes('corte') || n.includes('masculino')) {
+    const barberImages = [
+      'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=600',
+    ];
+    return barberImages[Math.abs(index) % barberImages.length];
+  }
+
+  if (n.includes('odonto') || n.includes('dent') || n.includes('sorriso')) {
+    const dentalImages = [
+      'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=600',
+    ];
+    return dentalImages[Math.abs(index) % dentalImages.length];
+  }
+
+  if (n.includes('advoc') || n.includes('juríd') || n.includes('jurid') || n.includes('direito') || n.includes('lei')) {
+    const lawImages = [
+      'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
+    ];
+    return lawImages[Math.abs(index) % lawImages.length];
+  }
+
+  if (n.includes('unha') || n.includes('nail') || n.includes('manicure') || n.includes('fibra')) {
+    const nailImages = [
+      'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&q=80&w=600',
+    ];
+    return nailImages[Math.abs(index) % nailImages.length];
+  }
+
+  const generalBeauty = [
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=600',
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
+  ];
+  return generalBeauty[Math.abs(index) % generalBeauty.length];
+}
+
   export function generateExportCode(
     targetData?: typeof INITIAL_DATA,
     options?: ExportCodeOptions
@@ -942,7 +1009,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
           const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
           return `
           <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
-            <img src="${optimizeImageUrl(p, 420)}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700';" />
+            <img src="${optimizeImageUrl(p, 420)}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
             ${caption ? `<div class="gallery-caption">${escapeHtmlAttr(caption)}</div>` : ''}
           </div>`;
         }).join('')}
@@ -957,11 +1024,11 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
       ${data.beforeAfter.subtitle ? `<p style="font-size: 11px; color: ${mc.beforeAfter?.textColor || theme.textMuted}; margin-bottom: 10px;">${data.beforeAfter.subtitle}</p>` : ''}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${optimizeImageUrl(data.beforeAfter.beforeUrl, 420)}" alt="Antes" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+          <img src="${optimizeImageUrl(data.beforeAfter.beforeUrl, 420)}" alt="Antes" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 1)}';" />
           <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Antes</span>
         </div>
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${optimizeImageUrl(data.beforeAfter.afterUrl, 420)}" alt="Depois" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=500';" />
+          <img src="${optimizeImageUrl(data.beforeAfter.afterUrl, 420)}" alt="Depois" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 2)}';" />
           <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Depois</span>
         </div>
       </div>
@@ -991,7 +1058,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
         ${data.services.subtitle ? `<p class="gallery-sub" style="color:${mc.services?.textColor || theme.textMuted};">${data.services.subtitle}</p>` : ''}
       </div>
       <div class="${data.services.layout === 'grid2' ? 'services-grid-2' : ''}" style="${data.services.layout !== 'grid2' ? 'display:flex; flex-direction:column; gap:10px;' : ''}">
-        ${data.services.items.map(srv => {
+        ${data.services.items.map((srv, idx) => {
           const waMsg = encodeURIComponent(`Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`);
           const rawSrvHref = srv.actionType === 'link' && srv.customUrl
             ? srv.customUrl
@@ -1008,7 +1075,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
             return `
             <div class="service-card ${srv.featured ? 'featured' : ''}">
               <div style="position:relative; height:145px; width:100%; overflow:hidden; background:#000;">
-                <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+                <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
                 ${srv.badge ? `<span class="service-badge" style="position:absolute; top:10px; left:10px;">${srv.badge}</span>` : ''}
                 ${srv.duration ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:3px 8px; border-radius:999px;">⏱ ${srv.duration}</span>` : ''}
               </div>
@@ -1031,7 +1098,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
             <div class="service-card ${srv.featured ? 'featured' : ''}" style="display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="position:relative; aspect-ratio:4/3; width:100%; overflow:hidden; background:#000;">
-                  <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+                  <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
                   ${srv.badge ? `<span class="service-badge" style="position:absolute; top:6px; left:6px; font-size:7px;">${srv.badge}</span>` : ''}
                 </div>
                 <div style="padding:10px;">
@@ -1053,7 +1120,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
           return `
           <div class="service-card ${srv.featured ? 'featured' : ''}" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
-              <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=500';" />
+              <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
             </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -1099,7 +1166,7 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
       </h3>
       ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
       <div style="width: 100%; height: 170px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700';" />
+        <img src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
       </div>` : ''}
       <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe.paragraph}
@@ -1151,13 +1218,13 @@ export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
     </div>
     <div style="position:relative; max-width:92vw; max-height:82vh; display:flex; align-items:center; justify-content:center;" onclick="event.stopPropagation()">
       <button onclick="navGalleryLightbox(-1)" style="position:absolute; left:-20px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%; font-size:22px; cursor:pointer; z-index:5;">‹</button>
-      <img id="lb-img" src="" style="max-width:90vw; max-height:76vh; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.15);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=900';" />
+      <img id="lb-img" src="" style="max-width:90vw; max-height:76vh; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.15);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 0)}';" />
       <button onclick="navGalleryLightbox(1)" style="position:absolute; right:-20px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%; font-size:22px; cursor:pointer; z-index:5;">›</button>
     </div>
     <div id="lb-caption" style="display:none; margin-top:12px; max-width:85vw; padding:8px 16px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); color:#fff; font-size:13px; font-weight:500; text-align:center;" onclick="event.stopPropagation()"></div>
   </div>
   <script>
-    var galleryPhotos = ${JSON.stringify(data.studentGrid?.photos || [])};
+    var galleryPhotos = ${JSON.stringify((data.studentGrid?.photos || []).map((p: string, idx: number) => optimizeImageUrl(p || getNicheFallbackImage(data.profile?.title || data.profile?.tagline || '', idx), 900)))};
     var galleryCaptions = ${JSON.stringify((data.studentGrid as any)?.captions || [])};
     var curLbIndex = 0;
     function syncLightboxCaption() {

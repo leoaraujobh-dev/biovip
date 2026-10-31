@@ -188,6 +188,19 @@ export function optimizeImageUrl(url: string, targetWidth = 800): string {
   ) {
     return trimmed;
   }
+
+  // URLs do CDN do Instagram/Facebook (Meta) possuem proteção rígida de hotlink (CORS/403) e tokens assinados temporários
+  // Roteamos pelo CDN global Weserv com cache seguro para carregar perfeitamente em qualquer navegador e iframe sem 403
+  if (
+    trimmed.includes('cdninstagram.com') ||
+    trimmed.includes('fbcdn.net') ||
+    trimmed.includes('instagram.f') ||
+    trimmed.includes('lookaside.fbsbx.com')
+  ) {
+    if (trimmed.includes('images.weserv.nl')) return trimmed;
+    return `https://images.weserv.nl/?url=${encodeURIComponent(trimmed)}&output=jpg&q=85&w=${targetWidth}`;
+  }
+
   try {
     if (trimmed.includes('images.unsplash.com')) {
       const parsed = new URL(trimmed);

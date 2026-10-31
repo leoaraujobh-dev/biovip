@@ -2378,6 +2378,24 @@ export default function App() {
       const customDomain = currentSite?.customDomain || saveForm.customDomain;
       const targetUrl = getPublicMicrositeUrl(cleanSub, customDomain);
 
+      // Sincroniza o estado atual do editor no localStorage para que a nova aba renderize instantaneamente com 100% de fidelidade
+      if (typeof window !== 'undefined' && data) {
+        try {
+          localStorage.setItem(`luxebio_live_preview_${cleanSub}`, JSON.stringify(data));
+          if (editingSiteId) {
+            setSavedSites(prev => {
+              const updated = prev.map(s => (s.id === editingSiteId ? { ...s, data, isCustomized: true, lastUpdated: new Date().toISOString().split('T')[0] } : s));
+              try {
+                localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
+        } catch (e) {
+          console.warn('Falha ao sincronizar preview local:', e);
+        }
+      }
+
       // Abrir o microsite estritamente em UMA nova aba, mantendo o editor aberto na aba atual
       if (typeof document !== 'undefined') {
         const link = document.createElement('a');
@@ -9453,6 +9471,17 @@ COMO PUBLICAR NO SERVIDOR:
 
     const cleanSlug = slug.replace(/[^a-z0-9]/g, '');
 
+    // Verifica se há dados sincronizados em tempo real pelo Studio nesta máquina
+    let livePreviewData: any = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const rawLive = localStorage.getItem(`luxebio_live_preview_${cleanSlug}`) || localStorage.getItem(`luxebio_live_preview_${slug}`);
+        if (rawLive) {
+          livePreviewData = JSON.parse(rawLive);
+        }
+      } catch {}
+    }
+
     const matchingSites = slug
       ? savedSites.filter((s) => {
           const sSub = (s.subdomain || '').toLowerCase().trim();
@@ -9496,7 +9525,8 @@ COMO PUBLICAR NO SERVIDOR:
       .filter((t) => t.length >= 3);
     const currentDataMatches =
       Boolean(cleanSlug) &&
-      ((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanSlug) ||
+      (Boolean(livePreviewData) ||
+       (data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanSlug) ||
        cleanSlug.includes((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
        (saveForm?.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '') === cleanSlug ||
        currentEditorTokens.some((t) => cleanSlug.includes(t) || t.includes(cleanSlug)));
@@ -9511,11 +9541,11 @@ COMO PUBLICAR NO SERVIDOR:
       (currentDataMatches
         ? ({
             id: editingSiteId || 'current-preview',
-            clientName: data.profile.name || 'Cliente BioVip',
+            clientName: (livePreviewData?.profile?.name || data?.profile?.name) || 'Cliente BioVip',
             subdomain: slug,
             isLandingModel: true,
             isCustomized: true,
-            data: data,
+            data: livePreviewData || data,
             status: 'active' as const,
             monthlyFee: 49.9,
             creationFee: 79.9,
@@ -9526,7 +9556,7 @@ COMO PUBLICAR NO SERVIDOR:
             domainType: 'subdomain' as const,
             dnsConfigured: true,
             sslActive: true,
-            nicheCategory: data.profile.title || 'Geral',
+            nicheCategory: (livePreviewData?.profile?.title || data?.profile?.title) || 'Geral',
           } as SavedMicrosite)
         : undefined);
 
@@ -9569,7 +9599,8 @@ COMO PUBLICAR NO SERVIDOR:
       }
 
       const resolvedData =
-        foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data);
+        livePreviewData ||
+        (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
       return (
         <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
@@ -9587,7 +9618,7 @@ COMO PUBLICAR NO SERVIDOR:
         <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
           <iframe
             title={`${demoModel.personaName} — ${demoModel.title}`}
-            srcDoc={demoModel.realHtml || generateExportCode(demoModel.realSiteData)}
+            srcDoc={livePreviewData ? generateExportCode(livePreviewData) : (demoModel.realHtml || generateExportCode(demoModel.realSiteData))}
             className="w-full h-full border-0"
           />
         </div>
