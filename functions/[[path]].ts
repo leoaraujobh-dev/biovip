@@ -1,4 +1,5 @@
 import generateMicrositeHandler from '../api/generate-microsite.ts';
+import createProspectMicrositeHandler from '../api/create-prospect-microsite.ts';
 import instagramPreviewHandler from '../api/instagram-preview.ts';
 import optimizeCopyHandler from '../api/optimize-copy.ts';
 import sendBulkEmailHandler from '../api/send-bulk-email.ts';
@@ -57,7 +58,8 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
   let body: any = {};
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     try {
-      body = await request.json();
+      const clonedRequest = request.clone();
+      body = await clonedRequest.json();
     } catch {
       body = {};
     }
@@ -104,7 +106,9 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
   };
 
   try {
-    if (path.includes('generate-microsite')) {
+    if (path.includes('create-prospect-microsite') || path.includes('prospect-site')) {
+      await createProspectMicrositeHandler(req, res);
+    } else if (path.includes('generate-microsite')) {
       await generateMicrositeHandler(req, res);
     } else if (path.includes('instagram-preview')) {
       await instagramPreviewHandler(req, res);
