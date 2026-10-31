@@ -3215,8 +3215,32 @@ export default function App() {
             : INITIAL_DATA.qualifierFunnel.questions,
       },
       aboutMe: {
-        ...INITIAL_DATA.aboutMe,
-        ...(generated?.aboutMe || {}),
+        enabled: generated?.aboutMe?.enabled !== undefined ? Boolean(generated.aboutMe.enabled) : true,
+        headline:
+          generated?.aboutMe?.headline ||
+          generated?.aboutMe?.title ||
+          `Sobre ${generated?.profile?.name || aiForm.businessName || 'Nossa Especialista & Espaço'}`,
+        photoUrl:
+          sanitizeImageUrl(generated?.aboutMe?.photoUrl, '') ||
+          sanitizeImageUrl(generated?.aboutMe?.aboutPhotoUrl, '') ||
+          sanitizeImageUrl(generated?.profile?.aboutPhotoUrl, '') ||
+          cachedPhotos[1] ||
+          cachedPhotos[0] ||
+          INITIAL_DATA.aboutMe.photoUrl,
+        paragraph:
+          generated?.aboutMe?.paragraph ||
+          generated?.aboutMe?.bioText ||
+          generated?.aboutMe?.text ||
+          generated?.aboutMe?.description ||
+          generated?.aboutMe?.content ||
+          `Com foco em excelência e atendimento acolhedor, nosso espaço oferece procedimentos de alto padrão em ${generated?.profile?.title || aiForm.businessNiche || 'nossos serviços'}, unindo conhecimento técnico, biossegurança rigorosa e protocolos personalizados para valorizar sua beleza e bem-estar.`,
+        closingPhrase:
+          generated?.aboutMe?.closingPhrase ||
+          generated?.aboutMe?.signature ||
+          generated?.aboutMe?.signaturePhrase ||
+          generated?.aboutMe?.cursivePhrase ||
+          generated?.profile?.cursivePhrase ||
+          'Excelência, sofisticação e cuidado em cada detalhe.',
       },
       faq: {
         ...INITIAL_DATA.faq,
@@ -3431,9 +3455,10 @@ Assim que tiver os dados do cliente, pesquise na internet e no Google Maps tudo 
 - Nome comercial exato, especialidade principal e posicionamento de autoridade.
 - Biografia real do Instagram, número de seguidores, telefone/WhatsApp e links da bio.
 - Os **4 a 6 serviços/procedimentos reais** trabalhados pelo cliente (baseados nas informações coletadas do perfil, legendas e nicho), criando descrições persuasivas e elegantes.
+- Seção **Sobre a Especialista & Nosso Espaço (aboutMe)**: Redija uma apresentação profunda, acolhedora e comovente sobre a trajetória, anos de experiência, especialização técnica, padrão de atendimento e amor pelo ofício para preencher \`paragraph\` e a frase marcante \`closingPhrase\`.
 - Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
 - 6 legendas curtas e impactantes baseadas nos posts mais curtidos do Instagram para a galeria.
-- **ATENÇÃO CRÍTICA PARA IMAGENS:** Todas as chaves de imagem (avatarUrl, aboutPhotoUrl, cardImage, imageUrl, photos) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web (ex: https://images.unsplash.com/photo-...). NUNCA envie objetos nem chaves aninhadas para as imagens.
+- **ATENÇÃO CRÍTICA PARA IMAGENS:** Todas as chaves de imagem (avatarUrl, aboutPhotoUrl, photoUrl, cardImage, imageUrl, photos) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web (ex: https://images.unsplash.com/photo-...). NUNCA envie objetos nem chaves aninhadas para as imagens.
 
 ---
 
@@ -3473,6 +3498,8 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
       "title": "ESPECIALIDADE PRINCIPAL DE ALTO PADRÃO",
       "tagline": "Bio persuasiva baseada nas informações reais do Instagram e diferenciais do cliente.",
       "cursivePhrase": "Excelência, sofisticação e cuidado em cada detalhe.",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900",
+      "aboutPhotoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=700",
       "instagram": "usuario_sem_arroba",
       "whatsapp": "5531999999999",
       "mapsUrl": "https://maps.google.com/?q=Endereco+do+Cliente"
@@ -3653,9 +3680,10 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
     },
     "aboutMe": {
       "enabled": true,
-      "headline": "Sobre Especialista & Nosso Espaço",
-      "bioText": "Texto institucional apresentando a trajetória, o cuidado com cada cliente e os diferenciais do espaço.",
-      "badges": ["Atendimento Exclusivo", "Materiais Premium", "Hora Marcada"]
+      "headline": "SOBRE A ESPECIALISTA & NOSSO ESPAÇO",
+      "photoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=700",
+      "paragraph": "Texto persuasivo e acolhedor (2 a 3 parágrafos) apresentando a trajetória da especialista ou fundadora, anos de experiência, propósito de atendimento humanizado, excelência técnica e diferenciais que tornam o espaço e os procedimentos únicos.",
+      "closingPhrase": "Sua beleza e bem-estar, nosso maior compromisso."
     },
     "faq": {
       "enabled": true,
@@ -3849,6 +3877,21 @@ Inicie agora fazendo a **Solicitação 1**!`;
                 if (micrositeObj.actionCards[1] && !micrositeObj.actionCards[1].cardImage) {
                   micrositeObj.actionCards[1].cardImage =
                     serverData.studentGrid.photos[1] || serverData.studentGrid.photos[0];
+                }
+              }
+              // Injeta foto real do Instagram no módulo Sobre a Especialista / Espaço caso não tenha foto personalizada
+              if (
+                Array.isArray(serverData?.studentGrid?.photos) &&
+                serverData.studentGrid.photos.length > 1 &&
+                (!micrositeObj?.aboutMe?.photoUrl || micrositeObj.aboutMe.photoUrl.includes('unsplash.com'))
+              ) {
+                const aboutPhoto = serverData.studentGrid.photos[1];
+                micrositeObj.aboutMe = {
+                  ...(micrositeObj.aboutMe || {}),
+                  photoUrl: aboutPhoto,
+                };
+                if (micrositeObj.profile) {
+                  micrositeObj.profile.aboutPhotoUrl = aboutPhoto;
                 }
               }
             }
