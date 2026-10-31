@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AlertCircle,
   User,
@@ -46,6 +46,8 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
   savedSitesCount,
   showToast,
 }) => {
+  const [activeSectionId, setActiveSectionId] = useState<string>('profile');
+
   // Toggle individual section visibility in microsite data
   const handleToggleSection = (e: React.MouseEvent, key: string, label: string) => {
     e.stopPropagation();
@@ -74,6 +76,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: data.announcement?.badge || 'Agenda VIP',
       icon: AlertCircle,
       tab: 'identity',
+      targetId: 'module-announcement',
       enabled: data.announcement?.enabled ?? true,
       canToggle: true,
       color: 'text-amber-400',
@@ -86,6 +89,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: data.profile?.name || 'Identidade do Profissional',
       icon: User,
       tab: 'identity',
+      targetId: 'module-profile',
       enabled: true,
       canToggle: false,
       color: 'text-rose-400',
@@ -98,6 +102,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: '3 Ações de Agendamento',
       icon: Zap,
       tab: 'buttons',
+      targetId: 'module-actionCards',
       enabled: true,
       canToggle: false,
       color: 'text-emerald-400',
@@ -110,6 +115,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: data.quiz?.badge || '3 Perguntas VIP',
       icon: Filter,
       tab: 'qualifier',
+      targetId: 'module-quiz',
       enabled: data.quiz?.enabled ?? true,
       canToggle: true,
       color: 'text-purple-400',
@@ -122,6 +128,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: 'Seguidores & Google',
       icon: Award,
       tab: 'modules',
+      targetId: 'module-metrics',
       enabled: data.metrics?.enabled ?? true,
       canToggle: true,
       color: 'text-amber-400',
@@ -134,6 +141,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: 'Jornada do Cliente',
       icon: ListOrdered,
       tab: 'modules',
+      targetId: 'module-processSteps',
       enabled: data.processSteps?.enabled ?? true,
       canToggle: true,
       color: 'text-sky-400',
@@ -145,7 +153,8 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       label: 'Galeria & Portfólio',
       sublabel: `${data.studentGrid?.photos?.length || 6} fotos técnicas`,
       icon: Image,
-      tab: 'identity',
+      tab: 'modules',
+      targetId: 'module-studentGrid',
       enabled: data.studentGrid?.enabled ?? true,
       canToggle: true,
       color: 'text-pink-400',
@@ -158,6 +167,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: `${data.services?.items?.length || 0} procedimentos cadastrados`,
       icon: Sparkles,
       tab: 'services',
+      targetId: 'module-services',
       enabled: data.services?.enabled ?? true,
       canToggle: true,
       color: 'text-amber-400',
@@ -169,7 +179,8 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       label: 'Localização & GPS',
       sublabel: data.locationCard?.address ? 'Endereço Google Maps' : 'Hora Marcada',
       icon: MapPin,
-      tab: 'identity',
+      tab: 'modules',
+      targetId: 'module-locationCard',
       enabled: data.locationCard?.enabled ?? true,
       canToggle: true,
       color: 'text-red-400',
@@ -182,6 +193,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: `${data.testimonials?.items?.length || 3} avaliações`,
       icon: MessageSquare,
       tab: 'modules',
+      targetId: 'module-testimonials',
       enabled: data.testimonials?.enabled ?? true,
       canToggle: true,
       color: 'text-teal-400',
@@ -193,7 +205,8 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       label: 'Sobre a Especialista',
       sublabel: 'História e Biossegurança',
       icon: BookOpen,
-      tab: 'identity',
+      tab: 'modules',
+      targetId: 'module-aboutMe',
       enabled: data.aboutMe?.enabled ?? true,
       canToggle: true,
       color: 'text-indigo-400',
@@ -206,12 +219,31 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
       sublabel: 'FAQ Sanfonado',
       icon: HelpCircle,
       tab: 'modules',
+      targetId: 'module-faq',
       enabled: data.faq?.enabled ?? true,
       canToggle: true,
       color: 'text-orange-400',
       bgColor: 'bg-orange-400/10',
     },
   ];
+
+  const handleSelectSection = (sec: (typeof sections)[0]) => {
+    setActiveSectionId(sec.id);
+    setActiveTab(sec.tab);
+
+    if (sec.targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(sec.targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.classList.add('ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-neutral-900');
+          setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-neutral-900');
+          }, 1800);
+        }
+      }, 120);
+    }
+  };
 
   const activeCount = sections.filter((s) => s.enabled).length;
 
@@ -228,7 +260,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
 
   if (isCollapsed) {
     return (
-      <aside className="w-14 h-full bg-[#0c0c0e] border-r border-neutral-800 flex flex-col items-center py-3 shrink-0 select-none z-30 transition-all duration-200">
+      <aside className="hidden lg:flex w-14 h-full bg-[#0c0c0e] border-r border-neutral-800 flex-col items-center py-3 shrink-0 select-none z-30 transition-all duration-200">
         <button
           type="button"
           onClick={() => setIsCollapsed(false)}
@@ -241,15 +273,15 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
         <div className="w-full flex-1 overflow-y-auto space-y-1.5 px-1.5 scrollbar-thin scrollbar-thumb-neutral-800">
           {sections.map((sec) => {
             const Icon = sec.icon;
-            const isTabActive = activeTab === sec.tab;
+            const isSecActive = activeSectionId === sec.id && activeTab === sec.tab;
             return (
               <button
                 key={sec.id}
                 type="button"
-                onClick={() => setActiveTab(sec.tab)}
+                onClick={() => handleSelectSection(sec)}
                 className={`w-full aspect-square rounded-xl flex items-center justify-center relative transition cursor-pointer group ${
-                  isTabActive
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  isSecActive
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                     : sec.enabled
                     ? 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900 border border-transparent'
                     : 'text-neutral-600 hover:text-neutral-400 bg-neutral-950/40 opacity-50'
@@ -288,7 +320,7 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
   }
 
   return (
-    <aside className="w-64 xl:w-72 h-full bg-[#0c0c0e] border-r border-neutral-800 flex flex-col shrink-0 select-none z-30 transition-all duration-200">
+    <aside className="hidden lg:flex w-64 xl:w-72 h-full bg-[#0c0c0e] border-r border-neutral-800 flex-col shrink-0 select-none z-30 transition-all duration-200">
       {/* Header da Coluna 1 */}
       <div className="p-3 border-b border-neutral-800/90 flex items-center justify-between gap-2 bg-neutral-950/60">
         <div className="flex items-center gap-2">
@@ -324,14 +356,14 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
 
         {sections.map((sec, idx) => {
           const Icon = sec.icon;
-          const isTabActive = activeTab === sec.tab;
+          const isSecActive = activeSectionId === sec.id && activeTab === sec.tab;
 
           return (
             <div
               key={sec.id}
-              onClick={() => setActiveTab(sec.tab)}
+              onClick={() => handleSelectSection(sec)}
               className={`group flex items-center justify-between p-2 rounded-xl transition cursor-pointer border ${
-                isTabActive
+                isSecActive
                   ? 'bg-neutral-900 border-amber-500/40 text-neutral-100 shadow-sm'
                   : sec.enabled
                   ? 'bg-neutral-950/40 border-neutral-800/60 hover:bg-neutral-900/60 hover:border-neutral-700 text-neutral-300'
@@ -391,7 +423,10 @@ export const StructureNavigatorColumn: React.FC<StructureNavigatorColumnProps> =
               <button
                 key={tool.id}
                 type="button"
-                onClick={() => setActiveTab(tool.id)}
+                onClick={() => {
+                  setActiveSectionId(tool.id);
+                  setActiveTab(tool.id);
+                }}
                 className={`w-full flex items-center gap-2.5 p-2 rounded-xl transition text-left cursor-pointer border ${
                   isTabActive
                     ? 'bg-neutral-900 border-amber-500/40 text-neutral-100 font-bold'

@@ -79,7 +79,7 @@ export function ModulesTab({
   return (
     <div className="space-y-6">
       {/* Módulo: Métricas de Autoridade */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-metrics" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-amber-400" />
@@ -155,7 +155,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Como Funciona o Processo */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-processSteps" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ListOrdered className="w-4 h-4 text-amber-400" />
@@ -225,7 +225,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Galeria de Fotos & Portfólio de Resultados */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4">
+      <div id="module-studentGrid" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Grid className="w-4 h-4 text-amber-400" />
@@ -704,7 +704,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Depoimentos de Clientes */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-testimonials" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-400" />
@@ -780,7 +780,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Card de Localização / Google Maps */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-locationCard" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-amber-400" />
@@ -877,7 +877,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Sobre Mim & FAQ */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-aboutMe" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-amber-400" />
@@ -1024,7 +1024,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Dúvidas Frequentes (FAQ) */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-faq" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <HelpCircle className="w-4 h-4 text-amber-400" />
