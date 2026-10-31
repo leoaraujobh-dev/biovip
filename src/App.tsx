@@ -139,6 +139,7 @@ import {
   parseBrlCurrency,
   escapeHtmlAttr,
   sanitizeImageUrl,
+  isLowResolutionAvatar,
   serializeSafeFirestorePayload,
   safeCopyText,
   getLuminance,
@@ -3019,8 +3020,8 @@ export default function App() {
       profile: {
         ...INITIAL_DATA.profile,
         ...kit.profile,
-        avatarUrl: cachedAvatar || kit.profile.avatarUrl,
-        aboutPhotoUrl: cachedPhotos[0] || cachedAvatar || kit.profile.aboutPhotoUrl,
+        avatarUrl: (!isLowResolutionAvatar(cachedAvatar) ? cachedAvatar : '') || cachedPhotos[0] || cachedAvatar || kit.profile.avatarUrl,
+        aboutPhotoUrl: cachedPhotos[1] || cachedPhotos[0] || cachedAvatar || kit.profile.aboutPhotoUrl,
         name: nameUpper,
         title: (aiForm.businessNiche || kit.profile.title).toUpperCase(),
         tagline: aiForm.additionalInfo?.trim() || kit.profile.tagline,
@@ -3178,11 +3179,15 @@ export default function App() {
         ...INITIAL_DATA.profile,
         ...(generated?.profile || {}),
         avatarUrl:
+          (!isLowResolutionAvatar(generated?.profile?.avatarUrl) ? sanitizeImageUrl(generated?.profile?.avatarUrl, '') : '') ||
+          cachedPhotos[0] ||
+          finalGalleryPhotos[0] ||
           sanitizeImageUrl(generated?.profile?.avatarUrl, '') ||
           cachedAvatar ||
           INITIAL_DATA.profile.avatarUrl,
         aboutPhotoUrl:
           sanitizeImageUrl(generated?.profile?.aboutPhotoUrl, '') ||
+          cachedPhotos[1] ||
           cachedPhotos[0] ||
           cachedAvatar ||
           INITIAL_DATA.profile.aboutPhotoUrl,
@@ -3956,12 +3961,13 @@ Inicie agora fazendo a **Solicitação 1**!`;
             if (json?.success && json?.data) {
               extractedMeta = json.extractedMeta || null;
               const serverData = json.data;
-              // Injeta o avatar real do Instagram se o Gemini não trouxe foto real
+              // Injeta a foto real em alta resolução no cabeçalho se o Gemini não trouxe foto real ou trouxe miniatura de baixa qualidade
               if (
                 serverData?.profile?.avatarUrl &&
                 (!micrositeObj?.profile?.avatarUrl ||
                   micrositeObj.profile.avatarUrl.includes('unsplash.com') ||
-                  micrositeObj.profile.avatarUrl.includes('exemplo'))
+                  micrositeObj.profile.avatarUrl.includes('exemplo') ||
+                  isLowResolutionAvatar(micrositeObj.profile.avatarUrl))
               ) {
                 micrositeObj.profile = {
                   ...(micrositeObj.profile || {}),

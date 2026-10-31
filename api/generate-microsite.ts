@@ -240,14 +240,37 @@ function safeBufferToBase64(arrayBuffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+export function isLowResolutionAvatar(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return true;
+  const clean = url.trim().toLowerCase();
+  if (!clean) return true;
+
+  // Padrões explícitos de thumbnail de 100x100 ou 150x150 do Instagram
+  if (/s100x100|s150x150|100x100|150x150|dst-jpg_s100|dst-jpg_s150/i.test(clean)) {
+    return true;
+  }
+
+  // Endpoint de avatar do Instagram (t51.2885-19) sem sufixo de alta definição
+  if (clean.includes('t51.2885-19') && !clean.includes('s1080x1080') && !clean.includes('s640x640')) {
+    return true;
+  }
+
+  // Se for Base64 minúsculo (menor que 18KB, típico de 100x100 ou 150x150)
+  if (clean.startsWith('data:image/') && clean.length < 18000) {
+    return true;
+  }
+
+  return false;
+}
+
 async function fetchImageAsDataUrl(url: string, timeoutMs = 7000, isAvatar = false): Promise<string | null> {
   if (!url || !url.startsWith('http')) return null;
   const cleanUrl = decodeHtmlEntities(url.replace(/\\u0026/g, '&').replace(/&amp;/g, '&').replace(/\\\//g, '/'));
 
-  // Se for avatar ou contiver thumbnail 150x150, prioriza a extração em Alta Definição (HD 800x800) com nitidez
-  if (isAvatar || /s150x150|150x150|t51\.82787-19/i.test(cleanUrl)) {
+  // Se for avatar ou contiver thumbnail 100x100 / 150x150, processa em tamanho natural otimizado (360x360) com nitidez sem esticar pixels
+  if (isAvatar || /s100x100|s150x150|100x100|150x150|t51\.82787-19/i.test(cleanUrl)) {
     try {
-      const hdProxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=800&h=800&fit=cover&q=95&sharp=1&output=jpg`;
+      const hdProxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=360&h=360&fit=cover&q=95&sharp=1&output=jpg`;
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const res = await fetch(hdProxyUrl, {
@@ -258,7 +281,7 @@ async function fetchImageAsDataUrl(url: string, timeoutMs = 7000, isAvatar = fal
       if (res.ok) {
         const contentType = res.headers.get('content-type') || 'image/jpeg';
         const arrayBuffer = await res.arrayBuffer();
-        if (arrayBuffer.byteLength >= 1000) {
+        if (arrayBuffer.byteLength >= 600) {
           const base64 = safeBufferToBase64(arrayBuffer);
           return `data:${contentType.split(';')[0]};base64,${base64}`;
         }
@@ -1208,7 +1231,7 @@ export async function extractInstagramInfo(rawInstagram?: string): Promise<Extra
   ]);
 
   const hdAvatarFallback = rawAvatarUrl
-    ? `https://images.weserv.nl/?url=${encodeURIComponent(rawAvatarUrl)}&w=800&h=800&fit=cover&q=95&sharp=1&output=jpg`
+    ? `https://images.weserv.nl/?url=${encodeURIComponent(rawAvatarUrl)}&w=360&h=360&fit=cover&q=95&sharp=1&output=jpg`
     : '';
 
   if (avatarDataUrl) {
@@ -2167,29 +2190,69 @@ function applyExtractedAssetsToMicrosite(
     galleryCaptionsOrderedByLikes.push(instaData.cleanBusinessName || instaData.fullName || '');
   }
 
-  // Foto de Perfil (Cabeçalho): utiliza ESTRITAMENTE o avatar real em Alta Definição (HD)
-  const primaryAvatar =
-    instaData.avatarUrl ||
-    rawParams.cachedProfile?.avatarUrl ||
-    mapsData.photos[0] ||
-    microsite.profile?.avatarUrl;
-
-  // Foto de Sobre / Destaque: foto do post mais curtido do Instagram
-  const mostLikedPostPhoto =
+  // =========================================================================
+  // FOTO PRINCIPAL DO CABEÇALHO (HERO COVER) EM ALTA DEFINIÇÃO (HD 1080p)
+  // =========================================================================
+  // O cabeçalho do microsite ocupa 380px a 500px de altura no celular.
+  // Miniaturas de avatar raspadas do Instagram costumam ter apenas 100x100 ou 150x150 pixels,
+  // ficando completamente borradas e pixeladas se esticadas nessa área nobre.
+  // Prioridade absoluta para imagens de Alta Definição:
+  // 1º Foto #1 do feed/portfólio do Instagram (1080x1080 HD real, selecionada pelo motor de afinidade de procedimentos)
+  // 2º Foto em alta resolução do Google Meu Negócio (1920x1080 HD da clínica/estabelecimento)
+  // 3º Avatar se NÃO for uma miniatura de baixa resolução do Instagram (ex: Unsplash HD, upload manual em alta)
+  // 4º Último recurso: avatar original se nenhuma outra imagem for localizada
+  const highResPortfolioPhoto =
     instaData.postPhotos[0] ||
     rawParams.cachedProfile?.photos?.[0] ||
+    '';
+
+  const secondaryPortfolioPhoto =
+    instaData.postPhotos[1] ||
+    rawParams.cachedProfile?.photos?.[1] ||
+    '';
+
+  const highResMapsPhoto =
+    mapsData.photos[0] ||
+    '';
+
+  const rawCandidateAvatar =
     instaData.avatarUrl ||
     rawParams.cachedProfile?.avatarUrl ||
-    mapsData.photos[0] ||
-    microsite.profile?.aboutPhotoUrl;
+    '';
+
+  const isCandidateAvatarLowRes = isLowResolutionAvatar(rawCandidateAvatar);
+
+  let primaryHeroHeaderPhoto = '';
+  if (highResPortfolioPhoto) {
+    primaryHeroHeaderPhoto = highResPortfolioPhoto;
+  } else if (highResMapsPhoto) {
+    primaryHeroHeaderPhoto = highResMapsPhoto;
+  } else if (rawCandidateAvatar && !isCandidateAvatarLowRes) {
+    primaryHeroHeaderPhoto = rawCandidateAvatar;
+  } else if (rawCandidateAvatar) {
+    primaryHeroHeaderPhoto = rawCandidateAvatar;
+  } else if (microsite.profile?.avatarUrl) {
+    primaryHeroHeaderPhoto = microsite.profile.avatarUrl;
+  }
+
+  // Foto da Seção Sobre Mim / Destaque Secundário:
+  // Se a foto #1 do portfólio foi usada no cabeçalho, a foto #2 (ou do Google Maps ou avatar do profissional) é a melhor escolha!
+  const highResAboutPhoto =
+    (highResPortfolioPhoto && secondaryPortfolioPhoto) ||
+    highResMapsPhoto ||
+    (rawCandidateAvatar && !isCandidateAvatarLowRes ? rawCandidateAvatar : '') ||
+    highResPortfolioPhoto ||
+    rawCandidateAvatar ||
+    microsite.profile?.aboutPhotoUrl ||
+    '';
 
   if (!microsite.profile) microsite.profile = {};
 
-  if (primaryAvatar) {
-    microsite.profile.avatarUrl = primaryAvatar;
+  if (primaryHeroHeaderPhoto) {
+    microsite.profile.avatarUrl = primaryHeroHeaderPhoto;
   }
-  if (mostLikedPostPhoto) {
-    microsite.profile.aboutPhotoUrl = mostLikedPostPhoto;
+  if (highResAboutPhoto) {
+    microsite.profile.aboutPhotoUrl = highResAboutPhoto;
   }
 
   const resolvedBusinessName =
@@ -2417,7 +2480,7 @@ function applyExtractedAssetsToMicrosite(
     if (galleryPhotosOrderedByLikes.length > 0) {
       if (microsite.actionCards[0]) {
         microsite.actionCards[0].cardImage =
-          galleryPhotosOrderedByLikes[0] || primaryAvatar;
+          galleryPhotosOrderedByLikes[0] || primaryHeroHeaderPhoto;
       }
       if (microsite.actionCards[1]) {
         microsite.actionCards[1].cardImage =

@@ -73,6 +73,34 @@ export function sanitizeImageUrl(val: any, fallback: string): string {
 }
 
 /**
+ * Detects if an image URL or Base64 is an Instagram circular thumbnail or low-resolution avatar
+ * (typically 100x100 or 150x150 pixels), which causes severe blur and pixelation if used
+ * in a 380px-500px hero header banner.
+ */
+export function isLowResolutionAvatar(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return true;
+  const clean = url.trim().toLowerCase();
+  if (!clean) return true;
+
+  // Instagram thumbnail dimension patterns in path or query
+  if (/s100x100|s150x150|100x100|150x150|dst-jpg_s100|dst-jpg_s150/i.test(clean)) {
+    return true;
+  }
+
+  // Instagram profile picture CDN endpoint (t51.2885-19) without HD modifier
+  if (clean.includes('t51.2885-19') && !clean.includes('s1080x1080') && !clean.includes('s640x640')) {
+    return true;
+  }
+
+  // If it's a tiny data: URL (under 16KB base64, typical for 100x100 or 150x150 thumbnails)
+  if (clean.startsWith('data:image/') && clean.length < 18000) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Serializes payloads for Firestore while guaranteeing the string stays within the security rule maxLength (950KB).
  */
 export function serializeSafeFirestorePayload(obj: unknown, maxLen = 920000): string {

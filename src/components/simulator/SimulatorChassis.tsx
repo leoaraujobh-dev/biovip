@@ -238,6 +238,7 @@ export function SimulatorChassis({
                   alt={data.profile.name || 'Foto de Capa'}
                   referrerPolicy={data.profile.avatarUrl.startsWith('http') ? 'no-referrer' : undefined}
                   accentColor={theme.accent}
+                  targetWidth={1080}
                   className="w-full h-full object-cover block transition-all duration-300"
                   style={{
                     transform: `scale(${(data.styling.photoScale || 100) / 100})`,

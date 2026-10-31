@@ -149,8 +149,8 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
     return ((data: typeof INITIAL_DATA, theme: typeof siteTheme) => {
       const mc = data.moduleColors || {};
-      const avatarOptimized = optimizeImageUrl(data.profile.avatarUrl, 800);
-      const aboutPhotoOptimized = optimizeImageUrl((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl, 800);
+      const avatarOptimized = optimizeImageUrl(data.profile.avatarUrl, 1080);
+      const aboutPhotoOptimized = optimizeImageUrl((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl, 1080);
       return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>

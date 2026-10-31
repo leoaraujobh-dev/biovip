@@ -1,7 +1,7 @@
 import React from 'react';
 import { BellRing, Upload, Sparkles } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
-import { formatWhatsAppPhone } from '../../../utils/formatters';
+import { formatWhatsAppPhone, isLowResolutionAvatar } from '../../../utils/formatters';
 import { ModuleColorControls } from '../ModuleColorControls';
 
 export interface IdentityTabProps {
@@ -130,6 +130,48 @@ export function IdentityTab({
             )}
           </div>
         </div>
+
+        {/* Seletor Rápido de Fotos do Portfólio em Alta Definição (1 Clique) */}
+        {Array.isArray(data.studentGrid?.photos) && data.studentGrid.photos.length > 0 && (
+          <div className="pt-2.5 border-t border-neutral-900 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                Trocar por foto em Alta Definição (1080p HD do Portfólio):
+              </span>
+              {isLowResolutionAvatar(data.profile.avatarUrl) && (
+                <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  ⚠️ Foto atual em baixa resolução
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+              {data.studentGrid.photos.map((pUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    updateProfile('avatarUrl', pUrl);
+                    showToast(`✨ Foto #${idx + 1} em Alta Definição aplicada ao cabeçalho!`);
+                  }}
+                  className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition shrink-0 cursor-pointer ${
+                    data.profile.avatarUrl === pUrl
+                      ? 'border-amber-400 ring-2 ring-amber-400/40 scale-105'
+                      : 'border-neutral-800 hover:border-neutral-600 opacity-75 hover:opacity-100'
+                  }`}
+                  title={`Aplicar Foto #${idx + 1} (Alta Definição) no Cabeçalho`}
+                >
+                  <img src={pUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                  {data.profile.avatarUrl === pUrl && (
+                    <div className="absolute inset-0 bg-amber-500/25 flex items-center justify-center font-bold text-white text-[10px]">
+                      ✓
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Upload Foto da Seção Sobre Mim */}
