@@ -237,6 +237,7 @@ import { ModulesTab } from './components/editor/tabs/ModulesTab';
 import { DashboardTab } from './components/editor/tabs/DashboardTab';
 import { FullscreenClientsView } from './components/views/FullscreenClientsView';
 import { StudioHeader } from './components/editor/StudioHeader';
+import { StructureNavigatorColumn } from './components/editor/StructureNavigatorColumn';
 import { generateExportCode as generateExportCodeEngine, getNicheFallbackImage } from './utils/exportEngine';
 
 // Re-exports for backward compatibility
@@ -1475,6 +1476,25 @@ export default function App() {
     if (search.get('view') === 'editor' || search.get('modo') === 'editor') return false;
     return true;
   });
+
+  // Editor Studio Layout: 3 Colunas Studio Pro vs 2 Colunas Clássico
+  const [editorLayoutMode, setEditorLayoutMode] = useState<'3col' | '2col'>(() => {
+    try {
+      return (localStorage.getItem('biovip_editor_layout_mode') as '3col' | '2col') || '3col';
+    } catch {
+      return '3col';
+    }
+  });
+
+  const handleSetEditorLayoutMode = (mode: '3col' | '2col') => {
+    setEditorLayoutMode(mode);
+    try {
+      localStorage.setItem('biovip_editor_layout_mode', mode);
+    } catch {}
+    showToast(mode === '3col' ? '📐 Modo Studio 3 Colunas ativado!' : '📑 Modo Clássico 2 Colunas ativado!');
+  };
+
+  const [isNavCollapsed, setIsNavCollapsed] = useState<boolean>(false);
   const [asaasStatusTesting, setAsaasStatusTesting] = useState<boolean>(false);
   const [asaasTestResult, setAsaasTestResult] = useState<{ success: boolean; message: string; balance?: number } | null>(null);
   const [asaasServerConfigured, setAsaasServerConfigured] = useState<boolean>(false);
@@ -10574,93 +10594,8 @@ COMO PUBLICAR NO SERVIDOR:
     );
   }
 
-  return (
-    <div className="flex h-[100dvh] min-h-screen w-full max-w-full overflow-hidden bg-neutral-950 text-neutral-100 font-sans">
-      {isClientsFullscreen ? (
-        <FullscreenClientsView
-          savedSites={savedSites}
-          revenueGoal={revenueGoal}
-          setRevenueGoal={setRevenueGoal}
-          landingConfig={landingConfig}
-          setLandingConfig={setLandingConfig}
-          updateLandingConfig={updateLandingConfig}
-          persistLandingConfigEverywhere={persistLandingConfigEverywhere}
-          asaasServerConfigured={asaasServerConfigured}
-          asaasStatusTesting={asaasStatusTesting}
-          asaasTestResult={asaasTestResult}
-          setAsaasTestResult={setAsaasTestResult}
-          asaasGuideOpen={asaasGuideOpen}
-          setAsaasGuideOpen={setAsaasGuideOpen}
-          handleTestAsaasConnection={handleTestAsaasConnection}
-          getActiveAsaasApiKey={getActiveAsaasApiKey}
-          getActiveAsaasEnv={getActiveAsaasEnv}
-          updateAsaasSettings={updateAsaasSettings}
-          applyConfiguredPlanPricesToExistingClients={applyConfiguredPlanPricesToExistingClients}
-          setIsClientsFullscreen={setIsClientsFullscreen}
-          startNewDraftMicrosite={startNewDraftMicrosite}
-          setAiCreationMode={setAiCreationMode}
-          setAiModalOpen={setAiModalOpen}
-          setSubdomainModalOpen={setSubdomainModalOpen}
-          setSecurityModalOpen={setSecurityModalOpen}
-          setSecurityModalTab={setSecurityModalTab}
-          handleLockAdminPanel={handleLockAdminPanel}
-          openPublicSalesLanding={openPublicSalesLanding}
-          loadSiteForEditing={loadSiteForEditing}
-          toggleSiteLandingModel={toggleSiteLandingModel}
-          toggleSiteConstructionMode={toggleSiteConstructionMode}
-          toggleSiteSuspensionMode={toggleSiteSuspensionMode}
-          openPixBillingModal={openPixBillingModal}
-          extendDueDate={extendDueDate}
-          updateSiteDueDate={updateSiteDueDate}
-          openSuspendedPagePreview={openSuspendedPagePreview}
-          openPublicMicrosite={openPublicMicrosite}
-          setUnderConstructionPreviewSite={setUnderConstructionPreviewSite}
-          setPublishModalOpen={setPublishModalOpen}
-          setSelectedPublishSiteId={setSelectedPublishSiteId}
-          setSinglePdfSiteId={setSinglePdfSiteId}
-          setDeleteModalSite={setDeleteModalSite}
-          showToast={showToast}
-          adminUser={adminUser}
-          editingSiteId={editingSiteId}
-        />
-      ) : (
-        <>
-          {/* ============================================================== */}
-          {/* LEFT COLUMN: BUILDER SAAS PRO CONTROLS                         */}
-          {/* ============================================================== */}
-          <aside className={`w-full lg:w-[620px] xl:w-[680px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
-        <StudioHeader
-          data={data}
-          currentEditingSite={currentEditingSite}
-          startNewDraftMicrosite={startNewDraftMicrosite}
-          handleStartNewMicrosite={handleStartNewMicrosite}
-          openPublicSalesLanding={openPublicSalesLanding}
-          openCreatorSubdomain={() => setSubdomainModalOpen(true)}
-          openLivePreviewTab={openLivePreviewTab}
-          setQrModalOpen={setQrModalOpen}
-          setAiModalOpen={setAiModalOpen}
-          openSaveDialog={openSaveDialog}
-          setPublishModalOpen={setPublishModalOpen}
-          setSelectedPublishSiteId={setSelectedPublishSiteId}
-          savedSites={savedSites}
-          editingSiteId={editingSiteId}
-          setIsClientsFullscreen={setIsClientsFullscreen}
-          copyExportCode={copyExportCode}
-          copiedCode={copiedCode}
-          openBulkEmailModal={() => openBulkEmailModal()}
-          setSecurityModalTab={setSecurityModalTab}
-          setSecurityModalOpen={setSecurityModalOpen}
-          handleLockAdminPanel={handleLockAdminPanel}
-          handleAdminLogout={handleAdminLogout}
-          adminUser={adminUser}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          landingConfig={landingConfig}
-        />
 
-{/* Tab Panels */}
+  const renderTabPanelsContent = () => (
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* TAB 0: CRIAÇÃO RÁPIDA & IA (SIMPLIFICADA) */}
           {activeTab === 'quickCreate' && (
@@ -10902,11 +10837,9 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
             />
           )}
         </div>
-      </aside>
+  );
 
-      {/* ============================================================== */}
-      {/* RIGHT COLUMN: SIMULADOR IPHONE MULTI-NICHO                    */}
-      {/* ============================================================== */}
+  const renderSimulatorMainContent = () => (
       <main className={`flex-1 h-full bg-neutral-950 ${viewMode === 'editor' ? 'hidden lg:flex' : 'flex'} flex-col items-center justify-start lg:justify-center p-2 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden w-full max-w-full relative`}>
         <div
           className="absolute w-full max-w-[440px] h-[360px] sm:h-[440px] rounded-full blur-[100px] sm:blur-[140px] opacity-25 pointer-events-none transition-colors duration-700 overflow-hidden"
@@ -11053,6 +10986,163 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
           setLightboxIndex={setLightboxIndex}
         />
       </main>
+  );
+
+  return (
+    <div className="flex h-[100dvh] min-h-screen w-full max-w-full overflow-hidden bg-neutral-950 text-neutral-100 font-sans">
+      {isClientsFullscreen ? (
+        <FullscreenClientsView
+          savedSites={savedSites}
+          revenueGoal={revenueGoal}
+          setRevenueGoal={setRevenueGoal}
+          landingConfig={landingConfig}
+          setLandingConfig={setLandingConfig}
+          updateLandingConfig={updateLandingConfig}
+          persistLandingConfigEverywhere={persistLandingConfigEverywhere}
+          asaasServerConfigured={asaasServerConfigured}
+          asaasStatusTesting={asaasStatusTesting}
+          asaasTestResult={asaasTestResult}
+          setAsaasTestResult={setAsaasTestResult}
+          asaasGuideOpen={asaasGuideOpen}
+          setAsaasGuideOpen={setAsaasGuideOpen}
+          handleTestAsaasConnection={handleTestAsaasConnection}
+          getActiveAsaasApiKey={getActiveAsaasApiKey}
+          getActiveAsaasEnv={getActiveAsaasEnv}
+          updateAsaasSettings={updateAsaasSettings}
+          applyConfiguredPlanPricesToExistingClients={applyConfiguredPlanPricesToExistingClients}
+          setIsClientsFullscreen={setIsClientsFullscreen}
+          startNewDraftMicrosite={startNewDraftMicrosite}
+          setAiCreationMode={setAiCreationMode}
+          setAiModalOpen={setAiModalOpen}
+          setSubdomainModalOpen={setSubdomainModalOpen}
+          setSecurityModalOpen={setSecurityModalOpen}
+          setSecurityModalTab={setSecurityModalTab}
+          handleLockAdminPanel={handleLockAdminPanel}
+          openPublicSalesLanding={openPublicSalesLanding}
+          loadSiteForEditing={loadSiteForEditing}
+          toggleSiteLandingModel={toggleSiteLandingModel}
+          toggleSiteConstructionMode={toggleSiteConstructionMode}
+          toggleSiteSuspensionMode={toggleSiteSuspensionMode}
+          openPixBillingModal={openPixBillingModal}
+          extendDueDate={extendDueDate}
+          updateSiteDueDate={updateSiteDueDate}
+          openSuspendedPagePreview={openSuspendedPagePreview}
+          openPublicMicrosite={openPublicMicrosite}
+          setUnderConstructionPreviewSite={setUnderConstructionPreviewSite}
+          setPublishModalOpen={setPublishModalOpen}
+          setSelectedPublishSiteId={setSelectedPublishSiteId}
+          setSinglePdfSiteId={setSinglePdfSiteId}
+          setDeleteModalSite={setDeleteModalSite}
+          showToast={showToast}
+          adminUser={adminUser}
+          editingSiteId={editingSiteId}
+        />
+      ) : editorLayoutMode === '3col' ? (
+        <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
+          {/* Header Superior Global em Toda a Largura */}
+          <StudioHeader
+            data={data}
+            currentEditingSite={currentEditingSite}
+            startNewDraftMicrosite={startNewDraftMicrosite}
+            handleStartNewMicrosite={handleStartNewMicrosite}
+            openPublicSalesLanding={openPublicSalesLanding}
+            openCreatorSubdomain={() => setSubdomainModalOpen(true)}
+            openLivePreviewTab={openLivePreviewTab}
+            setQrModalOpen={setQrModalOpen}
+            setAiModalOpen={setAiModalOpen}
+            openSaveDialog={openSaveDialog}
+            setPublishModalOpen={setPublishModalOpen}
+            setSelectedPublishSiteId={setSelectedPublishSiteId}
+            savedSites={savedSites}
+            editingSiteId={editingSiteId}
+            setIsClientsFullscreen={setIsClientsFullscreen}
+            copyExportCode={copyExportCode}
+            copiedCode={copiedCode}
+            openBulkEmailModal={() => openBulkEmailModal()}
+            setSecurityModalTab={setSecurityModalTab}
+            setSecurityModalOpen={setSecurityModalOpen}
+            handleLockAdminPanel={handleLockAdminPanel}
+            handleAdminLogout={handleAdminLogout}
+            adminUser={adminUser}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            landingConfig={landingConfig}
+            editorLayoutMode={editorLayoutMode}
+            setEditorLayoutMode={handleSetEditorLayoutMode}
+          />
+
+          {/* 3 Colunas Studio Pro */}
+          <div className="flex-1 flex w-full h-[calc(100dvh-54px)] overflow-hidden relative">
+            {/* Coluna 1: Navegador de Estrutura & Seções */}
+            <StructureNavigatorColumn
+              data={data}
+              setData={setData}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              isCollapsed={isNavCollapsed}
+              setIsCollapsed={setIsNavCollapsed}
+              savedSitesCount={savedSites.length}
+              showToast={showToast}
+            />
+
+            {/* Coluna 2: Palco Central com o Mockup Vivo */}
+            {renderSimulatorMainContent()}
+
+            {/* Coluna 3: Inspetor de Propriedades da Seção Selecionada */}
+            <aside className={`w-full lg:w-[440px] xl:w-[490px] 2xl:w-[540px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-l border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
+              <div className="px-4 py-2 border-b border-neutral-800 bg-[#0c0c0e] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2 text-xs font-bold text-neutral-200">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Inspetor de Propriedades</span>
+                </div>
+                <div className="text-[10px] text-amber-400 font-mono bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 uppercase tracking-wider">
+                  {activeTab}
+                </div>
+              </div>
+              {renderTabPanelsContent()}
+            </aside>
+          </div>
+        </div>
+      ) : (
+        <>
+          <aside className={`w-full lg:w-[620px] xl:w-[680px] h-full ${viewMode === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col border-r border-neutral-800 bg-neutral-900/95 backdrop-blur z-20`}>
+            <StudioHeader
+              data={data}
+              currentEditingSite={currentEditingSite}
+              startNewDraftMicrosite={startNewDraftMicrosite}
+              handleStartNewMicrosite={handleStartNewMicrosite}
+              openPublicSalesLanding={openPublicSalesLanding}
+              openCreatorSubdomain={() => setSubdomainModalOpen(true)}
+              openLivePreviewTab={openLivePreviewTab}
+              setQrModalOpen={setQrModalOpen}
+              setAiModalOpen={setAiModalOpen}
+              openSaveDialog={openSaveDialog}
+              setPublishModalOpen={setPublishModalOpen}
+              setSelectedPublishSiteId={setSelectedPublishSiteId}
+              savedSites={savedSites}
+              editingSiteId={editingSiteId}
+              setIsClientsFullscreen={setIsClientsFullscreen}
+              copyExportCode={copyExportCode}
+              copiedCode={copiedCode}
+              openBulkEmailModal={() => openBulkEmailModal()}
+              setSecurityModalTab={setSecurityModalTab}
+              setSecurityModalOpen={setSecurityModalOpen}
+              handleLockAdminPanel={handleLockAdminPanel}
+              handleAdminLogout={handleAdminLogout}
+              adminUser={adminUser}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              landingConfig={landingConfig}
+              editorLayoutMode={editorLayoutMode}
+              setEditorLayoutMode={handleSetEditorLayoutMode}
+            />
+            {renderTabPanelsContent()}
+          </aside>
+          {renderSimulatorMainContent()}
         </>
       )}
 

@@ -31,6 +31,8 @@ import {
   MoreVertical,
   QrCode,
   ChevronDown,
+  Columns3,
+  Sidebar,
 } from 'lucide-react';
 
 export interface StudioHeaderProps {
@@ -62,6 +64,8 @@ export interface StudioHeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   landingConfig: any;
+  editorLayoutMode?: '3col' | '2col';
+  setEditorLayoutMode?: (mode: '3col' | '2col') => void;
 }
 
 export const StudioHeader: React.FC<StudioHeaderProps> = ({
@@ -93,6 +97,8 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   activeTab,
   setActiveTab,
   landingConfig,
+  editorLayoutMode = '3col',
+  setEditorLayoutMode,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [tabCategoryFilter, setTabCategoryFilter] = useState<'all' | 'design' | 'conversion' | 'seo' | 'management'>('all');
@@ -209,6 +215,38 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
               <span>Ver Página</span>
             </button>
           </div>
+
+          {/* Alternador de Layout: 3 Colunas Studio vs 2 Colunas Clássico */}
+          {setEditorLayoutMode && (
+            <div className="hidden lg:flex items-center bg-neutral-900/90 p-0.5 rounded-xl border border-neutral-800 shadow-inner">
+              <button
+                type="button"
+                onClick={() => setEditorLayoutMode('3col')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                  editorLayoutMode === '3col'
+                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 font-bold shadow-md shadow-amber-500/20'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+                title="Modo Studio 3 Colunas: Estrutura à esquerda, Mockup no centro e Editor à direita"
+              >
+                <Columns3 className="w-3.5 h-3.5" />
+                <span>3 Colunas</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorLayoutMode('2col')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                  editorLayoutMode === '2col'
+                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 font-bold shadow-md shadow-amber-500/20'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+                title="Modo Clássico 2 Colunas: Editor à esquerda e Mockup à direita"
+              >
+                <Sidebar className="w-3.5 h-3.5" />
+                <span>2 Colunas</span>
+              </button>
+            </div>
+          )}
 
           {/* Botão Prévia em Nova Aba */}
           <button
