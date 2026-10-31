@@ -65,7 +65,7 @@ export const PixBillingModal: React.FC<PixBillingModalProps> = ({
 
         const billing = getSiteBillingSummary(pixModalSite);
         const daysDiff = getDaysUntilDue(pixModalSite.dueDate);
-        const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (pixModalSite.daysOverdue || 0);
+        const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
         const editsBlocked = isSiteEditsLocked(pixModalSite, daysOverdue);
         const isSuspended = isSiteSuspendedStatus(pixModalSite);
         const activePixKey = (pixCustomCode || data.saasSettings?.pixKey || 'contato@biovip.com.br').trim();
@@ -386,7 +386,7 @@ export const PixBillingModal: React.FC<PixBillingModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    extendDueDate(pixModalSite.id);
+                    extendDueDate(pixModalSite.id, 30);
                     onClose();
                   }}
                   className="w-full py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer"

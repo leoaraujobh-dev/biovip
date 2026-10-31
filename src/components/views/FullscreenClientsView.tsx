@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
+  Check,
   CheckCircle2,
   Copy,
   CreditCard,
@@ -73,6 +74,7 @@ export interface FullscreenClientsViewProps {
   toggleSiteConstructionMode: (siteId: string) => void;
   toggleSiteSuspensionMode: (siteId: string) => void;
   openPixBillingModal: (site: SavedMicrosite) => void;
+  extendDueDate?: (siteId: string, days?: number) => void;
   openSuspendedPagePreview: (site: SavedMicrosite) => void;
   openPublicMicrosite: (slug: string, customDomain?: string) => void;
   setUnderConstructionPreviewSite: (site: SavedMicrosite | null) => void;
@@ -118,6 +120,7 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
   toggleSiteConstructionMode,
   toggleSiteSuspensionMode,
   openPixBillingModal,
+  extendDueDate,
   openSuspendedPagePreview,
   openPublicMicrosite,
   setUnderConstructionPreviewSite,
@@ -843,7 +846,7 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
               {filteredSites.map((site) => {
                 const billing = getSiteBillingSummary(site);
                 const daysDiff = getDaysUntilDue(site.dueDate);
-                const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (site.daysOverdue || 0);
+                const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
                 const isModel = isModelMicrosite(site);
                 const isUnderConst = isSiteUnderConstruction(site);
                 const isEditsBlocked = !isModel && isSiteEditsLocked(site, daysOverdue);
@@ -1077,6 +1080,23 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
                           >
                             <CreditCard className="w-3.5 h-3.5 text-amber-400" />
                             <span>Fatura Asaas & PIX</span>
+                          </button>
+                        )}
+
+                        {/* 5. CONFIRMAÇÃO DIRETA DE PAGAMENTO (+30 DIAS) */}
+                        {!isModel && extendDueDate && (
+                          <button
+                            type="button"
+                            onClick={() => extendDueDate(site.id, 30)}
+                            className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer transition ${
+                              isSuspended || isEditsBlocked || daysOverdue > 0
+                                ? 'bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-amber-500/20 animate-pulse'
+                                : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                            }`}
+                            title="Confirmar pagamento: renova vencimento por +30 dias, libera edições e zera atrasos"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Confirmar Pagamento (+30d)</span>
                           </button>
                         )}
                       </div>

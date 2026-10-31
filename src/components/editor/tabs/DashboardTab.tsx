@@ -1183,7 +1183,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                       ) : (
                         filteredList.map(site => {
                           const daysDiff = getDaysUntilDue(site.dueDate);
-                          const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : (site.daysOverdue || 0);
+                          const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;
                           const isSuspended = isSiteSuspendedStatus(site);
                           const isOverdue = !isSuspended && (daysDiff < 0 || site.status === 'overdue' || site.status === 'atrasado_d3');
                           const isEditsBlocked = isSiteEditsLocked(site, daysOverdue);

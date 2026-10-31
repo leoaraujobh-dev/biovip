@@ -301,24 +301,29 @@ export const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
     }
 
     if (daysDiff >= 0) {
-      const expectedStatus: CustomerDelinquencyStatus =
-        site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue
-          ? site.status
-          : daysDiff === 0
-          ? 'pendente'
-          : 'pago';
+      const isManuallyDisabled = site.status === 'disabled' && !site.autoDisabledByOverdue;
+      const expectedStatus: CustomerDelinquencyStatus = isManuallyDisabled
+        ? 'disabled'
+        : daysDiff === 0
+        ? 'pendente'
+        : 'pago';
       const expectedLinkStatus: 'ativo' | 'manutencao' =
-        site.autoDisabledByOverdue ? 'ativo' : (site.linkStatus || 'ativo');
+        isManuallyDisabled || (site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue)
+          ? 'manutencao'
+          : 'ativo';
       const expectedEdicoes =
-        site.autoDisabledByOverdue ? false : Boolean(site.edicoesBloqueadas && site.linkStatus === 'manutencao');
+        isManuallyDisabled ? Boolean(site.edicoesBloqueadas) : false;
 
       if (
         site.daysOverdue !== 0 ||
         site.status === 'overdue' ||
         site.status === 'atrasado_d3' ||
+        site.status === 'suspenso_d7' ||
         site.status === 'active' ||
-        ((site.status === 'disabled' || site.status === 'suspenso_d7') && site.autoDisabledByOverdue) ||
-        site.linkStatus !== expectedLinkStatus
+        site.status !== expectedStatus ||
+        site.autoDisabledByOverdue ||
+        site.linkStatus !== expectedLinkStatus ||
+        site.edicoesBloqueadas !== expectedEdicoes
       ) {
         changed = true;
         return {
