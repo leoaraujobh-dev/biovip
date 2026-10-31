@@ -89,7 +89,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
               </button>
             </div>
 
-            {/* Seletor de Modo: Script para Gemini Externo vs GeraÃ§Ã£o AutomÃ¡tica API */}
+            {/* Seletor de Modo: Script para Gemini Externo vs Geração Automática API */}
             <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-neutral-950 border border-neutral-800">
               <button
                 type="button"
@@ -104,7 +104,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 }`}
               >
                 <Code className="w-3.5 h-3.5" />
-                <span>ðŸ¤– Script Gemini & Colar CÃ³digo</span>
+                <span>🤖 Script Gemini & Colar Código</span>
               </button>
               <button
                 type="button"
@@ -119,7 +119,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>âš¡ GeraÃ§Ã£o Direta AutomÃ¡tica</span>
+                <span>⚡ Geração Direta Automática</span>
               </button>
             </div>
 
@@ -143,7 +143,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                     </a>
                   </div>
                   <p className="text-[11px] text-neutral-400 leading-relaxed">
-                    Ao colar esse script lÃ¡ no Gemini, ele vai te solicitar <strong>sequencialmente</strong> os dados do cliente, o <strong>@Instagram</strong> e o <strong>endereÃ§o do Google Maps</strong>, puxar todas as informaÃ§Ãµes da internet e te entregar o cÃ³digo pronto.
+                    Ao colar esse script lá no Gemini, ele vai te solicitar <strong>sequencialmente</strong> os dados do cliente, o <strong>@Instagram</strong> e o <strong>endereço do Google Maps</strong>, puxar todas as informações da internet e te entregar o código pronto.
                   </p>
                   <button
                     type="button"
@@ -157,13 +157,13 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                     {copiedGeminiScript ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     <span>
                       {copiedGeminiScript
-                        ? 'Script Sequencial Copiado! Agora cole lÃ¡ no Gemini'
-                        : 'ðŸ“‹ Copiar Script Sequencial para o Gemini'}
+                        ? 'Script Sequencial Copiado! Agora cole lá no Gemini'
+                        : '📋 Copiar Script Sequencial para o Gemini'}
                     </span>
                   </button>
                   <details className="text-[10px] text-neutral-400">
                     <summary className="cursor-pointer hover:text-amber-300 font-semibold select-none">
-                      ðŸ‘ï¸ Ver ou copiar manualmente o texto do Script
+                      👁️ Ver ou copiar manualmente o texto do Script
                     </summary>
                     <textarea
                       readOnly
@@ -174,12 +174,12 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                   </details>
                 </div>
 
-                {/* PASSO 2: COLAR O CÃ“DIGO ENTREGUE PELO GEMINI */}
+                {/* PASSO 2: COLAR O CÓDIGO ENTREGUE PELO GEMINI */}
                 <div className="p-3.5 rounded-xl bg-neutral-950 border border-emerald-500/30 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
                       <span className="w-4 h-4 rounded-full bg-emerald-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">2</span>
-                      Passo 2: Cole aqui o CÃ³digo que o Gemini te entregou
+                      Passo 2: Cole aqui o Código que o Gemini te entregou
                     </span>
                     {geminiPastedCode.trim() && (
                       <button
@@ -194,7 +194,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 
                   <textarea
                     rows={5}
-                    placeholder='Cole aqui o cÃ³digo JSON gerado pelo Gemini...'
+                    placeholder='Cole aqui o código JSON gerado pelo Gemini...'
                     value={geminiPastedCode}
                     onChange={(e) => {
                       setAiError(null);
@@ -212,7 +212,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                         className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
                       />
                       <span>
-                        ðŸ“¸ Puxar automaticamente as <strong>6 fotos mais curtidas e avatar real do Instagram</strong>
+                        📸 Puxar automaticamente as <strong>6 fotos mais curtidas e avatar real do Instagram</strong>
                       </span>
                     </label>
                     <label className="flex items-center gap-2 text-[11px] text-neutral-300 cursor-pointer select-none">
@@ -223,7 +223,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                         className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
                       />
                       <span>
-                        ðŸ›¡ï¸ JÃ¡ criar com a <strong>Ãrea de AdministraÃ§Ã£o pronta</strong> (Cadastrar cliente no Painel)
+                        🛡️ Já criar com a <strong>Área de Administração pronta</strong> (Cadastrar cliente no Painel)
                       </span>
                     </label>
                   </div>
@@ -244,8 +244,8 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                     <Sparkles className="w-4 h-4 fill-neutral-950" />
                     <span>
                       {geminiImporting
-                        ? 'Criando PÃ¡gina + Puxando Fotos + Montando Ãrea de AdministraÃ§Ã£o...'
-                        : 'âœ¨ Criar PÃ¡gina + Ãrea de AdministraÃ§Ã£o Pronta'}
+                        ? 'Criando Página + Puxando Fotos + Montando Área de Administração...'
+                        : '✨ Criar Página + Área de Administração Pronta'}
                     </span>
                   </button>
                 </div>
@@ -259,13 +259,13 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 <div className="space-y-2">
                   <h4 className="font-bold text-sm text-neutral-100 animate-pulse">
                     {aiStepIndex === 0
-                      ? '1/3 Â· Buscando perfil, bio e as fotos mais curtidas no Instagram...'
+                      ? '1/3 · Buscando perfil, bio e as fotos mais curtidas no Instagram...'
                       : aiStepIndex === 1
-                      ? '2/3 Â· Extraindo serviÃ§os das legendas, endereÃ§o e dados do negÃ³cio...'
-                      : '3/3 Â· Montando galeria mais curtida e catÃ¡logo personalizado com IA...'}
+                      ? '2/3 · Extraindo serviços das legendas, endereço e dados do negócio...'
+                      : '3/3 · Montando galeria mais curtida e catálogo personalizado com IA...'}
                   </h4>
                   <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                    A IA seleciona automaticamente as fotos com mais curtidas do Instagram para a galeria e cria os serviÃ§os com base nas informaÃ§Ãµes reais coletadas do cliente.
+                    A IA seleciona automaticamente as fotos com mais curtidas do Instagram para a galeria e cria os serviços com base nas informações reais coletadas do cliente.
                   </p>
                   <div className="max-w-xs mx-auto pt-2 space-y-1.5 text-left">
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 0 ? 'bg-pink-500/10 border-pink-500/30 text-pink-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
@@ -274,11 +274,11 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                     </div>
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 1 ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span>ExtraÃ§Ã£o de ServiÃ§os Reais & LocalizaÃ§Ã£o</span>
+                      <span>Extração de Serviços Reais & Localização</span>
                     </div>
                     <div className={`flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-lg border ${aiStepIndex >= 2 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-neutral-900 border-neutral-800 text-neutral-500'}`}>
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                      <span>Galeria Ordenada por Curtidas & CatÃ¡logo VIP</span>
+                      <span>Galeria Ordenada por Curtidas & Catálogo VIP</span>
                     </div>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 text-[11px] flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>
-                    A IA seleciona as <strong>imagens com mais curtidas no Instagram</strong> para a galeria e monta o <strong>catÃ¡logo de serviÃ§os baseado nos dados reais coletados do cliente</strong>.
+                    A IA seleciona as <strong>imagens com mais curtidas no Instagram</strong> para a galeria e monta o <strong>catálogo de serviços baseado nos dados reais coletados do cliente</strong>.
                   </span>
                 </div>
 
@@ -322,11 +322,11 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 <div>
                   <label className="text-[11px] font-semibold text-neutral-300 block mb-1 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                    Link do Google Meu NegÃ³cio / Maps (Opcional)
+                    Link do Google Meu Negócio / Maps (Opcional)
                   </label>
                   <input
                     type="text"
-                    placeholder="https://maps.app.goo.gl/... ou endereÃ§o do negÃ³cio"
+                    placeholder="https://maps.app.goo.gl/... ou endereço do negócio"
                     value={aiForm.googleMaps}
                     onChange={(e) => setAiForm((f: any) => ({ ...f, googleMaps: e.target.value }))}
                     className="w-full px-3 py-2 text-xs rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-100"
@@ -335,7 +335,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-[10px] text-neutral-400 block mb-1">Nome do NegÃ³cio / Profissional</label>
+                    <label className="text-[10px] text-neutral-400 block mb-1">Nome do Negócio / Profissional</label>
                     <input
                       type="text"
                       placeholder="Ex: Studio Lorrayne Ramos"
@@ -352,7 +352,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                     <label className="text-[10px] text-neutral-400 block mb-1">Nicho / Especialidade</label>
                     <input
                       type="text"
-                      placeholder="Ex: ExtensÃ£o de cÃ­lios e nail designer"
+                      placeholder="Ex: Extensão de cílios e nail designer"
                       value={aiForm.businessNiche}
                       onChange={(e) => {
                         setAiError(null);
@@ -365,7 +365,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
 
                 <div>
                   <label className="text-[10px] text-neutral-400 block mb-1">
-                    InformaÃ§Ãµes Adicionais / ServiÃ§os Principais / Diferenciais (Opcional)
+                    Informações Adicionais / Serviços Principais / Diferenciais (Opcional)
                   </label>
                   <textarea
                     rows={2}
@@ -379,14 +379,14 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                 {/* Seletor de Objetivo Principal de ConversÃ£o */}
                 <div>
                   <label className="text-[10px] font-semibold text-neutral-300 block mb-1.5">
-                    Objetivo Principal de ConversÃ£o da PÃ¡gina
+                    Objetivo Principal de Conversão da Página
                   </label>
                   <div className="grid grid-cols-2 gap-1.5">
                     {[
-                      { id: 'whatsapp_booking', label: 'ðŸ“… Agendamento RÃ¡pido WA' },
-                      { id: 'catalog_sales', label: 'ðŸ›ï¸ Venda de CatÃ¡logo / Tabela' },
-                      { id: 'vip_triage', label: 'âœ¨ Triagem & OrÃ§amento VIP' },
-                      { id: 'courses_mentorship', label: 'ðŸŽ“ CaptaÃ§Ã£o de Alunas / Cursos' },
+                      { id: 'whatsapp_booking', label: '📅 Agendamento Rápido WA' },
+                      { id: 'catalog_sales', label: '🛍️ Venda de Catálogo / Tabela' },
+                      { id: 'vip_triage', label: '✨ Triagem & Orçamento VIP' },
+                      { id: 'courses_mentorship', label: '🎓 Captação de Alunas / Cursos' },
                     ].map((goal) => (
                       <button
                         key={goal.id}
@@ -416,11 +416,11 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                   </label>
                   <div className="grid grid-cols-5 gap-1">
                     {[
-                      { id: 'auto', label: 'âœ¨ Auto' },
-                      { id: 'rose_luxury', label: 'ðŸŒ¸ RosÃ©' },
-                      { id: 'dark_gold', label: 'ðŸ–¤ Gold' },
-                      { id: 'clean_minimal', label: 'ðŸ¤ Clean' },
-                      { id: 'vibrant_glam', label: 'ðŸ’– Glam' },
+                      { id: 'auto', label: '✨ Auto' },
+                      { id: 'rose_luxury', label: '🌸 Rosé' },
+                      { id: 'dark_gold', label: '🖤 Gold' },
+                      { id: 'clean_minimal', label: '🤍 Clean' },
+                      { id: 'vibrant_glam', label: '💖 Glam' },
                     ].map((st) => (
                       <button
                         key={st.id}
