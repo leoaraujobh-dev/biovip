@@ -376,7 +376,7 @@ export const AiGeneratorModal: React.FC<AiGeneratorModalProps> = ({
                   />
                 </div>
 
-                {/* Seletor de Objetivo Principal de ConversÃ£o */}
+                {/* Seletor de Objetivo Principal de Conversão */}
                 <div>
                   <label className="text-[10px] font-semibold text-neutral-300 block mb-1.5">
                     Objetivo Principal de Conversão da Página

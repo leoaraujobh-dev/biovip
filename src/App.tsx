@@ -3029,7 +3029,15 @@ export default function App() {
     };
   };
 
-  const applyGeneratedMicrositeData = (generated: any, extractedMeta?: any) => {
+  const applyGeneratedMicrositeData = (
+    generated: any,
+    extractedMeta?: any,
+    adminOverrides?: Partial<SavedMicrosite> & {
+      subdomain?: string;
+      adminClient?: any;
+      skipAdminSave?: boolean;
+    }
+  ) => {
     const safeTheme =
       aiForm.selectedPalette && THEMES[aiForm.selectedPalette]
         ? aiForm.selectedPalette
@@ -3265,16 +3273,26 @@ export default function App() {
       },
     };
 
-    // Auto-criação do cadastro do cliente na Área de Administração
-    const clientName =
+    // Auto-criação ou vinculação unificada do cadastro do cliente na Área de Administração
+    const clientName = (
+      adminOverrides?.clientName ||
       builtMicrositeData.profile.name ||
       aiForm.businessName ||
-      'Novo Cliente';
-    const clientPhone =
+      'Novo Cliente'
+    ).trim();
+
+    const clientPhone = (
+      adminOverrides?.clientPhone ||
       aiForm.whatsapp?.trim() ||
       builtMicrositeData.profile.whatsapp ||
-      '';
-    const rawSlug = cleanInsta || clientName;
+      ''
+    ).replace(/\D/g, '');
+
+    const rawSlug =
+      adminOverrides?.subdomain ||
+      cleanInsta ||
+      clientName;
+
     const cleanSlug =
       String(rawSlug)
         .toLowerCase()
@@ -3284,35 +3302,71 @@ export default function App() {
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '') || `cliente-${Date.now().toString().slice(-4)}`;
 
-    const newId = editingSiteId || 'site-' + Date.now();
+    const clientEmail = (
+      adminOverrides?.clientEmail ||
+      `${cleanSlug}@biovip.com.br`
+    ).trim();
+
+    const planKey: MaintenancePlanId =
+      adminOverrides?.maintenancePlan && MAINTENANCE_PLANS[adminOverrides.maintenancePlan as MaintenancePlanId]
+        ? (adminOverrides.maintenancePlan as MaintenancePlanId)
+        : 'pro_4';
+
+    const feeNum =
+      typeof adminOverrides?.monthlyFee === 'number' && adminOverrides.monthlyFee > 0
+        ? adminOverrides.monthlyFee
+        : MAINTENANCE_PLANS[planKey].price;
+
+    const creationFeeNum =
+      typeof adminOverrides?.creationFee === 'number' && adminOverrides.creationFee >= 0
+        ? adminOverrides.creationFee
+        : Number((landingConfig as any).creationFee) || 79.9;
+
+    const isModel = Boolean(adminOverrides?.isLandingModel ?? false);
+    const isDemo = Boolean(adminOverrides?.isTemporaryDemo ?? false);
+    const demoDays = Number(adminOverrides?.demoDurationDays) || 7;
+    const proposalVal = adminOverrides?.proposalValue ? String(adminOverrides.proposalValue) : '197,00';
+    const crmStageVal = adminOverrides?.crmStage || (isDemo ? 'demonstracao' : undefined);
+
     const todayStr = new Date().toISOString().split('T')[0];
     const nextMonth = new Date();
     nextMonth.setDate(nextMonth.getDate() + 30);
     const dueDateStr = nextMonth.toISOString().split('T')[0];
+    const newId = editingSiteId || 'site-' + Date.now();
 
     const autoClient: SavedMicrosite = {
       id: newId,
       clientName,
       clientPhone,
-      clientEmail: `${cleanSlug}@biovip.com.br`,
-      nicheCategory: builtMicrositeData.profile.title || aiForm.businessNiche || 'Geral',
+      clientEmail,
+      nicheCategory:
+        adminOverrides?.nicheCategory ||
+        THEMES[safeTheme]?.category ||
+        builtMicrositeData.profile.title ||
+        aiForm.businessNiche ||
+        'Geral',
       createdAt: todayStr,
       dueDate: dueDateStr,
-      monthlyFee: 49.9,
-      maintenancePlan: 'pro_4',
-      creationFee: Number((landingConfig as any).creationFee) || 79.9,
+      monthlyFee: feeNum,
+      maintenancePlan: planKey,
+      creationFee: creationFeeNum,
       isFirstMonth: true,
       status: 'active',
       updatesThisMonth: 0,
       lastUpdated: todayStr,
       domainType: 'subdomain',
       subdomain: cleanSlug,
-      customDomain: '',
+      customDomain: adminOverrides?.customDomain || '',
       dnsConfigured: true,
       sslActive: true,
       whatsappClicks: 0,
       pageViews: 120,
-      isLandingModel: false,
+      isLandingModel: isModel,
+      isTemporaryDemo: isDemo,
+      demoDurationDays: isDemo ? demoDays : undefined,
+      proposalValue: isDemo ? proposalVal : undefined,
+      crmStage: crmStageVal,
+      prospectNotes: adminOverrides?.prospectNotes || '',
       isCustomized: true,
       data: JSON.parse(JSON.stringify(builtMicrositeData)),
     };
@@ -3323,28 +3377,47 @@ export default function App() {
     setSaveForm({
       clientName,
       clientPhone,
-      clientEmail: `${cleanSlug}@biovip.com.br`,
-      maintenancePlan: 'pro_4',
-      monthlyFee: '49,90',
-      creationFee: '79,90',
+      clientEmail,
+      maintenancePlan: planKey,
+      monthlyFee: feeNum.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      creationFee: creationFeeNum.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
       isFirstMonth: true,
       subdomain: cleanSlug,
-      customDomain: '',
-      isLandingModel: false,
+      customDomain: adminOverrides?.customDomain || '',
+      isLandingModel: isModel,
+      isTemporaryDemo: isDemo,
+      demoDurationDays: demoDays,
+      proposalValue: proposalVal,
+      crmStage: crmStageVal || 'demonstracao',
+      prospectNotes: adminOverrides?.prospectNotes || '',
     });
 
-    setSavedSites((prev) => {
-      const existingIdx = prev.findIndex((s) => s.id === newId);
-      let updatedList: SavedMicrosite[];
-      if (existingIdx >= 0) {
-        updatedList = prev.map((s, idx) => (idx === existingIdx ? autoClient : s));
-      } else {
-        updatedList = [autoClient, ...prev];
-      }
-      persistSavedSitesToStorage(updatedList);
-      syncSiteToFirestore(autoClient);
-      return updatedList;
-    });
+    if (!adminOverrides?.skipAdminSave) {
+      setSavedSites((prev) => {
+        // Busca inteligente e rigorosa para evitar QUALQUER duplicação por id, subdomain ou clientName
+        const existingIdx = prev.findIndex(
+          (s) =>
+            s.id === newId ||
+            (Boolean(s.subdomain) && Boolean(autoClient.subdomain) && s.subdomain.toLowerCase() === autoClient.subdomain.toLowerCase()) ||
+            (Boolean(s.clientName) && Boolean(autoClient.clientName) && s.clientName.trim().toLowerCase() === autoClient.clientName.trim().toLowerCase())
+        );
+        let updatedList: SavedMicrosite[];
+        if (existingIdx >= 0) {
+          const existing = prev[existingIdx];
+          const merged: SavedMicrosite = {
+            ...existing,
+            ...autoClient,
+            id: existing.id, // Preserva o ID oficial já existente
+          };
+          updatedList = prev.map((s, idx) => (idx === existingIdx ? merged : s));
+        } else {
+          updatedList = [autoClient, ...prev];
+        }
+        persistSavedSitesToStorage(updatedList);
+        syncSiteToFirestore(autoClient);
+        return updatedList;
+      });
+    }
 
     setAiModalOpen(false);
     setActiveTab('quickCreate');
@@ -3901,105 +3974,21 @@ Inicie agora fazendo a **Solicitação 1**!`;
         }
       }
 
-      const builtData = applyGeneratedMicrositeData(micrositeObj, extractedMeta);
+      const adminOverrides = geminiAutoCreateAdminRecord
+        ? (adminClientObj || {})
+        : { skipAdminSave: true };
 
-      // Se ativado, já cria e vincula o registro completo do cliente na Área de Administração (Painel & Clientes)
+      const builtData = applyGeneratedMicrositeData(micrositeObj, extractedMeta, adminOverrides);
+
+      setIsClientsFullscreen(false);
+      setGeminiPastedCode('');
+
       if (geminiAutoCreateAdminRecord && builtData) {
-        const clientName =
-          (adminClientObj?.clientName || micrositeObj?.profile?.name || aiForm.businessName || 'Cliente BioVip').trim();
-        const clientPhone =
-          (adminClientObj?.clientPhone || micrositeObj?.profile?.whatsapp || '').replace(/\D/g, '');
-        const clientEmail = (adminClientObj?.clientEmail || '').trim();
-        const rawSlug =
-          adminClientObj?.subdomain ||
-          micrositeObj?.profile?.instagram ||
-          clientName;
-        const cleanSlug =
-          String(rawSlug)
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9-]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '') || `cliente-${Date.now().toString().slice(-4)}`;
-
-        const planKey: MaintenancePlanId =
-          adminClientObj?.maintenancePlan && MAINTENANCE_PLANS[adminClientObj.maintenancePlan as MaintenancePlanId]
-            ? (adminClientObj.maintenancePlan as MaintenancePlanId)
-            : 'pro_4';
-        const feeNum =
-          typeof adminClientObj?.monthlyFee === 'number' && adminClientObj.monthlyFee > 0
-            ? adminClientObj.monthlyFee
-            : MAINTENANCE_PLANS[planKey].price;
-        const creationFeeNum =
-          typeof adminClientObj?.creationFee === 'number' && adminClientObj.creationFee >= 0
-            ? adminClientObj.creationFee
-            : Number((landingConfig as any).creationFee) || 79.9;
-        const isModel = Boolean(adminClientObj?.isLandingModel ?? false);
-
-        const todayStr = new Date().toISOString().split('T')[0];
-        const nextMonth = new Date();
-        nextMonth.setDate(nextMonth.getDate() + 30);
-        const dueDateStr = nextMonth.toISOString().split('T')[0];
-        const newId = 'site-' + Date.now();
-
-        const newSite: SavedMicrosite = {
-          id: newId,
-          clientName,
-          clientPhone: clientPhone || builtData.profile.whatsapp,
-          clientEmail,
-          nicheCategory:
-            adminClientObj?.nicheCategory ||
-            THEMES[builtData.theme]?.category ||
-            'Beleza & Estética',
-          createdAt: todayStr,
-          dueDate: dueDateStr,
-          monthlyFee: feeNum,
-          maintenancePlan: planKey,
-          creationFee: creationFeeNum,
-          isFirstMonth: true,
-          status: 'active',
-          updatesThisMonth: 0,
-          lastUpdated: todayStr,
-          domainType: 'subdomain',
-          subdomain: cleanSlug,
-          customDomain: '',
-          dnsConfigured: true,
-          sslActive: true,
-          whatsappClicks: 0,
-          pageViews: 100,
-          isLandingModel: isModel,
-          isCustomized: true,
-          data: JSON.parse(JSON.stringify(builtData)),
-        };
-
-        setSavedSites((prev) => {
-          const updatedList = [newSite, ...prev];
-          persistSavedSitesToStorage(updatedList);
-          return updatedList;
-        });
-        setEditingSiteId(newId);
-        setSaveForm({
-          clientName,
-          clientPhone: clientPhone || builtData.profile.whatsapp,
-          clientEmail,
-          maintenancePlan: planKey,
-          monthlyFee: feeNum.toFixed(2).replace('.', ','),
-          creationFee: creationFeeNum.toFixed(2).replace('.', ','),
-          isFirstMonth: true,
-          subdomain: cleanSlug,
-          customDomain: '',
-          isLandingModel: isModel,
-        });
-        syncSiteToFirestore(newSite);
-        setIsClientsFullscreen(false);
-        setGeminiPastedCode('');
+        const displayName = (adminClientObj?.clientName || micrositeObj?.profile?.name || aiForm.businessName || 'Cliente BioVip').trim();
         showToast(
-          `🎉 Página + Área de Administração de "${clientName}" (${cleanSlug}) criadas e salvas com sucesso!`
+          `🎉 Página + Área de Administração de "${displayName}" criadas e salvas com sucesso!`
         );
       } else {
-        setIsClientsFullscreen(false);
-        setGeminiPastedCode('');
         showToast('✨ Código do Gemini importado com sucesso! Página montada no editor.');
       }
     } finally {

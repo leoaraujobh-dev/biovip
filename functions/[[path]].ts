@@ -29,6 +29,15 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
           const fastHeaders = new Headers(assetRes.headers);
           fastHeaders.set('Cache-Control', 'public, max-age=31536000, immutable');
           fastHeaders.set('X-Content-Type-Options', 'nosniff');
+          if (path.endsWith('.js') || path.endsWith('.mjs')) {
+            fastHeaders.set('Content-Type', 'application/javascript; charset=utf-8');
+          } else if (path.endsWith('.css')) {
+            fastHeaders.set('Content-Type', 'text/css; charset=utf-8');
+          } else if (path.endsWith('.json') || path.endsWith('.webmanifest')) {
+            fastHeaders.set('Content-Type', 'application/json; charset=utf-8');
+          } else if (path.endsWith('.svg')) {
+            fastHeaders.set('Content-Type', 'image/svg+xml; charset=utf-8');
+          }
           return new Response(assetRes.body, {
             status: assetRes.status,
             statusText: assetRes.statusText,
@@ -44,6 +53,7 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
         const indexHeaders = new Headers(indexRes.headers);
         indexHeaders.set('Cache-Control', 'public, max-age=0, must-revalidate');
         indexHeaders.set('X-Content-Type-Options', 'nosniff');
+        indexHeaders.set('Content-Type', 'text/html; charset=utf-8');
         return new Response(indexRes.body, {
           status: 200,
           headers: indexHeaders,
