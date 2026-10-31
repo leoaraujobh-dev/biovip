@@ -664,6 +664,11 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
           'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=700',
         ],
       },
+      seo: {
+        ...INITIAL_DATA.seo,
+        metaTitle: 'DON CORLEONE BARBERSHOP — Barbearia Tradicional & Visagismo VIP',
+        metaDescription: 'Corte artesanal de precisão, barboterapia e ambiente clássico executivo. Agende seu horário com exclusividade.',
+      },
     }
   },
   {
@@ -784,6 +789,11 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
           'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80&w=700',
           'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=700',
         ],
+      },
+      seo: {
+        ...INITIAL_DATA.seo,
+        metaTitle: 'LARISSA ALMEIDA NAILS — Nail Designer & Alongamento de Luxo',
+        metaDescription: 'Especialista em Fibra de Vidro Slim, Gel Moldado e Naturalidade Europeia. Agende seu atendimento exclusivo.',
       },
     }
   }

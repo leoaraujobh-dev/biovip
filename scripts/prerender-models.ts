@@ -40,6 +40,11 @@ if (lashTemplate?.sampleData) {
   lashData.profile.cursivePhrase = 'Seu olhar transmite o seu verdadeiro poder.';
   lashData.profile.avatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=900';
   lashData.profile.aboutPhotoUrl = 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=700';
+  lashData.seo = {
+    ...INITIAL_DATA.seo,
+    metaTitle: 'JANNE CAMPELO — Especialista em Sobrancelhas & Lash Design',
+    metaDescription: 'Nanoblading realista, Brow Lamination e Extensão de Cílios de alta retenção. Realce o seu olhar com exclusividade.',
+  };
   modelsToPrerender.push({ slug: 'jannecampelo', data: lashData });
 }
 
@@ -54,6 +59,11 @@ if (estheticsTemplate?.sampleData) {
   estheticsData.profile.cursivePhrase = 'Realçando sua beleza única com ciência, arte e sutileza.';
   estheticsData.profile.avatarUrl = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900';
   estheticsData.profile.aboutPhotoUrl = 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=700';
+  estheticsData.seo = {
+    ...INITIAL_DATA.seo,
+    metaTitle: 'DRA. FERNANDA MARCOLIN — Harmonização Facial & Estética Avançada',
+    metaDescription: 'Protocolos médicos de rejuvenescimento, toxina botulínica e bioestimuladores de colágeno com foco em elegância natural.',
+  };
   modelsToPrerender.push({ slug: 'drafernanda', data: estheticsData });
 }
 
