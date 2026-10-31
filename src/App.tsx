@@ -2134,8 +2134,42 @@ export default function App() {
         idbSites.forEach((idbSite: SavedMicrosite) => {
           if (idbSite && idbSite.id && idbSite.data) {
             const existing = byId.get(idbSite.id);
-            if (!existing || JSON.stringify(idbSite.data).length > JSON.stringify(existing.data).length) {
-              byId.set(idbSite.id, { ...existing, ...idbSite });
+            if (!existing) {
+              byId.set(idbSite.id, idbSite);
+            } else {
+              const existingData = existing.data || {};
+              const idbData = idbSite.data || {};
+              const mergedData = {
+                ...idbData,
+                ...existingData,
+                profile: {
+                  ...idbData.profile,
+                  ...existingData.profile,
+                  avatarUrl: existingData.profile?.avatarUrl || idbData.profile?.avatarUrl,
+                  aboutPhotoUrl: existingData.profile?.aboutPhotoUrl || idbData.profile?.aboutPhotoUrl,
+                },
+                studentGrid: {
+                  ...idbData.studentGrid,
+                  ...existingData.studentGrid,
+                  photos: (existingData.studentGrid?.photos?.length ? existingData.studentGrid.photos : idbData.studentGrid?.photos) || [],
+                },
+                services: {
+                  ...idbData.services,
+                  ...existingData.services,
+                },
+                actionCards: (existingData.actionCards?.length ? existingData.actionCards : idbData.actionCards) || [],
+                beforeAfter: {
+                  ...idbData.beforeAfter,
+                  ...existingData.beforeAfter,
+                  beforeImage: existingData.beforeAfter?.beforeImage || idbData.beforeAfter?.beforeImage,
+                  afterImage: existingData.beforeAfter?.afterImage || idbData.beforeAfter?.afterImage,
+                },
+              };
+              byId.set(idbSite.id, {
+                ...idbSite,
+                ...existing,
+                data: mergedData,
+              });
             }
           }
         });
@@ -6025,7 +6059,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
         const img = new window.Image();
         img.onload = () => {
           try {
-            const maxDim = 1200;
+            const maxDim = 800;
             let { width, height } = img;
             if (width > maxDim || height > maxDim) {
               if (width > height) {
@@ -6042,9 +6076,9 @@ Inicie agora fazendo a **Solicitação 1**!`;
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
-              const compressed = canvas.toDataURL('image/jpeg', 0.88);
+              const compressed = canvas.toDataURL('image/jpeg', 0.82);
               callback(compressed);
-              showToast('📸 Imagem carregada e aplicada no preview com sucesso!');
+              showToast('📸 Imagem carregada e aplicada com sucesso!');
               return;
             }
           } catch {
@@ -8854,91 +8888,14 @@ COMO PUBLICAR NO SERVIDOR:
       const dueStr = nextMonth.toISOString().split('T')[0];
 
       let changed = false;
-      const updated = prev.map((s) => {
-        // Fix site-1 (Don Corleone Barber) if unedited and had lawyer images from old INITIAL_SAVED_SITES
-        if (!s.isCustomized && s.id === 'site-1' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
-          const defaultSite1 = INITIAL_SAVED_SITES.find((is) => is.id === 'site-1');
-          if (defaultSite1) {
-            changed = true;
-            return {
-              ...s,
-              isLandingModel: false,
-              data: JSON.parse(JSON.stringify(defaultSite1.data)),
-            };
-          }
-        }
-        // Fix site-2 (Dra. Marina Advocacia) if unedited and had random street portraits in studentGrid
-        if (!s.isCustomized && s.id === 'site-2' && s.data?.studentGrid?.photos?.some((p: string) => p.includes('1517841905240'))) {
-          changed = true;
-          return {
-            ...s,
-            data: JSON.parse(JSON.stringify(INITIAL_DATA)),
-          };
-        }
-        // Fix site-3 (Larissa Almeida Nails) if unedited and had lawyer images from old INITIAL_SAVED_SITES
-        if (!s.isCustomized && s.id === 'site-3' && s.data?.profile?.avatarUrl?.includes('1573496359142')) {
-          const defaultSite3 = INITIAL_SAVED_SITES.find((is) => is.id === 'site-3');
-          if (defaultSite3) {
-            changed = true;
-            return {
-              ...s,
-              data: JSON.parse(JSON.stringify(defaultSite3.data)),
-            };
-          }
-        }
-
-        const matchedPreset = RAW_READY_MADE_MODELS.find(
-          (rm) => `real-niche-${rm.id}` === s.id || rm.subdomain === s.subdomain
-        );
-        const cleanCustom = (s.customDomain || '').toLowerCase().trim();
-        const isFakeCustom =
-          cleanCustom === `www.${s.subdomain}.com.br` ||
-          cleanCustom === `${s.subdomain}.com.br` ||
-          cleanCustom === 'www.dramarinaalmeida.com.br' ||
-          cleanCustom === 'www.doncorleonebarber.com.br';
-
-        if (s.id === 'site-2' && s.subdomain === 'dramarina') {
-          changed = true;
-          return {
-            ...s,
-            subdomain: 'almeidaadv',
-            domainType: 'subdomain' as const,
-            customDomain: '',
-          };
-        }
-        if (s.id === 'site-3' && s.subdomain === 'larissanails') {
-          changed = true;
-          return {
-            ...s,
-            subdomain: 'larissaalmeida',
-            domainType: 'subdomain' as const,
-            customDomain: '',
-          };
-        }
-
-        if (matchedPreset && isModelSiteImagesStale(s, matchedPreset)) {
-          changed = true;
-          return {
-            ...s,
-            domainType: 'subdomain' as const,
-            customDomain: isFakeCustom ? '' : s.customDomain,
-            data: JSON.parse(JSON.stringify(matchedPreset.realSiteData)),
-          };
-        }
-        if (isFakeCustom) {
-          changed = true;
-          return {
-            ...s,
-            domainType: 'subdomain' as const,
-            customDomain: '',
-          };
-        }
-        return s;
-      });
+      // CRITICAL: Preserve ALL existing saved sites and their images/configurations exactly as created and saved by the user.
+      // Never overwrite, revert or modify any existing site's data, photos, avatar, or subdomain.
+      const updated = [...prev];
 
       RAW_READY_MADE_MODELS.forEach((m, idx) => {
         const nicheId = `real-niche-${m.id}`;
-        if (!existingIds.has(nicheId) && !deletedIds.includes(nicheId)) {
+        const alreadyExists = existingIds.has(nicheId) || prev.some((s) => s.subdomain === m.subdomain);
+        if (!alreadyExists && !deletedIds.includes(nicheId)) {
           changed = true;
           updated.push({
             id: nicheId,
@@ -8967,6 +8924,7 @@ COMO PUBLICAR NO SERVIDOR:
               direct: 10,
             },
             isLandingModel: true,
+            isCustomized: true,
             data: m.realSiteData,
           });
         }
@@ -9149,8 +9107,47 @@ COMO PUBLICAR NO SERVIDOR:
     }));
 
     setSavedSites((prev) => {
-      const customOnes = prev.filter((s) => !s.id.startsWith('real-niche-'));
-      const merged = [...customOnes, ...seededSites];
+      const byId = new Map(prev.map((s) => [s.id, s]));
+      seededSites.forEach((s) => {
+        const existing = byId.get(s.id) || prev.find((p) => p.subdomain === s.subdomain);
+        if (existing) {
+          // PRESERVE ALL existing images, configurations and customizations made by the user
+          const existingData = existing.data || {};
+          const mergedData = {
+            ...s.data,
+            ...existingData,
+            profile: {
+              ...s.data.profile,
+              ...existingData.profile,
+              avatarUrl: existingData.profile?.avatarUrl || s.data.profile.avatarUrl,
+              aboutPhotoUrl: existingData.profile?.aboutPhotoUrl || s.data.profile.aboutPhotoUrl,
+            },
+            studentGrid: {
+              ...s.data.studentGrid,
+              ...existingData.studentGrid,
+              photos: existingData.studentGrid?.photos?.length ? existingData.studentGrid.photos : s.data.studentGrid.photos,
+            },
+            services: {
+              ...s.data.services,
+              ...existingData.services,
+            },
+            actionCards: existingData.actionCards?.length ? existingData.actionCards : s.data.actionCards,
+            beforeAfter: {
+              ...s.data.beforeAfter,
+              ...existingData.beforeAfter,
+            },
+          };
+          byId.set(existing.id, {
+            ...s,
+            ...existing,
+            isLandingModel: true,
+            data: mergedData,
+          });
+        } else {
+          byId.set(s.id, s);
+        }
+      });
+      const merged = Array.from(byId.values());
       try {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(merged));
         const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
@@ -9160,7 +9157,8 @@ COMO PUBLICAR NO SERVIDOR:
           localStorage.setItem('luxebio_deleted_site_ids_v1', JSON.stringify(remainingDel));
         }
       } catch {}
-      seededSites.forEach((s) => syncSiteToFirestore(s));
+      persistSavedSitesToStorage(merged);
+      merged.forEach((s) => syncSiteToFirestore(s));
       return merged;
     });
     showToast('✅ Os 8 Microsites Reais (1 de cada nicho) foram restaurados e marcados como Modelos da Landing Page!');
