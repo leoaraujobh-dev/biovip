@@ -190,7 +190,7 @@ export function optimizeImageUrl(url: string, targetWidth = 800): string {
   }
 
   // URLs do CDN do Instagram/Facebook (Meta) possuem proteção rígida de hotlink (CORS/403) e tokens assinados temporários
-  // Roteamos pelo CDN global Weserv com cache seguro para carregar perfeitamente em qualquer navegador e iframe sem 403
+  // Roteamos pelo CDN global Weserv com cache seguro, alta resolução Retina (mínimo 720px para cards e 1080px para fotos principais) e nitidez calibrada (sharp=1)
   if (
     trimmed.includes('cdninstagram.com') ||
     trimmed.includes('fbcdn.net') ||
@@ -198,7 +198,8 @@ export function optimizeImageUrl(url: string, targetWidth = 800): string {
     trimmed.includes('lookaside.fbsbx.com')
   ) {
     if (trimmed.includes('images.weserv.nl')) return trimmed;
-    return `https://images.weserv.nl/?url=${encodeURIComponent(trimmed)}&output=jpg&q=85&w=${targetWidth}`;
+    const retinaWidth = Math.max(targetWidth >= 600 ? 1080 : 720, targetWidth * 2);
+    return `https://images.weserv.nl/?url=${encodeURIComponent(trimmed)}&output=jpg&q=90&sharp=1&w=${retinaWidth}`;
   }
 
   try {
@@ -210,17 +211,9 @@ export function optimizeImageUrl(url: string, targetWidth = 800): string {
       if (!parsed.searchParams.has('fit')) {
         parsed.searchParams.set('fit', 'crop');
       }
-      if (!parsed.searchParams.has('q')) {
-        parsed.searchParams.set('q', '80');
-      }
-      if (!parsed.searchParams.has('w')) {
-        parsed.searchParams.set('w', String(targetWidth));
-      } else {
-        const currentW = parseInt(parsed.searchParams.get('w') || '0', 10);
-        if (currentW > 1200) {
-          parsed.searchParams.set('w', String(targetWidth));
-        }
-      }
+      parsed.searchParams.set('q', '85');
+      const retinaWidth = Math.max(targetWidth >= 600 ? 1080 : 720, targetWidth * 2);
+      parsed.searchParams.set('w', String(retinaWidth));
       return parsed.toString();
     }
   } catch {

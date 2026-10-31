@@ -85,7 +85,7 @@ export function SimulatorImage({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(imgEl, 0, 0);
-          const dataUrl = canvas.toDataURL('image/webp', 0.82) || canvas.toDataURL('image/jpeg', 0.82);
+          const dataUrl = canvas.toDataURL('image/webp', 0.92) || canvas.toDataURL('image/jpeg', 0.92);
           if (dataUrl && dataUrl.startsWith('data:image/')) {
             saveImageToIdbCache(optimizedSrc, dataUrl);
           }

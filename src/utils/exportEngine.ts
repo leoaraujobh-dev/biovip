@@ -149,8 +149,8 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
     return ((data: typeof INITIAL_DATA, theme: typeof siteTheme) => {
       const mc = data.moduleColors || {};
-      const avatarOptimized = optimizeImageUrl(data.profile.avatarUrl, 700);
-      const aboutPhotoOptimized = optimizeImageUrl((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl, 700);
+      const avatarOptimized = optimizeImageUrl(data.profile.avatarUrl, 800);
+      const aboutPhotoOptimized = optimizeImageUrl((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl, 800);
       return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -929,7 +929,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           <div class="cta-sub" style="margin-top: 4px; color: ${resolvedSubColor};">${c.subtitle}</div>
           ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: ${ctaBtnBg}; ${ctaBtnBorder} color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
         </div>
-        <img src="${optimizeImageUrl(c.cardImage, 360)}" alt="${escapeHtmlAttr(c.title)}" loading="lazy" decoding="async" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
+        <img src="${optimizeImageUrl(c.cardImage, 720)}" alt="${escapeHtmlAttr(c.title)}" loading="lazy" decoding="async" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
       </a>`;
         }
 
@@ -1009,7 +1009,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
           return `
           <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
-            <img src="${optimizeImageUrl(p, 420)}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
+            <img src="${optimizeImageUrl(p, 900)}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
             ${caption ? `<div class="gallery-caption">${escapeHtmlAttr(caption)}</div>` : ''}
           </div>`;
         }).join('')}
@@ -1024,11 +1024,11 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       ${data.beforeAfter.subtitle ? `<p style="font-size: 11px; color: ${mc.beforeAfter?.textColor || theme.textMuted}; margin-bottom: 10px;">${data.beforeAfter.subtitle}</p>` : ''}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${optimizeImageUrl(data.beforeAfter.beforeUrl, 420)}" alt="Antes" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 1)}';" />
+          <img src="${optimizeImageUrl(data.beforeAfter.beforeUrl, 840)}" alt="Antes" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 1)}';" />
           <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Antes</span>
         </div>
         <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid ${theme.socialBorder}; height: 170px;">
-          <img src="${optimizeImageUrl(data.beforeAfter.afterUrl, 420)}" alt="Depois" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 2)}';" />
+          <img src="${optimizeImageUrl(data.beforeAfter.afterUrl, 840)}" alt="Depois" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block;" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 2)}';" />
           <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Depois</span>
         </div>
       </div>
@@ -1075,7 +1075,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
             return `
             <div class="service-card ${srv.featured ? 'featured' : ''}">
               <div style="position:relative; height:145px; width:100%; overflow:hidden; background:#000;">
-                <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
+                <img src="${optimizeImageUrl(srv.imageUrl, 720)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
                 ${srv.badge ? `<span class="service-badge" style="position:absolute; top:10px; left:10px;">${srv.badge}</span>` : ''}
                 ${srv.duration ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:3px 8px; border-radius:999px;">⏱ ${srv.duration}</span>` : ''}
               </div>
@@ -1098,7 +1098,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
             <div class="service-card ${srv.featured ? 'featured' : ''}" style="display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="position:relative; aspect-ratio:4/3; width:100%; overflow:hidden; background:#000;">
-                  <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
+                  <img src="${optimizeImageUrl(srv.imageUrl, 720)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
                   ${srv.badge ? `<span class="service-badge" style="position:absolute; top:6px; left:6px; font-size:7px;">${srv.badge}</span>` : ''}
                 </div>
                 <div style="padding:10px;">
@@ -1120,7 +1120,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           return `
           <div class="service-card ${srv.featured ? 'featured' : ''}" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
-              <img src="${optimizeImageUrl(srv.imageUrl, 360)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
+              <img src="${optimizeImageUrl(srv.imageUrl, 720)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
             </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
