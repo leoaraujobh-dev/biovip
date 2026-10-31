@@ -1,16 +1,23 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import generateMicrositeHandler from './generate-microsite.ts';
 import { generateExportCode } from '../src/utils/exportEngine.ts';
 import { generateProspectProposalMessage, type ProspectSituation } from '../src/utils/prospectProposal.ts';
 import { formatWhatsAppPhone } from '../src/utils/formatters.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '..');
-const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
-const SAVED_PROSPECTS_PATH = path.resolve(ROOT_DIR, '.saved-prospects.json');
+const getRootDir = () => {
+  if (typeof process !== 'undefined' && process.cwd) {
+    try {
+      return process.cwd();
+    } catch {
+      return '.';
+    }
+  }
+  return '.';
+};
+
+const getPublicDir = () => path.resolve(getRootDir(), 'public');
+const getSavedProspectsPath = () => path.resolve(getRootDir(), '.saved-prospects.json');
 
 export interface CreateProspectRequest {
   apiKey?: string;
@@ -158,15 +165,18 @@ export default async function createProspectMicrositeHandler(req: any, res: any)
     demoWhatsAppPhone: cleanPhone,
   });
 
-  // 8. Publica o HTML diretamente na pasta estática public/{slug}/index.html
+  // 8. Publica o HTML diretamente na pasta estática public/{slug}/index.html (ambiente com disco)
   try {
-    const targetFolder = path.resolve(PUBLIC_DIR, slug);
-    if (!fs.existsSync(targetFolder)) {
-      fs.mkdirSync(targetFolder, { recursive: true });
+    if (typeof fs !== 'undefined' && fs.existsSync && fs.mkdirSync && fs.writeFileSync) {
+      const publicDir = getPublicDir();
+      const targetFolder = path.resolve(publicDir, slug);
+      if (!fs.existsSync(targetFolder)) {
+        fs.mkdirSync(targetFolder, { recursive: true });
+      }
+      fs.writeFileSync(path.resolve(targetFolder, 'index.html'), htmlContent, 'utf8');
     }
-    fs.writeFileSync(path.resolve(targetFolder, 'index.html'), htmlContent, 'utf8');
   } catch (diskErr: any) {
-    console.error(`Erro ao salvar HTML do microsite na pasta public/${slug}:`, diskErr);
+    console.warn(`[createProspectMicrosite] Armazenamento estático em disco indisponível no ambiente atual (Edge/Serverless):`, diskErr?.message);
   }
 
   // 9. Gera o texto persuasivo de abordagem comercial para o WhatsApp
@@ -213,15 +223,18 @@ export default async function createProspectMicrositeHandler(req: any, res: any)
   };
 
   try {
-    let existingProspects: any[] = [];
-    if (fs.existsSync(SAVED_PROSPECTS_PATH)) {
-      const raw = fs.readFileSync(SAVED_PROSPECTS_PATH, 'utf8');
-      if (raw) existingProspects = JSON.parse(raw);
+    if (typeof fs !== 'undefined' && fs.existsSync && fs.readFileSync && fs.writeFileSync) {
+      const savedProspectsPath = getSavedProspectsPath();
+      let existingProspects: any[] = [];
+      if (fs.existsSync(savedProspectsPath)) {
+        const raw = fs.readFileSync(savedProspectsPath, 'utf8');
+        if (raw) existingProspects = JSON.parse(raw);
+      }
+      // Remove se já existir com o mesmo slug para atualizar
+      existingProspects = existingProspects.filter((p: any) => p.subdomain !== slug);
+      existingProspects.unshift(leadRecord);
+      fs.writeFileSync(savedProspectsPath, JSON.stringify(existingProspects, null, 2), 'utf8');
     }
-    // Remove se já existir com o mesmo slug para atualizar
-    existingProspects = existingProspects.filter((p: any) => p.subdomain !== slug);
-    existingProspects.unshift(leadRecord);
-    fs.writeFileSync(SAVED_PROSPECTS_PATH, JSON.stringify(existingProspects, null, 2), 'utf8');
   } catch {}
 
   // 11. Resposta completa com todos os dados e links para o CRM Externo
