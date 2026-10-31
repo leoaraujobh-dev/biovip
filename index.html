@@ -247,16 +247,23 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
         window.addEventListener('load', function () {
           navigator.serviceWorker.register('/sw.js')
             .then(function (reg) {
-              console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+              reg.update();
               reg.onupdatefound = function () {
                 var installing = reg.installing;
                 if (installing) {
                   installing.onstatechange = function () {
                     if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.log('[PWA] Nova versão do BioVip Studio pronta para uso.');
+                      installing.postMessage({ type: 'SKIP_WAITING' });
                     }
                   };
                 }

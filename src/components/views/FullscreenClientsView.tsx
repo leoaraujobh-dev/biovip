@@ -242,6 +242,37 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
           <div className="flex items-center gap-2.5 flex-wrap">
             <button
               type="button"
+              onClick={async () => {
+                try {
+                  if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const reg of registrations) {
+                      await reg.unregister();
+                    }
+                  }
+                  if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (const key of keys) {
+                      await caches.delete(key);
+                    }
+                  }
+                  showToast('🔄 Cache limpo! Recarregando versão mais recente...');
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 300);
+                } catch {
+                  window.location.reload();
+                }
+              }}
+              className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-neutral-700 cursor-pointer transition shadow-sm"
+              title="Limpar cache do navegador e recarregar imediatamente a versão mais recente do sistema"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+              <span>Atualizar App</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsClientsFullscreen(false)}
               className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer transition"
               title="Sair da tela cheia e voltar para o editor do microsite"

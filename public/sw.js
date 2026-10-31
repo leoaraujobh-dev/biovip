@@ -1,8 +1,7 @@
-// BioVip Studio PWA Service Worker (Offline First Engine)
-const CACHE_NAME = 'biovip-studio-v1.0';
+// BioVip Studio PWA Service Worker (Always Fresh Navigation)
+const CACHE_NAME = 'biovip-studio-v1.3-refresh';
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/biovip-logo.svg',
   '/biovip-logo.gif',
@@ -13,8 +12,9 @@ const STATIC_ASSETS = [
   '/icons/apple-touch-icon.png',
 ];
 
-// Install Event - Pre-cache core shell assets
+// Install Event - Skip waiting immediately to activate newest code
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS).catch((err) => {
@@ -22,10 +22,9 @@ self.addEventListener('install', (event) => {
       });
     })
   );
-  self.skipWaiting();
 });
 
-// Activate Event - Clean up stale caches
+// Activate Event - Clean up all previous stale caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -40,9 +39,9 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch Event - Hybrid Strategy:
-// 1. Navigation (HTML): Network-First with Cache Fallback
-// 2. Google Fonts & Static Assets: Stale-While-Revalidate
-// 3. API / External Dynamic: Network-First
+// 1. Navigation (HTML): ALWAYS Network-First with no-cache, falling back to cache only when offline
+// 2. Google Fonts: Cache First / Stale While Revalidate
+// 3. Static JS/CSS: Network with cache update
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
@@ -52,10 +51,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. HTML Navigation Requests -> Network first, fallback to cached index.html
+  // 1. HTML Navigation Requests -> Always fresh from network to prevent running stale versions
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-cache' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
