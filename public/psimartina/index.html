@@ -1464,6 +1464,91 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
+
+    // Live Client Sync Engine (Atualização Instantânea de Alterações Salvas no Criador)
+    (function() {
+      var currentSlug = 'psimartina';
+      if (!currentSlug) return;
+      var cleanSlug = currentSlug.replace(/[^a-z0-9]/g, '');
+
+      function applyUpdates(freshData) {
+        if (!freshData || typeof freshData !== 'object') return;
+        var p = freshData.profile || {};
+        if (p.avatarUrl) {
+          var heroImg = document.querySelector('.hero-img, .avatar-img');
+          if (heroImg && heroImg.getAttribute('src') !== p.avatarUrl) {
+            heroImg.src = p.avatarUrl;
+          }
+        }
+        if (p.aboutPhotoUrl || (freshData.aboutMe && freshData.aboutMe.photoUrl)) {
+          var aboutPhoto = p.aboutPhotoUrl || freshData.aboutMe.photoUrl;
+          var aboutImg = document.querySelector('.about-photo-img, #about-img, [alt="Sobre"]');
+          if (aboutImg && aboutImg.getAttribute('src') !== aboutPhoto) {
+            aboutImg.src = aboutPhoto;
+          }
+        }
+        if (p.name) {
+          var nameEl = document.querySelector('.name, .hero-name, h1');
+          if (nameEl) nameEl.textContent = p.name;
+        }
+        if (p.title) {
+          var titleEl = document.querySelector('.badge-sub, .hero-title');
+          if (titleEl) titleEl.textContent = p.title;
+        }
+        if (p.tagline) {
+          var tagEl = document.querySelector('.tagline');
+          if (tagEl) tagEl.textContent = p.tagline;
+        }
+        if (freshData.aboutMe && freshData.aboutMe.paragraph) {
+          var bioEl = document.querySelector('.about-bio, .about-paragraph');
+          if (bioEl) bioEl.textContent = freshData.aboutMe.paragraph;
+        }
+      }
+
+      try {
+        var rawLocal = localStorage.getItem('luxebio_live_preview_' + cleanSlug) ||
+                       localStorage.getItem('luxebio_live_preview_' + currentSlug);
+        if (rawLocal) {
+          applyUpdates(JSON.parse(rawLocal));
+        } else {
+          var savedSitesRaw = localStorage.getItem('luxebio_saved_sites_v1');
+          if (savedSitesRaw) {
+            var all = JSON.parse(savedSitesRaw);
+            var found = all.find(function(s) {
+              return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+            });
+            if (found && found.data) applyUpdates(found.data);
+          }
+        }
+      } catch(e) {}
+
+      try {
+        fetch('/api/saved-sites')
+          .then(function(res) { return res.ok ? res.json() : null; })
+          .then(function(json) {
+            if (json && Array.isArray(json.sites)) {
+              var found = json.sites.find(function(s) {
+                return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+              });
+              if (found && found.data) {
+                applyUpdates(found.data);
+              }
+            }
+          })
+          .catch(function() {});
+      } catch(e) {}
+
+      try {
+        if (window.BroadcastChannel) {
+          var bc = new BroadcastChannel('luxebio_preview_sync');
+          bc.onmessage = function(ev) {
+            if (ev && ev.data && (ev.data.slug === currentSlug || ev.data.slug === cleanSlug)) {
+              applyUpdates(ev.data.data);
+            }
+          };
+        }
+      } catch(e) {}
+    })();
   </script>
 
   <!-- Modal Instruções PWA / Adicionar à Tela Inicial -->

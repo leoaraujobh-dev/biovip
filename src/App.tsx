@@ -2531,35 +2531,27 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [data, editingSiteId]);
 
-  // Sincronização automática ao acessar um microsite público no celular que ainda não chegou no storage local
+  // Sincronização automática ao acessar um microsite público no celular (sempre garante dados mais recentes)
   useEffect(() => {
     if (appSurface === 'microsite' && activePublicSlug) {
-      const clean = cleanMicrositeSlug(activePublicSlug);
-      const isAlreadyFound = savedSites.some(s => {
-        const sSub = (s.subdomain || '').toLowerCase().trim();
-        const sClean = sSub.replace(/[^a-z0-9]/g, '');
-        return sSub === clean || sClean === clean.replace(/[^a-z0-9]/g, '');
-      });
-      if (!isAlreadyFound) {
-        fetch('/api/saved-sites')
-          .then(res => (res.ok ? res.json() : null))
-          .then(json => {
-            if (json?.success && Array.isArray(json.sites) && json.sites.length > 0) {
-              setSavedSites(prev => {
-                const byId = new Map(prev.map(s => [s.id, s]));
-                json.sites.forEach((remoteSite: SavedMicrosite) => {
-                  if (remoteSite && remoteSite.id) byId.set(remoteSite.id, remoteSite);
-                });
-                const merged = Array.from(byId.values());
-                persistSavedSitesToStorage(merged);
-                return merged;
+      fetch('/api/saved-sites')
+        .then(res => (res.ok ? res.json() : null))
+        .then(json => {
+          if (json?.success && Array.isArray(json.sites) && json.sites.length > 0) {
+            setSavedSites(prev => {
+              const byId = new Map(prev.map(s => [s.id, s]));
+              json.sites.forEach((remoteSite: SavedMicrosite) => {
+                if (remoteSite && remoteSite.id) byId.set(remoteSite.id, remoteSite);
               });
-            }
-          })
-          .catch(() => {});
-      }
+              const merged = Array.from(byId.values());
+              persistSavedSitesToStorage(merged);
+              return merged;
+            });
+          }
+        })
+        .catch(() => {});
     }
-  }, [appSurface, activePublicSlug, savedSites.length]);
+  }, [appSurface, activePublicSlug]);
 
   // Transmissão de Live Preview em tempo real do Studio para abas de teste via BroadcastChannel (com debounce)
   useEffect(() => {
@@ -5695,7 +5687,18 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
         return updatedSite;
       });
       setSavedSites(updated);
-      persistSavedSitesToStorage(updated);
+      persistSavedSitesToStorage(updated, true);
+      if (typeof window !== 'undefined' && slug) {
+        try {
+          localStorage.setItem(`luxebio_live_preview_${slug.replace(/[^a-z0-9]/g, '')}`, JSON.stringify(data));
+          localStorage.setItem(`luxebio_live_preview_${slug}`, JSON.stringify(data));
+        } catch {}
+        try {
+          const bc = new BroadcastChannel('luxebio_preview_sync');
+          bc.postMessage({ type: 'UPDATE_MICROSITE', slug, data });
+          bc.close();
+        } catch {}
+      }
       if (savedTargetSite) {
         syncSiteToFirestore(savedTargetSite);
       }
@@ -5747,7 +5750,18 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       const newList = [newSite, ...savedSites];
       setSavedSites(newList);
       setEditingSiteId(newId);
-      persistSavedSitesToStorage(newList);
+      persistSavedSitesToStorage(newList, true);
+      if (typeof window !== 'undefined' && slug) {
+        try {
+          localStorage.setItem(`luxebio_live_preview_${slug.replace(/[^a-z0-9]/g, '')}`, JSON.stringify(data));
+          localStorage.setItem(`luxebio_live_preview_${slug}`, JSON.stringify(data));
+        } catch {}
+        try {
+          const bc = new BroadcastChannel('luxebio_preview_sync');
+          bc.postMessage({ type: 'UPDATE_MICROSITE', slug, data });
+          bc.close();
+        } catch {}
+      }
       syncSiteToFirestore(newSite);
       showToast(
         newSite.isFirstMonth
