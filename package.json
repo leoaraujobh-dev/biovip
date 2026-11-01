@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "node scripts/sync-initial-sites.js && tsx scripts/prerender-models.ts && vite build",
-    "vercel-build": "node scripts/sync-initial-sites.js && tsx scripts/prerender-models.ts && vite build",
+    "build": "node scripts/extract-base64-images.js && node scripts/sync-initial-sites.js && tsx scripts/prerender-models.ts && vite build",
+    "vercel-build": "node scripts/extract-base64-images.js && node scripts/sync-initial-sites.js && tsx scripts/prerender-models.ts && vite build",
     "start": "node server.ts",
     "preview": "vite preview",
     "clean": "node -e \"const fs=require('fs');['dist','server.js'].forEach(p=>fs.rmSync(p,{recursive:true,force:true}))\"",

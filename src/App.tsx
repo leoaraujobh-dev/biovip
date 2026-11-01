@@ -375,7 +375,17 @@ export default function App() {
       const raw = localStorage.getItem('luxebio_saved_sites_v1');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) baseList = parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Garante que novos microsites adicionados a INITIAL_SAVED_SITES nunca sejam perdidos por cache antigo de localStorage
+          const byId = new Map(INITIAL_SAVED_SITES.map((s) => [s.id, s]));
+          parsed.forEach((s: SavedMicrosite) => {
+            if (s && s.id) {
+              const init = byId.get(s.id);
+              byId.set(s.id, init ? { ...init, ...s } : s);
+            }
+          });
+          baseList = Array.from(byId.values());
+        }
       }
       const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
       if (deletedRaw) {
@@ -393,6 +403,23 @@ export default function App() {
   });
 
   const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
+  const [saveForm, setSaveForm] = useState<SaveFormState>({
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    maintenancePlan: 'pro_4' as MaintenancePlanId,
+    monthlyFee: '49,90',
+    creationFee: '79,90',
+    isFirstMonth: true,
+    subdomain: '',
+    customDomain: '',
+    isLandingModel: true,
+    isTemporaryDemo: false,
+    demoDurationDays: 7,
+    proposalValue: '197,00',
+    crmStage: 'demonstracao' as CrmStage,
+    prospectNotes: '',
+  });
   const [editingDueDateSiteId, setEditingDueDateSiteId] = useState<string | null>(null);
   const [tempDueDateInput, setTempDueDateInput] = useState<string>('');
   const [publishModalOpen, setPublishModalOpen] = useState(false);
@@ -1472,6 +1499,7 @@ export default function App() {
   const [appSurface, setAppSurface] = useState<'landing' | 'studio' | 'microsite'>(() => detectCreatorSurface());
   const [activePublicSlug, setActivePublicSlug] = useState<string | null>(() => detectPublicMicrositeSlug());
   const [isHydratingSites, setIsHydratingSites] = useState<boolean>(() => Boolean(detectPublicMicrositeSlug()));
+  const [liveStreamData, setLiveStreamData] = useState<any>(null);
 
   // Automatically cleans up the address bar to show '/slug' without triggering 404 or page reload
   useEffect(() => {
@@ -2493,6 +2521,60 @@ export default function App() {
       }
     }
   }, [appSurface, activePublicSlug, savedSites.length]);
+
+  // Transmissão de Live Preview em tempo real do Studio para abas de teste via BroadcastChannel
+  useEffect(() => {
+    if (typeof window === 'undefined' || !data) return;
+    try {
+      if ('BroadcastChannel' in window) {
+        const currentSite = savedSites.find((s) => s.id === editingSiteId);
+        const rawSub = currentSite?.subdomain || data?.profile?.instagram || data?.profile?.name || '';
+        const cleanSub = cleanMicrositeSlug(rawSub);
+        if (cleanSub) {
+          const channel = new BroadcastChannel('biovip_preview_sync');
+          channel.postMessage({
+            type: 'BIOVIP_PREVIEW_UPDATE',
+            slug: cleanSub,
+            data,
+          });
+          channel.close();
+        }
+      }
+    } catch {}
+  }, [data, editingSiteId, savedSites]);
+
+  // Recepção de atualizações de Live Preview em tempo real via BroadcastChannel + storage
+  useEffect(() => {
+    if (typeof window === 'undefined' || appSurface !== 'microsite' || !activePublicSlug) return;
+    const currentSlug = cleanMicrositeSlug(activePublicSlug);
+    let channel: BroadcastChannel | null = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        channel = new BroadcastChannel('biovip_preview_sync');
+        channel.onmessage = (event) => {
+          const { type, slug: incomingSlug, data: incomingData } = event.data || {};
+          if (type === 'BIOVIP_PREVIEW_UPDATE' && incomingSlug && currentSlug === cleanMicrositeSlug(incomingSlug) && incomingData) {
+            setLiveStreamData(incomingData);
+          }
+        };
+      }
+    } catch {}
+
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key) return;
+      if (e.key === `luxebio_live_preview_${currentSlug}` && e.newValue) {
+        try {
+          setLiveStreamData(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      try { channel?.close(); } catch {}
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [appSurface, activePublicSlug]);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -4672,24 +4754,6 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       setAiGenerating(false);
     }
   };
-
-  const [saveForm, setSaveForm] = useState<SaveFormState>({
-    clientName: '',
-    clientPhone: '',
-    clientEmail: '',
-    maintenancePlan: 'pro_4' as MaintenancePlanId,
-    monthlyFee: '49,90',
-    creationFee: '79,90',
-    isFirstMonth: true,
-    subdomain: '',
-    customDomain: '',
-    isLandingModel: true,
-    isTemporaryDemo: false,
-    demoDurationDays: 7,
-    proposalValue: '197,00',
-    crmStage: 'demonstracao' as CrmStage,
-    prospectNotes: '',
-  });
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -9694,6 +9758,61 @@ COMO PUBLICAR NO SERVIDOR:
     showToast('✅ Os 8 Microsites Reais (1 de cada nicho) foram restaurados e marcados como Modelos da Landing Page!');
   };
 
+  const exportFullBackupJson = () => {
+    try {
+      const backupData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        totalSites: savedSites.length,
+        savedSites,
+        landingConfig,
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `biovip_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`✅ Backup exportado com sucesso! (${savedSites.length} microsites salvos)`);
+    } catch (err: any) {
+      showToast(`❌ Erro ao exportar backup: ${err?.message || 'Falha desconhecida'}`);
+    }
+  };
+
+  const handleImportBackupJson = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const raw = e.target?.result as string;
+        const parsed = JSON.parse(raw);
+        const incomingSites: SavedMicrosite[] = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.savedSites) ? parsed.savedSites : []);
+        if (!incomingSites.length) {
+          showToast('⚠️ Arquivo de backup não contém microsites válidos.');
+          return;
+        }
+        setSavedSites((prev) => {
+          const byId = new Map(prev.map((s) => [s.id, s]));
+          incomingSites.forEach((s) => {
+            if (s && s.id) byId.set(s.id, s);
+          });
+          const merged = Array.from(byId.values());
+          persistSavedSitesToStorage(merged);
+          return merged;
+        });
+        if (parsed?.landingConfig && typeof parsed.landingConfig === 'object') {
+          setLandingConfig((prev) => ({ ...prev, ...parsed.landingConfig }));
+        }
+        showToast(`✅ Backup restaurado com sucesso! ${incomingSites.length} microsites recuperados.`);
+      } catch {
+        showToast('❌ Arquivo de backup inválido ou corrompido.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const getPlanCheckoutDetails = (planId: 'basic' | 'pro' | 'vip') => {
     syncMaintenancePlansFromConfig(landingConfig);
     const fmt = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -9989,9 +10108,21 @@ COMO PUBLICAR NO SERVIDOR:
       'medicina', 'vip', 'oficial', 'bio'
     ]);
 
+    // Combina savedSites com INITIAL_SAVED_SITES para garantir resolução instantânea de qualquer cliente modelo mesmo se o localStorage do visitante estiver desatualizado
+    const sitesPool = (() => {
+      const byId = new Map(INITIAL_SAVED_SITES.map((s) => [s.id, s]));
+      savedSites.forEach((s) => {
+        if (s && s.id) {
+          const init = byId.get(s.id);
+          byId.set(s.id, init ? { ...init, ...s } : s);
+        }
+      });
+      return Array.from(byId.values());
+    })();
+
     // 1. Busca primeiro por correspondência EXATA (precisão máxima, sem falsos positivos)
     const exactMatch = slug
-      ? savedSites.find((s) => {
+      ? sitesPool.find((s) => {
           const sSub = (s.subdomain || '').toLowerCase().trim();
           const sCleanSub = sSub.replace(/[^a-z0-9]/g, '');
           const sId = (s.id || '').toLowerCase().trim();
@@ -10025,7 +10156,7 @@ COMO PUBLICAR NO SERVIDOR:
 
     // 3. Busca por aproximação distintiva (somente clientes ativos e que compartilhem o nome próprio, ex: 'analuiza')
     const fuzzyMatches = (!exactMatch && slug && coreSlugRoot.length >= 3)
-      ? savedSites.filter((s) => {
+      ? sitesPool.filter((s) => {
           // Modelos seed suspensos/desativados NUNCA devem ser capturados por aproximação
           if (s.status === 'disabled' || s.status === 'suspenso_d7') return false;
 
@@ -10134,6 +10265,7 @@ COMO PUBLICAR NO SERVIDOR:
       }
 
       const resolvedData =
+        liveStreamData ||
         livePreviewData ||
         (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
@@ -11609,6 +11741,8 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
             landingConfig={landingConfig}
             editorLayoutMode={editorLayoutMode}
             setEditorLayoutMode={handleSetEditorLayoutMode}
+            exportFullBackupJson={exportFullBackupJson}
+            handleImportBackupJson={handleImportBackupJson}
           />
 
           {/* 3 Colunas Studio Pro */}
@@ -11677,6 +11811,8 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
               landingConfig={landingConfig}
               editorLayoutMode={editorLayoutMode}
               setEditorLayoutMode={handleSetEditorLayoutMode}
+              exportFullBackupJson={exportFullBackupJson}
+              handleImportBackupJson={handleImportBackupJson}
             />
             {renderTabPanelsContent()}
           </aside>

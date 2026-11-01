@@ -192,6 +192,61 @@ app.post('/api/landing-config', async (req, res) => {
   }
 });
 
+// Middleware para servir OpenGraph dinâmico para WhatsApp, Telegram e redes sociais
+app.use(async (req, res, next) => {
+  const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
+  const isBot = /facebookexternalhit|whatsapp|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|googlebot|bingbot/.test(userAgent);
+  const rawPath = req.path.replace(/^\/+|\/+$/g, '').toLowerCase();
+
+  if (isBot && rawPath && !rawPath.startsWith('api') && rawPath !== 'criador' && rawPath !== 'studio' && !rawPath.includes('.')) {
+    try {
+      const fs = await import('fs');
+      const sitesPath = path.resolve(__dirname, '.saved-sites.json');
+      if (fs.existsSync(sitesPath)) {
+        const sites = JSON.parse(fs.readFileSync(sitesPath, 'utf-8'));
+        if (Array.isArray(sites)) {
+          const site = sites.find((s: any) =>
+            (s?.subdomain || '').toLowerCase() === rawPath ||
+            (Array.isArray(s?.subdomainAliases) && s.subdomainAliases.some((a: string) => a.toLowerCase() === rawPath))
+          );
+          if (site && site.data) {
+            const host = req.headers.host || 'biovip.com.br';
+            const origin = `https://${host}`;
+            const title = site.data.seo?.metaTitle || `${site.data.profile?.name || site.clientName} — ${site.data.profile?.title || 'Microsite BioVip'}`;
+            const desc = site.data.seo?.metaDescription || site.data.profile?.tagline || 'Agende seu atendimento exclusivo.';
+            let img = site.data.seo?.ogImageUrl || site.data.profile?.avatarUrl || '';
+            if (img && img.startsWith('/')) img = `${origin}${img}`;
+
+            const botHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <meta name="description" content="${desc}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${desc}">
+  <meta property="og:image" content="${img}">
+  <meta property="og:url" content="${origin}/${rawPath}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${desc}">
+  <meta name="twitter:image" content="${img}">
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${desc}</p>
+</body>
+</html>`;
+            return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).send(botHtml);
+          }
+        }
+      }
+    } catch {}
+  }
+  next();
+});
+
 // Vite Dev Server middleware or production static server
 if (process.env.NODE_ENV !== 'production') {
   const { createServer: createViteServer } = await import('vite');

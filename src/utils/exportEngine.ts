@@ -813,6 +813,77 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       transform: translateY(-2px) scale(1.03);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     }
+    .footer-vip-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      max-width: 320px;
+      margin: 14px auto 16px;
+    }
+    .btn-save-pwa, .btn-save-vcard {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      border: 1px solid ${theme.cardBorder};
+      backdrop-filter: blur(8px);
+    }
+    .btn-save-pwa {
+      background: linear-gradient(135deg, ${theme.accent}15, ${theme.accent}30);
+      color: ${theme.textMain};
+      border-color: ${theme.accent}60;
+    }
+    .btn-save-pwa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px ${theme.accent}30;
+      background: linear-gradient(135deg, ${theme.accent}30, ${theme.accent}45);
+    }
+    .btn-save-vcard {
+      background: rgba(255, 255, 255, 0.05);
+      color: ${theme.textMuted};
+    }
+    .btn-save-vcard:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: ${theme.textMain};
+    }
+    .pwa-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 9999999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .pwa-modal-box {
+      background: #121214;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      max-width: 380px;
+      width: 100%;
+      padding: 24px;
+      color: #ffffff;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
     .whatsapp-float {
       position: fixed;
       bottom: 20px;
@@ -1381,6 +1452,14 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>` : ''}
 
     <div class="footer">
+      <div class="footer-vip-actions">
+        <button type="button" class="btn-save-pwa" onclick="openSaveContactModal()">
+          <span>📲 Salvar Cartão na Tela Inicial</span>
+        </button>
+        <button type="button" class="btn-save-vcard" onclick="downloadVCardContact()">
+          <span>📇 Salvar Contato na Agenda</span>
+        </button>
+      </div>
       <div>© ${new Date().getFullYear()} ${data.profile.name}. Todos os direitos reservados.</div>
       ${(() => {
         const creatorInfo = resolveCreatorFooterInfo(data, options?.landingConfig);
@@ -1420,7 +1499,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     <span style="position:absolute; top:-3px; right:-3px; width:18px; height:18px; border-radius:50%; background:#ef4444; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.4);">1</span>
     <svg style="width:28px;height:28px;display:inline-block;vertical-align:middle;fill:#ffffff;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z"/><path d="M12 1c-6.075 0-11 4.925-11 11 0 2.102.589 4.066 1.606 5.744l-1.606 5.256 5.438-1.57c1.613.918 3.479 1.442 5.562 1.442 6.075 0 11-4.925 11-11s-4.925-11-11-11zm0 19.825c-1.875 0-3.626-.543-5.111-1.479l-.366-.23-3.232.933.951-3.111-.252-.387c-1.047-1.606-1.615-3.501-1.615-5.551 0-5.132 4.173-9.305 9.305-9.305 5.132 0 9.305 4.173 9.305 9.305 0 5.132-4.173 9.305-9.305 9.305z"/></svg>
   </a>`;
-  })() : ''} : ''}
+  })() : ''}
 
   <!-- Modal Lightbox da Galeria de Fotos -->
   <div id="gallery-lightbox-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; padding:16px;" onclick="closeGalleryLightbox()">
@@ -1677,7 +1756,81 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       }
     }, true);
     ` : ''}
+    var deferredPwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+    });
+
+    function openSaveContactModal() {
+      if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        deferredPwaPrompt.userChoice.then(function() {
+          deferredPwaPrompt = null;
+        });
+        return;
+      }
+      var modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeSaveContactModal() {
+      var modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function downloadVCardContact() {
+      var cleanPhone = '${(data.profile.whatsapp || '').replace(/\D/g, '')}';
+      var cleanName = '${escapeHtmlAttr(data.profile.name)}';
+      var cleanTitle = '${escapeHtmlAttr(data.profile.title)}';
+      var cleanLoc = '${escapeHtmlAttr(data.profile.location || '')}';
+      var vcard = [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        'FN:' + cleanName,
+        'ORG:' + cleanName,
+        'TITLE:' + cleanTitle,
+        'TEL;TYPE=CELL,VOICE:+' + cleanPhone,
+        'ADR;TYPE=WORK:;;' + cleanLoc,
+        'NOTE:Agendamentos VIP',
+        'END:VCARD'
+      ].join('\\r\\n');
+
+      var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_contato.vcf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   </script>
+
+  <!-- Modal Instruções PWA / Adicionar à Tela Inicial -->
+  <div id="pwa-install-modal" class="pwa-modal-overlay" onclick="closeSaveContactModal()">
+    <div class="pwa-modal-box" onclick="event.stopPropagation()">
+      <div style="font-size: 32px; margin-bottom: 8px;">📲</div>
+      <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #fff;">Instalar Cartão na Tela Inicial</h3>
+      <p style="font-size: 12px; color: #a1a1aa; line-height: 1.5; margin-bottom: 16px;">
+        Acesse este microsite com 1 toque direto da tela inicial do seu celular, como um aplicativo VIP.
+      </p>
+      <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px; text-align: left; margin-bottom: 16px; font-size: 11.5px; line-height: 1.5; color: #e4e4e7;">
+        <div style="margin-bottom: 8px;">
+          <strong style="color: #fbbf24;">🍏 No iPhone (Safari):</strong><br/>
+          Toque no botão Compartilhar (ícone <span style="font-size: 13px;">⬆️</span> na barra inferior) e selecione <strong>"Adicionar à Tela de Início"</strong>.
+        </div>
+        <div>
+          <strong style="color: #60a5fa;">🤖 No Android (Chrome / Brave):</strong><br/>
+          Toque nos três pontinhos (<span style="font-weight: 900;">⋮</span> no topo direito) e selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.
+        </div>
+      </div>
+      <button type="button" onclick="closeSaveContactModal()" style="width: 100%; padding: 10px; background: ${theme.accent}; color: #09090b; font-weight: 800; font-size: 12px; border: none; border-radius: 10px; cursor: pointer;">
+        Entendido ✓
+      </button>
+    </div>
+  </div>
 </body>
 </html>`;
     })(siteData, siteTheme);

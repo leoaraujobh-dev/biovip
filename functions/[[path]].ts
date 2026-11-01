@@ -47,8 +47,64 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
         }
         return assetRes;
       }
-      // Se não for um arquivo com extensão (ex: .js, .css, .png, etc.), faz fallback para index.html (SPA)
+      // Se não for um arquivo com extensão (ex: .js, .css, .png, etc.), faz fallback para index.html (SPA) ou OpenGraph dinâmico para bots
       if (!path.includes('.')) {
+        const slug = path.replace(/^\/+|\/+$/g, '').toLowerCase();
+        const userAgent = (request.headers.get('user-agent') || '').toLowerCase();
+        const isBot = /facebookexternalhit|whatsapp|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|googlebot|bingbot/.test(userAgent);
+
+        if (isBot && slug && slug !== 'criador' && slug !== 'studio') {
+          try {
+            const sitesUrl = new URL('/.saved-sites.json', request.url);
+            const sitesRes = await env.ASSETS.fetch(new Request(sitesUrl.toString()));
+            if (sitesRes.ok) {
+              const sites = await sitesRes.json();
+              if (Array.isArray(sites)) {
+                const site = sites.find((s: any) =>
+                  (s?.subdomain || '').toLowerCase() === slug ||
+                  (Array.isArray(s?.subdomainAliases) && s.subdomainAliases.some((a: string) => a.toLowerCase() === slug))
+                );
+                if (site && site.data) {
+                  const title = site.data.seo?.metaTitle || `${site.data.profile?.name || site.clientName} — ${site.data.profile?.title || 'Microsite BioVip'}`;
+                  const desc = site.data.seo?.metaDescription || site.data.profile?.tagline || 'Agende seu atendimento exclusivo.';
+                  let img = site.data.seo?.ogImageUrl || site.data.profile?.avatarUrl || '';
+                  if (img && img.startsWith('/')) {
+                    img = `${url.origin}${img}`;
+                  }
+                  const botHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <meta name="description" content="${desc}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${desc}">
+  <meta property="og:image" content="${img}">
+  <meta property="og:url" content="${url.origin}/${slug}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${desc}">
+  <meta name="twitter:image" content="${img}">
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${desc}</p>
+</body>
+</html>`;
+                  return new Response(botHtml, {
+                    status: 200,
+                    headers: {
+                      'Content-Type': 'text/html; charset=utf-8',
+                      'Cache-Control': 'public, max-age=3600',
+                    },
+                  });
+                }
+              }
+            }
+          } catch {}
+        }
+
         const indexUrl = new URL('/index.html', request.url);
         const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
         const indexHeaders = new Headers(indexRes.headers);

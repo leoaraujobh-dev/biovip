@@ -4,6 +4,7 @@ import {
   Smartphone,
   Copy,
   Download,
+  Upload,
   Share2,
   ExternalLink,
   Save,
@@ -66,6 +67,8 @@ export interface StudioHeaderProps {
   landingConfig: any;
   editorLayoutMode?: '3col' | '2col';
   setEditorLayoutMode?: (mode: '3col' | '2col') => void;
+  exportFullBackupJson?: () => void;
+  handleImportBackupJson?: (file: File) => void;
 }
 
 export const StudioHeader: React.FC<StudioHeaderProps> = ({
@@ -99,8 +102,11 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   landingConfig,
   editorLayoutMode = '3col',
   setEditorLayoutMode,
+  exportFullBackupJson,
+  handleImportBackupJson,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [tabCategoryFilter, setTabCategoryFilter] = useState<'all' | 'design' | 'conversion' | 'seo' | 'management'>('all');
 
   const hasUnsavedChanges = currentEditingSite
@@ -388,6 +394,43 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                   <Mail className="w-4 h-4 text-purple-400" />
                   <span>Disparo de E-mails em Massa</span>
                 </button>
+
+                {exportFullBackupJson && (
+                  <button
+                    type="button"
+                    onClick={exportFullBackupJson}
+                    className="w-full px-3.5 py-2 text-left hover:bg-neutral-800 flex items-center gap-2 transition cursor-pointer text-emerald-300"
+                    title="Exportar backup completo de todos os clientes em arquivo JSON"
+                  >
+                    <Download className="w-4 h-4 text-emerald-400" />
+                    <span>Exportar Backup Geral (.JSON)</span>
+                  </button>
+                )}
+
+                {handleImportBackupJson && (
+                  <>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept=".json"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImportBackupJson(file);
+                        e.target.value = '';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full px-3.5 py-2 text-left hover:bg-neutral-800 flex items-center gap-2 transition cursor-pointer text-amber-300"
+                      title="Importar e restaurar backup de microsites em JSON"
+                    >
+                      <Upload className="w-4 h-4 text-amber-400" />
+                      <span>Restaurar Backup (.JSON)</span>
+                    </button>
+                  </>
+                )}
 
                 <div className="my-1.5 border-t border-neutral-800" />
 
