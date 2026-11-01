@@ -25,6 +25,11 @@ import {
   Zap,
   Car,
   ShieldCheck,
+  Coffee,
+  Award,
+  CheckCircle,
+  Wifi,
+  Lock,
 } from 'lucide-react';
 import { WhatsAppIcon, InstagramIcon, CalendarIcon } from '../icons/BrandIcons';
 import { SimulatorImage } from '../SimulatorImage';
@@ -1746,50 +1751,114 @@ export function SimulatorChassis({
                   )}
 
                   {/* TRUST BADGES & FACILIDADES (QUEBRA DE OBJEÇÕES) */}
-                  <div
-                    className="p-3 rounded-2xl grid grid-cols-2 gap-2 mt-3"
-                    style={{
-                      background: getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${theme.socialBorder}`,
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
-                        <CreditCard className="w-3.5 h-3.5" />
+                  {(data.trustBadges?.enabled ?? true) && (() => {
+                    const badgeItems = data.trustBadges?.items?.length
+                      ? data.trustBadges.items
+                      : [
+                          { id: 'tb-1', icon: 'credit-card', title: 'Cartão até 12x', subtitle: 'Crédito e Débito', color: 'emerald' },
+                          { id: 'tb-2', icon: 'zap', title: 'Pix Instantâneo', subtitle: 'Confirmação na hora', color: 'amber' },
+                          { id: 'tb-3', icon: 'car', title: 'Fácil Acesso', subtitle: 'Local seguro', color: 'sky' },
+                          { id: 'tb-4', icon: 'shield', title: 'Espaço VIP', subtitle: 'Climatizado & Café', color: 'purple' },
+                        ];
+
+                    const renderBadgeIcon = (iconName?: string) => {
+                      switch ((iconName || '').toLowerCase()) {
+                        case 'credit-card':
+                        case 'card':
+                          return <CreditCard className="w-3.5 h-3.5" />;
+                        case 'zap':
+                        case 'pix':
+                        case 'lightning':
+                          return <Zap className="w-3.5 h-3.5" />;
+                        case 'car':
+                        case 'parking':
+                          return <Car className="w-3.5 h-3.5" />;
+                        case 'shield':
+                        case 'security':
+                        case 'vip':
+                          return <ShieldCheck className="w-3.5 h-3.5" />;
+                        case 'coffee':
+                        case 'cafe':
+                          return <Coffee className="w-3.5 h-3.5" />;
+                        case 'clock':
+                        case 'time':
+                          return <Clock className="w-3.5 h-3.5" />;
+                        case 'map-pin':
+                        case 'location':
+                          return <MapPin className="w-3.5 h-3.5" />;
+                        case 'award':
+                        case 'trophy':
+                          return <Award className="w-3.5 h-3.5" />;
+                        case 'star':
+                          return <Star className="w-3.5 h-3.5" />;
+                        case 'heart':
+                          return <Heart className="w-3.5 h-3.5" />;
+                        case 'check':
+                          return <CheckCircle className="w-3.5 h-3.5" />;
+                        case 'wifi':
+                          return <Wifi className="w-3.5 h-3.5" />;
+                        case 'lock':
+                          return <Lock className="w-3.5 h-3.5" />;
+                        default:
+                          return <Sparkles className="w-3.5 h-3.5" />;
+                      }
+                    };
+
+                    const getBadgeColorClasses = (color?: string, idx = 0) => {
+                      switch (color) {
+                        case 'emerald':
+                        case 'green':
+                          return 'bg-emerald-500/15 text-emerald-400';
+                        case 'amber':
+                        case 'gold':
+                        case 'yellow':
+                          return 'bg-amber-500/15 text-amber-400';
+                        case 'sky':
+                        case 'blue':
+                          return 'bg-sky-500/15 text-sky-400';
+                        case 'purple':
+                        case 'violet':
+                          return 'bg-purple-500/15 text-purple-400';
+                        case 'rose':
+                        case 'pink':
+                        case 'red':
+                          return 'bg-rose-500/15 text-rose-400';
+                        case 'indigo':
+                          return 'bg-indigo-500/15 text-indigo-400';
+                        default: {
+                          const palette = [
+                            'bg-emerald-500/15 text-emerald-400',
+                            'bg-amber-500/15 text-amber-400',
+                            'bg-sky-500/15 text-sky-400',
+                            'bg-purple-500/15 text-purple-400',
+                          ];
+                          return palette[idx % palette.length];
+                        }
+                      }
+                    };
+
+                    return (
+                      <div
+                        className="p-3 rounded-2xl grid grid-cols-2 gap-2 mt-3"
+                        style={{
+                          background: getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${theme.socialBorder}`,
+                        }}
+                      >
+                        {badgeItems.map((badge, idx) => (
+                          <div key={badge.id || `badge-${idx}`} className="flex items-center gap-2">
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${getBadgeColorClasses(badge.color, idx)}`}>
+                              {renderBadgeIcon(badge.icon)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[9.5px] font-bold truncate" style={{ color: theme.textMain }}>{badge.title}</div>
+                              <div className="text-[8px] truncate" style={{ color: theme.textMuted }}>{badge.subtitle}</div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="min-w-0">
-                        <div className="text-[9.5px] font-bold" style={{ color: theme.textMain }}>Cartão até 12x</div>
-                        <div className="text-[8px]" style={{ color: theme.textMuted }}>Crédito e Débito</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
-                        <Zap className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[9.5px] font-bold" style={{ color: theme.textMain }}>Pix Instantâneo</div>
-                        <div className="text-[8px]" style={{ color: theme.textMuted }}>Confirmação na hora</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0">
-                        <Car className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[9.5px] font-bold" style={{ color: theme.textMain }}>Fácil Acesso</div>
-                        <div className="text-[8px]" style={{ color: theme.textMuted }}>Local seguro</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[9.5px] font-bold" style={{ color: theme.textMain }}>Espaço VIP</div>
-                        <div className="text-[8px]" style={{ color: theme.textMuted }}>Climatizado & Café</div>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               );
             })()}

@@ -15,6 +15,7 @@ import {
   Clock,
   User,
   HelpCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
 import { ModuleColorControls } from '../ModuleColorControls';
@@ -1080,6 +1081,40 @@ export function ModulesTab({
             />
           </div>
         )}
+      </div>
+
+      {/* Módulo: Facilidades & Quebra de Objeções */}
+      <div id="module-trustbadges" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-semibold text-neutral-200">Facilidades & Quebra de Objeções (Cartão, Pix, Local, VIP...)</span>
+          </div>
+          <input
+            type="checkbox"
+            checked={data.trustBadges?.enabled ?? true}
+            onChange={(e) => {
+              setData((prev) => ({
+                ...prev,
+                trustBadges: {
+                  items: prev.trustBadges?.items?.length
+                    ? prev.trustBadges.items
+                    : [
+                        { id: 'tb-1', icon: 'credit-card', title: 'Cartão até 12x', subtitle: 'Crédito e Débito', color: 'emerald' },
+                        { id: 'tb-2', icon: 'zap', title: 'Pix Instantâneo', subtitle: 'Confirmação na hora', color: 'amber' },
+                        { id: 'tb-3', icon: 'car', title: 'Fácil Acesso', subtitle: 'Local seguro', color: 'sky' },
+                        { id: 'tb-4', icon: 'shield', title: 'Espaço VIP', subtitle: 'Climatizado & Café', color: 'purple' },
+                      ],
+                  enabled: e.target.checked,
+                },
+              }));
+            }}
+            className="accent-amber-500"
+          />
+        </div>
+        <p className="text-[11px] text-neutral-400">
+          Exibe os 4 cards destacados logo abaixo dos serviços. Você pode editar todos os ícones, títulos e textos na aba <strong>Serviços</strong>.
+        </p>
       </div>
     </div>
   );

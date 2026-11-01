@@ -3382,6 +3382,13 @@ export default function App() {
         ...(generated?.services || {}),
         items: normalizedServices,
       },
+      trustBadges: {
+        ...INITIAL_DATA.trustBadges,
+        ...(generated?.trustBadges || {}),
+        items: Array.isArray(generated?.trustBadges?.items) && generated.trustBadges.items.length > 0
+          ? generated.trustBadges.items
+          : INITIAL_DATA.trustBadges.items,
+      },
       testimonials: {
         ...INITIAL_DATA.testimonials,
         ...(generated?.testimonials || {}),

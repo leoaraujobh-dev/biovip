@@ -1180,36 +1180,72 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       </div>
 
       <!-- Trust Badges & Facilidades (Quebra de Objeções) -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${theme.socialBorder};">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:16px;">💳</span>
-          <div>
-            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Cartão até 12x</div>
-            <div style="font-size:8.5px; color:${theme.textMuted};">Crédito e Débito</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:16px;">⚡</span>
-          <div>
-            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Pix Instantâneo</div>
-            <div style="font-size:8.5px; color:${theme.textMuted};">Confirmação imediata</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:16px;">🚗</span>
-          <div>
-            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Fácil Acesso</div>
-            <div style="font-size:8.5px; color:${theme.textMuted};">Local seguro</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:16px;">☕</span>
-          <div>
-            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Espaço VIP</div>
-            <div style="font-size:8.5px; color:${theme.textMuted};">Climatizado & Café</div>
-          </div>
-        </div>
-      </div>
+      ${(data.trustBadges?.enabled ?? true) ? (() => {
+        const badgeItems = data.trustBadges?.items?.length
+          ? data.trustBadges.items
+          : [
+              { id: 'tb-1', icon: 'credit-card', title: 'Cartão até 12x', subtitle: 'Crédito e Débito' },
+              { id: 'tb-2', icon: 'zap', title: 'Pix Instantâneo', subtitle: 'Confirmação imediata' },
+              { id: 'tb-3', icon: 'car', title: 'Fácil Acesso', subtitle: 'Local seguro' },
+              { id: 'tb-4', icon: 'coffee', title: 'Espaço VIP', subtitle: 'Climatizado & Café' },
+            ];
+
+        const getBadgeEmoji = (iconName?: string) => {
+          switch ((iconName || '').toLowerCase()) {
+            case 'credit-card':
+            case 'card':
+              return '💳';
+            case 'zap':
+            case 'pix':
+            case 'lightning':
+              return '⚡';
+            case 'car':
+            case 'parking':
+              return '🚗';
+            case 'shield':
+            case 'security':
+            case 'vip':
+              return '🛡️';
+            case 'coffee':
+            case 'cafe':
+              return '☕';
+            case 'clock':
+            case 'time':
+              return '⏰';
+            case 'map-pin':
+            case 'location':
+              return '📍';
+            case 'award':
+            case 'trophy':
+              return '🏆';
+            case 'star':
+              return '⭐';
+            case 'heart':
+              return '💖';
+            case 'check':
+              return '✅';
+            case 'wifi':
+              return '📶';
+            case 'lock':
+              return '🔒';
+            default:
+              return '✨';
+          }
+        };
+
+        return `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${theme.socialBorder};">
+          ${badgeItems.map(badge => `
+            <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
+              <span style="font-size:16px; line-height:1;">${getBadgeEmoji(badge.icon)}</span>
+              <div style="min-width:0; overflow:hidden;">
+                <div style="font-size:10px; font-weight:700; color:${theme.textMain}; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${badge.title}</div>
+                <div style="font-size:8.5px; color:${theme.textMuted}; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${badge.subtitle}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+      })() : ''}
     </div>` : ''}
 
     ${data.testimonials?.enabled && data.testimonials.items?.length > 0 ? `

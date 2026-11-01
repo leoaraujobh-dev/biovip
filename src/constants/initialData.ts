@@ -1,4 +1,4 @@
-import { SavedMicrosite } from '../types/microsite';
+import { SavedMicrosite, TrustBadgeItem } from '../types/microsite';
 
 export const INITIAL_DATA = {
   theme: 'navyLaw',
@@ -276,6 +276,15 @@ export const INITIAL_DATA = {
       category?: string;
       featured?: boolean;
     }>
+  },
+  trustBadges: {
+    enabled: true,
+    items: [
+      { id: 'tb-1', icon: 'credit-card', title: 'Cartão até 12x', subtitle: 'Crédito e Débito', color: 'emerald' },
+      { id: 'tb-2', icon: 'zap', title: 'Pix Instantâneo', subtitle: 'Confirmação na hora', color: 'amber' },
+      { id: 'tb-3', icon: 'car', title: 'Fácil Acesso', subtitle: 'Local seguro', color: 'sky' },
+      { id: 'tb-4', icon: 'shield', title: 'Espaço VIP', subtitle: 'Climatizado & Café', color: 'purple' },
+    ] as TrustBadgeItem[],
   },
   beforeAfter: {
     enabled: false,

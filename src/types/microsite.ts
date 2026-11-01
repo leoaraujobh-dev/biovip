@@ -89,6 +89,19 @@ export interface ActionCardItem {
   ctaActionText: string;
 }
 
+export interface TrustBadgeItem {
+  id: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+  color?: string;
+}
+
+export interface TrustBadgesConfig {
+  enabled: boolean;
+  items: TrustBadgeItem[];
+}
+
 export interface SavedMicrosite {
   id: string;
   clientName: string;

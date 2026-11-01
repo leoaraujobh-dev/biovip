@@ -9,6 +9,12 @@ import {
   Trash2,
   Sparkles,
   Upload,
+  ShieldCheck,
+  CreditCard,
+  Zap,
+  Car,
+  Coffee,
+  RotateCcw,
 } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
 import { ModuleColorControls } from '../ModuleColorControls';
@@ -42,6 +48,85 @@ export function ServicesTab({
   openCopyOptimizer,
   handleFileUpload,
 }: ServicesTabProps) {
+  const DEFAULT_TRUST_BADGES = [
+    { id: 'tb-1', icon: 'credit-card', title: 'Cartão até 12x', subtitle: 'Crédito e Débito', color: 'emerald' },
+    { id: 'tb-2', icon: 'zap', title: 'Pix Instantâneo', subtitle: 'Confirmação na hora', color: 'amber' },
+    { id: 'tb-3', icon: 'car', title: 'Fácil Acesso', subtitle: 'Local seguro', color: 'sky' },
+    { id: 'tb-4', icon: 'shield', title: 'Espaço VIP', subtitle: 'Climatizado & Café', color: 'purple' },
+  ];
+
+  const currentTrustBadges = data.trustBadges || {
+    enabled: true,
+    items: DEFAULT_TRUST_BADGES,
+  };
+
+  const toggleTrustBadges = (enabled: boolean) => {
+    setData((prev) => ({
+      ...prev,
+      trustBadges: {
+        items: prev.trustBadges?.items?.length ? prev.trustBadges.items : DEFAULT_TRUST_BADGES,
+        enabled,
+      },
+    }));
+  };
+
+  const updateTrustBadge = (id: string, field: 'icon' | 'title' | 'subtitle' | 'color', val: string) => {
+    setData((prev) => {
+      const existing = prev.trustBadges?.items?.length ? prev.trustBadges.items : DEFAULT_TRUST_BADGES;
+      const updated = existing.map((item) => (item.id === id ? { ...item, [field]: val } : item));
+      return {
+        ...prev,
+        trustBadges: {
+          enabled: prev.trustBadges?.enabled ?? true,
+          items: updated,
+        },
+      };
+    });
+  };
+
+  const addTrustBadge = () => {
+    setData((prev) => {
+      const existing = prev.trustBadges?.items?.length ? prev.trustBadges.items : DEFAULT_TRUST_BADGES;
+      const newItem = {
+        id: `tb-${Date.now()}`,
+        icon: 'star',
+        title: 'Novo Diferencial',
+        subtitle: 'Descrição do benefício',
+        color: 'amber',
+      };
+      return {
+        ...prev,
+        trustBadges: {
+          enabled: prev.trustBadges?.enabled ?? true,
+          items: [...existing, newItem],
+        },
+      };
+    });
+  };
+
+  const removeTrustBadge = (id: string) => {
+    setData((prev) => {
+      const existing = prev.trustBadges?.items?.length ? prev.trustBadges.items : DEFAULT_TRUST_BADGES;
+      return {
+        ...prev,
+        trustBadges: {
+          enabled: prev.trustBadges?.enabled ?? true,
+          items: existing.filter((b) => b.id !== id),
+        },
+      };
+    });
+  };
+
+  const resetTrustBadges = () => {
+    setData((prev) => ({
+      ...prev,
+      trustBadges: {
+        enabled: true,
+        items: DEFAULT_TRUST_BADGES,
+      },
+    }));
+  };
+
   return (
     <div className="space-y-5">
       {/* Header & Master Switch */}
@@ -433,6 +518,146 @@ export function ServicesTab({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* FACILIDADES & DIFERENCIAIS (QUEBRA DE OBJEÇÕES)                           */}
+      {/* ========================================================================= */}
+      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800/80 pb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-100 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Facilidades & Quebra de Objeções</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                {currentTrustBadges.items.length} {currentTrustBadges.items.length === 1 ? 'diferencial' : 'diferenciais'}
+              </span>
+            </h3>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              Cards com ícones destacados exibidos no catálogo para facilitar o fechamento e pagamento.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={resetTrustBadges}
+              className="text-[10px] text-neutral-400 hover:text-amber-300 flex items-center gap-1 transition cursor-pointer"
+              title="Restaurar badges padrão"
+            >
+              <RotateCcw className="w-3 h-3" /> Restaurar Padrão
+            </button>
+            <label className="flex items-center gap-1.5 text-xs text-neutral-300 cursor-pointer bg-neutral-900 px-2.5 py-1.5 rounded-lg border border-neutral-800">
+              <input
+                type="checkbox"
+                checked={currentTrustBadges.enabled}
+                onChange={(e) => toggleTrustBadges(e.target.checked)}
+                className="accent-amber-500"
+              />
+              <span className="font-medium text-[11px]">{currentTrustBadges.enabled ? 'Ativo no Site' : 'Oculto'}</span>
+            </label>
+          </div>
+        </div>
+
+        {currentTrustBadges.enabled && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {currentTrustBadges.items.map((item, idx) => (
+                <div
+                  key={item.id || `tb-${idx}`}
+                  className="p-3.5 rounded-xl bg-neutral-900/90 border border-neutral-800 hover:border-neutral-700 transition space-y-3 relative group"
+                >
+                  <div className="flex items-center justify-between gap-2 border-b border-neutral-800/60 pb-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold">
+                      Diferencial #{idx + 1}
+                    </span>
+                    {currentTrustBadges.items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTrustBadge(item.id)}
+                        className="text-neutral-500 hover:text-rose-400 p-1 rounded transition cursor-pointer"
+                        title="Remover este diferencial"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Seleção rápida de Ícone */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-neutral-400 font-medium">Ícone Visual</label>
+                    <div className="grid grid-cols-6 gap-1">
+                      {[
+                        { icon: 'credit-card', label: '💳 Cartão' },
+                        { icon: 'zap', label: '⚡ Pix' },
+                        { icon: 'car', label: '🚗 Carro' },
+                        { icon: 'shield', label: '🛡️ VIP' },
+                        { icon: 'coffee', label: '☕ Café' },
+                        { icon: 'clock', label: '⏰ Horário' },
+                        { icon: 'map-pin', label: '📍 Local' },
+                        { icon: 'award', label: '🏆 Troféu' },
+                        { icon: 'star', label: '⭐ Estrela' },
+                        { icon: 'heart', label: '💖 Cuidado' },
+                        { icon: 'wifi', label: '📶 Wi-Fi' },
+                        { icon: 'lock', label: '🔒 Seguro' },
+                      ].map((ic) => (
+                        <button
+                          key={ic.icon}
+                          type="button"
+                          onClick={() => updateTrustBadge(item.id, 'icon', ic.icon)}
+                          className={`px-1 py-1 text-[10px] rounded border text-center transition cursor-pointer truncate ${
+                            (item.icon || '').toLowerCase() === ic.icon
+                              ? 'bg-amber-500/25 border-amber-400 text-amber-200 font-bold shadow-sm'
+                              : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                          }`}
+                          title={ic.label}
+                        >
+                          {ic.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Campos de Título e Subtítulo */}
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[10px] text-neutral-400 font-medium block mb-1">Título</label>
+                      <input
+                        type="text"
+                        value={item.title || ''}
+                        onChange={(e) => updateTrustBadge(item.id, 'title', e.target.value)}
+                        placeholder="Ex: Cartão até 12x"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-200 focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-neutral-400 font-medium block mb-1">Subtítulo</label>
+                      <input
+                        type="text"
+                        value={item.subtitle || ''}
+                        onChange={(e) => updateTrustBadge(item.id, 'subtitle', e.target.value)}
+                        placeholder="Ex: Crédito e Débito"
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-400 focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Botão de Adicionar Mais Diferenciais */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={addTrustBadge}
+                className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Adicionar Mais um Diferencial</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
