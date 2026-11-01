@@ -253,7 +253,11 @@ export function SimulatorChassis({
                     data.moduleColors?.announcement?.textColor ||
                     getSafeContrastText(data.moduleColors?.announcement?.bgColor || theme.accent, '#0a0a0c', '#ffffff'),
                 }}
-                onClick={() => setBookingModalOpen(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setBookingModalOpen(true);
+                }}
               >
                 <span>{data.announcement.badge}:</span>
                 <span className="font-medium underline">{data.announcement.text}</span>
@@ -359,7 +363,11 @@ export function SimulatorChassis({
                 )}
                 <button
                   type="button"
-                  onClick={() => setBookingModalOpen(true)}
+                  onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setBookingModalOpen(true);
+                }}
                   className="w-10 h-10 rounded-2xl flex items-center justify-center transition hover:scale-105 cursor-pointer shadow"
                   style={{
                     background: theme.socialBg,
@@ -2217,15 +2225,18 @@ export function SimulatorChassis({
                   </div>
 
                   <a
-                    href={buildWhatsAppLink()}
-                    target="_blank"
+                    href={data.profile.whatsapp ? buildWhatsAppLink() : 'javascript:void(0)'}
+                    target={data.profile.whatsapp ? '_blank' : undefined}
                     rel="noreferrer"
-                    onClick={() => {
+                    onClick={(e) => {
+                      if (!data.profile.whatsapp) {
+                        e.preventDefault();
+                      }
                       recordWhatsappClick();
                       setBookingModalOpen(false);
                     }}
-                    className="w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition hover:opacity-95"
-                    style={{ background: theme.accent, color: '#000' }}
+                    className="w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition hover:opacity-95 cursor-pointer"
+                    style={{ background: theme.accent, color: getSafeContrastText(theme.accent, '#000000', '#ffffff') }}
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Confirmar via WhatsApp</span>

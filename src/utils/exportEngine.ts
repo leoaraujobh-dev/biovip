@@ -356,6 +356,13 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       text-decoration: none;
       font-size: 11px;
       font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      box-sizing: border-box;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .social-btn:hover {
+      transform: scale(1.05);
     }
     .cursive-banner {
       font-family: '${theme.fontScript}', cursive, serif;
@@ -451,6 +458,10 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     @keyframes ctaShimmerSweep {
       0% { transform: translateX(-120%) skewX(-20deg); }
       45%, 100% { transform: translateX(220%) skewX(-20deg); }
+    }
+    @keyframes modalSlideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
     .anim-pulse-glow { animation: ctaPulseGlow 2.4s infinite ease-in-out; }
     .anim-float { animation: ctaFloat 2.8s infinite ease-in-out; }
@@ -810,7 +821,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     ${data.styling.spotlightGlow ? '<div class="spotlight"></div>' : ''}
     
     ${(data.announcement?.enabled || (data as any).announcementBar?.enabled) ? `
-    <a href="${options?.disableLinks ? 'javascript:void(0)' : (data.announcement?.link || (data as any).announcementBar?.link || '#agendar')}" class="announcement" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ''}>
+    <a href="${options?.disableLinks ? 'javascript:void(0)' : ((data.announcement?.link || (data as any).announcementBar?.link || '').includes('booking') || (data.announcement?.link || (data as any).announcementBar?.link || '').includes('agendar') ? 'javascript:void(0)' : (data.announcement?.link || (data as any).announcementBar?.link || '#agendar'))}" class="announcement" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ((data.announcement?.link || (data as any).announcementBar?.link || '').includes('booking') || (data.announcement?.link || (data as any).announcementBar?.link || '').includes('agendar') ? 'onclick="openBookingModal(event); return false;"' : '')}>
       <span>● ${data.announcement?.badge || (data as any).announcementBar?.badge || 'AVISO'}:</span> ${data.announcement?.text || (data as any).announcementBar?.text || ''}
     </a>` : ''}
 
@@ -826,7 +837,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     <div class="social-bar">
       ${data.profile.whatsapp ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="WhatsApp">${WHATSAPP_SVG_STRING}</a>` : ''}
       ${data.profile.instagram ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : `https://instagram.com/${data.profile.instagram}`}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Instagram">${INSTAGRAM_SVG_STRING}</a>` : ''}
-      <a href="${options?.disableLinks ? 'javascript:void(0)' : '#booking'}" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ''} title="Agenda">${CALENDAR_SVG_STRING}</a>
+      <button type="button" class="social-btn" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'onclick="openBookingModal(event)"'} title="Abrir Agenda de Atendimentos">${CALENDAR_SVG_STRING}</button>
     </div>
 
     ${data.highConversion?.enabled && data.highConversion?.urgencyTimer?.enabled ? `
@@ -858,12 +869,15 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       </a>` : ''}
       ${data.actionCards.map(c => {
         const animClass = c.animation && c.animation !== 'none' ? `anim-${c.animation}` : '';
-        const rawHref = c.linkType === 'whatsapp'
+        const isBooking = c.linkType === 'booking' || c.url === '#booking' || c.url === '#agendar';
+        const rawHref = isBooking
+          ? 'javascript:void(0)'
+          : c.linkType === 'whatsapp'
           ? `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}`
           : (c.url || '#');
         const href = options?.disableLinks ? 'javascript:void(0)' : rawHref;
-        const targetAttr = (options?.disableLinks || !c.openInNewTab || href.startsWith('#') || href.startsWith('javascript:')) ? (options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : '') : 'target="_blank" rel="noopener noreferrer"';
-        const cardOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
+        const targetAttr = (options?.disableLinks || isBooking || !c.openInNewTab || href.startsWith('#') || href.startsWith('javascript:')) ? (options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : '') : 'target="_blank" rel="noopener noreferrer"';
+        const cardOnclick = options?.disableLinks ? 'return false;' : isBooking ? "openBookingModal(event); return false;" : "if(window.fbq) fbq('track', 'Lead');";
         let inlineStyle = '';
         if (c.variant === 'accent') {
           const accentTextColor = c.customText || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff');
@@ -1079,13 +1093,17 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       <div class="${data.services.layout === 'grid2' ? 'services-grid-2' : ''}" style="${data.services.layout !== 'grid2' ? 'display:flex; flex-direction:column; gap:10px;' : ''}">
         ${data.services.items.map((srv: any, idx: number) => {
           const srvCat = escapeHtmlAttr((srv.category || srv.badge || '').trim());
-          const waMsg = encodeURIComponent(`Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`);
-          const rawSrvHref = srv.actionType === 'link' && srv.customUrl
+          const isSrvBooking = srv.actionType === 'booking';
+          const defaultSrvMsg = `Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`;
+          const waMsg = encodeURIComponent(srv.whatsappMessage || defaultSrvMsg);
+          const rawSrvHref = isSrvBooking
+            ? 'javascript:void(0)'
+            : srv.actionType === 'link' && srv.customUrl
             ? srv.customUrl
             : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${waMsg}`;
           const srvHref = options?.disableLinks ? 'javascript:void(0)' : rawSrvHref;
-          const srvTargetAttr = options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"';
-          const srvOnclick = options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');";
+          const srvTargetAttr = (isSrvBooking || options?.disableLinks) ? (options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : '') : 'target="_blank" rel="noopener noreferrer"';
+          const srvOnclick = options?.disableLinks ? 'return false;' : isSrvBooking ? `openBookingModal(event, '${escapeHtmlAttr(srv.name)}'); return false;` : "if(window.fbq) fbq('track', 'Lead');";
           const btnText = srv.ctaLabel || 'Reservar';
           const srvTitleColor = mc.services?.titleColor || theme.textMain;
           const srvDescColor = mc.services?.textColor || theme.textMuted;
@@ -1325,6 +1343,44 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>
     <div id="lb-caption" style="display:none; margin-top:12px; max-width:85vw; padding:8px 16px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); color:#fff; font-size:13px; font-weight:500; text-align:center;" onclick="event.stopPropagation()"></div>
   </div>
+
+  <!-- Modal de Pré-Agendamento VIP -->
+  <div id="booking-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); align-items:flex-end; justify-content:center; padding:16px;" onclick="closeBookingModal(event)">
+    <div style="background:${theme.bg}; border:1px solid ${theme.cardBorder}; border-radius:24px; padding:22px; width:100%; max-width:420px; box-shadow:0 25px 60px rgba(0,0,0,0.8); animation:modalSlideUp 0.25s ease-out; margin-bottom:env(safe-area-inset-bottom, 12px);" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div>
+          <h4 style="font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:${theme.accent}; margin:0;">Pré-Agendamento VIP</h4>
+          <p style="font-size:11px; color:${theme.textMuted}; margin:3px 0 0 0;">Escolha seu procedimento e confirme pelo WhatsApp</p>
+        </div>
+        <button type="button" onclick="closeBookingModal(event)" style="background:none; border:none; color:${theme.textMuted}; font-size:22px; cursor:pointer; line-height:1; padding:4px;">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:10px; font-weight:700; text-transform:uppercase; color:${theme.textMuted}; display:block; margin-bottom:4px;">Seu Nome</label>
+          <input type="text" id="bm-name" placeholder="Como podemos te chamar?" style="width:100%; padding:10px 14px; font-size:13px; border-radius:12px; background:rgba(0,0,0,0.4); border:1px solid ${theme.cardBorder}; color:${theme.textMain}; box-sizing:border-box; outline:none;" />
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; text-transform:uppercase; color:${theme.textMuted}; display:block; margin-bottom:4px;">Procedimento / Serviço</label>
+          <select id="bm-service" style="width:100%; padding:10px 14px; font-size:13px; border-radius:12px; background:rgba(0,0,0,0.4); border:1px solid ${theme.cardBorder}; color:${theme.textMain}; box-sizing:border-box; outline:none;">
+            ${(data.services?.items || []).map((s: any) => `<option value="${escapeHtmlAttr(s.name)}" style="background:${theme.bg}; color:${theme.textMain};">${escapeHtmlAttr(s.name)}${s.price ? ` (${escapeHtmlAttr(s.price)})` : ''}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px; font-weight:700; text-transform:uppercase; color:${theme.textMuted}; display:block; margin-bottom:4px;">Melhor Período</label>
+          <select id="bm-period" style="width:100%; padding:10px 14px; font-size:13px; border-radius:12px; background:rgba(0,0,0,0.4); border:1px solid ${theme.cardBorder}; color:${theme.textMain}; box-sizing:border-box; outline:none;">
+            <option value="Qualquer horário disponível" style="background:${theme.bg}; color:${theme.textMain};">Qualquer horário disponível</option>
+            <option value="Manhã (09h às 12h)" style="background:${theme.bg}; color:${theme.textMain};">Manhã (09h às 12h)</option>
+            <option value="Tarde (13h às 17h)" style="background:${theme.bg}; color:${theme.textMain};">Tarde (13h às 17h)</option>
+            <option value="Final do dia / Noite (após 17h)" style="background:${theme.bg}; color:${theme.textMain};">Final do dia / Noite (após 17h)</option>
+          </select>
+        </div>
+        <button type="button" onclick="submitBookingToWhatsApp(event)" style="margin-top:6px; width:100%; padding:14px; border-radius:14px; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:${theme.accent}; color:${getSafeContrastText(theme.accent, '#000000', '#ffffff')}; border:none; box-shadow:0 8px 24px rgba(0,0,0,0.3); transition:transform 0.2s;">
+          ${WHATSAPP_SVG_STRING}
+          <span>Confirmar via WhatsApp</span>
+        </button>
+      </div>
+    </div>
+  </div>
   <script>
     var galleryPhotos = ${JSON.stringify((data.studentGrid?.photos || []).map((p: string, idx: number) => optimizeImageUrl(p || getNicheFallbackImage(data.profile?.title || data.profile?.tagline || '', idx), 900)))};
     var galleryCaptions = ${JSON.stringify((data.studentGrid as any)?.captions || [])};
@@ -1368,9 +1424,82 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       syncLightboxCaption();
     }
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeGalleryLightbox();
+      if (e.key === 'Escape') {
+        closeGalleryLightbox();
+        closeBookingModal();
+      }
       if (e.key === 'ArrowLeft') navGalleryLightbox(-1);
       if (e.key === 'ArrowRight') navGalleryLightbox(1);
+    });
+
+    function openBookingModal(e, prefillService) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      var modal = document.getElementById('booking-modal');
+      if (!modal) return false;
+      if (prefillService) {
+        var select = document.getElementById('bm-service');
+        if (select) {
+          for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === prefillService) {
+              select.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return false;
+    }
+
+    function closeBookingModal(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      var modal = document.getElementById('booking-modal');
+      if (modal) modal.style.display = 'none';
+      document.body.style.overflow = '';
+      return false;
+    }
+
+    function submitBookingToWhatsApp(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      var nameEl = document.getElementById('bm-name');
+      var srvEl = document.getElementById('bm-service');
+      var perEl = document.getElementById('bm-period');
+      var name = (nameEl && nameEl.value ? nameEl.value.trim() : '') || 'Cliente';
+      var srv = (srvEl && srvEl.value ? srvEl.value.trim() : 'Atendimento VIP');
+      var per = (perEl && perEl.value ? perEl.value.trim() : 'Qualquer horário');
+      var phone = '${formatWhatsAppPhone(data.profile.whatsapp || '')}';
+      if (!phone) {
+        alert('Número de WhatsApp não configurado.');
+        return false;
+      }
+      var msg = 'Olá! Meu nome é ' + name + ' e gostaria de agendar um horário para *' + srv + '* no período: ' + per + '.';
+      var url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg);
+      window.open(url, '_blank');
+      closeBookingModal();
+      return false;
+    }
+
+    document.addEventListener('click', function(e) {
+      var a = e.target && e.target.closest ? e.target.closest('a') : null;
+      if (a) {
+        var href = a.getAttribute('href');
+        if (href === '#booking' || href === '#agendar') {
+          e.preventDefault();
+          e.stopPropagation();
+          openBookingModal(e);
+          return false;
+        }
+      }
     });
 
     function copyAddress(btn, text) {
