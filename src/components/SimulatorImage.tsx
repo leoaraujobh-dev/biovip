@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
 import { optimizeImageUrl } from '../utils/formatters';
 
@@ -27,28 +27,63 @@ export const SimulatorImage = React.memo(function SimulatorImage({
   decoding?: 'async' | 'sync' | 'auto';
   targetWidth?: number;
 }) {
-  const optimizedSrc = React.useMemo(() => optimizeImageUrl(src, targetWidth), [src, targetWidth]);
-  const optimizedFallback = React.useMemo(() => optimizeImageUrl(fallbackUrl, targetWidth), [fallbackUrl, targetWidth]);
+  const isImmediate = Boolean(
+    src && (
+      src.startsWith('data:') ||
+      src.startsWith('blob:') ||
+      src.startsWith('/assets/') ||
+      src.startsWith('./assets/')
+    )
+  );
 
-  const [loaded, setLoaded] = useState(false);
+  const optimizedSrc = React.useMemo(() => {
+    if (isImmediate) return src;
+    return optimizeImageUrl(src, targetWidth);
+  }, [src, targetWidth, isImmediate]);
+
+  const optimizedFallback = React.useMemo(
+    () => optimizeImageUrl(fallbackUrl, targetWidth),
+    [fallbackUrl, targetWidth]
+  );
+
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [loaded, setLoaded] = useState(isImmediate);
   const [hasError, setHasError] = useState(false);
 
-  // Reset loaded/error state when src changes
   useEffect(() => {
+    if (isImmediate) {
+      setLoaded(true);
+      setHasError(false);
+      return;
+    }
+
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setLoaded(true);
+      setHasError(false);
+      return;
+    }
+
     setLoaded(false);
     setHasError(false);
-  }, [optimizedSrc]);
+
+    // Failsafe timer: se por algum motivo a imagem demorar ou o evento onLoad for engolido pelo navegador, exibe a imagem
+    const timer = setTimeout(() => {
+      setLoaded(true);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [optimizedSrc, isImmediate]);
 
   const displaySrc = hasError || !optimizedSrc ? optimizedFallback : optimizedSrc;
 
   return (
     <>
-      {!loaded && (
+      {!loaded && !isImmediate && (
         <div
           className={`absolute inset-0 z-10 skeleton-shimmer flex items-center justify-center transition-opacity duration-300 pointer-events-none ${skeletonClassName}`}
           style={
             {
-              backgroundColor: 'rgba(24, 24, 27, 0.85)',
+              backgroundColor: 'rgba(24, 24, 27, 0.65)',
               '--skel-shimmer': `${accentColor}30`,
             } as React.CSSProperties
           }
@@ -62,21 +97,21 @@ export const SimulatorImage = React.memo(function SimulatorImage({
         </div>
       )}
       <img
+        ref={imgRef}
         src={displaySrc}
         alt={alt}
-        loading={loading}
-        decoding={decoding}
+        loading={isImmediate ? 'eager' : loading}
+        decoding={isImmediate ? 'sync' : decoding}
         referrerPolicy={referrerPolicy}
         onLoad={() => setLoaded(true)}
         onError={() => {
           if (!hasError && optimizedSrc !== optimizedFallback) {
             setHasError(true);
-          } else {
-            setLoaded(true);
           }
+          setLoaded(true);
         }}
-        className={`${className} transition-opacity duration-300 ease-out ${
-          loaded ? 'opacity-100' : 'opacity-0'
+        className={`${className} transition-opacity duration-200 ease-out ${
+          loaded || isImmediate ? 'opacity-100' : 'opacity-0'
         }`}
         style={style}
       />

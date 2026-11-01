@@ -306,6 +306,8 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                   referrerPolicy={data.profile.avatarUrl.startsWith('http') ? 'no-referrer' : undefined}
                   accentColor={theme.accent}
                   targetWidth={1080}
+                  loading="eager"
+                  decoding="sync"
                   className="w-full h-full object-cover block transition-all duration-300"
                   style={{
                     transform: `scale(${(data.styling.photoScale || 100) / 100})`,
@@ -2135,6 +2137,8 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                       alt="Sobre"
                       referrerPolicy="no-referrer"
                       accentColor={theme.accent}
+                      loading="eager"
+                      decoding="sync"
                       className="w-full h-full object-cover transition-all duration-300"
                       style={{
                         objectPosition: `${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%`,
