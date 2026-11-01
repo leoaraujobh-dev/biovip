@@ -1471,17 +1471,12 @@
       function applyUpdates(freshData) {
         if (!freshData || typeof freshData !== 'object') return;
         var p = freshData.profile || {};
+        
+        // 1. Cabeçalho & Perfil
         if (p.avatarUrl) {
           var heroImg = document.querySelector('.hero-img, .avatar-img');
           if (heroImg && heroImg.getAttribute('src') !== p.avatarUrl) {
             heroImg.src = p.avatarUrl;
-          }
-        }
-        if (p.aboutPhotoUrl || (freshData.aboutMe && freshData.aboutMe.photoUrl)) {
-          var aboutPhoto = p.aboutPhotoUrl || freshData.aboutMe.photoUrl;
-          var aboutImg = document.querySelector('.about-photo-img, #about-img, [alt="Sobre"]');
-          if (aboutImg && aboutImg.getAttribute('src') !== aboutPhoto) {
-            aboutImg.src = aboutPhoto;
           }
         }
         if (p.name) {
@@ -1496,9 +1491,96 @@
           var tagEl = document.querySelector('.tagline');
           if (tagEl) tagEl.textContent = p.tagline;
         }
-        if (freshData.aboutMe && freshData.aboutMe.paragraph) {
-          var bioEl = document.querySelector('.about-bio, .about-paragraph');
-          if (bioEl) bioEl.textContent = freshData.aboutMe.paragraph;
+        if (p.cursivePhrase) {
+          var curEl = document.querySelector('.cursive-phrase');
+          if (curEl) curEl.textContent = p.cursivePhrase;
+        }
+        if (p.whatsapp) {
+          var cleanPhone = String(p.whatsapp).replace(/[^0-9]/g, '');
+          var waLinks = document.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp.com"]');
+          waLinks.forEach(function(a) {
+            var oldHref = a.getAttribute('href') || '';
+            a.href = oldHref.replace(/wa.me/[0-9]+/, 'wa.me/' + cleanPhone);
+          });
+        }
+        if (p.instagram) {
+          var cleanInsta = String(p.instagram).replace(/[@s]/g, '');
+          var instaLinks = document.querySelectorAll('a[href*="instagram.com"]');
+          instaLinks.forEach(function(a) {
+            a.href = 'https://instagram.com/' + cleanInsta;
+          });
+        }
+
+        // 2. Sobre Mim
+        var ab = freshData.aboutMe || {};
+        var aboutPhoto = p.aboutPhotoUrl || ab.photoUrl;
+        if (aboutPhoto) {
+          var aboutImg = document.querySelector('.about-photo-img, #about-img, [alt="Sobre"]');
+          if (aboutImg && aboutImg.getAttribute('src') !== aboutPhoto) {
+            aboutImg.src = aboutPhoto;
+          }
+          if (aboutImg) {
+            var posX = ab.photoPosX !== undefined ? ab.photoPosX : 50;
+            var posY = ab.photoPosY !== undefined ? ab.photoPosY : 25;
+            aboutImg.style.objectPosition = posX + '% ' + posY + '%';
+            if (ab.photoHeight && aboutImg.parentElement) {
+              aboutImg.parentElement.style.height = ab.photoHeight + 'px';
+            }
+          }
+        }
+        if (ab.headline) {
+          var abHead = document.querySelector('.about-headline, h3');
+          if (abHead && abHead.textContent.toLowerCase().includes('sobre')) {
+            abHead.textContent = ab.headline;
+          }
+        }
+        if (ab.paragraph) {
+          var bioEl = document.querySelector('.about-bio, .about-paragraph, p');
+          if (bioEl) bioEl.textContent = ab.paragraph;
+        }
+        if (ab.closingPhrase) {
+          var abClosing = document.querySelector('.about-closing');
+          if (abClosing) abClosing.textContent = ab.closingPhrase;
+        }
+
+        // 3. Portfólio & Galeria (StudentGrid)
+        if (freshData.studentGrid && Array.isArray(freshData.studentGrid.photos) && freshData.studentGrid.photos.length > 0) {
+          var galleryImgs = document.querySelectorAll('#galeria img, .gallery-item img, [alt^="Foto "]');
+          galleryImgs.forEach(function(gImg, idx) {
+            if (freshData.studentGrid.photos[idx]) {
+              gImg.src = freshData.studentGrid.photos[idx];
+            }
+          });
+        }
+
+        // 4. Catálogo de Serviços
+        if (freshData.services && Array.isArray(freshData.services.items) && freshData.services.items.length > 0) {
+          var serviceCards = document.querySelectorAll('.service-card');
+          serviceCards.forEach(function(card, idx) {
+            var item = freshData.services.items[idx];
+            if (!item) return;
+            var titleEl = card.querySelector('.service-title, h4');
+            if (titleEl && item.name) titleEl.textContent = item.name;
+            var priceEl = card.querySelector('.service-price');
+            if (priceEl && item.price) priceEl.textContent = item.price;
+            var descEl = card.querySelector('.service-desc, p');
+            if (descEl && item.description) descEl.textContent = item.description;
+            var srvImg = card.querySelector('img');
+            if (srvImg && item.imageUrl) srvImg.src = item.imageUrl;
+          });
+        }
+
+        // 5. Dúvidas Frequentes (FAQ)
+        if (freshData.faq && Array.isArray(freshData.faq.items) && freshData.faq.items.length > 0) {
+          var faqDetails = document.querySelectorAll('details');
+          faqDetails.forEach(function(dt, idx) {
+            var item = freshData.faq.items[idx];
+            if (!item) return;
+            var sum = dt.querySelector('summary');
+            if (sum && item.question) sum.textContent = item.question;
+            var ans = dt.querySelector('p');
+            if (ans && item.answer) ans.textContent = item.answer;
+          });
         }
       }
 

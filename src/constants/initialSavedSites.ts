@@ -7077,7 +7077,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     "daysOverdue": 0,
     "edicoesBloqueadas": false,
     "linkStatus": "ativo",
-    "updatesThisMonth": 1,
+    "updatesThisMonth": 2,
     "lastUpdated": "2026-11-01",
     "domainType": "subdomain",
     "subdomain": "germanazocrato",
@@ -7274,18 +7274,23 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         "headline": "Portfólio & Estrutura de Atendimento",
         "subtitle": "Registros reais do nosso padrão de entrega e excelência jurídica",
         "badge": "ESTRUTURA VIP",
-        "layout": "smart_masonry",
-        "aspectRatio": "auto",
+        "layout": "mosaic",
+        "aspectRatio": "square",
         "enableLightbox": true,
         "photos": [
-          "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700",
-          "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700",
-          "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700",
-          "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700",
-          "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700",
-          "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700"
+          "/assets/models/germanazocrato/portfolio-1.jpg",
+          "/assets/models/germanazocrato/portfolio-2.jpg",
+          "/assets/models/germanazocrato/portfolio-3.jpg",
+          "/assets/models/germanazocrato/portfolio-4.jpg",
+          "/assets/models/germanazocrato/portfolio-5.jpg"
         ],
-        "captions": []
+        "captions": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
       },
       "locationCard": {
         "enabled": true,
@@ -7302,14 +7307,14 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         "headline": "Procedimentos & Tratamentos",
         "subtitle": "Protocolos individualizados com foco em biossegurança e conforto",
         "badge": "CATÁLOGO VIP",
-        "layout": "list",
+        "layout": "featured",
         "items": [
           {
             "id": "srv-1",
             "name": "Drenagem Linfática Pós-Operatório",
             "category": "Pós-Cirúrgico",
             "description": "Protocolo clínico individualizado para cirurgias plásticas, reparadoras e cesáreas. Reduz o inchaço e previne fibroses.",
-            "price": "R$ 180,00",
+            "price": "Sob Consulta",
             "oldPrice": "R$ 220,00",
             "duration": "1h00",
             "badge": "MAIS PROCURADO",
@@ -7318,14 +7323,14 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
             "customUrl": "",
             "whatsappMessage": "Olá Germana! Gostaria de agendar a Drenagem Pós-Operatório.",
             "featured": true,
-            "imageUrl": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=600"
+            "imageUrl": "/assets/models/germanazocrato/service-1.jpg"
           },
           {
             "id": "srv-2",
             "name": "Drenagem Linfática Corporal & Facial",
             "category": "Estética Clínica",
             "description": "Manobras suaves e precisas para alívio de retenção de líquidos, desintoxicação tecidual e melhora circulatória.",
-            "price": "R$ 150,00",
+            "price": "Sob Consulta",
             "oldPrice": "",
             "duration": "1h00",
             "badge": "LEVEZA IMEDIATA",
@@ -7341,16 +7346,16 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
             "name": "Taping Terapêutico Pós-Cirúrgico",
             "category": "Recuperação Rápida",
             "description": "Aplicação especializada de bandagens compressivas para alívio da dor, contenção de edemas e aceleração cicatricial.",
-            "price": "R$ 120,00",
+            "price": "Sob Consulta",
             "oldPrice": "",
             "duration": "45min",
-            "badge": "SUPORTE TÉCNICO",
+            "badge": "",
             "ctaLabel": "Consultar Taping",
             "actionType": "booking",
             "customUrl": "",
             "whatsappMessage": "Olá Germana! Gostaria de saber mais sobre o Taping Terapêutico.",
             "featured": false,
-            "imageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=600"
+            "imageUrl": "/assets/models/germanazocrato/service-3.jpg"
           },
           {
             "id": "srv-4",
@@ -7398,7 +7403,9 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         "headline": "Transformação Real",
         "subtitle": "Arraste para comparar o antes e o depois",
         "beforeUrl": "https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&q=80&w=500",
-        "afterUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=500"
+        "afterUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=500",
+        "beforeImage": "",
+        "afterImage": ""
       },
       "testimonials": {
         "enabled": true,
@@ -7560,6 +7567,13 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         "customJs": "",
         "isolatedIframePreview": false
       }
-    }
+    },
+    "isTemporaryDemo": false,
+    "demoDurationDays": 7,
+    "crmStage": "demonstracao",
+    "proposalValue": 197,
+    "prospectNotes": "",
+    "prospectInstagram": "germanazocrato",
+    "prospectSituation": "wa_direto"
   }
 ];
