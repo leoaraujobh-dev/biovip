@@ -792,19 +792,24 @@
     
 
     
-    <div class="cta-card" style="margin-top: 16px; background: rgba(226, 184, 87, 0.12); border: 1px solid rgba(226, 184, 87, 0.35); color: #ffffff;">
-      <div class="cta-left">
-        <div class="cta-icon" style="color: #e2b857;">📍</div>
-        <div>
+    <div class="cta-card" style="margin-top: 16px; background: rgba(226, 184, 87, 0.12); border: 1px solid rgba(226, 184, 87, 0.35); color: #ffffff; padding: 14px; border-radius: 18px; display: block;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="cta-icon" style="color: #e2b857; font-size: 20px; flex-shrink: 0;">📍</div>
+        <div style="flex: 1; min-width: 0;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <div class="cta-title" style="color: #ffffff;">Nossa Localização</div>
+            <div class="cta-title" style="color: #ffffff; font-size: 13px; font-weight: 700;">Nossa Localização</div>
             <span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:rgba(16,185,129,0.18); color:#10b981; border:1px solid rgba(16,185,129,0.35);">● ABERTO AGORA · HORA MARCADA</span>
           </div>
-          <div class="cta-sub" style="color: #cbd5e1;">Av. Paulista, 1200 - Bela Vista, São Paulo - SP</div>
-          <div style="font-size:10px; margin-top:3px; opacity:0.9; font-weight:600; color: #cbd5e1;">🕒 Seg a Sáb · 08:30 às 19:30</div>
+          <div class="cta-sub" style="color: #cbd5e1; font-size: 11px; margin-top: 2px;">Av. Paulista, 1200 - Bela Vista, São Paulo - SP</div>
+          <div style="font-size:10px; margin-top:4px; opacity:0.9; font-weight:600; color: #cbd5e1;">🕒 Seg a Sáb · 08:30 às 19:30</div>
         </div>
       </div>
-      <a href="https://maps.google.com" target="_blank" style="font-size: 10px; font-weight: bold; color: #e2b857; text-decoration: underline;">Mapa</a>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+        <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid rgba(226, 184, 87, 0.35); color: #f8fafc; font-size: 9.5px; font-weight: 700; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px;">🗺️ Maps</a>
+        <a href="https://waze.com/ul?q=Av.%20Paulista%2C%201200%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP&navigate=yes" target="_blank" rel="noopener noreferrer" style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid rgba(226, 184, 87, 0.35); color: #f8fafc; font-size: 9.5px; font-weight: 700; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px;">🚗 Waze</a>
+        <a href="https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=Av.%20Paulista%2C%201200%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP" target="_blank" rel="noopener noreferrer" style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid rgba(226, 184, 87, 0.35); color: #fff; font-size: 9px; font-weight: 900; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px;">UBER</a>
+        <button type="button" onclick="copyAddress(this, 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP')" style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid rgba(226, 184, 87, 0.35); color: #f8fafc; font-size: 9.5px; font-weight: 700; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;">📋 Copiar</button>
+      </div>
     </div>
 
     
@@ -814,9 +819,20 @@
         <h3 class="gallery-title" style="color:#e2b857;">Como posso te ajudar</h3>
         <p class="gallery-sub" style="color:#cbd5e1;">Procedimentos, consultorias e soluções sob medida para o seu objetivo</p>
       </div>
+
+      
+        <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; scrollbar-width:none;">
+          <button type="button" class="srv-cat-btn active" onclick="filterServices(this, 'all')" style="padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; border-radius:999px; background:#e2b857; color:#0a0a0c; border:1px solid #e2b857; cursor:pointer; flex-shrink:0;">Todos</button>
+          
+          <button type="button" class="srv-cat-btn" onclick="filterServices(this, 'MAIS PROCURADO')" style="padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; border-radius:999px; background:rgba(255,255,255,0.06); color:#f8fafc; border:1px solid rgba(226, 184, 87, 0.35); cursor:pointer; flex-shrink:0;">MAIS PROCURADO</button>
+          
+          <button type="button" class="srv-cat-btn" onclick="filterServices(this, 'EXCLUSIVO')" style="padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; border-radius:999px; background:rgba(255,255,255,0.06); color:#f8fafc; border:1px solid rgba(226, 184, 87, 0.35); cursor:pointer; flex-shrink:0;">EXCLUSIVO</button>
+          
+        </div>
+
       <div class="" style="display:flex; flex-direction:column; gap:10px;">
         
-          <div class="service-card featured" style="padding:12px; display:flex; gap:12px; align-items:center;">
+          <div class="service-card featured" data-category="MAIS PROCURADO" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
               <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=85&w=1440" alt="Consultoria Estratégica Individual" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=600';" />
             </div>
@@ -836,7 +852,7 @@
               </div>
             </div>
           </div>
-          <div class="service-card " style="padding:12px; display:flex; gap:12px; align-items:center;">
+          <div class="service-card " data-category="EXCLUSIVO" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
               <img src="https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=85&w=1440" alt="Planejamento e Parecer Técnico" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=600';" />
             </div>
@@ -857,27 +873,97 @@
             </div>
           </div>
       </div>
+
+      <!-- Trust Badges & Facilidades (Quebra de Objeções) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(226, 184, 87, 0.35);">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">💳</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:#f8fafc;">Cartão até 12x</div>
+            <div style="font-size:8.5px; color:#94a3b8;">Crédito e Débito</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">⚡</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:#f8fafc;">Pix Instantâneo</div>
+            <div style="font-size:8.5px; color:#94a3b8;">Confirmação imediata</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">🚗</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:#f8fafc;">Fácil Acesso</div>
+            <div style="font-size:8.5px; color:#94a3b8;">Local seguro</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">☕</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:#f8fafc;">Espaço VIP</div>
+            <div style="font-size:8.5px; color:#94a3b8;">Climatizado & Café</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     
     <div style="margin: 24px 0;">
-      <h3 style="font-size: 14px; text-transform: uppercase; color: #e2b857; margin-bottom: 10px; font-family: 'Cinzel', serif;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: #e2b857; margin-bottom: 8px; font-family: 'Cinzel', serif;">
         Depoimentos de Clientes
       </h3>
-      <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;">
-        
-        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: rgba(226, 184, 87, 0.12); border: 1px solid rgba(226, 184, 87, 0.35);">
-          <div style="color: #fbbf24; font-size: 12px; margin-bottom: 6px;">★★★★★</div>
-          <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: #cbd5e1;">"A segurança técnica e clareza da Marina me deram tranquilidade no momento mais decisivo."</p>
-          <div style="font-size: 10.5px; font-weight: 700; margin-top: 8px; color: #ffffff;">
-            Dra. Vanessa Mendes <span style="opacity: 0.65; font-weight: 400;">· São Paulo - SP</span>
+      <!-- Google Reviews Badge -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(226, 184, 87, 0.35); margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:8px; background:#ffffff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg style="width:16px; height:16px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <span style="font-size:11px; font-weight:800; color:#f8fafc;">4.9</span>
+              <span style="color:#fbbf24; font-size:10px;">★★★★★</span>
+            </div>
+            <div style="font-size:8.5px; color:#94a3b8;">Google Meu Negócio · Avaliações Reais</div>
           </div>
         </div>
-        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: rgba(226, 184, 87, 0.12); border: 1px solid rgba(226, 184, 87, 0.35);">
-          <div style="color: #fbbf24; font-size: 12px; margin-bottom: 6px;">★★★★★</div>
-          <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: #cbd5e1;">"Atendimento impecável, ágil e extremamente humanizado. Recomendo de olhos fechados!"</p>
-          <div style="font-size: 10.5px; font-weight: 700; margin-top: 8px; color: #ffffff;">
-            Renato Silveira <span style="opacity: 0.65; font-weight: 400;">· Campinas - SP</span>
+        <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" style="font-size:9px; font-weight:700; color:#38bdf8; text-decoration:none; padding:4px 8px; border-radius:6px; background:rgba(56,189,248,0.1);">Ver no Maps ↗</a>
+      </div>
+      <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;">
+        
+        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: rgba(226, 184, 87, 0.12); border: 1px solid rgba(226, 184, 87, 0.35); display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <div style="color: #fbbf24; font-size: 11px;">★★★★★</div>
+              <span style="font-size:8px; font-weight:700; color:#34d399; background:rgba(52,211,153,0.12); padding:2px 6px; border-radius:999px;">✓ Verificado</span>
+            </div>
+            <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: #cbd5e1;">"A segurança técnica e clareza da Marina me deram tranquilidade no momento mais decisivo."</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="width:24px; height:24px; border-radius:50%; background:#e2b85730; color:#e2b857; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              DV
+            </div>
+            <div>
+              <div style="font-size: 10.5px; font-weight: 700; color: #ffffff;">Dra. Vanessa Mendes</div>
+              <div style="font-size: 8.5px; opacity: 0.65; color: #94a3b8;">São Paulo - SP</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: rgba(226, 184, 87, 0.12); border: 1px solid rgba(226, 184, 87, 0.35); display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <div style="color: #fbbf24; font-size: 11px;">★★★★★</div>
+              <span style="font-size:8px; font-weight:700; color:#34d399; background:rgba(52,211,153,0.12); padding:2px 6px; border-radius:999px;">✓ Verificado</span>
+            </div>
+            <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: #cbd5e1;">"Atendimento impecável, ágil e extremamente humanizado. Recomendo de olhos fechados!"</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="width:24px; height:24px; border-radius:50%; background:#e2b85730; color:#e2b857; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              RS
+            </div>
+            <div>
+              <div style="font-size: 10.5px; font-weight: 700; color: #ffffff;">Renato Silveira</div>
+              <div style="font-size: 8.5px; opacity: 0.65; color: #94a3b8;">Campinas - SP</div>
+            </div>
           </div>
         </div>
       </div>
@@ -933,9 +1019,17 @@
   </div>
 
   
+  <div id="wa-bubble-container" style="position:fixed; bottom:82px; right:20px; z-index:9999; max-width:210px; padding:10px 12px; border-radius:16px; background:rgba(15,23,42,0.96); border:1px solid rgba(34,197,94,0.4); box-shadow:0 12px 30px rgba(0,0,0,0.6); backdrop-filter:blur(8px); font-family:system-ui, sans-serif; display:flex; flex-direction:column; gap:4px; animation:bounce 2s infinite ease-in-out;">
+    <div style="display:flex; align-items:center; justify-content:space-between; font-size:8.5px; font-weight:800; color:#34d399;">
+      <span style="display:flex; align-items:center; gap:4px;"><span style="width:6px; height:6px; border-radius:50%; background:#34d399; display:inline-block;"></span> Online agora</span>
+      <button type="button" onclick="document.getElementById('wa-bubble-container').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:11px; cursor:pointer; padding:0 2px;">✕</button>
+    </div>
+    <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" style="color:#ffffff; font-size:10.5px; line-height:1.35; font-weight:600; text-decoration:none;">⚖️ Dúvidas jurídicas? Fale com nossa equipe agora</a>
+  </div>
   <a href="https://wa.me/5511999999999" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Falar no WhatsApp" onclick="if(window.fbq) fbq('track', 'Lead');">
+    <span style="position:absolute; top:-3px; right:-3px; width:18px; height:18px; border-radius:50%; background:#ef4444; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.4);">1</span>
     <svg style="width:28px;height:28px;display:inline-block;vertical-align:middle;fill:#ffffff;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z"/><path d="M12 1c-6.075 0-11 4.925-11 11 0 2.102.589 4.066 1.606 5.744l-1.606 5.256 5.438-1.57c1.613.918 3.479 1.442 5.562 1.442 6.075 0 11-4.925 11-11s-4.925-11-11-11zm0 19.825c-1.875 0-3.626-.543-5.111-1.479l-.366-.23-3.232.933.951-3.111-.252-.387c-1.047-1.606-1.615-3.501-1.615-5.551 0-5.132 4.173-9.305 9.305-9.305 5.132 0 9.305 4.173 9.305 9.305 0 5.132-4.173 9.305-9.305 9.305z"/></svg>
-  </a>
+  </a> : ''}
 
   <!-- Modal Lightbox da Galeria de Fotos -->
   <div id="gallery-lightbox-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; padding:16px;" onclick="closeGalleryLightbox()">
@@ -997,6 +1091,37 @@
       if (e.key === 'ArrowLeft') navGalleryLightbox(-1);
       if (e.key === 'ArrowRight') navGalleryLightbox(1);
     });
+
+    function copyAddress(btn, text) {
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      }
+      var orig = btn.innerText;
+      btn.innerText = 'Copiado! ✓';
+      btn.style.color = '#34d399';
+      setTimeout(function() {
+        btn.innerText = orig;
+        btn.style.color = '';
+      }, 2500);
+    }
+    function filterServices(btn, cat) {
+      var allBtns = document.querySelectorAll('.srv-cat-btn');
+      for (var i = 0; i < allBtns.length; i++) {
+        allBtns[i].style.background = 'rgba(255,255,255,0.06)';
+        allBtns[i].style.color = '#f8fafc';
+      }
+      btn.style.background = '#e2b857';
+      btn.style.color = '#0a0a0c';
+      var cards = document.querySelectorAll('.service-card');
+      for (var j = 0; j < cards.length; j++) {
+        var cardCat = cards[j].getAttribute('data-category') || '';
+        if (cat === 'all' || cardCat === cat) {
+          cards[j].style.display = '';
+        } else {
+          cards[j].style.display = 'none';
+        }
+      }
+    }
 
     // Detecção dinâmica de orientação (retrato vs paisagem) nas fotos da galeria
     (function detectGalleryOrientations() {

@@ -1036,19 +1036,24 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>` : ''}
 
     ${data.locationCard.enabled ? `
-    <div class="cta-card" style="margin-top: 16px; background: ${mc.locationCard?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; color: ${mc.locationCard?.titleColor || theme.textMain};">
-      <div class="cta-left">
-        <div class="cta-icon" style="color: ${mc.locationCard?.accentColor || theme.iconColor};">📍</div>
-        <div>
+    <div class="cta-card" style="margin-top: 16px; background: ${mc.locationCard?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; color: ${mc.locationCard?.titleColor || theme.textMain}; padding: 14px; border-radius: 18px; display: block;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="cta-icon" style="color: ${mc.locationCard?.accentColor || theme.iconColor}; font-size: 20px; flex-shrink: 0;">📍</div>
+        <div style="flex: 1; min-width: 0;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <div class="cta-title" style="color: ${mc.locationCard?.titleColor || theme.textMain};">${data.locationCard.headline}</div>
+            <div class="cta-title" style="color: ${mc.locationCard?.titleColor || theme.textMain}; font-size: 13px; font-weight: 700;">${data.locationCard.headline}</div>
             ${data.locationCard.showHours !== false && data.locationCard.openStatus ? `<span style="font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(5,150,105,0.12)' : 'rgba(16,185,129,0.18)'}; color:${getLuminance(theme.bg) > 0.6 ? '#047857' : '#10b981'}; border:1px solid ${getLuminance(theme.bg) > 0.6 ? 'rgba(5,150,105,0.3)' : 'rgba(16,185,129,0.35)'};">● ${data.locationCard.openStatus}</span>` : ''}
           </div>
-          <div class="cta-sub" style="color: ${mc.locationCard?.textColor || theme.textMuted};">${data.locationCard.address}</div>
-          ${data.locationCard.showHours !== false && data.locationCard.hours ? `<div style="font-size:10px; margin-top:3px; opacity:0.9; font-weight:600; color: ${mc.locationCard?.textColor || theme.textMain};">🕒 ${data.locationCard.hours}</div>` : ''}
+          <div class="cta-sub" style="color: ${mc.locationCard?.textColor || theme.textMuted}; font-size: 11px; margin-top: 2px;">${data.locationCard.address}</div>
+          ${data.locationCard.showHours !== false && data.locationCard.hours ? `<div style="font-size:10px; margin-top:4px; opacity:0.9; font-weight:600; color: ${mc.locationCard?.textColor || theme.textMain};">🕒 ${data.locationCard.hours}</div>` : ''}
         </div>
       </div>
-      <a href="${options?.disableLinks ? 'javascript:void(0)' : data.locationCard.mapsUrl}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank"'} style="font-size: 10px; font-weight: bold; color: ${mc.locationCard?.accentColor || theme.accent}; text-decoration: underline;">Mapa</a>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+        <a href="${options?.disableLinks ? 'javascript:void(0)' : (data.locationCard.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(data.locationCard.address)}`)}" ${options?.disableLinks ? 'tabindex="-1"' : 'target="_blank" rel="noopener noreferrer"'} style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid ${theme.socialBorder}; color: ${theme.textMain}; font-size: 9.5px; font-weight: 700; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px;">🗺️ Maps</a>
+        <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://waze.com/ul?q=${encodeURIComponent(data.locationCard.address)}&navigate=yes`}" ${options?.disableLinks ? 'tabindex="-1"' : 'target="_blank" rel="noopener noreferrer"'} style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid ${theme.socialBorder}; color: ${theme.textMain}; font-size: 9.5px; font-weight: 700; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px;">🚗 Waze</a>
+        <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(data.locationCard.address)}`}" ${options?.disableLinks ? 'tabindex="-1"' : 'target="_blank" rel="noopener noreferrer"'} style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid ${theme.socialBorder}; color: #fff; font-size: 9px; font-weight: 900; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px;">UBER</a>
+        <button type="button" onclick="copyAddress(this, '${escapeHtmlAttr(data.locationCard.address)}')" style="padding: 5px 2px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid ${theme.socialBorder}; color: ${theme.textMain}; font-size: 9.5px; font-weight: 700; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;">📋 Copiar</button>
+      </div>
     </div>` : ''}
 
     ${data.services?.enabled && data.services.items?.length > 0 ? `
@@ -1058,8 +1063,22 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         <h3 class="gallery-title" style="color:${mc.services?.headlineColor || theme.accent};">${data.services.headline}</h3>
         ${data.services.subtitle ? `<p class="gallery-sub" style="color:${mc.services?.textColor || theme.textMuted};">${data.services.subtitle}</p>` : ''}
       </div>
+
+      ${(() => {
+        const cats = Array.from(new Set(data.services.items.map((s: any) => (s.category || s.badge || '').trim()).filter(Boolean)));
+        if (cats.length < 2) return '';
+        return `
+        <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; scrollbar-width:none;">
+          <button type="button" class="srv-cat-btn active" onclick="filterServices(this, 'all')" style="padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; border-radius:999px; background:${mc.services?.headlineColor || theme.accent}; color:${getSafeContrastText(mc.services?.headlineColor || theme.accent, '#0a0a0c', '#ffffff')}; border:1px solid ${mc.services?.headlineColor || theme.accent}; cursor:pointer; flex-shrink:0;">Todos</button>
+          ${cats.map(c => `
+          <button type="button" class="srv-cat-btn" onclick="filterServices(this, '${escapeHtmlAttr(c)}')" style="padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; border-radius:999px; background:rgba(255,255,255,0.06); color:${theme.textMain}; border:1px solid ${theme.socialBorder}; cursor:pointer; flex-shrink:0;">${escapeHtmlAttr(c)}</button>
+          `).join('')}
+        </div>`;
+      })()}
+
       <div class="${data.services.layout === 'grid2' ? 'services-grid-2' : ''}" style="${data.services.layout !== 'grid2' ? 'display:flex; flex-direction:column; gap:10px;' : ''}">
-        ${data.services.items.map((srv, idx) => {
+        ${data.services.items.map((srv: any, idx: number) => {
+          const srvCat = escapeHtmlAttr((srv.category || srv.badge || '').trim());
           const waMsg = encodeURIComponent(`Olá ${data.profile.name}! Tenho interesse em "${srv.name}" (${srv.price}). Gostaria de verificar a disponibilidade!`);
           const rawSrvHref = srv.actionType === 'link' && srv.customUrl
             ? srv.customUrl
@@ -1074,7 +1093,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
           if (data.services.layout === 'featured') {
             return `
-            <div class="service-card ${srv.featured ? 'featured' : ''}">
+            <div class="service-card ${srv.featured ? 'featured' : ''}" data-category="${srvCat}">
               <div style="position:relative; height:145px; width:100%; overflow:hidden; background:#000;">
                 <img src="${optimizeImageUrl(srv.imageUrl, 720)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
                 ${srv.badge ? `<span class="service-badge" style="position:absolute; top:10px; left:10px;">${srv.badge}</span>` : ''}
@@ -1096,7 +1115,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
           if (data.services.layout === 'grid2') {
             return `
-            <div class="service-card ${srv.featured ? 'featured' : ''}" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div class="service-card ${srv.featured ? 'featured' : ''}" data-category="${srvCat}" style="display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="position:relative; aspect-ratio:4/3; width:100%; overflow:hidden; background:#000;">
                   <img src="${optimizeImageUrl(srv.imageUrl, 720)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
@@ -1119,7 +1138,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           }
 
           return `
-          <div class="service-card ${srv.featured ? 'featured' : ''}" style="padding:12px; display:flex; gap:12px; align-items:center;">
+          <div class="service-card ${srv.featured ? 'featured' : ''}" data-category="${srvCat}" style="padding:12px; display:flex; gap:12px; align-items:center;">
             <div style="position:relative; width:68px; height:68px; border-radius:12px; overflow:hidden; flex-shrink:0; background:#000;">
               <img src="${optimizeImageUrl(srv.imageUrl, 720)}" alt="${escapeHtmlAttr(srv.name)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
             </div>
@@ -1141,20 +1160,79 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           </div>`;
         }).join('')}
       </div>
+
+      <!-- Trust Badges & Facilidades (Quebra de Objeções) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${theme.socialBorder};">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">💳</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Cartão até 12x</div>
+            <div style="font-size:8.5px; color:${theme.textMuted};">Crédito e Débito</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">⚡</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Pix Instantâneo</div>
+            <div style="font-size:8.5px; color:${theme.textMuted};">Confirmação imediata</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">🚗</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Fácil Acesso</div>
+            <div style="font-size:8.5px; color:${theme.textMuted};">Local seguro</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">☕</span>
+          <div>
+            <div style="font-size:10px; font-weight:700; color:${theme.textMain};">Espaço VIP</div>
+            <div style="font-size:8.5px; color:${theme.textMuted};">Climatizado & Café</div>
+          </div>
+        </div>
+      </div>
     </div>` : ''}
 
     ${data.testimonials?.enabled && data.testimonials.items?.length > 0 ? `
     <div style="margin: 24px 0;">
-      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.testimonials?.headlineColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
+      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.testimonials?.headlineColor || theme.accent}; margin-bottom: 8px; font-family: '${data.styling.fontFamily}', serif;">
         ${data.testimonials.headline}
       </h3>
+      <!-- Google Reviews Badge -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:14px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; border:1px solid ${theme.socialBorder}; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:8px; background:#ffffff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg style="width:16px; height:16px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <span style="font-size:11px; font-weight:800; color:${theme.textMain};">4.9</span>
+              <span style="color:#fbbf24; font-size:10px;">★★★★★</span>
+            </div>
+            <div style="font-size:8.5px; color:${theme.textMuted};">Google Meu Negócio · Avaliações Reais</div>
+          </div>
+        </div>
+        ${(data.profile.mapsUrl || data.locationCard.mapsUrl) ? `<a href="${options?.disableLinks ? 'javascript:void(0)' : (data.profile.mapsUrl || data.locationCard.mapsUrl)}" ${options?.disableLinks ? 'tabindex="-1"' : 'target="_blank" rel="noopener noreferrer"'} style="font-size:9px; font-weight:700; color:#38bdf8; text-decoration:none; padding:4px 8px; border-radius:6px; background:rgba(56,189,248,0.1);">Ver no Maps ↗</a>` : ''}
+      </div>
       <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;">
         ${data.testimonials.items.map(t => `
-        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: ${mc.testimonials?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder};">
-          <div style="color: #fbbf24; font-size: 12px; margin-bottom: 6px;">${'★'.repeat(t.rating || 5)}</div>
-          <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: ${mc.testimonials?.textColor || theme.textMuted};">"${t.text}"</p>
-          <div style="font-size: 10.5px; font-weight: 700; margin-top: 8px; color: ${mc.testimonials?.titleColor || theme.textMain};">
-            ${t.clientName} <span style="opacity: 0.65; font-weight: 400;">· ${t.city}</span>
+        <div style="flex-shrink: 0; width: 240px; padding: 14px; border-radius: 16px; background: ${mc.testimonials?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <div style="color: #fbbf24; font-size: 11px;">${'★'.repeat(t.rating || 5)}</div>
+              <span style="font-size:8px; font-weight:700; color:#34d399; background:rgba(52,211,153,0.12); padding:2px 6px; border-radius:999px;">✓ Verificado</span>
+            </div>
+            <p style="font-size: 11px; line-height: 1.45; font-style: italic; color: ${mc.testimonials?.textColor || theme.textMuted};">"${t.text}"</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="width:24px; height:24px; border-radius:50%; background:${theme.accent}30; color:${theme.accent}; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              ${t.clientName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+            </div>
+            <div>
+              <div style="font-size: 10.5px; font-weight: 700; color: ${mc.testimonials?.titleColor || theme.textMain};">${t.clientName}</div>
+              <div style="font-size: 8.5px; opacity: 0.65; color: ${theme.textMuted};">${t.city}</div>
+            </div>
           </div>
         </div>`).join('')}
       </div>
@@ -1206,10 +1284,33 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>
   </div>
 
-  ${data.profile.whatsapp ? `
+  ${data.profile.whatsapp ? (() => {
+    const exportNiche = `${data.profile.title || ''} ${data.profile.name || ''} ${data.theme || ''}`.toLowerCase();
+    let exportBubble = '💬 Olá! Posso te ajudar com alguma dúvida?';
+    if (exportNiche.includes('barber') || exportNiche.includes('barbearia') || exportNiche.includes('navalha')) {
+      exportBubble = '✂️ Quer garantir seu horário para hoje? Toque aqui!';
+    } else if (exportNiche.includes('unha') || exportNiche.includes('nail') || exportNiche.includes('lash') || exportNiche.includes('cilio') || exportNiche.includes('estetic') || exportNiche.includes('beleza')) {
+      exportBubble = '✨ Agende seu horário com exclusividade no WhatsApp';
+    } else if (exportNiche.includes('odonto') || exportNiche.includes('dentist') || exportNiche.includes('saude') || exportNiche.includes('sorriso')) {
+      exportBubble = '🦷 Agende sua avaliação presencial no WhatsApp';
+    } else if (exportNiche.includes('advoc') || exportNiche.includes('direito') || exportNiche.includes('juridic')) {
+      exportBubble = '⚖️ Dúvidas jurídicas? Fale com nossa equipe agora';
+    } else if (exportNiche.includes('restaurante') || exportNiche.includes('burger') || exportNiche.includes('gastronom')) {
+      exportBubble = '🍔 Faça seu pedido ou reserve mesa pelo WhatsApp';
+    }
+    return `
+  <div id="wa-bubble-container" style="position:fixed; bottom:82px; right:20px; z-index:9999; max-width:210px; padding:10px 12px; border-radius:16px; background:rgba(15,23,42,0.96); border:1px solid rgba(34,197,94,0.4); box-shadow:0 12px 30px rgba(0,0,0,0.6); backdrop-filter:blur(8px); font-family:system-ui, sans-serif; display:flex; flex-direction:column; gap:4px; animation:bounce 2s infinite ease-in-out;">
+    <div style="display:flex; align-items:center; justify-content:space-between; font-size:8.5px; font-weight:800; color:#34d399;">
+      <span style="display:flex; align-items:center; gap:4px;"><span style="width:6px; height:6px; border-radius:50%; background:#34d399; display:inline-block;"></span> Online agora</span>
+      <button type="button" onclick="document.getElementById('wa-bubble-container').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:11px; cursor:pointer; padding:0 2px;">✕</button>
+    </div>
+    <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}`}" ${options?.disableLinks ? 'tabindex="-1"' : 'target="_blank" rel="noopener noreferrer"'} style="color:#ffffff; font-size:10.5px; line-height:1.35; font-weight:600; text-decoration:none;">${exportBubble}</a>
+  </div>
   <a href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}`}" class="whatsapp-float" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} title="Falar no WhatsApp" onclick="${options?.disableLinks ? 'return false;' : "if(window.fbq) fbq('track', 'Lead');"}">
+    <span style="position:absolute; top:-3px; right:-3px; width:18px; height:18px; border-radius:50%; background:#ef4444; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.4);">1</span>
     <svg style="width:28px;height:28px;display:inline-block;vertical-align:middle;fill:#ffffff;" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z"/><path d="M12 1c-6.075 0-11 4.925-11 11 0 2.102.589 4.066 1.606 5.744l-1.606 5.256 5.438-1.57c1.613.918 3.479 1.442 5.562 1.442 6.075 0 11-4.925 11-11s-4.925-11-11-11zm0 19.825c-1.875 0-3.626-.543-5.111-1.479l-.366-.23-3.232.933.951-3.111-.252-.387c-1.047-1.606-1.615-3.501-1.615-5.551 0-5.132 4.173-9.305 9.305-9.305 5.132 0 9.305 4.173 9.305 9.305 0 5.132-4.173 9.305-9.305 9.305z"/></svg>
-  </a>` : ''}
+  </a>`;
+  })() : ''} : ''}
 
   <!-- Modal Lightbox da Galeria de Fotos -->
   <div id="gallery-lightbox-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; padding:16px;" onclick="closeGalleryLightbox()">
@@ -1271,6 +1372,37 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       if (e.key === 'ArrowLeft') navGalleryLightbox(-1);
       if (e.key === 'ArrowRight') navGalleryLightbox(1);
     });
+
+    function copyAddress(btn, text) {
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      }
+      var orig = btn.innerText;
+      btn.innerText = 'Copiado! ✓';
+      btn.style.color = '#34d399';
+      setTimeout(function() {
+        btn.innerText = orig;
+        btn.style.color = '';
+      }, 2500);
+    }
+    function filterServices(btn, cat) {
+      var allBtns = document.querySelectorAll('.srv-cat-btn');
+      for (var i = 0; i < allBtns.length; i++) {
+        allBtns[i].style.background = 'rgba(255,255,255,0.06)';
+        allBtns[i].style.color = '${theme.textMain}';
+      }
+      btn.style.background = '${mc.services?.headlineColor || theme.accent}';
+      btn.style.color = '${getSafeContrastText(mc.services?.headlineColor || theme.accent, '#0a0a0c', '#ffffff')}';
+      var cards = document.querySelectorAll('.service-card');
+      for (var j = 0; j < cards.length; j++) {
+        var cardCat = cards[j].getAttribute('data-category') || '';
+        if (cat === 'all' || cardCat === cat) {
+          cards[j].style.display = '';
+        } else {
+          cards[j].style.display = 'none';
+        }
+      }
+    }
 
     // Detecção dinâmica de orientação (retrato vs paisagem) nas fotos da galeria
     (function detectGalleryOrientations() {
