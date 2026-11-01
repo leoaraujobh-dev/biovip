@@ -326,11 +326,12 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       text-wrap: balance;
     }
     .tagline {
-      font-size: 12.5px;
+      font-size: 12px;
       color: ${mc.hero?.textColor || theme.textMuted};
       margin-top: 6px;
-      line-height: 1.4;
+      line-height: 1.35;
       text-wrap: balance;
+      max-width: 96%;
     }
     .social-bar {
       display: flex;

@@ -4087,26 +4087,188 @@ Inicie agora fazendo a **Solicitação 1**!`;
 
   const handleQuickCycleCopyVariant = () => {
     const bizName = data.profile.name || 'STUDIO VIP';
-    const copyOptions = [
-      {
-        tagline:
-          'Atendimento personalizado de alto padrão, técnicas exclusivas e resultados impecáveis pensados para valorizar a sua melhor versão.',
-        cursivePhrase: 'Excelência, sofisticação e cuidado em cada detalhe.',
-        ctaTitle: 'AGENDAR MEU HORÁRIO VIP NO WHATSAPP',
-      },
-      {
-        tagline:
-          'Referência em qualidade, biossegurança e durabilidade. Transforme sua autoestima em um ambiente acolhedor e exclusivo.',
-        cursivePhrase: 'Sua beleza e bem-estar em primeiro lugar.',
-        ctaTitle: 'RESERVAR ATENDIMENTO COM PRIORIDADE',
-      },
-      {
-        tagline:
-          'Protocolos personalizados e materiais premium para entregar um acabamento natural, elegante e duradouro em cada sessão.',
-        cursivePhrase: 'Agende seu momento especial conosco.',
-        ctaTitle: `FALAR COM ${bizName.split(' ')[0]} NO WHATSAPP`,
-      },
-    ];
+    const firstName = bizName.split(' ')[0] || 'NOSSA EQUIPE';
+
+    // Detecção inteligente do nicho para gerar textos concisos, atraentes e contextualizados
+    const searchContext = `${data.profile.title || ''} ${data.profile.name || ''} ${data.seo?.keywords || ''} ${data.theme || ''}`.toLowerCase();
+
+    let copyOptions: Array<{ tagline: string; cursivePhrase: string; ctaTitle: string }> = [];
+
+    if (searchContext.includes('barber') || searchContext.includes('barbearia') || searchContext.includes('navalha') || searchContext.includes('corte masculino') || searchContext.includes('bigode')) {
+      copyOptions = [
+        {
+          tagline: 'Cortes na navalha, barba alinhada e ambiente exclusivo.',
+          cursivePhrase: 'Tradição, estilo e respeito ao homem moderno.',
+          ctaTitle: 'AGENDAR HORÁRIO NA NAVALHA NO WHATSAPP',
+        },
+        {
+          tagline: 'Tradição, toalha quente e visagismo masculino de precisão.',
+          cursivePhrase: 'Cortes clássicos e modernos sob medida para você.',
+          ctaTitle: 'RESERVAR HORÁRIO VIP NO WHATSAPP',
+        },
+        {
+          tagline: 'Estilo impecável, navalha afiada e cerveja artesanal gelada.',
+          cursivePhrase: 'Mais que um corte, uma experiência completa.',
+          ctaTitle: `FALAR COM ${firstName} NO WHATSAPP`,
+        },
+        {
+          tagline: 'O padrão de excelência que a sua imagem e estilo merecem.',
+          cursivePhrase: 'Cuidado nos detalhes e máxima satisfação.',
+          ctaTitle: 'GARANTIR MEU ATENDIMENTO EXCLUSIVO',
+        },
+      ];
+    } else if (searchContext.includes('unha') || searchContext.includes('nail') || searchContext.includes('manicure') || searchContext.includes('fibra') || searchContext.includes('alongamento')) {
+      copyOptions = [
+        {
+          tagline: 'Alongamento slim em gel e acabamento natural de alta duração.',
+          cursivePhrase: 'Suas mãos elegantes e impecáveis todos os dias.',
+          ctaTitle: 'AGENDAR MEU HORÁRIO VIP NO WHATSAPP',
+        },
+        {
+          tagline: 'Unhas resistentes, acabamento impecável e elegância pura.',
+          cursivePhrase: 'Cuidado, biossegurança e precisão em cada detalhe.',
+          ctaTitle: 'RESERVAR ATENDIMENTO COM PRIORIDADE',
+        },
+        {
+          tagline: 'Design de unhas sofisticado com biossegurança e cuidado VIP.',
+          cursivePhrase: 'Sua melhor versão começa nos detalhes.',
+          ctaTitle: `FALAR COM ${firstName} NO WHATSAPP`,
+        },
+        {
+          tagline: 'Técnica exclusiva em fibra de vidro com naturalidade slim.',
+          cursivePhrase: 'Alta durabilidade e sofisticação para você.',
+          ctaTitle: 'GARANTIR MEU HORÁRIO EXCLUSIVO',
+        },
+      ];
+    } else if (searchContext.includes('lash') || searchContext.includes('cilio') || searchContext.includes('cílios') || searchContext.includes('sobrancelha') || searchContext.includes('olhar')) {
+      copyOptions = [
+        {
+          tagline: 'Extensão de cílios e sobrancelhas com leveza e naturalidade.',
+          cursivePhrase: 'O poder de um olhar marcante e sofisticado.',
+          ctaTitle: 'AGENDAR MEU HORÁRIO VIP NO WHATSAPP',
+        },
+        {
+          tagline: 'Mapeamento do olhar, visagismo e durabilidade impecável.',
+          cursivePhrase: 'Acorde pronta e confiante todos os dias.',
+          ctaTitle: 'RESERVAR ATENDIMENTO NO WHATSAPP',
+        },
+        {
+          tagline: 'Realce da sua beleza com fios ultra leves e mapeamento VIP.',
+          cursivePhrase: 'Conforto absoluto e retenção superior.',
+          ctaTitle: `FALAR COM ${firstName} NO WHATSAPP`,
+        },
+        {
+          tagline: 'Cílios perfeitos, conforto absoluto e acabamento premium.',
+          cursivePhrase: 'Visagismo exclusivo para valorizar seus traços.',
+          ctaTitle: 'GARANTIR MEU HORÁRIO EXCLUSIVO',
+        },
+      ];
+    } else if (searchContext.includes('odonto') || searchContext.includes('dentist') || searchContext.includes('sorriso') || searchContext.includes('dental')) {
+      copyOptions = [
+        {
+          tagline: 'Odontologia estética moderna com tecnologia e conforto.',
+          cursivePhrase: 'O sorriso que transforma a sua autoconfiança.',
+          ctaTitle: 'AGENDAR CONSULTA DE AVALIAÇÃO',
+        },
+        {
+          tagline: 'Lentes em resina, clareamento e reabilitação do sorriso.',
+          cursivePhrase: 'Tecnologia avançada e atendimento humanizado.',
+          ctaTitle: 'FALAR COM A EQUIPE NO WHATSAPP',
+        },
+        {
+          tagline: 'Harmonia do sorriso e saúde bucal com atendimento VIP.',
+          cursivePhrase: 'Precisão e estética em cada detalhe.',
+          ctaTitle: 'RESERVAR MEU HORÁRIO EXCLUSIVO',
+        },
+      ];
+    } else if (searchContext.includes('advoc') || searchContext.includes('advogad') || searchContext.includes('direito') || searchContext.includes('juridic') || searchContext.includes('oab')) {
+      copyOptions = [
+        {
+          tagline: 'Defesa jurídica especializada com rigor técnico e ética.',
+          cursivePhrase: 'Segurança, estratégia e proteção dos seus direitos.',
+          ctaTitle: 'CONSULTAR ESPECIALISTA NO WHATSAPP',
+        },
+        {
+          tagline: 'Atendimento consultivo e contencioso com foco em soluções.',
+          cursivePhrase: 'Atuação jurídica estratégica e humanizada.',
+          ctaTitle: 'SOLICITAR ANÁLISE DE CASO NO WHATSAPP',
+        },
+        {
+          tagline: 'Segurança jurídica estratégica para defender seus direitos.',
+          cursivePhrase: 'Compromisso com resultados e total discrição.',
+          ctaTitle: 'FALAR COM NOSSO TIME JURÍDICO',
+        },
+      ];
+    } else if (searchContext.includes('restaurante') || searchContext.includes('burger') || searchContext.includes('gastronom') || searchContext.includes('pizza') || searchContext.includes('bistro')) {
+      copyOptions = [
+        {
+          tagline: 'Ingredientes selecionados e sabor autoral em cada prato.',
+          cursivePhrase: 'Uma experiência gastronômica memorável.',
+          ctaTitle: 'VER CARDÁPIO & FAZER PEDIDO',
+        },
+        {
+          tagline: 'Experiência gastronômica marcante em ambiente acolhedor.',
+          cursivePhrase: 'Sabor autêntico feito com paixão e afeto.',
+          ctaTitle: 'RESERVAR MESA OU PEDIR NO WHATSAPP',
+        },
+        {
+          tagline: 'Sabor artesanal autêntico preparado nos mínimos detalhes.',
+          cursivePhrase: 'A melhor receita para momentos especiais.',
+          ctaTitle: 'PEDIR PELO WHATSAPP AGORA',
+        },
+      ];
+    } else if (searchContext.includes('tattoo') || searchContext.includes('tatuag') || searchContext.includes('piercing')) {
+      copyOptions = [
+        {
+          tagline: 'Arte na pele com traços finos, precisão e biossegurança.',
+          cursivePhrase: 'Projetos autorais e exclusivos para sua história.',
+          ctaTitle: 'SOLICITAR ORÇAMENTO NO WHATSAPP',
+        },
+        {
+          tagline: 'Tatuagens autorais exclusivas e materiais 100% descartáveis.',
+          cursivePhrase: 'Sua ideia transformada em obra de arte.',
+          ctaTitle: 'ORÇAR TATUAGEM NO WHATSAPP',
+        },
+      ];
+    } else if (searchContext.includes('personal') || searchContext.includes('treino') || searchContext.includes('fitness') || searchContext.includes('nutri') || searchContext.includes('academia')) {
+      copyOptions = [
+        {
+          tagline: 'Treinamento inteligente focado em performance e bem-estar.',
+          cursivePhrase: 'Constância, saúde e resultados comprovados.',
+          ctaTitle: 'AGENDAR CONSULTORIA NO WHATSAPP',
+        },
+        {
+          tagline: 'Resultados reais com acompanhamento técnico personalizado.',
+          cursivePhrase: 'Sua melhor performance todos os dias.',
+          ctaTitle: 'INICIAR MEU PLANO PERSONALIZADO',
+        },
+      ];
+    } else {
+      // Padrão Estética / Beleza / VIP Universal (máximo 65 caracteres por tagline)
+      copyOptions = [
+        {
+          tagline: 'Atendimento de alto padrão com técnicas exclusivas e cuidado.',
+          cursivePhrase: 'Excelência, sofisticação e cuidado em cada detalhe.',
+          ctaTitle: 'AGENDAR MEU HORÁRIO VIP NO WHATSAPP',
+        },
+        {
+          tagline: 'Excelência, sofisticação e resultados visíveis em cada sessão.',
+          cursivePhrase: 'Sua beleza e bem-estar em primeiro lugar.',
+          ctaTitle: 'RESERVAR ATENDIMENTO COM PRIORIDADE',
+        },
+        {
+          tagline: 'Cuidado personalizado pensado para valorizar a sua essência.',
+          cursivePhrase: 'Agende seu momento especial conosco.',
+          ctaTitle: `FALAR COM ${firstName} NO WHATSAPP`,
+        },
+        {
+          tagline: 'Protocolos avançados e acabamento impecável em cada sessão.',
+          cursivePhrase: 'Sua melhor versão com conforto e exclusividade.',
+          ctaTitle: 'GARANTIR MEU HORÁRIO EXCLUSIVO',
+        },
+      ];
+    }
+
     const currentIdx = copyOptions.findIndex((c) => c.tagline === data.profile.tagline);
     const nextCopy = copyOptions[(currentIdx + 1) % copyOptions.length];
     triggerSimulatorSkeleton(300);
@@ -4121,7 +4283,7 @@ Inicie agora fazendo a **Solicitação 1**!`;
         i === 0 ? { ...card, title: nextCopy.ctaTitle } : card
       ),
     }));
-    showToast('✍️ Textos de chamada e bio otimizados com nova variação persuasiva!');
+    showToast(`✍️ Bio IA (${copyOptions.length} variações): aplicada versão concisa e de alto impacto!`);
   };
 
   const handleQuickCycleGalleryLayout = () => {

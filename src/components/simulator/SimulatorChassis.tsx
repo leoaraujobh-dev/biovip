@@ -274,8 +274,11 @@ export function SimulatorChassis({
                   {data.profile.name}
                 </h2>
                 <p
-                  className="text-xs mt-1.5 line-clamp-2 leading-relaxed"
-                  style={{ color: data.moduleColors?.hero?.textColor || theme.textMuted }}
+                  className="text-[11.5px] sm:text-xs mt-1.5 line-clamp-3 leading-snug"
+                  style={{
+                    color: data.moduleColors?.hero?.textColor || theme.textMuted,
+                    textWrap: 'balance',
+                  }}
                 >
                   {data.profile.tagline}
                 </p>

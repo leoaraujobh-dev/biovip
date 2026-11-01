@@ -2583,7 +2583,7 @@ function buildSmartFallbackMicrosite(
         tagline:
           params.bio?.trim() ||
           params.additionalInfo?.trim() ||
-          'Realçando sua beleza natural com mapeamento individual, proporção, leveza e alta durabilidade.',
+          'Realçando sua beleza natural com técnica, leveza e durabilidade.',
         cursivePhrase: 'O cuidado e a excelência que você merece em cada detalhe.',
         avatarUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600',
         aboutPhotoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600',
@@ -3296,7 +3296,7 @@ RETORNE ESTRITAMENTE UM OBJETO JSON VÁLIDO (sem markdown no início ou no fim, 
   "profile": {
     "name": "${(effectiveBusinessName || 'NOME DO CLIENTE').toUpperCase()}",
     "title": "${(effectiveNiche || 'ESPECIALIDADE PRINCIPAL').toUpperCase()}",
-    "tagline": "Frase persuasiva baseada na bio e nos posts do Instagram do negócio",
+    "tagline": "Frase persuasiva concisa (máximo 55 a 70 caracteres, direto ao ponto para caber em 2 linhas sem truncar)",
     "cursivePhrase": "Frase em caligrafia com elegância e tom humano",
     "avatarUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=600",
     "aboutPhotoUrl": "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=600",

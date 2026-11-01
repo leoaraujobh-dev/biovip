@@ -50,10 +50,14 @@ export default async function handler(req: any, res: any) {
       },
     });
 
+    const isTaglineField = /slogan|tagline|posicionamento|bio curta/i.test(String(fieldType || ''));
+
     const prompt = `
 Você é um Copywriter de nível mundial especializado em alta conversão para páginas mobile (Instagram Bio, WhatsApp e Tráfego Pago).
 Refine o seguinte texto original para o campo "${fieldType || 'Texto do Microsite'}" no nicho "${niche || 'Geral'}".
 Tom desejado: ${tone || 'Elegante, Persuasivo e de Alta Autoridade'}.
+
+${isTaglineField ? 'REGRA CRÍTICA DE TAMANHO: Como este campo é o Slogan de Posicionamento do cabeçalho mobile, cada variação DEVE ter NO MÁXIMO 55 a 70 caracteres para caber com elegância em até 2 linhas sem truncar ou usar reticências.' : ''}
 
 TEXTO ORIGINAL:
 "${originalText || ''}"
