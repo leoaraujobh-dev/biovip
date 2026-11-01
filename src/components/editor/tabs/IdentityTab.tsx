@@ -1,5 +1,5 @@
 import React from 'react';
-import { BellRing, Upload, Sparkles } from 'lucide-react';
+import { BellRing, Upload, Sparkles, SlidersHorizontal, Move } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
 import { formatWhatsAppPhone, isLowResolutionAvatar } from '../../../utils/formatters';
 import { ModuleColorControls } from '../ModuleColorControls';
@@ -35,6 +35,26 @@ export function IdentityTab({
   openCopyOptimizer,
   showToast,
 }: IdentityTabProps) {
+  const updateStyle = (key: string, val: any) => {
+    setData((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        [key]: val,
+      },
+    }));
+  };
+
+  const updateAboutMe = (key: string, val: any) => {
+    setData((prev) => ({
+      ...prev,
+      aboutMe: {
+        ...prev.aboutMe,
+        [key]: val,
+      },
+    }));
+  };
+
   return (
     <div className="space-y-5">
       {/* Barra de Aviso */}
@@ -172,6 +192,150 @@ export function IdentityTab({
             </div>
           </div>
         )}
+
+        {/* Ajustes de Altura e Posicionamento da Foto de Capa */}
+        <div className="pt-3 border-t border-neutral-900 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+              Ajuste de Altura & Enquadramento da Imagem de Capa
+            </span>
+            <span className="text-[10px] text-amber-400 font-mono">
+              {data.styling.photoHeight}px • Y: {data.styling.photoPosY}% • X: {(data.styling as any).photoPosX ?? 50}%
+            </span>
+          </div>
+
+          {/* Slider de Altura */}
+          <div className="space-y-1 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-neutral-300">Altura da Imagem</span>
+              <span className="text-amber-400 font-mono font-bold">{data.styling.photoHeight}px</span>
+            </div>
+            <input
+              type="range"
+              min="160"
+              max="650"
+              step="5"
+              value={data.styling.photoHeight}
+              onChange={(e) => updateStyle('photoHeight', Number(e.target.value))}
+              className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+            />
+            <div className="flex items-center gap-1.5 pt-1 overflow-x-auto">
+              <span className="text-[10px] text-neutral-400 shrink-0">Atalhos:</span>
+              {[
+                { label: 'Compacto', val: 240 },
+                { label: 'Padrão', val: 390 },
+                { label: 'Expandido', val: 480 },
+                { label: 'Retrato Alto', val: 580 },
+              ].map((preset) => (
+                <button
+                  key={preset.val}
+                  type="button"
+                  onClick={() => updateStyle('photoHeight', preset.val)}
+                  className={`px-2 py-0.5 text-[10px] rounded border transition shrink-0 ${
+                    data.styling.photoHeight === preset.val
+                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                      : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                  }`}
+                >
+                  {preset.label} ({preset.val}px)
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Posicionamento Y e X */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Posição Vertical (Y) */}
+            <div className="space-y-1 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-300">Posição Vertical (Y)</span>
+                <span className="text-amber-400 font-mono font-bold">{data.styling.photoPosY}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={data.styling.photoPosY}
+                onChange={(e) => updateStyle('photoPosY', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+              <div className="grid grid-cols-4 gap-1 pt-1">
+                {[
+                  { label: 'Topo', val: 10 },
+                  { label: 'Rosto', val: 25 },
+                  { label: 'Centro', val: 50 },
+                  { label: 'Base', val: 85 },
+                ].map((pos) => (
+                  <button
+                    key={pos.val}
+                    type="button"
+                    onClick={() => updateStyle('photoPosY', pos.val)}
+                    className={`py-0.5 text-[10px] rounded border text-center transition ${
+                      data.styling.photoPosY === pos.val
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                        : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    {pos.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Posição Horizontal (X) */}
+            <div className="space-y-1 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-300">Posição Horizontal (X)</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.styling as any).photoPosX ?? 50}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={(data.styling as any).photoPosX ?? 50}
+                onChange={(e) => updateStyle('photoPosX', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+              <div className="grid grid-cols-3 gap-1 pt-1">
+                {[
+                  { label: 'Esquerda', val: 20 },
+                  { label: 'Centro', val: 50 },
+                  { label: 'Direita', val: 80 },
+                ].map((pos) => (
+                  <button
+                    key={pos.val}
+                    type="button"
+                    onClick={() => updateStyle('photoPosX', pos.val)}
+                    className={`py-0.5 text-[10px] rounded border text-center transition ${
+                      ((data.styling as any).photoPosX ?? 50) === pos.val
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                        : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    {pos.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Zoom / Escala */}
+          <div className="space-y-1 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-neutral-300">Zoom / Escala da Imagem</span>
+              <span className="text-amber-400 font-mono font-bold">{data.styling.photoScale}%</span>
+            </div>
+            <input
+              type="range"
+              min="100"
+              max="180"
+              value={data.styling.photoScale}
+              onChange={(e) => updateStyle('photoScale', Number(e.target.value))}
+              className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Upload Foto da Seção Sobre Mim */}
@@ -220,6 +384,53 @@ export function IdentityTab({
             )}
           </div>
         </div>
+
+        {data.profile.aboutPhotoUrl && (
+          <div className="pt-2 border-t border-neutral-900 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-neutral-300">Altura Sobre</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoHeight || 170}px</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="360"
+                value={(data.aboutMe as any)?.photoHeight || 170}
+                onChange={(e) => updateAboutMe('photoHeight', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-neutral-300">Posição Y (Vertical)</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoPosY ?? 50}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={(data.aboutMe as any)?.photoPosY ?? 50}
+                onChange={(e) => updateAboutMe('photoPosY', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-neutral-300">Posição X (Horizontal)</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoPosX ?? 50}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={(data.aboutMe as any)?.photoPosX ?? 50}
+                onChange={(e) => updateAboutMe('photoPosX', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Nome & Título */}

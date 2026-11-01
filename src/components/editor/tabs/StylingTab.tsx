@@ -422,54 +422,158 @@ export function StylingTab({
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-1">
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-neutral-300">Altura da Capa</span>
-              <span className="text-amber-400 font-mono">{data.styling.photoHeight}px</span>
+        {/* Dimensões e Enquadramento da Foto */}
+        <div className="pt-2 border-t border-neutral-900 space-y-4">
+          {/* Altura da Capa */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-neutral-200 font-medium">Altura da Imagem de Capa</span>
+              <span className="text-amber-400 font-mono font-bold">{data.styling.photoHeight}px</span>
             </div>
             <input
               type="range"
-              min="280"
-              max="480"
+              min="160"
+              max="650"
+              step="5"
               value={data.styling.photoHeight}
               onChange={(e) => updateStyle('photoHeight', Number(e.target.value))}
               className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
             />
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <span className="text-[10px] text-neutral-400 shrink-0">Atalhos:</span>
+              {[
+                { label: 'Compacto', val: 240 },
+                { label: 'Padrão', val: 390 },
+                { label: 'Expandido', val: 480 },
+                { label: 'Retrato Alto', val: 580 },
+              ].map((preset) => (
+                <button
+                  key={preset.val}
+                  type="button"
+                  onClick={() => updateStyle('photoHeight', preset.val)}
+                  className={`px-2 py-0.5 text-[10px] rounded border transition ${
+                    data.styling.photoHeight === preset.val
+                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                      : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                  }`}
+                >
+                  {preset.label} ({preset.val}px)
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-neutral-300">Zoom / Escala</span>
-              <span className="text-amber-400 font-mono">{data.styling.photoScale}%</span>
+          {/* Posicionamento Y e X */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Enquadramento Vertical (Y) */}
+            <div className="space-y-1.5 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-200 font-medium">Posição Vertical (Y)</span>
+                <span className="text-amber-400 font-mono font-bold">{data.styling.photoPosY}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={data.styling.photoPosY}
+                onChange={(e) => updateStyle('photoPosY', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+              <div className="grid grid-cols-4 gap-1 pt-0.5">
+                {[
+                  { label: 'Topo', val: 10 },
+                  { label: 'Rosto', val: 25 },
+                  { label: 'Centro', val: 50 },
+                  { label: 'Base', val: 85 },
+                ].map((pos) => (
+                  <button
+                    key={pos.val}
+                    type="button"
+                    onClick={() => updateStyle('photoPosY', pos.val)}
+                    className={`py-0.5 text-[10px] rounded border text-center transition ${
+                      data.styling.photoPosY === pos.val
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                        : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    {pos.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <input
-              type="range"
-              min="100"
-              max="150"
-              value={data.styling.photoScale}
-              onChange={(e) => updateStyle('photoScale', Number(e.target.value))}
-              className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
-            />
+
+            {/* Enquadramento Horizontal (X) */}
+            <div className="space-y-1.5 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-200 font-medium">Posição Horizontal (X)</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.styling as any).photoPosX ?? 50}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={(data.styling as any).photoPosX ?? 50}
+                onChange={(e) => updateStyle('photoPosX', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+              <div className="grid grid-cols-3 gap-1 pt-0.5">
+                {[
+                  { label: 'Esquerda', val: 20 },
+                  { label: 'Centro', val: 50 },
+                  { label: 'Direita', val: 80 },
+                ].map((pos) => (
+                  <button
+                    key={pos.val}
+                    type="button"
+                    onClick={() => updateStyle('photoPosX', pos.val)}
+                    className={`py-0.5 text-[10px] rounded border text-center transition ${
+                      ((data.styling as any).photoPosX ?? 50) === pos.val
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                        : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    {pos.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Zoom / Escala e Fade */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-neutral-300">Zoom / Escala</span>
+                <span className="text-amber-400 font-mono">{data.styling.photoScale}%</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="180"
+                value={data.styling.photoScale}
+                onChange={(e) => updateStyle('photoScale', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-neutral-300">Intensidade da Vinheta / Fade</span>
+                <span className="text-amber-400 font-mono">{data.styling.vignetteIntensity}%</span>
+              </div>
+              <input
+                type="range"
+                min="40"
+                max="100"
+                value={data.styling.vignetteIntensity}
+                onChange={(e) => updateStyle('vignetteIntensity', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-neutral-300">Enquadramento Vertical</span>
-              <span className="text-amber-400 font-mono">{data.styling.photoPosY}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={data.styling.photoPosY}
-              onChange={(e) => updateStyle('photoPosY', Number(e.target.value))}
-              className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
-            />
-          </div>
-
+        <div className="pt-2 border-t border-neutral-900">
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-neutral-300">Arredondamento Cards</span>
@@ -484,21 +588,6 @@ export function StylingTab({
               className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
             />
           </div>
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs">
-            <span className="text-neutral-300">Intensidade da Vinheta / Fade de Fusão</span>
-            <span className="text-amber-400 font-mono">{data.styling.vignetteIntensity}%</span>
-          </div>
-          <input
-            type="range"
-            min="50"
-            max="100"
-            value={data.styling.vignetteIntensity}
-            onChange={(e) => updateStyle('vignetteIntensity', Number(e.target.value))}
-            className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
-          />
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-800/80">

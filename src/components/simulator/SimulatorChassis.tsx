@@ -309,7 +309,7 @@ export function SimulatorChassis({
                   className="w-full h-full object-cover block transition-all duration-300"
                   style={{
                     transform: `scale(${(data.styling.photoScale || 100) / 100})`,
-                    objectPosition: `center ${data.styling.photoPosY ?? 20}%`,
+                    objectPosition: `${(data.styling as any).photoPosX ?? 50}% ${data.styling.photoPosY ?? 20}%`,
                     filter: currentFilter,
                   }}
                 />
@@ -2123,13 +2123,22 @@ export function SimulatorChassis({
                 </div>
 
                 {((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) && (
-                  <div className="relative w-full h-40 rounded-2xl overflow-hidden shadow bg-black">
+                  <div
+                    className="relative w-full rounded-2xl overflow-hidden shadow bg-black transition-all duration-300"
+                    style={{
+                      height: `${(data.aboutMe as any)?.photoHeight || 160}px`,
+                      minHeight: `${(data.aboutMe as any)?.photoHeight || 160}px`,
+                    }}
+                  >
                     <SimulatorImage
                       src={(data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl}
                       alt="Sobre"
                       referrerPolicy="no-referrer"
                       accentColor={theme.accent}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-all duration-300"
+                      style={{
+                        objectPosition: `${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%`,
+                      }}
                     />
                   </div>
                 )}
