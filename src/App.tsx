@@ -140,6 +140,7 @@ import {
   escapeHtmlAttr,
   sanitizeImageUrl,
   isLowResolutionAvatar,
+  cleanGalleryCaption,
   serializeSafeFirestorePayload,
   safeCopyText,
   getLuminance,
@@ -3153,13 +3154,19 @@ export default function App() {
       sanitizeImageUrl(p, cachedPhotos[idx] || INITIAL_DATA.studentGrid.photos[idx % INITIAL_DATA.studentGrid.photos.length])
     );
 
-    const finalGalleryCaptions = finalGalleryPhotos.map((_: string, idx: number) =>
-      Array.isArray(generated?.studentGrid?.captions) && generated.studentGrid.captions[idx]
-        ? String(generated.studentGrid.captions[idx])
-        : cachedProfile?.posts?.[idx]?.caption
+    const finalGalleryCaptions = finalGalleryPhotos.map((_: string, idx: number) => {
+      const geminiCap =
+        Array.isArray(generated?.studentGrid?.captions) && generated.studentGrid.captions[idx]
+          ? String(generated.studentGrid.captions[idx])
+          : '';
+      const cleanedGemini = cleanGalleryCaption(geminiCap);
+      if (cleanedGemini) return cleanedGemini;
+
+      const cachedCap = cachedProfile?.posts?.[idx]?.caption
         ? String(cachedProfile.posts[idx].caption).slice(0, 80)
-        : ''
-    );
+        : '';
+      return cleanGalleryCaption(cachedCap);
+    });
 
     const builtMicrositeData: typeof INITIAL_DATA = {
       ...INITIAL_DATA,
@@ -3615,6 +3622,11 @@ Assim que tiver os dados do cliente, pesquise na internet, no Instagram e no Goo
    - NUNCA envie objetos nem arrays aninhados no lugar de strings de URL. Se usar imagens Unsplash de referência, use sempre \`?auto=format&fit=crop&q=80&w=1080\`.
 4. **SLOGAN / TAGLINE CONCISO (MÁXIMO 55 A 70 CARACTERES):**
    - No campo \`profile.tagline\`, gere uma frase persuasiva direta ao ponto, adaptada ao nicho e com **NO MÁXIMO 55 a 70 caracteres**, garantindo que caiba perfeitamente em 2 linhas no cabeçalho mobile sem truncar ou usar reticências.
+5. **LEGENDAS DAS FOTOS DA GALERIA (\`studentGrid.captions\`):**
+   - **SE A IMAGEM DO INSTAGRAM NÃO TIVER TEXTO OU LEGENDA:** **NÃO use textos genéricos de exemplo como "Legenda curta do destaque...", "Legenda do procedimento..." e NUNCA invente legendas fictícias.** Deixe a string **TOTALMENTE VAZIA (\`""\`)**!
+   - **SE A IMAGEM TIVER UMA LEGENDA/DESCRIÇÃO REAL NO POST DO INSTAGRAM:** Use um resumo curto e descritivo do procedimento (máximo 40 caracteres).
+   - **REGRA OBRIGATÓRIA:** Se houver descrição real, use-a. Se NÃO houver descrição, **DEIXE VAZIO (\`""\`)**, para que a foto fique 100% limpa no microsite sem nenhuma tarja ou caixa de texto cobrindo a imagem.
+   - O array \`captions\` deve conter sempre 6 elementos (strings com a descrição real ou strings vazias \`""\`).
 
 ---
 
@@ -3722,12 +3734,12 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
         "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=1080"
       ],
       "captions": [
-        "Legenda do procedimento 1 com foco em acabamento e técnica",
-        "Legenda do procedimento 2 baseada no resultado e durabilidade",
-        "Legenda do procedimento 3 com foco em naturalidade",
-        "Legenda do resultado real do atendimento",
-        "Legenda destacando atendimento e produtos premium",
-        "Legenda do espaço, conforto e biossegurança"
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
       ]
     },
     "locationCard": {
@@ -4001,10 +4013,10 @@ Inicie agora fazendo a **Solicitação 1**!`;
                 serverData.studentGrid.photos.length > 0
               ) {
                 const geminiCaptions = Array.isArray(micrositeObj?.studentGrid?.captions)
-                  ? micrositeObj.studentGrid.captions
+                  ? micrositeObj.studentGrid.captions.map(cleanGalleryCaption)
                   : [];
                 const serverCaptions = Array.isArray(serverData?.studentGrid?.captions)
-                  ? serverData.studentGrid.captions
+                  ? serverData.studentGrid.captions.map(cleanGalleryCaption)
                   : [];
                 micrositeObj.studentGrid = {
                   ...(micrositeObj.studentGrid || {}),
@@ -4064,6 +4076,10 @@ Inicie agora fazendo a **Solicitação 1**!`;
         } catch (instaErr) {
           console.warn('Aviso ao enriquecer fotos do Instagram na importação Gemini:', instaErr);
         }
+      }
+
+      if (Array.isArray(micrositeObj?.studentGrid?.captions)) {
+        micrositeObj.studentGrid.captions = micrositeObj.studentGrid.captions.map(cleanGalleryCaption);
       }
 
       const adminOverrides = geminiAutoCreateAdminRecord

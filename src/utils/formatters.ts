@@ -101,6 +101,21 @@ export function isLowResolutionAvatar(url?: string | null): boolean {
 }
 
 /**
+ * Sanitizes gallery photo captions:
+ * - If caption is empty or null, returns ''
+ * - If caption contains generic AI placeholders (e.g., 'Legenda curta', 'Legenda do procedimento', 'Legenda do destaque', 'Foto 1'), returns ''
+ * - Otherwise returns trimmed caption
+ */
+export function cleanGalleryCaption(cap?: string | null): string {
+  if (!cap || typeof cap !== 'string') return '';
+  const trimmed = cap.trim();
+  if (!trimmed) return '';
+  if (/^legenda\s*(curta|do\s*procedimento|do\s*destaque|da\s*foto|\d)/i.test(trimmed)) return '';
+  if (/^foto\s*\d/i.test(trimmed)) return '';
+  return trimmed;
+}
+
+/**
  * Serializes payloads for Firestore while guaranteeing the string stays within the security rule maxLength (950KB).
  */
 export function serializeSafeFirestorePayload(obj: unknown, maxLen = 920000): string {

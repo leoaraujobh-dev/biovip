@@ -144,14 +144,15 @@ function extractBusinessHoursFromText(text: string): string | undefined {
   return undefined;
 }
 
-function summarizePostCaptionForGallery(caption: string, likes: number): string {
+function summarizePostCaptionForGallery(caption: string, _likes: number): string {
   const cleaned = (caption || '')
     .replace(/#[a-zA-Z0-9_\u00C0-\u017F]+/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 
+  // Se não houver texto real no post, mantém vazio para que a imagem apareça limpa
   if (!cleaned) {
-    return likes > 0 ? `Destaque do Instagram · ❤️ ${likes} curtidas` : '';
+    return '';
   }
 
   // Pega a primeira frase ou linha significativa
@@ -2177,9 +2178,7 @@ function applyExtractedAssetsToMicrosite(
     if (galleryPhotosOrderedByLikes.length >= 6) break;
     if (mapPhoto && !galleryPhotosOrderedByLikes.includes(mapPhoto)) {
       galleryPhotosOrderedByLikes.push(mapPhoto);
-      galleryCaptionsOrderedByLikes.push(
-        mapsData.placeName ? `Registro em ${mapsData.placeName}` : ''
-      );
+      galleryCaptionsOrderedByLikes.push('');
     }
   }
 
@@ -2187,7 +2186,7 @@ function applyExtractedAssetsToMicrosite(
   if (galleryPhotosOrderedByLikes.length === 0 && (instaData.avatarUrl || rawParams.cachedProfile?.avatarUrl)) {
     const fallbackAvatar = instaData.avatarUrl || rawParams.cachedProfile?.avatarUrl;
     galleryPhotosOrderedByLikes.push(fallbackAvatar);
-    galleryCaptionsOrderedByLikes.push(instaData.cleanBusinessName || instaData.fullName || '');
+    galleryCaptionsOrderedByLikes.push('');
   }
 
   // =========================================================================
