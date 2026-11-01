@@ -2142,19 +2142,20 @@ export default function App() {
 
     loadSitesFromIndexedDb().then((idbSites) => {
       if (!active) return;
-      if (Array.isArray(idbSites) && idbSites.length > 0) {
-        // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados com o servidor apenas se tiverem conteúdo válido
-        const hasValidData = idbSites.some((s) => s?.data?.profile?.avatarUrl || s?.data?.studentGrid?.photos?.some((p: any) => p && p.trim()));
-        if (hasValidData) {
-          try {
-            fetch('/api/saved-sites', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sites: idbSites }),
-            }).catch(() => {});
-          } catch {}
-        }
+      if (!Array.isArray(idbSites) || idbSites.length === 0) return;
+
+      // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados com o servidor apenas se tiverem conteúdo válido
+      const hasValidData = idbSites.some((s) => s?.data?.profile?.avatarUrl || s?.data?.studentGrid?.photos?.some((p: any) => p && p.trim()));
+      if (hasValidData) {
+        try {
+          fetch('/api/saved-sites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sites: idbSites }),
+          }).catch(() => {});
+        } catch {}
       }
+
       let deletedIds: string[] = [];
       let deletedSlugs: string[] = [];
       try {
