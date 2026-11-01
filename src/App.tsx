@@ -1380,6 +1380,22 @@ export default function App() {
       'api',
       'assets',
       'www',
+      'topo',
+      'catalogo',
+      'vantagens',
+      'comparativo',
+      'processo',
+      'investimento',
+      'encomendar',
+      'faq',
+      'planos',
+      'precos',
+      'modelos',
+      'contato',
+      'sobre',
+      'duvidas',
+      'recursos',
+      'garantia',
       configuredSub,
       baseDomain,
     ];
@@ -1392,7 +1408,14 @@ export default function App() {
       const val = hash.replace('site=', '').trim();
       if (val) return val;
     }
-    if (hash && !reservedPaths.includes(hash) && !hash.includes('.') && !hash.includes('?') && !hash.includes('&')) {
+    if (
+      hash &&
+      !reservedPaths.includes(hash) &&
+      !hash.includes('.') &&
+      !hash.includes('?') &&
+      !hash.includes('&') &&
+      !hash.includes('=')
+    ) {
       return hash;
     }
 

@@ -93,6 +93,14 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const activeHeroModel =
     dynamicLandingModels.find((m: any) => m.id === landingHeroModelId) ||
     dynamicLandingModels[0] ||
@@ -186,7 +194,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
       <header className="sticky top-0 z-50 h-16 border-b border-white/[0.08] bg-[#09090b]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           {/* Logo e Nome */}
-          <a href="#topo" className="flex items-center gap-3 group" title="BioVip - Microsites de Alta Conversão">
+          <a href="#topo" onClick={(e) => scrollToSection(e, 'topo')} className="flex items-center gap-3 group cursor-pointer" title="BioVip - Microsites de Alta Conversão">
             <div className="w-14 h-10 rounded-xl bg-[#1c1c1e] border border-amber-400/40 shadow-lg shadow-amber-500/20 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-amber-300 transition-colors">
               <img
                 src="/assets/aistudio/1793152702953_02858b21.jpg"
@@ -206,12 +214,12 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
 
           {/* Navegação Central */}
           <nav className="hidden lg:flex items-center gap-7 text-xs font-medium text-neutral-300">
-            <a href="#catalogo" className="hover:text-amber-300 transition">Modelos Prontos</a>
-            <a href="#vantagens" className="hover:text-amber-300 transition">Vantagens & Lucro</a>
-            <a href="#comparativo" className="hover:text-amber-300 transition">Comparativo</a>
-            <a href="#processo" className="hover:text-amber-300 transition">Como Funciona</a>
-            <a href="#investimento" className="hover:text-amber-300 transition">Planos & Preços</a>
-            <a href="#faq" className="hover:text-amber-300 transition">Dúvidas</a>
+            <a href="#catalogo" onClick={(e) => scrollToSection(e, 'catalogo')} className="hover:text-amber-300 transition cursor-pointer">Modelos Prontos</a>
+            <a href="#vantagens" onClick={(e) => scrollToSection(e, 'vantagens')} className="hover:text-amber-300 transition cursor-pointer">Vantagens & Lucro</a>
+            <a href="#comparativo" onClick={(e) => scrollToSection(e, 'comparativo')} className="hover:text-amber-300 transition cursor-pointer">Comparativo</a>
+            <a href="#processo" onClick={(e) => scrollToSection(e, 'processo')} className="hover:text-amber-300 transition cursor-pointer">Como Funciona</a>
+            <a href="#investimento" onClick={(e) => scrollToSection(e, 'investimento')} className="hover:text-amber-300 transition cursor-pointer">Planos & Preços</a>
+            <a href="#faq" onClick={(e) => scrollToSection(e, 'faq')} className="hover:text-amber-300 transition cursor-pointer">Dúvidas</a>
           </nav>
 
           {/* Ações no Topo */}
@@ -230,7 +238,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 hover:brightness-110 text-neutral-950 font-bold text-xs tracking-wide transition shadow-lg shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 fill-neutral-950" />
-              <span>Garantir Vaga R$ 79,90</span>
+              <span>Garantir Vaga {creationProStr}</span>
             </button>
           </div>
         </div>
@@ -300,6 +308,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <a
                   href="#investimento"
+                  onClick={(e) => scrollToSection(e, 'investimento')}
                   className="px-6 py-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 hover:brightness-110 text-neutral-950 font-black text-sm tracking-wide transition shadow-xl shadow-amber-500/25 flex items-center gap-2 cursor-pointer"
                 >
                   <span>Quero Meu Microsite Pronto em 24h</span>
@@ -520,6 +529,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               <div className="pt-4 border-t border-white/[0.08]">
                 <a
                   href="#investimento"
+                  onClick={(e) => scrollToSection(e, 'investimento')}
                   className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20"
                 >
                   <span>Quero Esse Padrão no Meu Negócio</span>
@@ -626,7 +636,8 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
                     </button>
                     <a
                       href="#investimento"
-                      onClick={() => {
+                      onClick={(e) => {
+                        scrollToSection(e, 'investimento');
                         setLandingOrderForm((p: any) => ({
                           ...p,
                           selectedModel: `${m.title} (${m.personaName})`,
@@ -1234,8 +1245,8 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
               >
                 Garantia de 7 Dias
               </button>
-              <a href="#investimento" className="hover:text-amber-300 transition">Planos</a>
-              <a href="#faq" className="hover:text-amber-300 transition">Dúvidas</a>
+              <a href="#investimento" onClick={(e) => scrollToSection(e, 'investimento')} className="hover:text-amber-300 transition cursor-pointer">Planos</a>
+              <a href="#faq" onClick={(e) => scrollToSection(e, 'faq')} className="hover:text-amber-300 transition cursor-pointer">Dúvidas</a>
               <button
                 type="button"
                 onClick={openCreatorSubdomain}
