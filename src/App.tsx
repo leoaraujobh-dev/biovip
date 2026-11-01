@@ -2070,8 +2070,12 @@ export default function App() {
             const existing = byId.get(remoteSite.id);
             if (!existing) {
               byId.set(remoteSite.id, remoteSite);
-            } else if (remoteSite.isCustomized && !existing.isCustomized) {
-              byId.set(remoteSite.id, { ...existing, ...remoteSite });
+            } else {
+              const remoteTime = remoteSite.lastUpdated ? new Date(remoteSite.lastUpdated).getTime() : 0;
+              const localTime = existing.lastUpdated ? new Date(existing.lastUpdated).getTime() : 0;
+              if (remoteTime >= localTime || (remoteSite.isCustomized && !existing.isCustomized)) {
+                byId.set(remoteSite.id, { ...existing, ...remoteSite });
+              }
             }
           });
           const merged = Array.from(byId.values());

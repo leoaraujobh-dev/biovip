@@ -5,11 +5,13 @@ let memorySavedSites: any[] = (globalThis as any).__biovipSavedSitesCache || [];
 
 function getRootDir(): string {
   try {
-    if (typeof __dirname !== 'undefined') return __dirname;
+    if (typeof process !== 'undefined' && process.cwd) {
+      return process.cwd();
+    }
     const filename = fileURLToPath(import.meta.url);
     return path.dirname(path.dirname(filename));
   } catch {
-    return process.cwd?.() || '.';
+    return '.';
   }
 }
 
