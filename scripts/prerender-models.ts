@@ -7,7 +7,7 @@ import { generateExportCode } from '../src/utils/exportEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const publicDir = path.resolve(__dirname, '../public');
+const exportArchiveDir = path.resolve(__dirname, '../export-archive');
 
 // Models to pre-render
 const modelsToPrerender: Array<{ slug: string; data: typeof INITIAL_DATA; aliases?: string[] }> = [];
@@ -99,13 +99,13 @@ for (const model of modelsToPrerender) {
   const targets = [model.slug, ...(model.aliases || [])];
 
   for (const t of targets) {
-    const targetDir = path.join(publicDir, t);
+    const targetDir = path.join(exportArchiveDir, t);
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
     }
     const filePath = path.join(targetDir, 'index.html');
     fs.writeFileSync(filePath, html, 'utf-8');
-    console.log(`✓ Pre-rendered: public/${t}/index.html (${(html.length / 1024).toFixed(1)} kB)`);
+    console.log(`✓ Pre-rendered: export-archive/${t}/index.html (${(html.length / 1024).toFixed(1)} kB)`);
   }
 }
 

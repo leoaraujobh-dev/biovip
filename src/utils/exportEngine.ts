@@ -226,6 +226,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       min-height: 100vh;
       min-height: 100dvh;
       justify-content: ${data.styling.wrapperAlignment || 'flex-start'};
+      background-color: ${theme.bg};
     }
     .hero, .announcement {
       width: calc(100% + 32px);
@@ -295,6 +296,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       .wrapper {
         max-width: 440px;
         border-radius: 36px;
+        background-color: ${theme.bg} !important;
         box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.92), 0 18px 36px -6px rgba(0, 0, 0, 0.75), 0 0 40px -5px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 2px 6px rgba(0, 0, 0, 0.65);
       }
     }
