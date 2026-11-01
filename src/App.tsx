@@ -3593,14 +3593,28 @@ E há algum serviço, pacote ou preço específico que deseja destacar?"
 ---
 
 ### PASSO 2: PESQUISA PROFUNDA NA INTERNET (QUANDO EU RESPONDER)
-Assim que tiver os dados do cliente, pesquise na internet e no Google Maps tudo sobre esse negócio:
+Assim que tiver os dados do cliente, pesquise na internet, no Instagram e no Google Maps tudo sobre esse negócio:
 - Nome comercial exato, especialidade principal e posicionamento de autoridade.
 - Biografia real do Instagram, número de seguidores, telefone/WhatsApp e links da bio.
 - Os **4 a 6 serviços/procedimentos reais** trabalhados pelo cliente (baseados nas informações coletadas do perfil, legendas e nicho), criando descrições persuasivas e elegantes.
 - Seção **Sobre a Especialista & Nosso Espaço (aboutMe)**: Redija uma apresentação profunda, acolhedora e comovente sobre a trajetória, anos de experiência, especialização técnica, padrão de atendimento e amor pelo ofício para preencher \`paragraph\` e a frase marcante \`closingPhrase\`.
 - Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
-- 6 legendas curtas e impactantes baseadas nos posts de procedimentos, resultados de antes/depois e serviços reais do Instagram para a galeria (priorizando afinidade técnica com o catálogo de serviços ao invés de meras curtidas).
-- **ATENÇÃO CRÍTICA PARA IMAGENS:** Todas as chaves de imagem (avatarUrl, aboutPhotoUrl, photoUrl, cardImage, imageUrl, photos) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web (ex: https://images.unsplash.com/photo-...). NUNCA envie objetos nem chaves aninhadas para as imagens.
+
+📸 **ORDEM CRÍTICA DE SELEÇÃO E MELHORIA DE QUALIDADE DE IMAGENS:**
+1. **CAPA PRINCIPAL DO CABEÇALHO (\`avatarUrl\`):**
+   - **NUNCA utilize a foto de perfil/avatar minúscula (150x150 ou 100x100) do Instagram**, pois em telas de celular ela fica completamente embaçada e pixelada na capa principal!
+   - Em vez disso, selecione a **foto de postagem em MAIOR RESOLUÇÃO (1080p Full HD)** do trabalho mais marcante, procedimento de destaque ou foto profissional do cliente para estampar o cabeçalho com máxima nitidez e impacto visual.
+2. **ORDEM DE BUSCA DE FOTOS (AFINIDADE COM SERVIÇOS VS CURTIDAS):**
+   - **NÃO busque nem selecione fotos pelo número de curtidas.** Curtidas frequentemente estão em memes, fotos pessoais ou reels aleatórios.
+   - A prioridade MÁXIMA de escolha das fotos para a galeria (\`studentGrid.photos\`) e serviços é:
+     - 🥇 **1º Lugar:** Fotos reais com foco nítido nos **serviços e procedimentos oferecidos** (trabalhos finalizados de perto, antes e depois real, corte navalhado, unhas em gel slim, extensão de cílios, etc.).
+     - 🥈 **2º Lugar:** Fotos do **espaço físico e ambiente de atendimento**, transmitindo biossegurança, conforto, tecnologia e higiene de alto padrão.
+     - 🥉 **3º Lugar:** Foto profissional da especialista/equipe em ação durante o atendimento.
+3. **RESOLUÇÃO E QUALIDADE DAS URLs (FULL HD 1080P):**
+   - Todas as chaves de imagem (\`avatarUrl\`, \`aboutPhotoUrl\`, \`photos\`, \`cardImage\`, \`imageUrl\`) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web em **alta resolução (mínimo 1080px de largura)**.
+   - NUNCA envie objetos nem arrays aninhados no lugar de strings de URL. Se usar imagens Unsplash de referência, use sempre \`?auto=format&fit=crop&q=80&w=1080\`.
+4. **SLOGAN / TAGLINE CONCISO (MÁXIMO 55 A 70 CARACTERES):**
+   - No campo \`profile.tagline\`, gere uma frase persuasiva direta ao ponto, adaptada ao nicho e com **NO MÁXIMO 55 a 70 caracteres**, garantindo que caiba perfeitamente em 2 linhas no cabeçalho mobile sem truncar ou usar reticências.
 
 ---
 
@@ -3638,10 +3652,10 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
     "profile": {
       "name": "NOME DO NEGÓCIO EM MAIÚSCULO",
       "title": "ESPECIALIDADE PRINCIPAL DE ALTO PADRÃO",
-      "tagline": "Bio persuasiva baseada nas informações reais do Instagram e diferenciais do cliente.",
+      "tagline": "Slogan conciso e persuasivo adaptado ao nicho (máx 55 a 70 caracteres)",
       "cursivePhrase": "Excelência, sofisticação e cuidado em cada detalhe.",
-      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900",
-      "aboutPhotoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=700",
+      "avatarUrl": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1080",
+      "aboutPhotoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1080",
       "instagram": "usuario_sem_arroba",
       "whatsapp": "5531999999999",
       "mapsUrl": "https://maps.google.com/?q=Endereco+do+Cliente"
@@ -3696,16 +3710,24 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
     "studentGrid": {
       "enabled": true,
       "headline": "Resultados Reais & Portfólio em Destaque",
-      "subtitle": "Registros mais curtidos no nosso Instagram oficial",
+      "subtitle": "Procedimentos e resultados reais do nosso espaço",
       "badgeText": "PORTFÓLIO OFICIAL",
       "layout": "smart_masonry",
+      "photos": [
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=1080",
+        "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1080",
+        "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=1080",
+        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1080",
+        "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1080",
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=1080"
+      ],
       "captions": [
-        "Legenda curta do destaque 1 baseada no serviço principal",
-        "Legenda curta do destaque 2 baseada na técnica exclusiva",
-        "Legenda curta do destaque 3 com foco em acabamento natural",
-        "Legenda curta do destaque 4 de resultado real",
-        "Legenda curta do destaque 5 de atendimento personalizado",
-        "Legenda curta do destaque 6 do espaço e biossegurança"
+        "Legenda do procedimento 1 com foco em acabamento e técnica",
+        "Legenda do procedimento 2 baseada no resultado e durabilidade",
+        "Legenda do procedimento 3 com foco em naturalidade",
+        "Legenda do resultado real do atendimento",
+        "Legenda destacando atendimento e produtos premium",
+        "Legenda do espaço, conforto e biossegurança"
       ]
     },
     "locationCard": {
