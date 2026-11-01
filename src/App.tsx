@@ -2564,13 +2564,29 @@ export default function App() {
           const rawSub = currentSite?.subdomain || data?.profile?.instagram || data?.profile?.name || '';
           const cleanSub = cleanMicrositeSlug(rawSub);
           if (cleanSub) {
-            const channel = new BroadcastChannel('biovip_preview_sync');
-            channel.postMessage({
-              type: 'BIOVIP_PREVIEW_UPDATE',
-              slug: cleanSub,
-              data,
-            });
-            channel.close();
+            try {
+              localStorage.setItem(`luxebio_live_preview_${cleanSub}`, JSON.stringify(data));
+            } catch {}
+
+            try {
+              const ch1 = new BroadcastChannel('biovip_preview_sync');
+              ch1.postMessage({
+                type: 'BIOVIP_PREVIEW_UPDATE',
+                slug: cleanSub,
+                data,
+              });
+              ch1.close();
+            } catch {}
+
+            try {
+              const ch2 = new BroadcastChannel('luxebio_preview_sync');
+              ch2.postMessage({
+                type: 'UPDATE_MICROSITE',
+                slug: cleanSub,
+                data,
+              });
+              ch2.close();
+            } catch {}
           }
         }
       } catch {}
@@ -5698,6 +5714,11 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           bc.postMessage({ type: 'UPDATE_MICROSITE', slug, data });
           bc.close();
         } catch {}
+        try {
+          const bc2 = new BroadcastChannel('biovip_preview_sync');
+          bc2.postMessage({ type: 'BIOVIP_PREVIEW_UPDATE', slug, data });
+          bc2.close();
+        } catch {}
       }
       if (savedTargetSite) {
         syncSiteToFirestore(savedTargetSite);
@@ -5760,6 +5781,11 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           const bc = new BroadcastChannel('luxebio_preview_sync');
           bc.postMessage({ type: 'UPDATE_MICROSITE', slug, data });
           bc.close();
+        } catch {}
+        try {
+          const bc2 = new BroadcastChannel('biovip_preview_sync');
+          bc2.postMessage({ type: 'BIOVIP_PREVIEW_UPDATE', slug, data });
+          bc2.close();
         } catch {}
       }
       syncSiteToFirestore(newSite);

@@ -1264,12 +1264,12 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
                 ${srv.duration ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; font-weight:700; padding:3px 8px; border-radius:999px;">⏱ ${srv.duration}</span>` : ''}
               </div>
               <div style="padding:12px 14px;">
-                <div style="font-size:13px; font-weight:700; color:${srvTitleColor};">${srv.name}</div>
-                <div style="font-size:11px; color:${srvDescColor}; margin-top:4px; line-height:1.4;">${srv.description}</div>
+                <div class="service-title" style="font-size:13px; font-weight:700; color:${srvTitleColor};">${srv.name}</div>
+                <div class="service-desc" style="font-size:11px; color:${srvDescColor}; margin-top:4px; line-height:1.4;">${srv.description}</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid ${theme.socialBorder};">
                   <div>
-                    ${srv.oldPrice ? `<span style="font-size:10px; text-decoration:line-through; color:${srvDescColor}; opacity:0.7; display:block;">${srv.oldPrice}</span>` : ''}
-                    <span style="font-size:14px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
+                    ${srv.oldPrice ? `<span class="service-old-price" style="font-size:10px; text-decoration:line-through; color:${srvDescColor}; opacity:0.7; display:block;">${srv.oldPrice}</span>` : ''}
+                    <span class="service-price" style="font-size:14px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
                   </div>
                   <a href="${srvHref}" ${srvTargetAttr} class="service-cta" onclick="${srvOnclick}">${btnText} ›</a>
                 </div>
@@ -1286,15 +1286,15 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
                   ${srv.badge ? `<span class="service-badge" style="position:absolute; top:6px; left:6px; font-size:7px;">${srv.badge}</span>` : ''}
                 </div>
                 <div style="padding:10px;">
-                  <div style="font-size:11.5px; font-weight:700; line-height:1.25; color:${srvTitleColor};">${srv.name}</div>
+                  <div class="service-title" style="font-size:11.5px; font-weight:700; line-height:1.25; color:${srvTitleColor};">${srv.name}</div>
                   ${srv.duration ? `<div style="font-size:9px; color:${srvDescColor}; margin-top:3px;">⏱ ${srv.duration}</div>` : ''}
-                  <div style="font-size:10px; color:${srvDescColor}; margin-top:4px; line-height:1.35;">${srv.description}</div>
+                  <div class="service-desc" style="font-size:10px; color:${srvDescColor}; margin-top:4px; line-height:1.35;">${srv.description}</div>
                 </div>
               </div>
               <div style="padding:0 10px 10px 10px;">
                 <div style="margin-bottom:6px;">
-                  ${srv.oldPrice ? `<span style="font-size:9px; text-decoration:line-through; color:${srvDescColor}; margin-right:4px;">${srv.oldPrice}</span>` : ''}
-                  <span style="font-size:12.5px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
+                  ${srv.oldPrice ? `<span class="service-old-price" style="font-size:9px; text-decoration:line-through; color:${srvDescColor}; margin-right:4px;">${srv.oldPrice}</span>` : ''}
+                  <span class="service-price" style="font-size:12.5px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
                 </div>
                 <a href="${srvHref}" ${srvTargetAttr} class="service-cta" style="width:100%;" onclick="${srvOnclick}">${btnText}</a>
               </div>
@@ -1311,12 +1311,12 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
                 ${srv.badge ? `<span class="service-badge">${srv.badge}</span>` : ''}
                 ${srv.duration ? `<span style="font-size:9px; color:${srvDescColor};">⏱ ${srv.duration}</span>` : ''}
               </div>
-              <div style="font-size:12.5px; font-weight:700; margin-top:2px; color:${srvTitleColor};">${srv.name}</div>
-              <div style="font-size:10.5px; color:${srvDescColor}; margin-top:2px; line-height:1.35;">${srv.description}</div>
+              <div class="service-title" style="font-size:12.5px; font-weight:700; margin-top:2px; color:${srvTitleColor};">${srv.name}</div>
+              <div class="service-desc" style="font-size:10.5px; color:${srvDescColor}; margin-top:2px; line-height:1.35;">${srv.description}</div>
               <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
                 <div>
-                  ${srv.oldPrice ? `<span style="font-size:9.5px; text-decoration:line-through; color:${srvDescColor}; margin-right:5px;">${srv.oldPrice}</span>` : ''}
-                  <span style="font-size:13px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
+                  ${srv.oldPrice ? `<span class="service-old-price" style="font-size:9.5px; text-decoration:line-through; color:${srvDescColor}; margin-right:5px;">${srv.oldPrice}</span>` : ''}
+                  <span class="service-price" style="font-size:13px; font-weight:800; color:${srvPriceColor};">${srv.price}</span>
                 </div>
                 <a href="${srvHref}" ${srvTargetAttr} class="service-cta" onclick="${srvOnclick}">${btnText}</a>
               </div>
@@ -1439,33 +1439,33 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>` : ''}
 
     ${data.aboutMe?.enabled ? `
-    <div style="margin: 24px 0;">
-      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.aboutMe?.titleColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
+    <div class="about-section" style="margin: 24px 0;">
+      <h3 class="about-headline" style="font-size: 14px; text-transform: uppercase; color: ${mc.aboutMe?.titleColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
         ${data.aboutMe.headline}
       </h3>
       ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
-      <div style="width: 100%; height: ${(data.aboutMe as any)?.photoHeight || 180}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;${(data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100 ? ` transform: scale(${(data.aboutMe as any).photoScale / 100}); transform-origin: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;` : ''} display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
+      <div class="about-photo-wrapper" style="width: 100%; height: ${(data.aboutMe as any)?.photoHeight || 180}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
+        <img class="about-photo-img" src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;${(data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100 ? ` transform: scale(${(data.aboutMe as any).photoScale / 100}); transform-origin: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;` : ''} display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
       </div>` : ''}
-      <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
+      <p class="about-paragraph about-bio" style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe.paragraph}
       </p>
       ${data.aboutMe.closingPhrase ? `
-      <div style="text-align: center; font-size: 22px; font-style: italic; margin-top: 8px; font-family: '${theme.fontScript}', cursive, serif; color: ${mc.aboutMe?.titleColor || theme.accent};">
+      <div class="about-closing" style="text-align: center; font-size: 22px; font-style: italic; margin-top: 8px; font-family: '${theme.fontScript}', cursive, serif; color: ${mc.aboutMe?.titleColor || theme.accent};">
         ${data.aboutMe.closingPhrase}
       </div>` : ''}
     </div>` : ''}
 
     ${data.faq?.enabled && data.faq.items?.length > 0 ? `
-    <div style="margin: 24px 0;">
-      <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.faq?.headlineColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
+    <div class="faq-section" style="margin: 24px 0;">
+      <h3 class="faq-headline" style="font-size: 14px; text-transform: uppercase; color: ${mc.faq?.headlineColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
         ${data.faq.headline}
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         ${data.faq.items.map(item => `
-        <details style="border-radius: 14px; padding: 12px 14px; background: ${mc.faq?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder};">
-          <summary style="font-size: 12px; font-weight: 600; cursor: pointer; color: ${mc.faq?.titleColor || theme.textMain};">${item.question}</summary>
-          <p style="font-size: 11px; line-height: 1.45; margin-top: 8px; color: ${mc.faq?.textColor || theme.textMuted};">${item.answer}</p>
+        <details class="faq-item" style="border-radius: 14px; padding: 12px 14px; background: ${mc.faq?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder};">
+          <summary class="faq-question" style="font-size: 12px; font-weight: 600; cursor: pointer; color: ${mc.faq?.titleColor || theme.textMain};">${item.question}</summary>
+          <p class="faq-answer" style="font-size: 11px; line-height: 1.45; margin-top: 8px; color: ${mc.faq?.textColor || theme.textMuted};">${item.answer}</p>
         </details>`).join('')}
       </div>
     </div>` : ''}
@@ -1844,7 +1844,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           }
         }
         if (p.name) {
-          var nameEl = document.querySelector('.name, .hero-name, h1');
+          var nameEl = document.querySelector('.name, .hero-name') || document.querySelector('h1');
           if (nameEl) nameEl.textContent = p.name;
         }
         if (p.title) {
@@ -1856,7 +1856,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           if (tagEl) tagEl.textContent = p.tagline;
         }
         if (p.cursivePhrase) {
-          var curEl = document.querySelector('.cursive-phrase');
+          var curEl = document.querySelector('.cursive-phrase, .cursive-banner');
           if (curEl) curEl.textContent = p.cursivePhrase;
         }
         if (p.whatsapp) {
@@ -1864,7 +1864,9 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           var waLinks = document.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp.com"]');
           waLinks.forEach(function(a) {
             var oldHref = a.getAttribute('href') || '';
-            a.href = oldHref.replace(/wa\.me\/[0-9]+/, 'wa.me/' + cleanPhone);
+            var qIdx = oldHref.indexOf('?');
+            var query = qIdx !== -1 ? oldHref.substring(qIdx) : '';
+            a.href = 'https://wa.me/' + cleanPhone + query;
           });
         }
         if (p.instagram) {
@@ -1879,7 +1881,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         var ab = freshData.aboutMe || {};
         var aboutPhoto = p.aboutPhotoUrl || ab.photoUrl;
         if (aboutPhoto) {
-          var aboutImg = document.querySelector('.about-photo-img, #about-img, [alt="Sobre"]');
+          var aboutImg = document.querySelector('.about-photo-img') || document.querySelector('.about-section img') || document.querySelector('[alt="Sobre"]');
           if (aboutImg && aboutImg.getAttribute('src') !== aboutPhoto) {
             aboutImg.src = aboutPhoto;
           }
@@ -1893,13 +1895,11 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           }
         }
         if (ab.headline) {
-          var abHead = document.querySelector('.about-headline, h3');
-          if (abHead && abHead.textContent.toLowerCase().includes('sobre')) {
-            abHead.textContent = ab.headline;
-          }
+          var abHead = document.querySelector('.about-headline') || document.querySelector('.about-section h3');
+          if (abHead) abHead.textContent = ab.headline;
         }
         if (ab.paragraph) {
-          var bioEl = document.querySelector('.about-bio, .about-paragraph, p');
+          var bioEl = document.querySelector('.about-paragraph') || document.querySelector('.about-bio') || document.querySelector('.about-section p');
           if (bioEl) bioEl.textContent = ab.paragraph;
         }
         if (ab.closingPhrase) {
@@ -1927,7 +1927,16 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
             if (titleEl && item.name) titleEl.textContent = item.name;
             var priceEl = card.querySelector('.service-price');
             if (priceEl && item.price) priceEl.textContent = item.price;
-            var descEl = card.querySelector('.service-desc, p');
+            var oldPriceEl = card.querySelector('.service-old-price');
+            if (oldPriceEl) {
+              if (item.oldPrice) {
+                oldPriceEl.textContent = item.oldPrice;
+                oldPriceEl.style.display = '';
+              } else {
+                oldPriceEl.style.display = 'none';
+              }
+            }
+            var descEl = card.querySelector('.service-desc') || card.querySelector('p');
             if (descEl && item.description) descEl.textContent = item.description;
             var srvImg = card.querySelector('img');
             if (srvImg && item.imageUrl) srvImg.src = item.imageUrl;
@@ -1936,17 +1945,19 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
         // 5. Dúvidas Frequentes (FAQ)
         if (freshData.faq && Array.isArray(freshData.faq.items) && freshData.faq.items.length > 0) {
-          var faqDetails = document.querySelectorAll('details');
+          var faqDetails = document.querySelectorAll('.faq-item, details');
           faqDetails.forEach(function(dt, idx) {
             var item = freshData.faq.items[idx];
             if (!item) return;
-            var sum = dt.querySelector('summary');
+            var sum = dt.querySelector('.faq-question, summary');
             if (sum && item.question) sum.textContent = item.question;
-            var ans = dt.querySelector('p');
+            var ans = dt.querySelector('.faq-answer, p');
             if (ans && item.answer) ans.textContent = item.answer;
           });
         }
       }
+
+      window.__biovipApplyUpdates = applyUpdates;
 
       try {
         var rawLocal = localStorage.getItem('luxebio_live_preview_' + cleanSlug) ||
@@ -1981,15 +1992,41 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           .catch(function() {});
       } catch(e) {}
 
+      // Sincronização em tempo real via BroadcastChannel (multi-canal)
       try {
         if (window.BroadcastChannel) {
-          var bc = new BroadcastChannel('luxebio_preview_sync');
-          bc.onmessage = function(ev) {
-            if (ev && ev.data && (ev.data.slug === currentSlug || ev.data.slug === cleanSlug)) {
-              applyUpdates(ev.data.data);
-            }
-          };
+          ['biovip_preview_sync', 'luxebio_preview_sync'].forEach(function(chName) {
+            try {
+              var bc = new BroadcastChannel(chName);
+              bc.onmessage = function(ev) {
+                if (!ev || !ev.data) return;
+                var payload = ev.data;
+                var targetSlug = payload.slug ? String(payload.slug).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+                if (targetSlug === cleanSlug || targetSlug === currentSlug.toLowerCase().replace(/[^a-z0-9]/g, '')) {
+                  if (payload.data) applyUpdates(payload.data);
+                }
+              };
+            } catch(chErr) {}
+          });
         }
+      } catch(e) {}
+
+      // Sincronização via evento storage (detecta alterações salvas em outras abas do navegador)
+      try {
+        window.addEventListener('storage', function(e) {
+          if (!e || !e.key) return;
+          if (e.key === 'luxebio_live_preview_' + cleanSlug || e.key === 'luxebio_live_preview_' + currentSlug) {
+            try { applyUpdates(JSON.parse(e.newValue)); } catch(err) {}
+          } else if (e.key === 'luxebio_saved_sites_v1' && e.newValue) {
+            try {
+              var all = JSON.parse(e.newValue);
+              var found = all.find(function(s) {
+                return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+              });
+              if (found && found.data) applyUpdates(found.data);
+            } catch(err) {}
+          }
+        });
       } catch(e) {}
     })();
   </script>
