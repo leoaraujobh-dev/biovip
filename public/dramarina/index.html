@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <title>DRA. MARINA ALMEIDA — Advocacia Estratégica &amp; Consultoria VIP</title>
   <meta name="description" content="Atendimento jurídico humanizado e focado em resultados. Agende sua consultoria presencial ou online.">
@@ -30,7 +30,10 @@
     html, body {
       overflow-x: hidden;
       width: 100%;
+      min-width: 100%;
       max-width: 100vw;
+      margin: 0;
+      padding: 0;
       overscroll-behavior-x: none;
       -webkit-overflow-scrolling: touch;
     }
@@ -40,13 +43,15 @@
       font-family: 'Cinzel', serif, sans-serif;
       display: flex;
       justify-content: center;
-      padding: 0 0 40px;
       min-height: 100vh;
+      min-height: 100dvh;
       -webkit-font-smoothing: antialiased;
+      padding: 0;
+      margin: 0;
     }
     .wrapper {
       width: 100%;
-      max-width: 440px;
+      max-width: 100%;
       margin: 0 auto;
       position: relative;
       padding: 0 16px;
@@ -55,8 +60,44 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      min-height: 100dvh;
       justify-content: flex-start;
-      box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.92), 0 18px 36px -6px rgba(0, 0, 0, 0.75), 0 0 40px -5px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 2px 6px rgba(0, 0, 0, 0.65);
+    }
+    .hero, .announcement {
+      width: calc(100% + 32px);
+      margin-left: -16px;
+      margin-right: -16px;
+    }
+
+    /* Em celulares e smartphones (telas até 768px): ocupa 100% da tela do aparelho de ponta a ponta sem bordas pretas ou margens */
+    @media (max-width: 768px) {
+      html, body {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #0f172a !important;
+      }
+      body {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        margin: 0 !important;
+        padding-left: 16px;
+        padding-right: 16px;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      .hero, .announcement {
+        width: calc(100% + 32px) !important;
+        margin-left: -16px !important;
+        margin-right: -16px !important;
+      }
     }
     @media (max-width: 400px) {
       .wrapper {
@@ -64,9 +105,9 @@
         padding-right: 12px;
       }
       .hero, .announcement {
-        width: calc(100% + 24px);
-        margin-left: -12px;
-        margin-right: -12px;
+        width: calc(100% + 24px) !important;
+        margin-left: -12px !important;
+        margin-right: -12px !important;
       }
     }
     @media (max-width: 340px) {
@@ -75,9 +116,22 @@
         padding-right: 8px;
       }
       .hero, .announcement {
-        width: calc(100% + 16px);
-        margin-left: -8px;
-        margin-right: -8px;
+        width: calc(100% + 16px) !important;
+        margin-left: -8px !important;
+        margin-right: -8px !important;
+      }
+    }
+
+    /* Em telas maiores (Computador / iPad / Notebook): centralizado e estilizado como smartphone de luxo */
+    @media (min-width: 769px) {
+      body {
+        padding: 24px 0 48px;
+        background-color: #050507;
+      }
+      .wrapper {
+        max-width: 440px;
+        border-radius: 36px;
+        box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.92), 0 18px 36px -6px rgba(0, 0, 0, 0.75), 0 0 40px -5px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 2px 6px rgba(0, 0, 0, 0.65);
       }
     }
     

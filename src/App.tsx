@@ -10088,11 +10088,12 @@ COMO PUBLICAR NO SERVIDOR:
         (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
       return (
-        <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
+        <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${foundSite.clientName} · BioVip`}
             srcDoc={generateExportCode(resolvedData)}
-            className="w-full h-full border-0"
+            className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
+            style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none' }}
           />
         </div>
       );
@@ -10100,11 +10101,12 @@ COMO PUBLICAR NO SERVIDOR:
 
     if (demoModel) {
       return (
-        <div className="relative w-full h-screen bg-[#09090b] overflow-hidden">
+        <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${demoModel.personaName} — ${demoModel.title}`}
             srcDoc={livePreviewData ? generateExportCode(livePreviewData) : (demoModel.realHtml || generateExportCode(demoModel.realSiteData))}
-            className="w-full h-full border-0"
+            className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
+            style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none' }}
           />
         </div>
       );
