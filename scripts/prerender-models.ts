@@ -99,13 +99,31 @@ for (const model of modelsToPrerender) {
   const targets = [model.slug, ...(model.aliases || [])];
 
   for (const t of targets) {
+    // 1. export-archive/
     const targetDir = path.join(exportArchiveDir, t);
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
     }
-    const filePath = path.join(targetDir, 'index.html');
-    fs.writeFileSync(filePath, html, 'utf-8');
-    console.log(`✓ Pre-rendered: export-archive/${t}/index.html (${(html.length / 1024).toFixed(1)} kB)`);
+    fs.writeFileSync(path.join(targetDir, 'index.html'), html, 'utf-8');
+
+    // 2. public/<t>/index.html (included in Vite static build into dist/)
+    const publicDir = path.resolve(__dirname, '../public', t);
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(publicDir, 'index.html'), html, 'utf-8');
+
+    // 3. dist/<t>/index.html (direct production destination if dist exists)
+    const distParent = path.resolve(__dirname, '../dist');
+    if (fs.existsSync(distParent)) {
+      const distDir = path.resolve(distParent, t);
+      if (!fs.existsSync(distDir)) {
+        fs.mkdirSync(distDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(distDir, 'index.html'), html, 'utf-8');
+    }
+
+    console.log(`✓ Pre-rendered static edge site: ${t}/index.html (${(html.length / 1024).toFixed(1)} kB)`);
   }
 }
 

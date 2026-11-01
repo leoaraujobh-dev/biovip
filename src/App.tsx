@@ -2175,9 +2175,9 @@ export default function App() {
       if (!active) return;
       if (!Array.isArray(idbSites) || idbSites.length === 0) return;
 
-      // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados com o servidor apenas se tiverem conteúdo válido
+      // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados apenas quando operando no Studio
       const hasValidData = idbSites.some((s) => s?.data?.profile?.avatarUrl || s?.data?.studentGrid?.photos?.some((p: any) => p && p.trim()));
-      if (hasValidData) {
+      if (hasValidData && appSurface === 'studio' && adminUser) {
         try {
           fetch('/api/saved-sites', {
             method: 'POST',
@@ -10287,26 +10287,42 @@ COMO PUBLICAR NO SERVIDOR:
         livePreviewData ||
         (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
+      let siteHtml = '';
+      try {
+        siteHtml = generateExportCode(resolvedData);
+      } catch (err) {
+        console.error('Falha ao renderizar microsite:', err);
+        siteHtml = demoModel?.realHtml || '';
+      }
+
       return (
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${foundSite.clientName} · BioVip`}
-            srcDoc={generateExportCode(resolvedData)}
+            srcDoc={siteHtml}
             className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
-            style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none' }}
+            style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', backgroundColor: '#09090b' }}
           />
         </div>
       );
     }
 
     if (demoModel) {
+      let demoHtml = '';
+      try {
+        demoHtml = livePreviewData ? generateExportCode(livePreviewData) : (demoModel.realHtml || generateExportCode(demoModel.realSiteData));
+      } catch (err) {
+        console.error('Falha ao renderizar modelo demo:', err);
+        demoHtml = demoModel.realHtml || '';
+      }
+
       return (
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${demoModel.personaName} — ${demoModel.title}`}
-            srcDoc={livePreviewData ? generateExportCode(livePreviewData) : (demoModel.realHtml || generateExportCode(demoModel.realSiteData))}
+            srcDoc={demoHtml}
             className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
-            style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none' }}
+            style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', backgroundColor: '#09090b' }}
           />
         </div>
       );

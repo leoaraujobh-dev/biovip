@@ -247,6 +247,80 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// High-Speed Edge Delivery for Client Microsites (serves ultra-fast static HTML in ~0.05s on mobile)
+app.get('/:slug', async (req, res, next) => {
+  const rawSlug = (req.params.slug || '').toLowerCase().trim();
+  if (
+    !rawSlug ||
+    rawSlug.startsWith('api') ||
+    rawSlug.startsWith('assets') ||
+    rawSlug.startsWith('@') ||
+    rawSlug.startsWith('src') ||
+    rawSlug.startsWith('node_modules') ||
+    rawSlug === 'criador' ||
+    rawSlug === 'studio' ||
+    rawSlug === 'painel' ||
+    rawSlug === 'admin' ||
+    rawSlug === 'favicon.ico' ||
+    rawSlug.includes('.')
+  ) {
+    return next();
+  }
+
+  // Se solicitado explicitamente modo SPA/editor via query string, deixa passar para o app React
+  if (req.query.spa === 'true' || req.query.editor === 'true' || req.query.modo === 'criador') {
+    return next();
+  }
+
+  try {
+    const fs = await import('fs');
+    const candidatePaths = [
+      path.resolve(__dirname, 'export-archive', rawSlug, 'index.html'),
+      path.resolve(__dirname, 'dist', rawSlug, 'index.html'),
+      path.resolve(__dirname, 'public', rawSlug, 'index.html'),
+    ];
+
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
+        return res.sendFile(p);
+      }
+    }
+
+    // Se ainda não pré-renderizou em disco, busca em .saved-sites.json e gera o HTML estático instantâneo
+    const sitesPath = path.resolve(__dirname, '.saved-sites.json');
+    if (fs.existsSync(sitesPath)) {
+      const sites = JSON.parse(fs.readFileSync(sitesPath, 'utf-8'));
+      if (Array.isArray(sites)) {
+        const site = sites.find((s: any) =>
+          (s?.subdomain || '').toLowerCase() === rawSlug ||
+          (Array.isArray(s?.subdomainAliases) && s.subdomainAliases.some((a: string) => a.toLowerCase() === rawSlug))
+        );
+        if (site && site.data) {
+          const { generateExportCode } = await import('./src/utils/exportEngine.ts');
+          const html = generateExportCode(site.data);
+
+          // Salva em disco para acessos seguintes imediatos
+          try {
+            const outDir = path.resolve(__dirname, 'export-archive', rawSlug);
+            if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+            fs.writeFileSync(path.join(outDir, 'index.html'), html, 'utf-8');
+          } catch {}
+
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
+          return res.status(200).send(html);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`[Static Edge Microsite Router] Fallback to SPA for ${rawSlug}:`, err);
+  }
+
+  next();
+});
+
 // Vite Dev Server middleware or production static server
 if (process.env.NODE_ENV !== 'production') {
   const { createServer: createViteServer } = await import('vite');
