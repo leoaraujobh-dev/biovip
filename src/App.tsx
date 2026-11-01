@@ -2161,24 +2161,41 @@ export default function App() {
                 profile: {
                   ...idbData.profile,
                   ...existingData.profile,
-                  avatarUrl: existingData.profile?.avatarUrl || idbData.profile?.avatarUrl,
-                  aboutPhotoUrl: existingData.profile?.aboutPhotoUrl || idbData.profile?.aboutPhotoUrl,
+                  avatarUrl: (existingData.profile?.avatarUrl && String(existingData.profile.avatarUrl).trim()) || idbData.profile?.avatarUrl || '',
+                  aboutPhotoUrl: (existingData.profile?.aboutPhotoUrl && String(existingData.profile.aboutPhotoUrl).trim()) || idbData.profile?.aboutPhotoUrl || '',
                 },
                 studentGrid: {
                   ...idbData.studentGrid,
                   ...existingData.studentGrid,
-                  photos: (existingData.studentGrid?.photos?.length ? existingData.studentGrid.photos : idbData.studentGrid?.photos) || [],
+                  photos: (() => {
+                    const idbPhotos = Array.isArray(idbData.studentGrid?.photos) ? idbData.studentGrid.photos : [];
+                    const existPhotos = Array.isArray(existingData.studentGrid?.photos) ? existingData.studentGrid.photos : [];
+                    const existHasPhotos = existPhotos.some((p: any) => typeof p === 'string' && p.trim().length > 0);
+                    if (!existHasPhotos && idbPhotos.length > 0) return idbPhotos;
+                    return (existPhotos.length > 0 ? existPhotos : idbPhotos).map((p: any, idx: number) => {
+                      return (typeof p === 'string' && p.trim().length > 0) ? p : (idbPhotos[idx] || '');
+                    });
+                  })(),
                 },
                 services: {
                   ...idbData.services,
                   ...existingData.services,
+                  items: Array.isArray(existingData.services?.items)
+                    ? existingData.services.items.map((it: any, idx: number) => {
+                        const idbItem = idbData.services?.items?.[idx] || idbData.services?.items?.find((x: any) => x.id === it.id);
+                        return {
+                          ...it,
+                          imageUrl: (it.imageUrl && String(it.imageUrl).trim()) || idbItem?.imageUrl || '',
+                        };
+                      })
+                    : idbData.services?.items || [],
                 },
                 actionCards: (existingData.actionCards?.length ? existingData.actionCards : idbData.actionCards) || [],
                 beforeAfter: {
                   ...idbData.beforeAfter,
                   ...existingData.beforeAfter,
-                  beforeImage: existingData.beforeAfter?.beforeImage || idbData.beforeAfter?.beforeImage,
-                  afterImage: existingData.beforeAfter?.afterImage || idbData.beforeAfter?.afterImage,
+                  beforeImage: (existingData.beforeAfter?.beforeImage && String(existingData.beforeAfter.beforeImage).trim()) || idbData.beforeAfter?.beforeImage || '',
+                  afterImage: (existingData.beforeAfter?.afterImage && String(existingData.beforeAfter.afterImage).trim()) || idbData.beforeAfter?.afterImage || '',
                 },
               };
               byId.set(idbSite.id, {
