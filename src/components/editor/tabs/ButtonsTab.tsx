@@ -28,7 +28,7 @@ export function ButtonsTab({
   handleFileUpload,
 }: ButtonsTabProps) {
   return (
-    <div className="space-y-5">
+    <div id="module-actionCards" className="space-y-5 scroll-mt-6 transition-all duration-300">
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div>
           <span className="text-xs font-semibold text-neutral-100 block">Personalização de Botões & Banners</span>

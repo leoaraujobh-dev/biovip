@@ -4528,6 +4528,39 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     showToast(`🏷️ Catálogo alterado para: ${labels[nextLayout]}`);
   };
 
+  const handleSelectModuleSection = (tab: string, targetId?: string) => {
+    setActiveTab(tab);
+    if (viewMode === 'preview') {
+      setViewMode('editor');
+    }
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.classList.add(
+            'ring-2',
+            'ring-amber-400',
+            'ring-offset-2',
+            'ring-offset-neutral-900',
+            'shadow-lg',
+            'shadow-amber-400/20'
+          );
+          setTimeout(() => {
+            el.classList.remove(
+              'ring-2',
+              'ring-amber-400',
+              'ring-offset-2',
+              'ring-offset-neutral-900',
+              'shadow-lg',
+              'shadow-amber-400/20'
+            );
+          }, 2200);
+        }
+      }, 150);
+    }
+  };
+
   const handleAiGenerateMicrosite = async () => {
     setAiError(null);
     if (
@@ -11412,6 +11445,7 @@ adjustSiteUpdatesCount={adjustSiteUpdatesCount}
           bookingForm={bookingForm}
           setBookingForm={setBookingForm}
           setLightboxIndex={setLightboxIndex}
+          onSelectModuleSection={handleSelectModuleSection}
         />
       </main>
   );

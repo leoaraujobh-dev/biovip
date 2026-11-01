@@ -17,7 +17,7 @@ export function QualifierTab({
   updateQualifier,
 }: QualifierTabProps) {
   return (
-    <div className="space-y-5">
+    <div id="module-quiz" className="space-y-5 scroll-mt-6 transition-all duration-300">
       <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

@@ -30,6 +30,7 @@ import {
   CheckCircle,
   Wifi,
   Lock,
+  Edit3,
 } from 'lucide-react';
 import { WhatsAppIcon, InstagramIcon, CalendarIcon } from '../icons/BrandIcons';
 import { SimulatorImage } from '../SimulatorImage';
@@ -69,6 +70,7 @@ export interface SimulatorChassisProps {
   bookingForm: BookingFormState;
   setBookingForm: React.Dispatch<React.SetStateAction<BookingFormState>>;
   setLightboxIndex: (index: number) => void;
+  onSelectModuleSection?: (tab: string, targetId?: string) => void;
 }
 
 export function SimulatorChassis({
@@ -96,10 +98,21 @@ export function SimulatorChassis({
   bookingForm,
   setBookingForm,
   setLightboxIndex,
+  onSelectModuleSection,
 }: SimulatorChassisProps) {
   const [addressCopied, setAddressCopied] = React.useState(false);
   const [showWaTooltip, setShowWaTooltip] = React.useState(true);
   const [srvActiveCategory, setSrvActiveCategory] = React.useState('Todos');
+
+  const renderEditHint = (label = 'Editar') => {
+    if (!onSelectModuleSection) return null;
+    return (
+      <span className="opacity-0 group-hover/sec:opacity-100 transition-opacity duration-200 absolute top-2 right-2 z-30 pointer-events-none bg-amber-500/95 text-black font-bold text-[9px] px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 backdrop-blur-sm">
+        <Edit3 className="w-2.5 h-2.5 text-black" />
+        <span>{label}</span>
+      </span>
+    );
+  };
 
   const handleCopyAddress = (e: React.MouseEvent, addr: string) => {
     e.preventDefault();
@@ -250,7 +263,7 @@ export function SimulatorChassis({
             {/* Announcement Urgency Bar */}
             {data.announcement.enabled && (
               <div
-                className="relative z-20 pt-7 pb-2 px-3 text-center text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shrink-0"
+                className="group/sec relative z-20 pt-7 pb-2 px-3 text-center text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shrink-0 transition-all hover:ring-1 hover:ring-amber-400/50"
                 style={{
                   backgroundColor: data.moduleColors?.announcement?.bgColor || theme.accent,
                   color:
@@ -261,9 +274,15 @@ export function SimulatorChassis({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setBookingModalOpen(true);
+                  if (onSelectModuleSection) {
+                    onSelectModuleSection('identity', 'module-announcement');
+                  } else {
+                    setBookingModalOpen(true);
+                  }
                 }}
+                title="Clique para editar este aviso no painel"
               >
+                {renderEditHint('Aviso')}
                 <span>{data.announcement.badge}:</span>
                 <span className="font-medium underline">{data.announcement.text}</span>
               </div>
@@ -271,12 +290,15 @@ export function SimulatorChassis({
 
             {/* HERO SECTION */}
             <div
-              className="relative w-full overflow-hidden shrink-0 bg-neutral-950"
+              className="group/sec relative w-full overflow-hidden shrink-0 bg-neutral-950 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40"
               style={{
                 height: `${data.styling.photoHeight || 380}px`,
                 minHeight: `${data.styling.photoHeight || 380}px`,
               }}
+              onClick={() => onSelectModuleSection?.('identity', 'module-profile')}
+              title="Clique para editar Foto e Título no painel"
             >
+              {renderEditHint('Perfil')}
               {data.profile.avatarUrl ? (
                 <SimulatorImage
                   src={data.profile.avatarUrl}
@@ -331,7 +353,16 @@ export function SimulatorChassis({
             </div>
 
             {/* QUICK SOCIAL BAR */}
-            <div className="flex items-center justify-center gap-3 px-5 py-2 relative z-10 shrink-0">
+            <div
+              className="group/sec relative flex items-center justify-center gap-3 px-5 py-2 z-10 shrink-0 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/30 rounded-lg"
+              onClick={(e) => {
+                if (!(e.target as HTMLElement).closest('a, button')) {
+                  onSelectModuleSection?.('buttons', 'module-actionCards');
+                }
+              }}
+              title="Clique para editar Redes Sociais"
+            >
+              {renderEditHint('Redes')}
               <div className="flex-1 h-px bg-neutral-800/30" />
               <div className="flex gap-2">
                 {data.profile.whatsapp && (
@@ -390,12 +421,15 @@ export function SimulatorChassis({
             {/* BANNER DE TIMER REGRESSIVO DE ESCASSEZ (SE HABILITADO NO MÓDULO DE ALTA CONVERSÃO) */}
             {data.highConversion?.enabled && data.highConversion?.urgencyTimer?.enabled && (
               <div
-                className="mx-5 my-2 p-3 rounded-2xl border text-center space-y-1 relative z-10 shadow-lg"
+                className="group/sec relative mx-5 my-2 p-3 rounded-2xl border text-center space-y-1 z-10 shadow-lg cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40"
                 style={{
                   backgroundColor: data.moduleColors?.urgencyTimer?.bgColor || 'rgba(245, 158, 11, 0.15)',
                   borderColor: `${data.moduleColors?.urgencyTimer?.accentColor || theme.accent}66`,
                 }}
+                onClick={() => onSelectModuleSection?.('highConversion')}
+                title="Clique para editar Timer de Escassez"
               >
+                {renderEditHint('Escassez')}
                 <div
                   className="text-[10px] font-black tracking-wider uppercase flex items-center justify-center gap-1"
                   style={{
@@ -437,25 +471,38 @@ export function SimulatorChassis({
             {/* CURSIVE BANNER */}
             {data.profile.cursivePhrase && (
               <div
-                className="text-center px-4 py-2 text-2xl italic tracking-wide"
+                className="group/sec relative text-center px-4 py-2 text-2xl italic tracking-wide cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/30 rounded-lg"
                 style={{
                   fontFamily: `'${theme.fontScript}', cursive, serif`,
                   color: data.moduleColors?.hero?.accentColor || data.moduleColors?.hero?.textColor || theme.textMuted,
                 }}
+                onClick={() => onSelectModuleSection?.('identity', 'module-profile')}
+                title="Clique para editar Assinatura"
               >
+                {renderEditHint('Assinatura')}
                 {data.profile.cursivePhrase}
               </div>
             )}
 
             {/* ACTION PILL CARDS */}
-            <div className="px-5 space-y-3 pb-3 relative z-10">
+            <div
+              className="group/sec relative px-5 space-y-3 pb-3 z-10 cursor-pointer rounded-xl transition-all hover:ring-1 hover:ring-amber-400/30"
+              onClick={(e) => {
+                if (!(e.target as HTMLElement).closest('button, a')) {
+                  onSelectModuleSection?.('buttons', 'module-actionCards');
+                }
+              }}
+              title="Clique para editar Botões de Ação"
+            >
+              {renderEditHint('Botões')}
               {/* BOTÃO ESPECIAL DE TRIAGEM / QUALIFICADOR */}
               {data.qualifierFunnel.enabled && (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
                     setQuizStep(0);
                     setQuizModalOpen(true);
+                    onSelectModuleSection?.('qualifier', 'module-quiz');
                   }}
                   className={`w-full flex items-center justify-between p-3.5 transition-all duration-300 ease-out transform hover:scale-105 active:scale-[0.98] cursor-pointer group text-left relative overflow-hidden ${
                     data.qualifierFunnel.animation && data.qualifierFunnel.animation !== 'none'
@@ -807,7 +854,12 @@ export function SimulatorChassis({
 
             {/* AUTHORITY METRICS */}
             {data.metrics.enabled && (
-              <div className="px-5 py-2 relative z-10">
+              <div
+                className="group/sec relative px-5 py-2 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={() => onSelectModuleSection?.('modules', 'module-metrics')}
+                title="Clique para editar Métricas"
+              >
+                {renderEditHint('Métricas')}
                 <div
                   className="grid grid-cols-3 divide-x divide-neutral-800/20 py-3 text-center"
                   style={{
@@ -864,7 +916,12 @@ export function SimulatorChassis({
 
             {/* MÓDULO: COMO FUNCIONA O PROCESSO (01, 02, 03) */}
             {data.processSteps.enabled && (
-              <div className="px-5 py-4 space-y-2.5 relative z-10">
+              <div
+                className="group/sec relative px-5 py-4 space-y-2.5 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={() => onSelectModuleSection?.('modules', 'module-processSteps')}
+                title="Clique para editar Passo a Passo"
+              >
+                {renderEditHint('Passo a Passo')}
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
@@ -957,7 +1014,17 @@ export function SimulatorChassis({
               };
 
               return (
-                <div className="px-5 py-4 space-y-2.5 relative z-10" id="galeria">
+                <div
+                  className="group/sec relative px-5 py-4 space-y-2.5 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                  id="galeria"
+                  onClick={(e) => {
+                    if (!(e.target as HTMLElement).closest('button, img')) {
+                      onSelectModuleSection?.('modules', 'module-studentGrid');
+                    }
+                  }}
+                  title="Clique para editar Galeria de Fotos"
+                >
+                  {renderEditHint('Galeria')}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       {data.studentGrid.badge && (
@@ -1241,7 +1308,16 @@ export function SimulatorChassis({
 
             {/* MÓDULO: ANTES & DEPOIS INTERATIVO */}
             {data.beforeAfter.enabled && (
-              <div className="px-5 py-4 space-y-2.5 relative z-10">
+              <div
+                className="group/sec relative px-5 py-4 space-y-2.5 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('input')) {
+                    onSelectModuleSection?.('modules', 'module-beforeAfter');
+                  }
+                }}
+                title="Clique para editar Antes e Depois"
+              >
+                {renderEditHint('Antes & Depois')}
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
@@ -1299,7 +1375,16 @@ export function SimulatorChassis({
 
             {/* CARD DE LOCALIZAÇÃO (MAPS + HORÁRIO + AÇÕES RÁPIDAS WAZE / UBER / COPIAR) */}
             {data.locationCard.enabled && (
-              <div className="px-5 py-2 relative z-10">
+              <div
+                className="group/sec relative px-5 py-2 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('button, a')) {
+                    onSelectModuleSection?.('modules', 'module-locationCard');
+                  }
+                }}
+                title="Clique para editar Localização"
+              >
+                {renderEditHint('Localização')}
                 <div
                   className="p-3.5 rounded-2xl group transition-all duration-300 space-y-2.5"
                   style={{
@@ -1467,7 +1552,17 @@ export function SimulatorChassis({
               };
 
               return (
-                <div className="px-5 py-4 space-y-3 relative z-10 shrink-0" id="catalogo">
+                <div
+                  className="group/sec relative px-5 py-4 space-y-3 z-10 shrink-0 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                  id="catalogo"
+                  onClick={(e) => {
+                    if (!(e.target as HTMLElement).closest('button, a, input, .trust-badges-container')) {
+                      onSelectModuleSection?.('services', 'module-services');
+                    }
+                  }}
+                  title="Clique para editar Catálogo de Serviços"
+                >
+                  {renderEditHint('Serviços')}
                   <div className="space-y-1">
                     {data.services.badge && (
                       <span
@@ -1839,12 +1934,21 @@ export function SimulatorChassis({
 
                     return (
                       <div
-                        className="p-3 rounded-2xl grid grid-cols-2 gap-2 mt-3"
+                        className="trust-badges-container group/badges relative p-3 rounded-2xl grid grid-cols-2 gap-2 mt-3 cursor-pointer hover:ring-1 hover:ring-amber-400/50 transition-all"
                         style={{
                           background: getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)',
                           border: `1px solid ${theme.socialBorder}`,
                         }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectModuleSection?.('services', 'module-trustbadges');
+                        }}
+                        title="Clique para editar Selos & Facilidades"
                       >
+                        <span className="opacity-0 group-hover/badges:opacity-100 transition-opacity duration-200 absolute top-1 right-2 z-30 pointer-events-none bg-amber-500/90 text-black font-bold text-[8.5px] px-1.5 py-0.5 rounded-full shadow flex items-center gap-1 backdrop-blur-sm">
+                          <Edit3 className="w-2.5 h-2.5 text-black" />
+                          <span>Facilidades</span>
+                        </span>
                         {badgeItems.map((badge, idx) => (
                           <div key={badge.id || `badge-${idx}`} className="flex items-center gap-2">
                             <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${getBadgeColorClasses(badge.color, idx)}`}>
@@ -1865,7 +1969,16 @@ export function SimulatorChassis({
 
             {/* TESTIMONIALS & GOOGLE REVIEWS PROVA SOCIAL */}
             {data.testimonials.enabled && (
-              <div className="px-5 py-4 space-y-2.5 relative z-10">
+              <div
+                className="group/sec relative px-5 py-4 space-y-2.5 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('a, button')) {
+                    onSelectModuleSection?.('modules', 'module-testimonials');
+                  }
+                }}
+                title="Clique para editar Depoimentos"
+              >
+                {renderEditHint('Depoimentos')}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <h3
@@ -1990,7 +2103,12 @@ export function SimulatorChassis({
 
             {/* ABOUT ME SECTION */}
             {data.aboutMe.enabled && (
-              <div className="px-5 py-4 space-y-3 relative z-10">
+              <div
+                className="group/sec relative px-5 py-4 space-y-3 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={() => onSelectModuleSection?.('modules', 'module-aboutMe')}
+                title="Clique para editar Sobre Mim"
+              >
+                {renderEditHint('Sobre Mim')}
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
@@ -2039,7 +2157,16 @@ export function SimulatorChassis({
 
             {/* FAQ ACCORDION SECTION */}
             {data.faq.enabled && data.faq.items.length > 0 && (
-              <div className="px-5 py-4 space-y-2.5 relative z-10">
+              <div
+                className="group/sec relative px-5 py-4 space-y-2.5 z-10 cursor-pointer transition-all hover:ring-1 hover:ring-amber-400/40 rounded-xl"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('button')) {
+                    onSelectModuleSection?.('modules', 'module-faq');
+                  }
+                }}
+                title="Clique para editar Perguntas Frequentes (FAQ)"
+              >
+                {renderEditHint('FAQ')}
                 <div className="flex items-center gap-2">
                   <h3
                     className="text-sm font-semibold tracking-wider uppercase"
@@ -2093,7 +2220,14 @@ export function SimulatorChassis({
             )}
 
             {/* FOOTER */}
-            <div className="pt-6 pb-8 px-4 text-center relative z-10 flex flex-col items-center gap-2.5">
+            <div
+              className="pt-6 pb-8 px-4 text-center relative z-10 flex flex-col items-center gap-2.5 cursor-pointer"
+              onClick={(e) => {
+                if (!(e.target as HTMLElement).closest('a')) {
+                  onSelectModuleSection?.('identity', 'module-profile');
+                }
+              }}
+            >
               <p
                 className="text-[10px] tracking-wider opacity-85"
                 style={{ color: data.moduleColors?.footer?.textColor || theme.textMuted }}

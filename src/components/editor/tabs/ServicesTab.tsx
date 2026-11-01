@@ -130,7 +130,7 @@ export function ServicesTab({
   return (
     <div className="space-y-5">
       {/* Header & Master Switch */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4">
+      <div id="module-services" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-4 scroll-mt-6 transition-all duration-300">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-neutral-100 flex items-center gap-2">

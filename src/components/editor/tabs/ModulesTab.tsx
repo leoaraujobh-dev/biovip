@@ -624,7 +624,7 @@ export function ModulesTab({
       </div>
 
       {/* Módulo: Antes e Depois Interativo */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-beforeAfter" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400" />

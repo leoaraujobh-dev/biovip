@@ -38,7 +38,7 @@ export function IdentityTab({
   return (
     <div className="space-y-5">
       {/* Barra de Aviso */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      <div id="module-announcement" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BellRing className="w-4 h-4 text-amber-400" />
@@ -88,8 +88,8 @@ export function IdentityTab({
         )}
       </div>
 
-      {/* Upload Foto Principal */}
-      <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+      {/* Upload Foto Principal & Perfil */}
+      <div id="module-profile" className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 scroll-mt-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <label className="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
             <Upload className="w-4 h-4 text-amber-400" /> Foto Principal do Cabeçalho (Upload Direto ou URL)
