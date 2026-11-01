@@ -1,7 +1,7 @@
 import React from 'react';
 import { QrCode, X, Copy, ExternalLink } from 'lucide-react';
 import type { SavedMicrosite } from '../../types/microsite';
-import { safeCopyText } from '../../utils/formatters';
+import { safeCopyText, getPublicMicrositeUrl, cleanMicrositeSlug } from '../../utils/formatters';
 
 export interface QrCodeModalProps {
   isOpen: boolean;
@@ -24,15 +24,31 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const targetSite = currentEditingSite || {
-    subdomain: data.profile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'meusite',
-    customDomain: '',
-    clientName: data.profile.name || 'Rascunho',
-  };
-  const liveUrl = targetSite.customDomain
-    ? `https://${targetSite.customDomain}`
-    : `https://${(landingConfig.baseDomain || 'biovip.com.br').toLowerCase()}/?site=${targetSite.subdomain || 'meusite'}`;
+  const rawSub =
+    currentEditingSite?.subdomain ||
+    data?.profile?.instagram ||
+    data?.profile?.name ||
+    'meusite';
+  const cleanSub = cleanMicrositeSlug(rawSub);
+  const clientName = currentEditingSite?.clientName || data?.profile?.name || 'Microsite';
+  const customDomain = currentEditingSite?.customDomain;
+
+  // Gera sempre o link canônico público oficial e limpo (ex: https://biovip.com.br/analuizanailstudio)
+  const liveUrl = getPublicMicrositeUrl(
+    cleanSub,
+    customDomain,
+    landingConfig?.baseDomain || 'biovip.com.br',
+    true
+  );
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(liveUrl)}`;
+
+  const handleOpenLink = () => {
+    if (typeof window !== 'undefined') {
+      window.open(liveUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      openLivePreviewTab();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
@@ -69,7 +85,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
               className="w-52 h-52 object-contain rounded-lg"
             />
             <div className="mt-2 text-center text-[10px] text-neutral-900 font-extrabold tracking-wider uppercase">
-              {targetSite.clientName}
+              {clientName}
             </div>
           </div>
 
@@ -95,7 +111,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
 
               <button
                 type="button"
-                onClick={openLivePreviewTab}
+                onClick={handleOpenLink}
                 className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />

@@ -38,7 +38,7 @@ export const ClientWaPromptModal: React.FC<ClientWaPromptModalProps> = ({
   const primaryDomain = (clientWaPromptSite.customDomain || '').trim() || `biovip.com.br/${clientWaPromptSite.subdomain || 'meusite'}`;
   const primaryUrl = `https://${primaryDomain}`;
   const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio&utm_campaign=perfil_oficial`;
-  const subdomainUrl = `https://biovip.com.br/?site=${clientWaPromptSite.subdomain || 'meusite'}`;
+  const subdomainUrl = `https://biovip.com.br/${clientWaPromptSite.subdomain || 'meusite'}`;
   const billing = getSiteBillingSummary(clientWaPromptSite);
   const daysDiff = getDaysUntilDue(clientWaPromptSite.dueDate);
   const daysOverdue = daysDiff < 0 ? Math.abs(daysDiff) : 0;

@@ -311,7 +311,8 @@ export function cleanMicrositeSlug(slug?: string | null): string {
 export function getPublicMicrositeUrl(
   subdomain: string,
   customDomain?: string,
-  baseDomainProp = 'biovip.com.br'
+  baseDomainProp = 'biovip.com.br',
+  forcePublicDomain = false
 ): string {
   const cleanSub = cleanMicrositeSlug(subdomain);
   const cleanBase = (baseDomainProp || 'biovip.com.br')
@@ -339,16 +340,16 @@ export function getPublicMicrositeUrl(
     return `https://${cleanCustom}`;
   }
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && !forcePublicDomain) {
     const host = window.location.hostname.toLowerCase();
     const origin = window.location.origin;
     if (host === cleanBase || host === `www.${cleanBase}` || host.endsWith(`.${cleanBase}`)) {
-      return `https://${cleanBase}/?site=${cleanSub}`;
+      return `https://${cleanBase}/${cleanSub}`;
     }
-    return `${origin}/?site=${cleanSub}`;
+    return `${origin}/${cleanSub}`;
   }
 
-  return `https://${cleanBase}/?site=${cleanSub}`;
+  return `https://${cleanBase}/${cleanSub}`;
 }
 
 

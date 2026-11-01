@@ -2384,7 +2384,7 @@ export default function App() {
       return;
     }
     try {
-      window.history.pushState({ surface: 'microsite', slug: clean }, '', `/?site=${clean}`);
+      window.history.pushState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
     } catch {}
     setActivePublicSlug(clean);
     setAppSurface('microsite');
@@ -2540,8 +2540,8 @@ export default function App() {
     site: SavedMicrosite,
     templateType: 'complete_kit' | 'onboarding_bio' | 'renewal_details' = 'complete_kit'
   ) => {
-    const primaryDomain = (site.customDomain || '').trim() || `biovip.com.br/?site=${site.subdomain || 'meusite'}`;
-    const primaryUrl = site.customDomain ? `https://${site.customDomain}` : `https://biovip.com.br/?site=${site.subdomain || 'meusite'}`;
+    const primaryDomain = (site.customDomain || '').trim() || `biovip.com.br/${site.subdomain || 'meusite'}`;
+    const primaryUrl = site.customDomain ? `https://${site.customDomain}` : `https://biovip.com.br/${site.subdomain || 'meusite'}`;
     const subdomainUrl = getPublicMicrositeUrl(site.subdomain || 'meusite');
     const instagramBioTrackedUrl = `${primaryUrl}?utm_source=instagram&utm_medium=bio`;
     const billing = getSiteBillingSummary(site);
@@ -9693,7 +9693,7 @@ COMO PUBLICAR NO SERVIDOR:
         setPaymentSuccessSite(null);
         setAppSurface('microsite');
         setActivePublicSlug(targetSlug);
-        window.history.pushState({}, '', `/?site=${targetSlug}`);
+        window.history.pushState({}, '', `/${targetSlug}`);
       }}
     />
   );
@@ -9736,14 +9736,18 @@ COMO PUBLICAR NO SERVIDOR:
             m.id.toLowerCase() === slug ||
             m.subdomain?.toLowerCase() === slug ||
             m.code?.toLowerCase() === slug ||
-            ((slug === 'doncorleone' || slug === 'dombarber') && (m.id === 'barber' || m.subdomain === 'dombarber' || m.subdomain === 'doncorleone'))
+            ((slug === 'doncorleone' || slug === 'dombarber') && (m.id === 'barber' || m.subdomain === 'dombarber' || m.subdomain === 'doncorleone')) ||
+            ((slug === 'dramarina' || slug === 'almeidaadv') && (m.id === 'law' || m.subdomain === 'dramarina' || m.subdomain === 'almeidaadv')) ||
+            ((slug === 'larissanails' || slug === 'larissaalmeida') && (m.id === 'nails' || m.subdomain === 'larissanails' || m.subdomain === 'larissaalmeida'))
         ) ||
         READY_MADE_MODELS.find(
           (m) =>
             m.id.toLowerCase() === slug ||
             m.subdomain?.toLowerCase() === slug ||
             m.code?.toLowerCase() === slug ||
-            ((slug === 'doncorleone' || slug === 'dombarber') && (m.id === 'barber' || m.subdomain === 'dombarber' || m.subdomain === 'doncorleone'))
+            ((slug === 'doncorleone' || slug === 'dombarber') && (m.id === 'barber' || m.subdomain === 'dombarber' || m.subdomain === 'doncorleone')) ||
+            ((slug === 'dramarina' || slug === 'almeidaadv') && (m.id === 'law' || m.subdomain === 'dramarina' || m.subdomain === 'almeidaadv')) ||
+            ((slug === 'larissanails' || slug === 'larissaalmeida') && (m.id === 'nails' || m.subdomain === 'larissanails' || m.subdomain === 'larissaalmeida'))
         )
       : undefined;
 

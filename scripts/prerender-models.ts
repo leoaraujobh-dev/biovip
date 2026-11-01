@@ -13,15 +13,15 @@ const publicDir = path.resolve(__dirname, '../public');
 const modelsToPrerender: Array<{ slug: string; data: typeof INITIAL_DATA; aliases?: string[] }> = [];
 
 // 1. Dra. Marina Almeida (Law)
-const lawSite = INITIAL_SAVED_SITES.find(s => s.subdomain === 'dramarina') || INITIAL_SAVED_SITES[1];
+const lawSite = INITIAL_SAVED_SITES.find(s => s.subdomain === 'dramarina' || s.subdomain === 'almeidaadv') || INITIAL_SAVED_SITES[1];
 if (lawSite?.data) {
-  modelsToPrerender.push({ slug: 'dramarina', data: lawSite.data });
+  modelsToPrerender.push({ slug: 'dramarina', data: lawSite.data, aliases: ['almeidaadv'] });
 }
 
 // 2. Larissa Almeida (Nails)
-const nailsSite = INITIAL_SAVED_SITES.find(s => s.subdomain === 'larissanails') || INITIAL_SAVED_SITES[2];
+const nailsSite = INITIAL_SAVED_SITES.find(s => s.subdomain === 'larissanails' || s.subdomain === 'larissaalmeida') || INITIAL_SAVED_SITES[2];
 if (nailsSite?.data) {
-  modelsToPrerender.push({ slug: 'larissanails', data: nailsSite.data });
+  modelsToPrerender.push({ slug: 'larissanails', data: nailsSite.data, aliases: ['larissaalmeida'] });
 }
 
 // 3. Don Corleone Barber
