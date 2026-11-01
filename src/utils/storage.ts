@@ -182,32 +182,21 @@ export function purgeSiteFromStorage(siteId: string, siteData?: any): void {
 }
 
 export function persistSavedSitesToStorage(sites: any[]): void {
+  // 1. IndexedDB é o armazenamento primário e resiliente (suporta centenas de megabytes sem cota restritiva de 5MB)
   saveSitesToIndexedDb(sites);
+
+  // 2. Tenta salvar no localStorage apenas se couber, sem nunca corromper ou zerar fotos
   try {
     localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(sites));
   } catch {
-    // QuotaExceededError fallback: strip heavy Base64 images in localStorage while IndexedDB retains full images
-    try {
-      const lightweight = sites.map((s) => {
-        try {
-          const cloned = JSON.parse(JSON.stringify(s, (_k, v) => {
-            if (typeof v === 'string' && v.startsWith('data:image/') && v.length > 35000) {
-              return '';
-            }
-            return v;
-          }));
-          return cloned;
-        } catch {
-          return s;
-        }
-      });
-      localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(lightweight));
-    } catch {}
+    // Se estourar a cota de 5MB do localStorage, NÃO substitui fotos por strings vazias "".
+    // O IndexedDB já possui a cópia completa e íntegra.
   }
 
-  // Sincronização automática com a API do servidor (PC <-> Celular <-> Nuvem)
+  // 3. Sincronização automática com a API do servidor (PC <-> Celular <-> Nuvem)
   if (typeof window !== 'undefined' && Array.isArray(sites) && sites.length > 0) {
     try {
+      // Garante que só envia para a API dados íntegros que tenham conteúdo
       fetch('/api/saved-sites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
