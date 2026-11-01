@@ -203,6 +203,7 @@ import {
   INITIAL_DATA,
   NICHE_DEMO_MODULE_COLORS,
   INITIAL_SAVED_SITES,
+  mergeWithInitialData,
 } from './constants/initialData';
 
 import {
@@ -307,8 +308,8 @@ export default function App() {
         const raw = localStorage.getItem('luxebio_editor_active_draft');
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === 'object' && parsed.profile?.name) {
-            return { ...INITIAL_DATA, ...parsed };
+          if (parsed && typeof parsed === 'object') {
+            return mergeWithInitialData(parsed);
           }
         }
       } catch {}
@@ -5799,8 +5800,28 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     }
 
     triggerSimulatorSkeleton(420);
-    setData(JSON.parse(JSON.stringify(site.data || INITIAL_DATA)));
+    const safeData = mergeWithInitialData(site.data);
+    setData(safeData);
     setEditingSiteId(site.id);
+    setSaveForm({
+      clientName: site.clientName || safeData.profile?.name || '',
+      clientPhone: site.clientPhone || safeData.profile?.whatsapp || '',
+      clientEmail: site.clientEmail || '',
+      maintenancePlan: site.maintenancePlan || 'pro_4',
+      monthlyFee: String(site.monthlyFee || '49,90').replace('.', ','),
+      creationFee: String(site.creationFee || '79,90').replace('.', ','),
+      isFirstMonth: site.isFirstMonth ?? false,
+      subdomain: site.subdomain || '',
+      customDomain: site.customDomain || '',
+      isLandingModel: site.isLandingModel ?? false,
+      isTemporaryDemo: site.isTemporaryDemo ?? false,
+      demoDurationDays: site.demoDurationDays || 7,
+      proposalValue: site.proposalValue || '197,00',
+      crmStage: site.crmStage || 'demonstracao',
+      prospectNotes: site.prospectNotes || '',
+      prospectInstagram: site.prospectInstagram || safeData.profile?.instagram || '',
+      prospectSituation: site.prospectSituation || 'wa_direto',
+    });
     setIsClientsFullscreen(false);
     setAppSurface('studio');
     setActiveTab('styling');
@@ -9641,7 +9662,7 @@ COMO PUBLICAR NO SERVIDOR:
       (s) => s.id === modelId || s.id === `real-niche-${modelId}`
     );
     if (existingSaved) {
-      setData(JSON.parse(JSON.stringify(existingSaved.data)));
+      setData(mergeWithInitialData(existingSaved.data));
       setEditingSiteId(existingSaved.id);
       setActiveTab('styling');
       openCreatorSubdomain(true);
@@ -9650,7 +9671,7 @@ COMO PUBLICAR NO SERVIDOR:
     }
     const fallbackModel = DYNAMIC_LANDING_MODELS.find((m) => m.id === modelId);
     if (fallbackModel) {
-      setData(JSON.parse(JSON.stringify(fallbackModel.realSiteData)));
+      setData(mergeWithInitialData(fallbackModel.realSiteData));
       setEditingSiteId(null);
       setActiveTab('styling');
       openCreatorSubdomain(true);

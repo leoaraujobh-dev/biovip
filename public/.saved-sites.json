@@ -7096,17 +7096,34 @@
     "data": {
       "theme": "sageMind",
       "customColors": {
-        "enabled": false
+        "enabled": false,
+        "bg": "#0f172a",
+        "textMain": "#ffffff",
+        "textMuted": "#94a3b8",
+        "accent": "#e2b857",
+        "cardBg": "#ffffff",
+        "cardText": "#0f172a",
+        "cardBorder": "#e2b857",
+        "socialBg": "#1e293b",
+        "glowColor": "#e2b857"
       },
+      "moduleColors": {},
       "styling": {
         "fontFamily": "Cormorant Garamond",
+        "borderRadius": 20,
+        "glassmorphism": true,
+        "metallicBorders": true,
+        "spotlightGlow": true,
+        "photoHeight": 280,
+        "photoScale": 100,
+        "photoPosY": 20,
+        "photoPosX": 50,
+        "vignetteIntensity": 85,
+        "photoFilter": "none",
+        "wrapperAlignment": "flex-start",
         "cardBorderRadius": 18,
         "buttonStyle": "gradient",
         "buttonRounding": "full",
-        "photoHeight": 280,
-        "photoPosY": 20,
-        "photoPosX": 50,
-        "photoScale": 100,
         "photoRadius": "xl",
         "cardBorderWidth": 1,
         "headerAlignment": "center",
@@ -7114,6 +7131,7 @@
       },
       "announcement": {
         "enabled": true,
+        "badge": "CONSULTORIA VIP",
         "text": "✨ Atendimento Clínico & Home Care Especializado em Pós-Operatório",
         "link": "#booking"
       },
@@ -7130,16 +7148,34 @@
         "mapsUrl": "",
         "verifiedBadge": true
       },
-      "aboutMe": {
+      "metrics": {
         "enabled": true,
-        "headline": "Sobre GERMANA ZOCRATO",
-        "photoUrl": "/assets/models/germanazocrato/about.jpg",
-        "photoHeight": 220,
-        "photoPosY": 25,
-        "photoPosX": 50,
-        "photoScale": 100,
-        "paragraph": "Técnica de enfermagem por formação, ofereço protocolos avançados em DRENAGEM LINFÁTICA & PÓS-OPERATÓRIO, unindo conhecimento clínico, biossegurança rigorosa e atendimento acolhedor para reduzir edemas, acelerar a recuperação e valorizar sua leveza e bem-estar.",
-        "closingPhrase": "Realçando sua beleza única com ciência, arte e sutileza."
+        "stat1Value": "+500",
+        "stat1Label": "CLIENTES",
+        "stat2Value": "8 anos",
+        "stat2Label": "DE EXPERIÊNCIA",
+        "stat3Value": "95%",
+        "stat3Label": "DE SATISFAÇÃO",
+        "items": [
+          {
+            "id": "m-1",
+            "value": "100%",
+            "label": "Biossegurança",
+            "icon": "ShieldCheck"
+          },
+          {
+            "id": "m-2",
+            "value": "Enfermagem",
+            "label": "Formação Técnica",
+            "icon": "Award"
+          },
+          {
+            "id": "m-3",
+            "value": "Home Care",
+            "label": "Atendimento Domiciliar",
+            "icon": "HeartPulse"
+          }
+        ]
       },
       "actionCards": [
         {
@@ -7206,10 +7242,65 @@
           "ctaActionText": "ENVIAR MENSAGEM"
         }
       ],
+      "processSteps": {
+        "enabled": true,
+        "headline": "Como funciona o processo?",
+        "subtitle": "Simples, seguro e totalmente transparente em 3 etapas",
+        "steps": [
+          {
+            "id": "step-1",
+            "number": "01",
+            "title": "Primeiro Contato & Triagem",
+            "description": "Você relata sua necessidade pelo WhatsApp ou formulário e alinhamos a prioridade."
+          },
+          {
+            "id": "step-2",
+            "number": "02",
+            "title": "Consulta Estratégica",
+            "description": "Análise aprofundada da sua situação com plano de ação sob medida."
+          },
+          {
+            "id": "step-3",
+            "number": "03",
+            "title": "Execução & Acompanhamento",
+            "description": "Defesa contínua e comunicação clara em todas as etapas."
+          }
+        ]
+      },
+      "studentGrid": {
+        "enabled": true,
+        "headline": "Portfólio & Estrutura de Atendimento",
+        "subtitle": "Registros reais do nosso padrão de entrega e excelência jurídica",
+        "badge": "ESTRUTURA VIP",
+        "layout": "smart_masonry",
+        "aspectRatio": "auto",
+        "enableLightbox": true,
+        "photos": [
+          "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700",
+          "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700",
+          "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700",
+          "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700",
+          "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700",
+          "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700"
+        ],
+        "captions": []
+      },
+      "locationCard": {
+        "enabled": true,
+        "headline": "Nossa Localização",
+        "address": "Av. Paulista, 1200 - Bela Vista, São Paulo - SP",
+        "buttonLabel": "Abrir no Google Maps",
+        "mapsUrl": "https://maps.google.com",
+        "hours": "Seg a Sáb · 08:30 às 19:30",
+        "openStatus": "ABERTO AGORA · HORA MARCADA",
+        "showHours": true
+      },
       "services": {
         "enabled": true,
         "headline": "Procedimentos & Tratamentos",
         "subtitle": "Protocolos individualizados com foco em biossegurança e conforto",
+        "badge": "CATÁLOGO VIP",
+        "layout": "list",
         "items": [
           {
             "id": "srv-1",
@@ -7277,29 +7368,6 @@
           }
         ]
       },
-      "metrics": {
-        "enabled": true,
-        "items": [
-          {
-            "id": "m-1",
-            "value": "100%",
-            "label": "Biossegurança",
-            "icon": "ShieldCheck"
-          },
-          {
-            "id": "m-2",
-            "value": "Enfermagem",
-            "label": "Formação Técnica",
-            "icon": "Award"
-          },
-          {
-            "id": "m-3",
-            "value": "Home Care",
-            "label": "Atendimento Domiciliar",
-            "icon": "HeartPulse"
-          }
-        ]
-      },
       "trustBadges": {
         "enabled": true,
         "items": [
@@ -7323,6 +7391,82 @@
           }
         ]
       },
+      "beforeAfter": {
+        "enabled": false,
+        "headline": "Transformação Real",
+        "subtitle": "Arraste para comparar o antes e o depois",
+        "beforeUrl": "https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&q=80&w=500",
+        "afterUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=500"
+      },
+      "testimonials": {
+        "enabled": true,
+        "headline": "Depoimentos de Clientes",
+        "items": [
+          {
+            "id": "t-1",
+            "clientName": "Dra. Vanessa Mendes",
+            "city": "São Paulo - SP",
+            "text": "A segurança técnica e clareza da Marina me deram tranquilidade no momento mais decisivo.",
+            "rating": 5
+          },
+          {
+            "id": "t-2",
+            "clientName": "Renato Silveira",
+            "city": "Campinas - SP",
+            "text": "Atendimento impecável, ágil e extremamente humanizado. Recomendo de olhos fechados!",
+            "rating": 5
+          }
+        ]
+      },
+      "qualifierFunnel": {
+        "enabled": true,
+        "animation": "shimmer",
+        "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
+        "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
+        "headline": "Triagem Estratégica & Agendamento",
+        "subtitle": "Responda para receber um atendimento sob medida e prioritário.",
+        "questions": [
+          {
+            "id": "q1",
+            "title": "Qual é o seu objetivo principal hoje?",
+            "options": [
+              "Agendar Consulta / Atendimento Individual",
+              "Consultoria Estratégica ou Parecer",
+              "Mentoria ou Cursos Profissionais",
+              "Outra dúvida específica"
+            ]
+          },
+          {
+            "id": "q2",
+            "title": "Você já realizou este tipo de procedimento ou consultoria antes?",
+            "options": [
+              "Sim, busco um atendimento de padrão superior",
+              "Não, é a minha primeira experiência",
+              "Ainda estou em fase de pesquisa e planejamento"
+            ]
+          },
+          {
+            "id": "q3",
+            "title": "Qual é a sua urgência e melhor turno para retorno?",
+            "options": [
+              "Urgente (esta semana) - Período da Manhã",
+              "Urgente (esta semana) - Período da Tarde",
+              "Próximas semanas com flexibilidade"
+            ]
+          }
+        ]
+      },
+      "aboutMe": {
+        "enabled": true,
+        "headline": "Sobre GERMANA ZOCRATO",
+        "photoUrl": "/assets/models/germanazocrato/about.jpg",
+        "photoHeight": 220,
+        "photoPosY": 25,
+        "photoPosX": 50,
+        "paragraph": "Técnica de enfermagem por formação, ofereço protocolos avançados em DRENAGEM LINFÁTICA & PÓS-OPERATÓRIO, unindo conhecimento clínico, biossegurança rigorosa e atendimento acolhedor para reduzir edemas, acelerar a recuperação e valorizar sua leveza e bem-estar.",
+        "closingPhrase": "Realçando sua beleza única com ciência, arte e sutileza.",
+        "photoScale": 100
+      },
       "faq": {
         "enabled": true,
         "headline": "Dúvidas Frequentes",
@@ -7344,9 +7488,75 @@
           }
         ]
       },
+      "conversion": {
+        "metaPixelId": "",
+        "googleAnalyticsId": "",
+        "defaultWhatsappMsg": "Olá Dra. {nome}, vi sua página e gostaria de informações sobre {servico} para a data de {data}."
+      },
       "seo": {
         "metaTitle": "GERMANA ZOCRATO · Drenagem Linfática & Pós-Operatório",
-        "metaDescription": "Protocolos avançados em drenagem linfática pós-operatório e estética clínica por Germana Zocrato, técnica de enfermagem. Agende no WhatsApp."
+        "metaDescription": "Protocolos avançados em drenagem linfática pós-operatório e estética clínica por Germana Zocrato, técnica de enfermagem. Agende no WhatsApp.",
+        "ogImageUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600",
+        "keywords": "advogada, consultoria, direito, atendimento vip, advocacia"
+      },
+      "highConversion": {
+        "enabled": true,
+        "socialProof": {
+          "enabled": true,
+          "notifications": [
+            {
+              "id": "sp-1",
+              "clientName": "Juliana M.",
+              "action": "agendou Atendimento VIP",
+              "timeAgo": "há 4 min"
+            },
+            {
+              "id": "sp-2",
+              "clientName": "Roberto S.",
+              "action": "solicitou orçamento no WhatsApp",
+              "timeAgo": "há 12 min"
+            },
+            {
+              "id": "sp-3",
+              "clientName": "Camila K.",
+              "action": "garantiu uma vaga da semana",
+              "timeAgo": "há 28 min"
+            }
+          ]
+        },
+        "urgencyTimer": {
+          "enabled": true,
+          "headline": "🔥 CONDIÇÃO ESPECIAL DE HOJE",
+          "subheadline": "Garanta sua vaga com atendimento prioritário antes que expire:",
+          "minutes": 14,
+          "seconds": 52
+        },
+        "embeddedBooking": {
+          "enabled": false,
+          "title": "📅 Agendamento Direto na Agenda",
+          "type": "cal",
+          "iframeUrl": "https://cal.com/demo"
+        }
+      },
+      "saasSettings": {
+        "pixKey": "contato@biovip.com.br",
+        "pixName": "BioVip Studio SaaS",
+        "pixCity": "São Paulo - SP",
+        "autoReminderMsg": "Olá {cliente}! Lembrete da mensalidade do seu microsite no valor de R$ {valor}. Vencimento: {vencimento}.\n\n🔑 Chave PIX: {pix}\nFavorecido: {nome_pix}",
+        "defaultMonthlyFee": 149.9,
+        "asaas": {
+          "apiKey": "",
+          "environment": "sandbox",
+          "preferredMethod": "PIX",
+          "enabled": false
+        }
+      },
+      "customCode": {
+        "enabled": false,
+        "customCss": "",
+        "customHtmlBanner": "",
+        "customJs": "",
+        "isolatedIframePreview": false
       }
     }
   }

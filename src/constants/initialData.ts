@@ -573,4 +573,39 @@ export const NICHE_DEMO_MODULE_COLORS: Record<string, typeof INITIAL_DATA.module
   },
 };
 
+/**
+ * Mescla qualquer objeto de dados de microsite com os valores e módulos padrão de INITIAL_DATA,
+ * garantindo que nenhuma propriedade aninhada seja undefined e prevenindo telas brancas.
+ */
+export function mergeWithInitialData(incoming: any): typeof INITIAL_DATA {
+  if (!incoming || typeof incoming !== 'object') {
+    return JSON.parse(JSON.stringify(INITIAL_DATA));
+  }
+  const clonedInitial = JSON.parse(JSON.stringify(INITIAL_DATA));
+  const result: any = {
+    ...clonedInitial,
+    ...incoming,
+  };
+
+  for (const key of Object.keys(clonedInitial)) {
+    const defaultVal = clonedInitial[key];
+    const incomingVal = incoming[key];
+
+    if (defaultVal && typeof defaultVal === 'object' && !Array.isArray(defaultVal)) {
+      result[key] = {
+        ...defaultVal,
+        ...(incomingVal && typeof incomingVal === 'object' && !Array.isArray(incomingVal) ? incomingVal : {}),
+      };
+    } else if (Array.isArray(defaultVal)) {
+      result[key] = Array.isArray(incomingVal) ? incomingVal : defaultVal;
+    } else if (incomingVal !== undefined) {
+      result[key] = incomingVal;
+    } else {
+      result[key] = defaultVal;
+    }
+  }
+
+  return result as typeof INITIAL_DATA;
+}
+
 export { INITIAL_SAVED_SITES } from './initialSavedSites';
