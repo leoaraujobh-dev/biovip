@@ -272,6 +272,8 @@ export const INITIAL_DATA = {
       ctaLabel?: string;
       actionType?: 'booking' | 'whatsapp' | 'link';
       customUrl?: string;
+      whatsappMessage?: string;
+      category?: string;
       featured?: boolean;
     }>
   },

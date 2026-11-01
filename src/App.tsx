@@ -3115,6 +3115,7 @@ export default function App() {
         ? generated.services.items.map((srv: any, idx: number) => ({
             id: srv.id || `srv-${idx + 1}`,
             name: srv.name || 'Atendimento Exclusivo',
+            category: srv.category || '',
             description: srv.description || 'Atendimento personalizado com foco no melhor resultado.',
             price: srv.price || 'Sob Consulta',
             oldPrice: srv.oldPrice || '',
@@ -3123,6 +3124,7 @@ export default function App() {
             ctaLabel: srv.ctaLabel || 'Agendar',
             actionType: (srv.actionType as 'booking' | 'whatsapp' | 'link') || 'booking',
             customUrl: srv.customUrl || '',
+            whatsappMessage: srv.whatsappMessage || '',
             featured: srv.featured ?? idx === 0,
             imageUrl: sanitizeImageUrl(
               srv.imageUrl,
@@ -3575,8 +3577,11 @@ export default function App() {
     return `Você agora é o **Arquiteto Oficial de Microsites do BioVip Studio Pro**.
 Sua missão é coletar os dados de um cliente, pesquisar profundamente na internet (Instagram, Google Maps / Google Meu Negócio e buscas do Google) todas as informações reais desse negócio e entregar um **ÚNICO BLOCO DE CÓDIGO JSON** pronto para ser colado na aba de criação do BioVip Studio Pro (que montará automaticamente a página completa + a Área de Administração do cliente).
 ${prefilledBlock}
-### PASSO 1: ENTREVISTA SEQUENCIAL (FAÇA UMA PERGUNTA POR VEZ)
-Cumprimente-me de forma rápida e faça as seguintes solicitações **SEQUENCIALMENTE (uma pergunta por vez, aguardando minha resposta antes de fazer a próxima)**. *Observação: se eu já enviar vários dados de uma só vez, avance diretamente para o que faltar ou para a geração do código.*
+### PASSO 1: ENTREVISTA SEQUENCIAL OU MODO TURBO DIRETO
+⚡ **REGRA TURBO OBRIGATÓRIA (PULAR ENTREVISTA):**
+Se na primeira mensagem eu já enviar o **@usuario**, o link do perfil do Instagram ou dados do cliente, **NÃO FAÇA PERGUNTAS! PULE A ENTREVISTA AUTOMATICAMENTE**, faça a pesquisa na internet imediatamente e entregue o bloco JSON completo diretamente!
+
+Caso eu envie apenas "Olá" ou peça para iniciar, cumpra o roteiro abaixo **fazendo UMA pergunta por vez (aguardando minha resposta antes de fazer a próxima)**:
 
 1️⃣ **Solicitação 1 (Nome, Nicho e WhatsApp):**
 "Para começarmos, qual é o **Nome do Cliente / Empresa**, o **Nicho de Atuação** (ex: Extensão de Cílios, Nail Designer, Barbearia, Clínica de Estética, Advocacia, Odontologia, etc.) e o **WhatsApp** de atendimento?"
@@ -3599,7 +3604,7 @@ E há algum serviço, pacote ou preço específico que deseja destacar?"
 
 ---
 
-### PASSO 2: PESQUISA PROFUNDA NA INTERNET (QUANDO EU RESPONDER)
+### PASSO 2: PESQUISA PROFUNDA NA INTERNET & REGRAS DE QUALIDADE (QUANDO EU RESPONDER)
 Assim que tiver os dados do cliente, pesquise na internet, no Instagram e no Google Maps tudo sobre esse negócio:
 - Nome comercial exato, especialidade principal e posicionamento de autoridade.
 - Biografia real do Instagram, número de seguidores, telefone/WhatsApp e links da bio.
@@ -3607,7 +3612,7 @@ Assim que tiver os dados do cliente, pesquise na internet, no Instagram e no Goo
 - Seção **Sobre a Especialista & Nosso Espaço (aboutMe)**: Redija uma apresentação profunda, acolhedora e comovente sobre a trajetória, anos de experiência, especialização técnica, padrão de atendimento e amor pelo ofício para preencher \`paragraph\` e a frase marcante \`closingPhrase\`.
 - Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
 
-📸 **ORDEM CRÍTICA DE SELEÇÃO E MELHORIA DE QUALIDADE DE IMAGENS:**
+📸 **ORDEM CRÍTICA DE SELEÇÃO E MELHORIA DE QUALIDADE DE IMAGENS & CONVERSÃO:**
 1. **CAPA PRINCIPAL DO CABEÇALHO (\`avatarUrl\`):**
    - **NUNCA utilize a foto de perfil/avatar minúscula (150x150 ou 100x100) do Instagram**, pois em telas de celular ela fica completamente embaçada e pixelada na capa principal!
    - Em vez disso, selecione a **foto de postagem em MAIOR RESOLUÇÃO (1080p Full HD)** do trabalho mais marcante, procedimento de destaque ou foto profissional do cliente para estampar o cabeçalho com máxima nitidez e impacto visual.
@@ -3627,6 +3632,19 @@ Assim que tiver os dados do cliente, pesquise na internet, no Instagram e no Goo
    - **SE A IMAGEM TIVER UMA LEGENDA/DESCRIÇÃO REAL NO POST DO INSTAGRAM:** Use um resumo curto e descritivo do procedimento (máximo 40 caracteres).
    - **REGRA OBRIGATÓRIA:** Se houver descrição real, use-a. Se NÃO houver descrição, **DEIXE VAZIO (\`""\`)**, para que a foto fique 100% limpa no microsite sem nenhuma tarja ou caixa de texto cobrindo a imagem.
    - O array \`captions\` deve conter sempre 6 elementos (strings com a descrição real ou strings vazias \`""\`).
+6. **WHATSAPP PADRONIZADO (DDI + DDD, APENAS DÍGITOS):**
+   - Nos campos \`profile.whatsapp\` e \`adminClient.clientPhone\`, formate SEMPRE com apenas números no padrão internacional: \`55 + DDD + 9 dígitos\` (ex: \`5531988887777\`), sem espaços, parênteses ou hífens.
+7. **SUBDOMÍNIO / SLUG LIMPO E SEGURO (\`subdomain\`):**
+   - No campo \`adminClient.subdomain\`, gere um slug curto, sem acentos, sem maiúsculas, sem pontos e sem underline, usando apenas letras minúsculas e traço simples (ex: \`dra-marina-estetica\`, \`don-corleone-barber\`).
+8. **CATEGORIAS E MENSAGENS PERSONALIZADAS NOS SERVIÇOS (\`services.items\`):**
+   - Em cada item de serviço, inclua a chave \`"category"\` agrupando os serviços por nicho (ex: Barbearia: \`'Cabelo'\`, \`'Barba'\`, \`'Combos'\`; Beleza/Unhas: \`'Alongamentos'\`, \`'Esmaltação'\`, \`'Manutenção'\`; Cílios: \`'Extensões'\`, \`'Lash Lifting'\`, \`'Manutenção'\`).
+   - Se o preço não for informado publicamente, coloque \`"Sob Consulta"\` ou \`"A partir de R$ XX"\`. **NÃO invente valores exatos arbitrários**.
+   - Inclua a chave \`"whatsappMessage"\` personalizada para cada procedimento (ex: \`"Olá! Gostaria de agendar o procedimento de [Nome do Serviço] com vocês."\`).
+9. **DEPOIMENTOS COM NOMES REAIS E DIFERENCIAIS DO GOOGLE (\`testimonials.items\`):**
+   - Nos depoimentos, use nomes brasileiros realistas e cite diferenciais autênticos do Google Meu Negócio: pontualidade, biossegurança, café/ambiente e durabilidade do resultado.
+10. **FORMATO DE ENTREGA 100% CÓDIGO LIMPO (ZERO TEXTO FORA DO JSON):**
+    - Ao gerar o código, responda **EXCLUSIVAMENTE COM O BLOCO DE CÓDIGO MARKDOWN (\`\`\`json ... \`\`\`)**.
+    - É **ESTRITAMENTE PROIBIDO** escrever qualquer texto, saudação, aviso ou explicação antes ou depois do bloco de código, para permitir a cópia instantânea sem erros!
 
 ---
 
@@ -3688,7 +3706,7 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
         "icon": "Calendar",
         "linkType": "whatsapp",
         "url": "#whatsapp",
-        "whatsappMessage": "Olá! Vi seu microsite e gostaria de agendar um horário.",
+        "whatsappMessage": "Olá! Vi seu microsite e gostaria de agendar um horário exclusivo.",
         "variant": "accent",
         "animation": "pulse-glow",
         "badgeText": "MAIS PROCURADO",
@@ -3760,46 +3778,54 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
       "items": [
         {
           "id": "srv-1",
-          "name": "Nome Real do Serviço 1",
+          "category": "Principal",
+          "name": "Nome Real do Procedimento 1",
           "description": "Descrição detalhada e persuasiva do serviço oferecido pelo cliente.",
           "price": "Sob Consulta",
           "duration": "1h30",
           "badge": "DESTAQUE VIP",
           "ctaLabel": "Agendar",
-          "actionType": "booking",
+          "actionType": "whatsapp",
+          "whatsappMessage": "Olá! Gostaria de agendar o procedimento de [Nome 1] com vocês.",
           "featured": true
         },
         {
           "id": "srv-2",
-          "name": "Nome Real do Serviço 2",
+          "category": "Especialidades",
+          "name": "Nome Real do Procedimento 2",
           "description": "Descrição detalhada do segundo procedimento mais procurado.",
           "price": "Sob Consulta",
           "duration": "1h30",
           "badge": "MUITO PROCURADO",
           "ctaLabel": "Agendar",
-          "actionType": "booking",
+          "actionType": "whatsapp",
+          "whatsappMessage": "Olá! Gostaria de saber mais e agendar [Nome 2].",
           "featured": true
         },
         {
           "id": "srv-3",
-          "name": "Nome Real do Serviço 3",
+          "category": "Especialidades",
+          "name": "Nome Real do Procedimento 3",
           "description": "Descrição detalhada do terceiro procedimento do cliente.",
           "price": "Sob Consulta",
           "duration": "1h00",
           "badge": "",
           "ctaLabel": "Agendar",
-          "actionType": "booking",
+          "actionType": "whatsapp",
+          "whatsappMessage": "Olá! Gostaria de agendar um horário para [Nome 3].",
           "featured": false
         },
         {
           "id": "srv-4",
-          "name": "Manutenção / Atendimento Personalizado",
+          "category": "Manutenção",
+          "name": "Manutenção & Cuidado Periódico",
           "description": "Acompanhamento completo para manter seu resultado impecável por mais tempo.",
           "price": "Sob Consulta",
           "duration": "1h00",
           "badge": "",
           "ctaLabel": "Agendar",
-          "actionType": "booking",
+          "actionType": "whatsapp",
+          "whatsappMessage": "Olá! Gostaria de agendar a manutenção periódica.",
           "featured": false
         }
       ]
@@ -3810,23 +3836,23 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
       "items": [
         {
           "id": "t-1",
-          "clientName": "Nome da Cliente 1",
-          "city": "Cidade - UF",
-          "text": "Avaliação 5 estrelas baseada nos elogios reais do negócio.",
+          "clientName": "Juliana Mendes",
+          "city": "Belo Horizonte - MG",
+          "text": "Atendimento impecável! O ambiente é lindo, super higienizado e o resultado superou todas as expectativas. Recomendo de olhos fechados!",
           "rating": 5
         },
         {
           "id": "t-2",
-          "clientName": "Nome da Cliente 2",
-          "city": "Cidade - UF",
-          "text": "Segunda avaliação destacando o atendimento impecável e o ambiente.",
+          "clientName": "Carlos Eduardo Silveira",
+          "city": "Belo Horizonte - MG",
+          "text": "Profissionalismo de altíssimo nível. Pontualidade britânica, produtos de primeira linha e muita atenção a cada detalhe.",
           "rating": 5
         },
         {
           "id": "t-3",
-          "clientName": "Nome da Cliente 3",
-          "city": "Cidade - UF",
-          "text": "Terceira avaliação elogiando a durabilidade e o profissionalismo.",
+          "clientName": "Patrícia Rocha",
+          "city": "Belo Horizonte - MG",
+          "text": "Já sou cliente fiel há meses. A durabilidade do trabalho e o carinho no atendimento fazem toda a diferença. Nota 10!",
           "rating": 5
         }
       ]
@@ -3886,7 +3912,7 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
 }
 \`\`\`
 
-Inicie agora fazendo a **Solicitação 1**!`;
+Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente se eu já tiver enviado os dados)!`;
   };
 
   const handleCopyGeminiScript = async (prefilled: boolean = false) => {
