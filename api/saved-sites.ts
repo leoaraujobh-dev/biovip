@@ -122,14 +122,28 @@ export default async function savedSitesHandler(req: any, res: any) {
         return res.status(200).json({ success: true, sites: memorySavedSites });
       }
       const fs = await import('fs');
-      if (fs.existsSync(storageFilePath)) {
-        const raw = fs.readFileSync(storageFilePath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          memorySavedSites = parsed;
-          (globalThis as any).__biovipSavedSitesCache = parsed;
-          return res.status(200).json({ success: true, sites: parsed });
-        }
+      const candidatePaths = [
+        '/tmp/.saved-sites.json',
+        storageFilePath,
+        path.resolve(process.cwd(), '.saved-sites.json'),
+        path.resolve(process.cwd(), 'public', '.saved-sites.json'),
+        path.resolve(rootDir, '.saved-sites.json'),
+        path.resolve(rootDir, 'public', '.saved-sites.json'),
+        '/var/task/.saved-sites.json',
+        '/var/task/public/.saved-sites.json',
+      ];
+      for (const p of candidatePaths) {
+        try {
+          if (fs.existsSync(p)) {
+            const raw = fs.readFileSync(p, 'utf-8');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              memorySavedSites = parsed;
+              (globalThis as any).__biovipSavedSitesCache = parsed;
+              return res.status(200).json({ success: true, sites: parsed });
+            }
+          }
+        } catch {}
       }
       return res.status(200).json({ success: true, sites: memorySavedSites || [] });
     } catch (err: any) {
@@ -180,10 +194,11 @@ export default async function savedSitesHandler(req: any, res: any) {
       memorySavedSites = currentSites;
       (globalThis as any).__biovipSavedSitesCache = currentSites;
 
-      // Persiste no arquivo .saved-sites.json no disco
+      // Persiste no arquivo .saved-sites.json no disco e em /tmp (para serverless Vercel)
       try {
         const fs = await import('fs');
-        fs.writeFileSync(storageFilePath, JSON.stringify(currentSites, null, 2), 'utf-8');
+        try { fs.writeFileSync(storageFilePath, JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
+        try { fs.writeFileSync('/tmp/.saved-sites.json', JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
       } catch (fsErr) {
         // Ambiente Edge/Serverless sem filesystem
       }

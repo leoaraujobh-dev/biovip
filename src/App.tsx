@@ -2071,15 +2071,38 @@ export default function App() {
             if (!existing) {
               byId.set(remoteSite.id, remoteSite);
             } else {
-              const remoteTime = remoteSite.lastUpdated ? new Date(remoteSite.lastUpdated).getTime() : 0;
-              const localTime = existing.lastUpdated ? new Date(existing.lastUpdated).getTime() : 0;
-              if (remoteTime >= localTime || (remoteSite.isCustomized && !existing.isCustomized)) {
-                byId.set(remoteSite.id, { ...existing, ...remoteSite });
-              }
+              const remotePhotos = remoteSite.data?.studentGrid?.photos || [];
+              const hasRemotePhotos = remotePhotos.some((p: any) => typeof p === 'string' && p.trim().length > 0);
+              const existPhotos = existing.data?.studentGrid?.photos || [];
+              const mergedPhotos = hasRemotePhotos ? remotePhotos : existPhotos;
+
+              byId.set(remoteSite.id, {
+                ...existing,
+                ...remoteSite,
+                data: {
+                  ...(existing.data || {}),
+                  ...(remoteSite.data || {}),
+                  profile: {
+                    ...(existing.data?.profile || {}),
+                    ...(remoteSite.data?.profile || {}),
+                    avatarUrl: remoteSite.data?.profile?.avatarUrl || existing.data?.profile?.avatarUrl || '',
+                    aboutPhotoUrl: remoteSite.data?.profile?.aboutPhotoUrl || existing.data?.profile?.aboutPhotoUrl || '',
+                  },
+                  studentGrid: {
+                    ...(existing.data?.studentGrid || {}),
+                    ...(remoteSite.data?.studentGrid || {}),
+                    photos: mergedPhotos,
+                  },
+                  services: {
+                    ...(existing.data?.services || {}),
+                    ...(remoteSite.data?.services || {}),
+                  },
+                },
+              });
             }
           });
           const merged = Array.from(byId.values());
-          persistSavedSitesToStorage(merged);
+          saveSitesToIndexedDb(merged);
           return merged;
         });
       })
@@ -2088,44 +2111,17 @@ export default function App() {
     loadSitesFromIndexedDb().then((idbSites) => {
       if (!active) return;
       if (Array.isArray(idbSites) && idbSites.length > 0) {
-        // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados com o servidor para acesso mobile
-        try {
-          fetch('/api/saved-sites', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sites: idbSites }),
-          }).catch(() => {});
-          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            fetch('https://biovip.com.br/api/saved-sites', {
+        // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados com o servidor apenas se tiverem conteúdo válido
+        const hasValidData = idbSites.some((s) => s?.data?.profile?.avatarUrl || s?.data?.studentGrid?.photos?.some((p: any) => p && p.trim()));
+        if (hasValidData) {
+          try {
+            fetch('/api/saved-sites', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ sites: idbSites }),
             }).catch(() => {});
-          }
-        } catch {}
-      } else {
-        // Fallback localStorage para sync com servidor
-        try {
-          const rawLocal = localStorage.getItem('luxebio_saved_sites_v1');
-          if (rawLocal) {
-            const parsed = JSON.parse(rawLocal);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              fetch('/api/saved-sites', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sites: parsed }),
-              }).catch(() => {});
-              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                fetch('https://biovip.com.br/api/saved-sites', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sites: parsed }),
-                }).catch(() => {});
-              }
-            }
-          }
-        } catch {}
-        return;
+          } catch {}
+        }
       }
       let deletedIds: string[] = [];
       let deletedSlugs: string[] = [];
