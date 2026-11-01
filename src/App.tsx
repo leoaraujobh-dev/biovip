@@ -3860,11 +3860,15 @@ Caso eu envie apenas "Olá" ou peça para iniciar, cumpra o roteiro abaixo **faz
 4️⃣ **Solicitação 4 (Estilo Visual e Plano de Manutenção):**
 "Qual **Tema Visual** combina mais com esse cliente?
 - \`roseGoldQuartz\` (Rosé Gold, Nude & Quartzo — Beleza, Cílios, Unhas, Estética)
-- \`obsidianGold\` (Dark Luxury & Ouro Imperial — Studios VIP, Clínicas, Advocacia, Mentorias)
+- \`royalAmethyst\` (Ametista Imperial, Púrpura & Ouro — Harmonização, Estética Avançada, Mística)
+- \`tiffanyDiamond\` (Verde Tiffany & Diamante — Joalherias, Odonto Estética, Luxo Contemporâneo)
+- \`nobleOlive\` (Oliva Nobre & Ouro Escovado — Spa Botânico, Orgânico, Gastronomia, Cafés)
+- \`blackCherryGold\` (Black Cherry, Cereja Escura & Ouro — Nail Designers High-Ticket, Salões de Luxo)
+- \`darkGold\` (Dark Luxury & Ouro Imperial — Studios VIP, Clínicas, Advocacia, Mentorias)
+- \`navyLaw\` (Azul Marinho Real & Dourado — Jurídico, Contabilidade, Consultoria)
 - \`barberVintage\` (Dark Barbearia & Âmbar — Barbearias e Grooming)
-- \`clinicalClean\` (Clean Minimalista & Pérola — Saúde, Odonto, Psicologia, Medicina)
-- \`velvetGlamour\` (Glamour Vibrante & Orquídea — Moda, Salões, Maquiagem)
-- \`navyLaw\` (Azul Marinho & Dourado — Jurídico, Contabilidade, Consultoria)
+- \`stealthTitanium\` (Stealth Titanium & P&B Puro — Arquitetura, Tattoo, Fotografia, Moda)
+- \`pearlChampagne\` (Pérola, Champanhe & Ouro Clean — Saúde, Odonto, Dermato, Noivas)
 E há algum serviço, pacote ou preço específico que deseja destacar?"
 
 ---
@@ -8497,6 +8501,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     'Dourados & Terrosos',
     'Claros & Clean',
     'Verdes & Esmeralda',
+    'Roxos & Lavanda',
     'Vibrantes & Notáveis',
   ];
 

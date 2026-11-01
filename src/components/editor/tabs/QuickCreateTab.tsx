@@ -512,11 +512,15 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
                   { id: 'darkGold', name: 'Dark Luxury Gold', bg: '#0c0b0b', accent: '#d4af37', label: 'Dark & Ouro' },
                   { id: 'roseGoldQuartz', name: 'Rose Gold Quartzo', bg: '#1c1618', accent: '#dfa2aa', label: 'Rose Gold' },
                   { id: 'navyLaw', name: 'Navy Royal & Gold', bg: '#0f172a', accent: '#d4af37', label: 'Navy Royal' },
-                  { id: 'emeraldPro', name: 'Esmeralda Nobre', bg: '#081c15', accent: '#52b788', label: 'Esmeralda' },
-                  { id: 'clinicalClean', name: 'Clean & Minimal', bg: '#f8fafc', accent: '#0284c7', label: 'Clean Claro' },
-                  { id: 'velvetGlamour', name: 'Velvet Glamour', bg: '#180e18', accent: '#ec4899', label: 'Velvet Pink' },
-                  { id: 'terracottaWarm', name: 'Terracota & Ocre', bg: '#1f1614', accent: '#e07a5f', label: 'Terracota' },
-                  { id: 'midnightObsidian', name: 'Obsidiana Black', bg: '#0a0a0c', accent: '#e2e8f0', label: 'Preto & Prata' },
+                  { id: 'royalAmethyst', name: 'Ametista Imperial', bg: '#0d0714', accent: '#c084fc', label: 'Ametista Roxo' },
+                  { id: 'tiffanyDiamond', name: 'Tiffany & Diamante', bg: '#061112', accent: '#0abab5', label: 'Verde Tiffany' },
+                  { id: 'nobleOlive', name: 'Oliva Nobre & Ouro', bg: '#0f140e', accent: '#d4af37', label: 'Verde Oliva' },
+                  { id: 'emeraldNails', name: 'Esmeralda Nobre', bg: '#081c15', accent: '#52b788', label: 'Esmeralda' },
+                  { id: 'blackCherryGold', name: 'Black Cherry & Ouro', bg: '#0f0307', accent: '#f43f5e', label: 'Black Cherry' },
+                  { id: 'blushNudeGlam', name: 'Nude Blush Cetim', bg: '#140e11', accent: '#fb7185', label: 'Blush Nude' },
+                  { id: 'pearlChampagne', name: 'Pérola & Champanhe', bg: '#faf7f2', accent: '#b45309', label: 'Pérola Clean' },
+                  { id: 'terracottaWarm', name: 'Terracota Orgânico', bg: '#fcfaf6', accent: '#c2410c', label: 'Terracota' },
+                  { id: 'stealthTitanium', name: 'Stealth Titanium P&B', bg: '#000000', accent: '#f8fafc', label: 'Preto & Branco' },
                 ].map((thm) => {
                   const isSelected = (aiForm.selectedPalette || data.theme) === thm.id;
                   return (
