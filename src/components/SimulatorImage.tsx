@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { optimizeImageUrl } from '../utils/formatters';
-import { getCachedImageFromIdb, saveImageToIdbCache } from '../utils/storage';
 
-export function SimulatorImage({
+export const SimulatorImage = React.memo(function SimulatorImage({
   src,
   alt,
   className = '',
@@ -32,75 +31,21 @@ export function SimulatorImage({
   const optimizedFallback = React.useMemo(() => optimizeImageUrl(fallbackUrl, targetWidth), [fallbackUrl, targetWidth]);
 
   const [loaded, setLoaded] = useState(false);
-  const [errored, setErrored] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(optimizedSrc);
-  const imgRef = React.useRef<HTMLImageElement | null>(null);
+  const [hasError, setHasError] = useState(false);
 
+  // Reset loaded/error state when src changes
   useEffect(() => {
-    let isCancelled = false;
     setLoaded(false);
-    setErrored(false);
+    setHasError(false);
+  }, [optimizedSrc]);
 
-    if (!optimizedSrc) {
-      setCurrentSrc(optimizedFallback);
-      setLoaded(true);
-      return;
-    }
-
-    if (optimizedSrc.startsWith('data:') || optimizedSrc.startsWith('blob:')) {
-      setCurrentSrc(optimizedSrc);
-      setLoaded(true);
-      return;
-    }
-
-    // Tenta carregar instantaneamente do cache persistente do IndexedDB / Map
-    getCachedImageFromIdb(optimizedSrc).then((cached) => {
-      if (isCancelled) return;
-      if (cached) {
-        setCurrentSrc(cached);
-        setLoaded(true);
-      } else {
-        setCurrentSrc(optimizedSrc);
-        const imgEl = imgRef.current;
-        if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
-          const timer = setTimeout(() => setLoaded(true), 100);
-          return () => clearTimeout(timer);
-        }
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [optimizedSrc, optimizedFallback]);
-
-  const handleImageLoad = () => {
-    setLoaded(true);
-    const imgEl = imgRef.current;
-    if (imgEl && optimizedSrc.startsWith('http')) {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = imgEl.naturalWidth || imgEl.width || 400;
-        canvas.height = imgEl.naturalHeight || imgEl.height || 400;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(imgEl, 0, 0);
-          const dataUrl = canvas.toDataURL('image/webp', 0.92) || canvas.toDataURL('image/jpeg', 0.92);
-          if (dataUrl && dataUrl.startsWith('data:image/')) {
-            saveImageToIdbCache(optimizedSrc, dataUrl);
-          }
-        }
-      } catch {
-        // Fallback CORS ignore
-      }
-    }
-  };
+  const displaySrc = hasError || !optimizedSrc ? optimizedFallback : optimizedSrc;
 
   return (
     <>
-      {!loaded && !errored && (
+      {!loaded && (
         <div
-          className={`absolute inset-0 z-10 skeleton-shimmer flex items-center justify-center transition-opacity duration-300 ${skeletonClassName}`}
+          className={`absolute inset-0 z-10 skeleton-shimmer flex items-center justify-center transition-opacity duration-300 pointer-events-none ${skeletonClassName}`}
           style={
             {
               backgroundColor: 'rgba(24, 24, 27, 0.85)',
@@ -117,26 +62,24 @@ export function SimulatorImage({
         </div>
       )}
       <img
-        ref={imgRef}
-        src={currentSrc}
+        src={displaySrc}
         alt={alt}
         loading={loading}
         decoding={decoding}
         referrerPolicy={referrerPolicy}
-        onLoad={handleImageLoad}
+        onLoad={() => setLoaded(true)}
         onError={() => {
-          if (currentSrc !== optimizedFallback) {
-            setCurrentSrc(optimizedFallback);
+          if (!hasError && optimizedSrc !== optimizedFallback) {
+            setHasError(true);
           } else {
-            setErrored(true);
+            setLoaded(true);
           }
-          setLoaded(true);
         }}
-        className={`${className} transition-opacity duration-500 ease-out ${
+        className={`${className} transition-opacity duration-300 ease-out ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
         style={style}
       />
     </>
   );
-}
+});

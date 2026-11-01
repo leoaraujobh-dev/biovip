@@ -181,7 +181,10 @@ export function purgeSiteFromStorage(siteId: string, siteData?: any): void {
   }
 }
 
-export function persistSavedSitesToStorage(sites: any[]): void {
+let _persistTimer: any = null;
+let _pendingSites: any[] | null = null;
+
+function _executePersist(sites: any[]) {
   // 1. IndexedDB é o armazenamento primário e resiliente (suporta centenas de megabytes sem cota restritiva de 5MB)
   saveSitesToIndexedDb(sites);
 
@@ -213,4 +216,27 @@ export function persistSavedSitesToStorage(sites: any[]): void {
       }
     } catch {}
   }
+}
+
+export function persistSavedSitesToStorage(sites: any[], immediate = false): void {
+  _pendingSites = sites;
+
+  if (immediate) {
+    if (_persistTimer) {
+      clearTimeout(_persistTimer);
+      _persistTimer = null;
+    }
+    _executePersist(sites);
+    _pendingSites = null;
+    return;
+  }
+
+  if (_persistTimer) clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(() => {
+    if (_pendingSites) {
+      _executePersist(_pendingSites);
+      _pendingSites = null;
+    }
+    _persistTimer = null;
+  }, 600);
 }

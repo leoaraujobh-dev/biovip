@@ -73,7 +73,7 @@ export interface SimulatorChassisProps {
   onSelectModuleSection?: (tab: string, targetId?: string) => void;
 }
 
-export function SimulatorChassis({
+export const SimulatorChassis = React.memo(function SimulatorChassis({
   data,
   theme,
   selectedThemeCategory,
@@ -2516,4 +2516,4 @@ export function SimulatorChassis({
           </div>
         </div>
   );
-}
+});

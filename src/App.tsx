@@ -986,13 +986,16 @@ export default function App() {
         } else if (ratio < 0.88) {
           orientation = 'portrait';
         }
-        setPhotoOrientations((prev) => ({
-          ...prev,
-          [url]: { orientation, width: w, height: h, ratio },
-        }));
+        setPhotoOrientations((prev) => {
+          if (prev[url]) return prev;
+          return {
+            ...prev,
+            [url]: { orientation, width: w, height: h, ratio },
+          };
+        });
       };
     });
-  }, [data.studentGrid?.photos, photoOrientations]);
+  }, [data.studentGrid?.photos]);
 
   // Keyboard navigation for photo gallery lightbox
   useEffect(() => {
@@ -2470,26 +2473,31 @@ export default function App() {
     return () => unsub();
   }, [adminUser]);
 
-  // Auto-sync active edited site data in savedSites and mark isCustomized: true whenever data or editingSiteId changes
+  // Auto-sync active edited site data in savedSites and mark isCustomized: true com debounce (evita travar o navegador)
   useEffect(() => {
     if (!editingSiteId || !data) return;
-    setSavedSites((prev) => {
-      const idx = prev.findIndex((s) => s.id === editingSiteId);
-      if (idx === -1) return prev;
-      const existing = prev[idx];
-      const dataString = JSON.stringify(data);
-      if (existing.isCustomized && JSON.stringify(existing.data) === dataString) {
-        return prev;
-      }
-      const updated = [...prev];
-      updated[idx] = {
-        ...existing,
-        isCustomized: true,
-        data: JSON.parse(dataString),
-      };
-      persistSavedSitesToStorage(updated);
-      return updated;
-    });
+
+    const timer = setTimeout(() => {
+      setSavedSites((prev) => {
+        const idx = prev.findIndex((s) => s.id === editingSiteId);
+        if (idx === -1) return prev;
+        const existing = prev[idx];
+        if (existing.isCustomized && existing.data === data) {
+          return prev;
+        }
+        const updated = [...prev];
+        updated[idx] = {
+          ...existing,
+          isCustomized: true,
+          data,
+          lastUpdated: new Date().toISOString().split('T')[0],
+        };
+        persistSavedSitesToStorage(updated);
+        return updated;
+      });
+    }, 700);
+
+    return () => clearTimeout(timer);
   }, [data, editingSiteId]);
 
   // Sincronização automática ao acessar um microsite público no celular que ainda não chegou no storage local
@@ -2522,26 +2530,31 @@ export default function App() {
     }
   }, [appSurface, activePublicSlug, savedSites.length]);
 
-  // Transmissão de Live Preview em tempo real do Studio para abas de teste via BroadcastChannel
+  // Transmissão de Live Preview em tempo real do Studio para abas de teste via BroadcastChannel (com debounce)
   useEffect(() => {
     if (typeof window === 'undefined' || !data) return;
-    try {
-      if ('BroadcastChannel' in window) {
-        const currentSite = savedSites.find((s) => s.id === editingSiteId);
-        const rawSub = currentSite?.subdomain || data?.profile?.instagram || data?.profile?.name || '';
-        const cleanSub = cleanMicrositeSlug(rawSub);
-        if (cleanSub) {
-          const channel = new BroadcastChannel('biovip_preview_sync');
-          channel.postMessage({
-            type: 'BIOVIP_PREVIEW_UPDATE',
-            slug: cleanSub,
-            data,
-          });
-          channel.close();
+
+    const timer = setTimeout(() => {
+      try {
+        if ('BroadcastChannel' in window) {
+          const currentSite = savedSites.find((s) => s.id === editingSiteId);
+          const rawSub = currentSite?.subdomain || data?.profile?.instagram || data?.profile?.name || '';
+          const cleanSub = cleanMicrositeSlug(rawSub);
+          if (cleanSub) {
+            const channel = new BroadcastChannel('biovip_preview_sync');
+            channel.postMessage({
+              type: 'BIOVIP_PREVIEW_UPDATE',
+              slug: cleanSub,
+              data,
+            });
+            channel.close();
+          }
         }
-      }
-    } catch {}
-  }, [data, editingSiteId, savedSites]);
+      } catch {}
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [data, editingSiteId]);
 
   // Recepção de atualizações de Live Preview em tempo real via BroadcastChannel + storage
   useEffect(() => {
