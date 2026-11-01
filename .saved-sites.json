@@ -7058,5 +7058,296 @@
     "autoDisabledByOverdue": false,
     "prospectInstagram": "bellalash.oficial",
     "prospectSituation": "wa_direto"
+  },
+  {
+    "id": "site-1793555626356",
+    "clientName": "Germana Zocrato",
+    "clientPhone": "5531991390202",
+    "clientEmail": "germanazocrato@biovip.com.br",
+    "nicheCategory": "Saúde & Estética",
+    "createdAt": "2026-11-01",
+    "dueDate": "2026-12-01",
+    "monthlyFee": 49.9,
+    "maintenancePlan": "pro_4",
+    "creationFee": 79.9,
+    "isFirstMonth": true,
+    "status": "pago",
+    "daysOverdue": 0,
+    "edicoesBloqueadas": false,
+    "linkStatus": "ativo",
+    "updatesThisMonth": 1,
+    "lastUpdated": "2026-11-01",
+    "domainType": "subdomain",
+    "subdomain": "germanazocrato",
+    "customDomain": "",
+    "dnsConfigured": true,
+    "sslActive": true,
+    "whatsappClicks": 14,
+    "pageViews": 86,
+    "trafficSources": {
+      "instagram": 65,
+      "tiktok": 0,
+      "googleMaps": 15,
+      "paidAds": 0,
+      "direct": 6
+    },
+    "isLandingModel": false,
+    "isCustomized": true,
+    "data": {
+      "theme": "sageMind",
+      "customColors": {
+        "enabled": false
+      },
+      "styling": {
+        "fontFamily": "Cormorant Garamond",
+        "cardBorderRadius": 18,
+        "buttonStyle": "gradient",
+        "buttonRounding": "full",
+        "photoHeight": 280,
+        "photoPosY": 20,
+        "photoPosX": 50,
+        "photoScale": 100,
+        "photoRadius": "xl",
+        "cardBorderWidth": 1,
+        "headerAlignment": "center",
+        "headerGlassmorphism": true
+      },
+      "announcement": {
+        "enabled": true,
+        "text": "✨ Atendimento Clínico & Home Care Especializado em Pós-Operatório",
+        "link": "#booking"
+      },
+      "profile": {
+        "name": "GERMANA ZOCRATO",
+        "title": "DRENAGEM LINFÁTICA & PÓS-OPERATÓRIO",
+        "tagline": "Técnica de enfermagem por formação, ofereço protocolos avançados em drenagem linfática e pós-operatório com biossegurança rigorosa e acolhimento.",
+        "cursivePhrase": "Realçando sua beleza única com ciência, arte e sutileza.",
+        "avatarUrl": "/assets/models/germanazocrato/avatar.jpg",
+        "aboutPhotoUrl": "/assets/models/germanazocrato/about.jpg",
+        "whatsapp": "5531991390202",
+        "instagram": "germanazocrato",
+        "location": "Belo Horizonte - MG & Atendimento Home Care",
+        "mapsUrl": "",
+        "verifiedBadge": true
+      },
+      "aboutMe": {
+        "enabled": true,
+        "headline": "Sobre GERMANA ZOCRATO",
+        "photoUrl": "/assets/models/germanazocrato/about.jpg",
+        "photoHeight": 220,
+        "photoPosY": 25,
+        "photoPosX": 50,
+        "photoScale": 100,
+        "paragraph": "Técnica de enfermagem por formação, ofereço protocolos avançados em DRENAGEM LINFÁTICA & PÓS-OPERATÓRIO, unindo conhecimento clínico, biossegurança rigorosa e atendimento acolhedor para reduzir edemas, acelerar a recuperação e valorizar sua leveza e bem-estar.",
+        "closingPhrase": "Realçando sua beleza única com ciência, arte e sutileza."
+      },
+      "actionCards": [
+        {
+          "id": "cta-1",
+          "title": "DRENAGEM PÓS-OPERATÓRIO",
+          "subtitle": "Acelere sua recuperação com protocolos clínicos seguros",
+          "icon": "HeartPulse",
+          "linkType": "booking",
+          "url": "#booking",
+          "whatsappMessage": "Olá Germana! Gostaria de agendar minha drenagem linfática de pós-operatório.",
+          "openInNewTab": true,
+          "animation": "pulse-glow",
+          "variant": "accent",
+          "badgeText": "ESPECIALIDADE",
+          "customBg": "#ffffff",
+          "customText": "#1c2d24",
+          "bgImage": "",
+          "imagePosition": "none",
+          "cardImage": "",
+          "imageFitStyle": "framed",
+          "imageSize": 88,
+          "ctaActionText": "AGENDAR"
+        },
+        {
+          "id": "cta-2",
+          "title": "MÉTODO REDUX & BEM-ESTAR",
+          "subtitle": "Redução imediata de retenção e sensação de leveza corporal",
+          "icon": "Sparkles",
+          "linkType": "booking",
+          "url": "#booking",
+          "whatsappMessage": "Olá Germana! Gostaria de saber mais sobre o método de drenagem Redux.",
+          "openInNewTab": true,
+          "animation": "none",
+          "variant": "default",
+          "badgeText": "ALTA RETENÇÃO",
+          "customBg": "#ffffff",
+          "customText": "#1c2d24",
+          "bgImage": "",
+          "imagePosition": "none",
+          "cardImage": "",
+          "imageFitStyle": "framed",
+          "imageSize": 88,
+          "ctaActionText": "CONSULTAR"
+        },
+        {
+          "id": "cta-3",
+          "title": "FALAR COM GERMANA NO WHATSAPP",
+          "subtitle": "Tire suas dúvidas diretamente pelo WhatsApp",
+          "icon": "MessageCircle",
+          "linkType": "whatsapp",
+          "url": "https://wa.me/5531991390202?text=Ol%C3%A1%20Germana!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20seus%20atendimentos.",
+          "whatsappMessage": "Olá Germana! Gostaria de informações sobre seus atendimentos.",
+          "openInNewTab": true,
+          "animation": "none",
+          "variant": "default",
+          "badgeText": "DIRETO",
+          "customBg": "#ffffff",
+          "customText": "#1c2d24",
+          "bgImage": "",
+          "imagePosition": "none",
+          "cardImage": "",
+          "imageFitStyle": "framed",
+          "imageSize": 88,
+          "ctaActionText": "ENVIAR MENSAGEM"
+        }
+      ],
+      "services": {
+        "enabled": true,
+        "headline": "Procedimentos & Tratamentos",
+        "subtitle": "Protocolos individualizados com foco em biossegurança e conforto",
+        "items": [
+          {
+            "id": "srv-1",
+            "name": "Drenagem Linfática Pós-Operatório",
+            "category": "Pós-Cirúrgico",
+            "description": "Protocolo clínico individualizado para cirurgias plásticas, reparadoras e cesáreas. Reduz o inchaço e previne fibroses.",
+            "price": "R$ 180,00",
+            "oldPrice": "R$ 220,00",
+            "duration": "1h00",
+            "badge": "MAIS PROCURADO",
+            "ctaLabel": "Agendar Sessão",
+            "actionType": "booking",
+            "customUrl": "",
+            "whatsappMessage": "Olá Germana! Gostaria de agendar a Drenagem Pós-Operatório.",
+            "featured": true,
+            "imageUrl": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=600"
+          },
+          {
+            "id": "srv-2",
+            "name": "Drenagem Linfática Corporal & Facial",
+            "category": "Estética Clínica",
+            "description": "Manobras suaves e precisas para alívio de retenção de líquidos, desintoxicação tecidual e melhora circulatória.",
+            "price": "R$ 150,00",
+            "oldPrice": "",
+            "duration": "1h00",
+            "badge": "LEVEZA IMEDIATA",
+            "ctaLabel": "Agendar",
+            "actionType": "booking",
+            "customUrl": "",
+            "whatsappMessage": "Olá Germana! Gostaria de agendar a Drenagem Linfática Corporal & Facial.",
+            "featured": false,
+            "imageUrl": "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?auto=format&fit=crop&q=80&w=600"
+          },
+          {
+            "id": "srv-3",
+            "name": "Taping Terapêutico Pós-Cirúrgico",
+            "category": "Recuperação Rápida",
+            "description": "Aplicação especializada de bandagens compressivas para alívio da dor, contenção de edemas e aceleração cicatricial.",
+            "price": "R$ 120,00",
+            "oldPrice": "",
+            "duration": "45min",
+            "badge": "SUPORTE TÉCNICO",
+            "ctaLabel": "Consultar Taping",
+            "actionType": "booking",
+            "customUrl": "",
+            "whatsappMessage": "Olá Germana! Gostaria de saber mais sobre o Taping Terapêutico.",
+            "featured": false,
+            "imageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=600"
+          },
+          {
+            "id": "srv-4",
+            "name": "Avaliação & Plano de Tratamento",
+            "category": "Consulta",
+            "description": "Triagem completa para analisar sua fase cirúrgica, indicação médica e traçar o melhor cronograma de sessões.",
+            "price": "Sob Consulta",
+            "oldPrice": "",
+            "duration": "30min",
+            "badge": "PRIMEIRO PASSO",
+            "ctaLabel": "Agendar Avaliação",
+            "actionType": "booking",
+            "customUrl": "",
+            "whatsappMessage": "Olá Germana! Gostaria de agendar uma avaliação inicial.",
+            "featured": false,
+            "imageUrl": "https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&q=80&w=600"
+          }
+        ]
+      },
+      "metrics": {
+        "enabled": true,
+        "items": [
+          {
+            "id": "m-1",
+            "value": "100%",
+            "label": "Biossegurança",
+            "icon": "ShieldCheck"
+          },
+          {
+            "id": "m-2",
+            "value": "Enfermagem",
+            "label": "Formação Técnica",
+            "icon": "Award"
+          },
+          {
+            "id": "m-3",
+            "value": "Home Care",
+            "label": "Atendimento Domiciliar",
+            "icon": "HeartPulse"
+          }
+        ]
+      },
+      "trustBadges": {
+        "enabled": true,
+        "items": [
+          {
+            "id": "tb-1",
+            "icon": "ShieldCheck",
+            "title": "Formação em Enfermagem",
+            "subtitle": "Conhecimento clínico e biossegurança rigorosa"
+          },
+          {
+            "id": "tb-2",
+            "icon": "Heart",
+            "title": "Atendimento Acolhedor",
+            "subtitle": "Cuidado humanizado e escuta ativa"
+          },
+          {
+            "id": "tb-3",
+            "icon": "Sparkles",
+            "title": "Resultados Comprovados",
+            "subtitle": "Alívio perceptível desde a 1ª sessão"
+          }
+        ]
+      },
+      "faq": {
+        "enabled": true,
+        "headline": "Dúvidas Frequentes",
+        "items": [
+          {
+            "id": "faq-1",
+            "question": "Quando posso iniciar a drenagem no pós-operatório?",
+            "answer": "Geralmente entre o 3º e o 7º dia após a cirurgia, sempre mediante a liberação expressa do seu cirurgião plástico."
+          },
+          {
+            "id": "faq-2",
+            "question": "A drenagem no pós-operatório causa dor?",
+            "answer": "Não. A técnica correta é extremamente suave, lenta e indolor, respeitando a sensibilidade dos tecidos recém-operados."
+          },
+          {
+            "id": "faq-3",
+            "question": "Você atende em domicílio (Home Care)?",
+            "answer": "Sim! Para seu maior conforto e segurança nos primeiros dias após o procedimento, realizo atendimento domiciliar com todo material estéril."
+          }
+        ]
+      },
+      "seo": {
+        "metaTitle": "GERMANA ZOCRATO · Drenagem Linfática & Pós-Operatório",
+        "metaDescription": "Protocolos avançados em drenagem linfática pós-operatório e estética clínica por Germana Zocrato, técnica de enfermagem. Agende no WhatsApp."
+      }
+    }
   }
 ]

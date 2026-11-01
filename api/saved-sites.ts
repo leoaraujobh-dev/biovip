@@ -145,6 +145,17 @@ export default async function savedSitesHandler(req: any, res: any) {
           }
         } catch {}
       }
+
+      // Fallback garantido para ambiente serverless Vercel (nunca retorna lista vazia)
+      try {
+        const { INITIAL_SAVED_SITES } = await import('../src/constants/initialSavedSites.ts');
+        if (Array.isArray(INITIAL_SAVED_SITES) && INITIAL_SAVED_SITES.length > 0) {
+          memorySavedSites = INITIAL_SAVED_SITES;
+          (globalThis as any).__biovipSavedSitesCache = INITIAL_SAVED_SITES;
+          return res.status(200).json({ success: true, sites: INITIAL_SAVED_SITES });
+        }
+      } catch {}
+
       return res.status(200).json({ success: true, sites: memorySavedSites || [] });
     } catch (err: any) {
       return res.status(200).json({ success: true, sites: memorySavedSites || [] });
@@ -198,6 +209,8 @@ export default async function savedSitesHandler(req: any, res: any) {
       try {
         const fs = await import('fs');
         try { fs.writeFileSync(storageFilePath, JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
+        try { fs.writeFileSync(path.resolve(rootDir, 'public', '.saved-sites.json'), JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
+        try { fs.writeFileSync(path.resolve(rootDir, 'dist', '.saved-sites.json'), JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
         try { fs.writeFileSync('/tmp/.saved-sites.json', JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
       } catch (fsErr) {
         // Ambiente Edge/Serverless sem filesystem

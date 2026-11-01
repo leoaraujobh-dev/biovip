@@ -18,11 +18,38 @@ import {
   Tag,
   Loader2,
   CheckCircle2,
-  Send,
-  Wand2,
+  Upload,
+  Globe,
+  Trash2,
 } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
 import { NICHE_TEMPLATES, NicheTemplate } from '../../../constants/templates';
+
+const POPULAR_PALETTES = [
+  { id: 'sageMind', name: 'Sálvia Botânica & Linho', colors: ['#4b6043', '#f4ede2', '#c9a227'] },
+  { id: 'emeraldLuxury', name: 'Esmeralda & Ouro Imperial', colors: ['#042f2e', '#14532d', '#d4af37'] },
+  { id: 'darkGold', name: 'Dark Luxury Gold', colors: ['#0c0b0b', '#2a241e', '#d4af37'] },
+  { id: 'roseGold', name: 'Rose Gold Atelier', colors: ['#23161c', '#f5e6e8', '#e8a598'] },
+  { id: 'champagneGlow', name: 'Champagne Warm Glow', colors: ['#1c1917', '#fef3c7', '#f59e0b'] },
+  { id: 'royalRuby', name: 'Royal Ruby & Rosé', colors: ['#3b0716', '#ffe4e6', '#fb7185'] },
+  { id: 'deepNavy', name: 'Deep Navy Minimal', colors: ['#0b132b', '#1c2541', '#60a5fa'] },
+  { id: 'terracottaWarm', name: 'Terracotta Warm', colors: ['#431407', '#ffedd5', '#ea580c'] },
+];
+
+const POPULAR_NICHES = [
+  'Estética Avançada & Drenagem',
+  'Harmonização Facial & Corporal',
+  'Lash Design & Sobrancelhas',
+  'Odontologia Estética & Implantes',
+  'Barbearia & Grooming Premium',
+  'Nutrição Clínica & Esportiva',
+  'Psicologia, Terapia & Bem-Estar',
+  'Salão de Beleza & Hair Stylist',
+  'Personal Trainer & Performance',
+  'Médicos & Consultórios Especializados',
+  'Advocacia & Consultoria Jurídica',
+  'Outro Nicho / Geral',
+];
 
 export interface QuickCreateTabProps {
   data: typeof INITIAL_DATA;
@@ -59,6 +86,8 @@ export interface QuickCreateTabProps {
   geminiImporting: boolean;
   handleImportGeminiCode: () => void;
   handleSaveMicrosite: (param: boolean) => void;
+  saveForm?: any;
+  setSaveForm?: React.Dispatch<React.SetStateAction<any>>;
 }
 
 export function QuickCreateTab({
@@ -79,7 +108,6 @@ export function QuickCreateTab({
   handleAiGenerateMicrosite,
   handleCopyGeminiScript,
   copiedGeminiScript,
-  buildGeminiSequentialScript,
   geminiPastedCode,
   setGeminiPastedCode,
   geminiAutoFetchInstaPhotos,
@@ -89,12 +117,28 @@ export function QuickCreateTab({
   geminiImporting,
   handleImportGeminiCode,
   handleSaveMicrosite,
+  saveForm,
+  setSaveForm,
 }: QuickCreateTabProps) {
   const [livePreviewLoading, setLivePreviewLoading] = useState(false);
   const [livePreviewData, setLivePreviewData] = useState<any>(null);
   const [copiedProposal, setCopiedProposal] = useState(false);
+  const [templateNotice, setTemplateNotice] = useState<string | null>(null);
+  const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
 
-  // Busca a prévia visual instantânea do Instagram com debounce de 600ms
+  // Slug ativo ou calculado
+  const currentSlug = (
+    saveForm?.subdomain ||
+    data.profile.name ||
+    'novo-cliente'
+  )
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') || 'microsite';
+
+  // Busca a prévia visual instantânea do Instagram com debounce
   useEffect(() => {
     const rawInput = (aiForm.instagram || '').trim();
     if (!rawInput || rawInput.length < 3) {
@@ -114,13 +158,11 @@ export function QuickCreateTab({
           const json = await res.json();
           if (json.success && json.profile) {
             setLivePreviewData(json.profile);
-            // Salva perfil em cache para geração instantânea e preenche nome caso vazio
             setAiForm((p: any) => ({
               ...p,
               cachedProfile: json.profile,
               ...(p.businessName ? {} : { businessName: json.profile.fullName || json.profile.cleanBusinessName }),
             }));
-            // Sugestão automática de paleta
             if (json.profile.suggestedPalette?.paletteId && !aiForm.selectedPalette) {
               setAiForm((p: any) => ({ ...p, selectedPalette: json.profile.suggestedPalette.paletteId }));
               applyThemePreset(json.profile.suggestedPalette.paletteId);
@@ -141,7 +183,6 @@ export function QuickCreateTab({
 
   const generateWhatsappProposalText = () => {
     const clientName = aiForm.businessName || livePreviewData?.fullName || data.profile.name || 'Empresa';
-    const cleanPhone = (aiForm.whatsapp || '').replace(/\D/g, '');
     const previewUrl = window.location.origin;
 
     return `Olá ${clientName}! Tudo bem?
@@ -161,42 +202,154 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
     setCopiedProposal(true);
     setTimeout(() => setCopiedProposal(false), 3000);
   };
+
+  // Carrega modelo sem sobrescrever silenciosamente o cliente ativo
+  const handleSelectTemplate = (tmpl: NicheTemplate) => {
+    if (editingSiteId) {
+      const ok = window.confirm(
+        `Você está editando o microsite salvo "${data.profile.name}".\n\nDeseja carregar o modelo "${tmpl.title}" como um NOVO projeto sem alterar o cliente salvo atual?`
+      );
+      if (!ok) return;
+      handleStartNewMicrosite();
+    }
+    const cloned = JSON.parse(JSON.stringify(tmpl.sampleData));
+    setData(cloned);
+    applyThemePreset(tmpl.theme);
+    setTemplateNotice(`✨ Modelo "${tmpl.title}" carregado no simulador! Ajuste os dados e clique em Salvar quando quiser.`);
+    setTimeout(() => setTemplateNotice(null), 5000);
+  };
+
+  // Upload e compressão leve de imagens para economizar memória do navegador
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: 'avatar' | 'about'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const raw = event.target?.result;
+      if (typeof raw === 'string') {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxDim = 800;
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressed = canvas.toDataURL('image/jpeg', 0.85);
+              if (target === 'avatar') {
+                setData((prev) => ({
+                  ...prev,
+                  profile: { ...prev.profile, avatarUrl: compressed },
+                }));
+              } else {
+                setData((prev) => ({
+                  ...prev,
+                  profile: { ...prev.profile, aboutPhotoUrl: compressed },
+                  aboutMe: { ...prev.aboutMe, photoUrl: compressed },
+                }));
+              }
+            }
+          } catch {
+            if (target === 'avatar') {
+              setData((prev) => ({
+                ...prev,
+                profile: { ...prev.profile, avatarUrl: raw },
+              }));
+            } else {
+              setData((prev) => ({
+                ...prev,
+                profile: { ...prev.profile, aboutPhotoUrl: raw },
+                aboutMe: { ...prev.aboutMe, photoUrl: raw },
+              }));
+            }
+          }
+        };
+        img.src = raw;
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleTriggerSave = (asNew = false) => {
+    handleSaveMicrosite(asNew);
+    setSaveSuccessNotice(true);
+    setTimeout(() => setSaveSuccessNotice(false), 3500);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Card de Status do Microsite Ativo */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-neutral-900 via-neutral-900 to-amber-950/30 border border-neutral-800 shadow-md flex items-center justify-between gap-3 flex-wrap">
+      {/* ========================================================================= */}
+      {/* BANNER DE STATUS DO MICROSITE & SALVAMENTO AUTOMÁTICO                     */}
+      {/* ========================================================================= */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-neutral-900 via-neutral-900 to-amber-950/30 border border-neutral-800 shadow-lg flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm font-bold text-white">
                 {editingSiteId ? `Editando: ${data.profile.name || 'Microsite do Cliente'}` : 'Novo Microsite'}
               </h2>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                editingSiteId ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-400'
-              }`}>
-                {editingSiteId ? 'SALVO NO PAINEL' : 'EM EDIÇÃO'}
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  editingSiteId
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                }`}
+              >
+                {editingSiteId ? 'SALVO NO PAINEL' : 'RASCUNHO ATIVO'}
+              </span>
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                <ShieldCheck className="w-3 h-3" />
+                <span>Auto-salvo</span>
               </span>
             </div>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-neutral-400 mt-0.5">
               {editingSiteId
-                ? 'As alterações feitas aqui refletem instantaneamente no simulador ao lado.'
-                : 'Preencha os dados abaixo para gerar e cadastrar o microsite do cliente em segundos.'}
+                ? 'As alterações feitas aqui refletem em tempo real no simulador ao lado.'
+                : 'Seus dados são preservados automaticamente na memória local para evitar perdas.'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={handleStartNewMicrosite}
-            className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            title="Limpar e iniciar um novo microsite do zero"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Iniciar Novo do Zero</span>
+            <Plus className="w-3.5 h-3.5 text-amber-400" />
+            <span>Novo do Zero</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => handleTriggerSave(false)}
+            className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 text-xs font-black flex items-center gap-1.5 shadow transition cursor-pointer"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{editingSiteId ? 'Salvar Alterações' : 'Salvar no Painel'}</span>
+          </button>
+
           {editingSiteId && (
             <button
               type="button"
@@ -210,8 +363,50 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
         </div>
       </div>
 
-      {/* Seletor de Modo de Criação Simplificado */}
+      {/* Notificação Temporária de Carregamento de Modelo */}
+      {templateNotice && (
+        <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-2 shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{templateNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTemplateNotice(null)}
+            className="text-emerald-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded cursor-pointer"
+          >
+            Fechar
+          </button>
+        </div>
+      )}
+
+      {/* Notificação de Salvamento com Sucesso */}
+      {saveSuccessNotice && (
+        <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-100 text-xs flex items-center gap-2 shadow-lg animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-semibold">
+            Microsite salvo com sucesso! Dados protegidos e atualizados no Painel de Clientes.
+          </span>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SELETOR DE MODO DE CRIAÇÃO                                                */}
+      {/* ========================================================================= */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 bg-neutral-900/90 rounded-2xl border border-neutral-800">
+        <button
+          type="button"
+          onClick={() => setQuickCreationMode('manual_quick')}
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            quickCreationMode === 'manual_quick'
+              ? 'bg-amber-400 text-neutral-950 shadow-md font-black'
+              : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
+          }`}
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>✍️ Criação Manual</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setQuickCreationMode('niche_templates')}
@@ -224,6 +419,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
           <Sparkles className="w-3.5 h-3.5" />
           <span>💎 Modelos Prontos</span>
         </button>
+
         <button
           type="button"
           onClick={() => setQuickCreationMode('instant_ai')}
@@ -236,6 +432,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
           <Sparkles className="w-3.5 h-3.5" />
           <span>⚡ Criar com IA</span>
         </button>
+
         <button
           type="button"
           onClick={() => setQuickCreationMode('gemini_script')}
@@ -248,22 +445,385 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
           <Copy className="w-3.5 h-3.5" />
           <span>📋 Script Gemini</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setQuickCreationMode('manual_quick')}
-          className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-            quickCreationMode === 'manual_quick'
-              ? 'bg-amber-400 text-neutral-950 shadow-md font-black'
-              : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
-          }`}
-        >
-          <Edit3 className="w-3.5 h-3.5" />
-          <span>✍️ Manual</span>
-        </button>
       </div>
 
       {/* ========================================================================= */}
-      {/* MODO 0: CATÁLOGO DE MODELOS PRONTOS POR NICHO (1 CLIQUE)                 */}
+      {/* MODO 0: CRIAÇÃO MANUAL DIRETA (NOVO, COMPLETO E RESILIENTE)              */}
+      {/* ========================================================================= */}
+      {quickCreationMode === 'manual_quick' && (
+        <div className="space-y-5 p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800 shadow-xl">
+          <div className="flex items-center justify-between gap-2 flex-wrap border-b border-neutral-800/80 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-amber-400" />
+                <span>Criação & Edição Manual Direta</span>
+              </h3>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Preencha os dados essenciais e veja as alterações refletidas no simulador ao lado em tempo real.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-neutral-400 font-mono">
+                biovip.com.br/<strong className="text-amber-400">{currentSlug}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* SEÇÃO 1: IDENTIFICAÇÃO E SUBDOMÍNIO */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                Nome do Negócio ou Profissional <span className="text-amber-400">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Germana Zocrato, Dra. Camila Lash, Studio Nobre"
+                value={data.profile.name}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setData((p) => ({ ...p, profile: { ...p.profile, name: val } }));
+                  if (setSaveForm && !saveForm?.clientName) {
+                    setSaveForm((prev: any) => ({ ...prev, clientName: val }));
+                  }
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-sm text-white placeholder-neutral-600 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                Especialidade / Título Principal <span className="text-amber-400">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Drenagem Linfática & Pós-Operatório"
+                value={data.profile.title}
+                onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, title: e.target.value } }))}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-sm text-white placeholder-neutral-600 focus:outline-none"
+              />
+            </div>
+
+            {/* Subdomínio Personalizado */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-blue-400" />
+                <span>Link Oficial / Subdomínio</span>
+              </label>
+              <div className="flex items-center rounded-xl bg-neutral-950 border border-neutral-800 focus-within:border-amber-400 overflow-hidden">
+                <span className="px-3 text-xs text-neutral-500 font-mono select-none">biovip.com.br/</span>
+                <input
+                  type="text"
+                  placeholder="slug-do-cliente"
+                  value={saveForm?.subdomain !== undefined ? saveForm.subdomain : currentSlug}
+                  onChange={(e) => {
+                    const clean = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                    if (setSaveForm) {
+                      setSaveForm((prev: any) => ({ ...prev, subdomain: clean }));
+                    }
+                  }}
+                  className="flex-1 px-2 py-2.5 bg-transparent text-sm text-amber-300 font-mono focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Nicho / Categoria */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Nicho de Atuação</span>
+              </label>
+              <select
+                value={saveForm?.nicheCategory || aiForm.businessNiche || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (setSaveForm) {
+                    setSaveForm((prev: any) => ({ ...prev, nicheCategory: val }));
+                  }
+                  setAiForm((prev: any) => ({ ...prev, businessNiche: val }));
+                }}
+                className="w-full px-3 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white focus:outline-none"
+              >
+                <option value="">Selecione o nicho do cliente...</option>
+                {POPULAR_NICHES.map((niche) => (
+                  <option key={niche} value={niche}>
+                    {niche}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* SEÇÃO 2: PALETA DE CORES RÁPIDA (AMOSTRAS VISUAIS) */}
+          <div className="space-y-2 pt-1 border-t border-neutral-800/60">
+            <label className="block text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5 text-amber-400" />
+              <span>Paleta de Cores do Microsite (1 Clique)</span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {POPULAR_PALETTES.map((pal) => (
+                <button
+                  key={pal.id}
+                  type="button"
+                  onClick={() => {
+                    applyThemePreset(pal.id);
+                    setAiForm((p: any) => ({ ...p, selectedPalette: pal.id }));
+                  }}
+                  className={`p-2 rounded-xl border text-left transition flex items-center gap-2 cursor-pointer ${
+                    aiForm.selectedPalette === pal.id
+                      ? 'border-amber-400 bg-amber-500/10 shadow-sm'
+                      : 'border-neutral-800 bg-neutral-950/60 hover:border-neutral-700'
+                  }`}
+                >
+                  <div className="flex -space-x-1.5 shrink-0">
+                    {pal.colors.map((c, i) => (
+                      <span
+                        key={i}
+                        className="w-3.5 h-3.5 rounded-full border border-black/40 shadow-xs"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[11px] font-medium text-neutral-200 truncate">{pal.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* SEÇÃO 3: CONTATOS DE CONVERSÃO */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1 border-t border-neutral-800/60">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                <span>WhatsApp de Atendimento</span>
+                <span className="text-amber-400">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="(DDD) 99999-9999"
+                value={data.profile.whatsapp}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setData((p) => ({ ...p, profile: { ...p.profile, whatsapp: val } }));
+                  setAiForm((p: any) => ({ ...p, whatsapp: val }));
+                  if (setSaveForm) {
+                    setSaveForm((prev: any) => ({ ...prev, clientPhone: val }));
+                  }
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-sm text-emerald-300 font-mono focus:outline-none"
+              />
+              <span className="text-[10px] text-neutral-500 block mt-0.5">
+                Conecta todos os botões de agendamento e CTA do microsite.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1.5">
+                <Instagram className="w-3.5 h-3.5 text-pink-400" />
+                <span>Instagram do Cliente</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm font-semibold">@</span>
+                <input
+                  type="text"
+                  placeholder="usuario.do.cliente"
+                  value={data.profile.instagram.replace(/^@/, '')}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/^@/, '').trim();
+                    setData((p) => ({ ...p, profile: { ...p.profile, instagram: clean } }));
+                    setAiForm((p: any) => ({ ...p, instagram: clean }));
+                  }}
+                  className="w-full pl-7 pr-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-sm text-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-red-400" />
+                <span>Endereço / Localização do Espaço</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Av. Principal, 1000 - Sala 402, Centro - Cidade/UF"
+                value={data.locationCard.address}
+                onChange={(e) => setData((p) => ({ ...p, locationCard: { ...p.locationCard, address: e.target.value } }))}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-sm text-white focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* SEÇÃO 4: FOTOS (AVATAR E SOBRE MIM COM UPLOAD E PREVIEW) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-neutral-800/60">
+            {/* Foto de Perfil */}
+            <div className="p-3.5 rounded-xl bg-neutral-950/80 border border-neutral-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Foto de Perfil / Cabeçalho</span>
+                </span>
+                {data.profile.avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setData((p) => ({ ...p, profile: { ...p.profile, avatarUrl: '' } }))}
+                    className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Remover</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-neutral-900 border border-neutral-700 shrink-0 flex items-center justify-center">
+                  {data.profile.avatarUrl ? (
+                    <img src={data.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-6 h-6 text-neutral-600" />
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-1.5">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-semibold cursor-pointer transition">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Carregar Foto do Aparelho</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'avatar')}
+                      className="hidden"
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ou cole a URL direta (https://...)"
+                    value={data.profile.avatarUrl?.startsWith('data:') ? '' : data.profile.avatarUrl}
+                    onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, avatarUrl: e.target.value } }))}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Foto da Seção Sobre Mim */}
+            <div className="p-3.5 rounded-xl bg-neutral-950/80 border border-neutral-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Foto da Seção Sobre Mim</span>
+                </span>
+                {data.profile.aboutPhotoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setData((p) => ({
+                        ...p,
+                        profile: { ...p.profile, aboutPhotoUrl: '' },
+                        aboutMe: { ...p.aboutMe, photoUrl: '' },
+                      }));
+                    }}
+                    className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Remover</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-700 shrink-0 flex items-center justify-center">
+                  {data.profile.aboutPhotoUrl || data.aboutMe?.photoUrl ? (
+                    <img
+                      src={data.profile.aboutPhotoUrl || data.aboutMe?.photoUrl}
+                      alt="Sobre Mim"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-neutral-600" />
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-1.5">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold cursor-pointer transition">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Carregar Foto do Aparelho</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'about')}
+                      className="hidden"
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ou cole a URL direta (https://...)"
+                    value={data.profile.aboutPhotoUrl?.startsWith('data:') ? '' : data.profile.aboutPhotoUrl}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setData((p) => ({
+                        ...p,
+                        profile: { ...p.profile, aboutPhotoUrl: val },
+                        aboutMe: { ...p.aboutMe, photoUrl: val },
+                      }));
+                    }}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SEÇÃO 5: BIOGRAFIA E ASSINATURA EDITORIAL */}
+          <div className="space-y-3 pt-1 border-t border-neutral-800/60">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                Texto da Biografia / Apresentação Sobre Mim
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Conte a história, formação e diferenciais do profissional ou clínica..."
+                value={data.aboutMe?.paragraph || data.profile.bio || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setData((p) => ({
+                    ...p,
+                    profile: { ...p.profile, bio: val },
+                    aboutMe: { ...p.aboutMe, paragraph: val },
+                  }));
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white placeholder-neutral-600 focus:outline-none leading-relaxed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                Assinatura Cursiva (Opcional)
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Realçando sua beleza única com ciência, arte e sutileza."
+                value={data.profile.editorialSignature || ''}
+                onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, editorialSignature: e.target.value } }))}
+                className="w-full px-3.5 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none italic"
+              />
+            </div>
+          </div>
+
+          {/* BOTÃO PRINCIPAL DE SALVAMENTO */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => handleTriggerSave(false)}
+              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:brightness-110 text-neutral-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer transition"
+            >
+              <Save className="w-4 h-4 fill-neutral-950" />
+              <span>Salvar Microsite e Cadastrar no Painel de Clientes</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODO 1: CATÁLOGO DE MODELOS PRONTOS POR NICHO                            */}
       {/* ========================================================================= */}
       {quickCreationMode === 'niche_templates' && (
         <div className="space-y-4 p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800 shadow-xl">
@@ -273,7 +833,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
               <span>Modelos Profissionais Prontos por Nicho</span>
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
-              Escolha um nicho abaixo para carregar imediatamente a paleta, copywriting, imagens e serviços validados para alta conversão.
+              Escolha um nicho abaixo para carregar imediatamente a paleta, copywriting, imagens e serviços validados para alta conversão no simulador.
             </p>
           </div>
 
@@ -309,15 +869,11 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setData(JSON.parse(JSON.stringify(tmpl.sampleData)));
-                    applyThemePreset(tmpl.theme);
-                    handleSaveMicrosite(false);
-                  }}
-                  className="w-full py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-amber-500/30 hover:border-amber-300 transition cursor-pointer"
+                  onClick={() => handleSelectTemplate(tmpl)}
+                  className="w-full py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-amber-500/30 hover:border-amber-300 transition cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Carregar este Modelo</span>
+                  <span>Carregar no Simulador</span>
                 </button>
               </div>
             ))}
@@ -326,7 +882,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
       )}
 
       {/* ========================================================================= */}
-      {/* MODO 1: CRIAÇÃO INSTANTÂNEA POR IA (3 CAMPOS ESSENCIAIS + BOTÃO) */}
+      {/* MODO 2: CRIAÇÃO INSTANTÂNEA POR IA (3 CAMPOS ESSENCIAIS + BOTÃO)          */}
       {/* ========================================================================= */}
       {quickCreationMode === 'instant_ai' && (
         <div className="space-y-5 p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800 shadow-xl">
@@ -398,355 +954,143 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
               {/* Indicador de carregamento da prévia */}
               {livePreviewLoading && (
                 <div className="mt-2.5 p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 flex items-center gap-2.5 text-xs text-amber-300 animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400 shrink-0" />
-                  <span>Buscando perfil e fotos no Instagram em tempo real...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                  <span>Localizando perfil público e analisando fotos...</span>
                 </div>
               )}
 
-              {/* Card de Prévia Visual Instantânea do Instagram */}
-              {livePreviewData && !livePreviewLoading && (
-                <div className="mt-3 p-3.5 rounded-xl bg-gradient-to-br from-neutral-900/90 via-neutral-900 to-neutral-950 border border-amber-500/30 space-y-3 shadow-lg">
-                  {/* Cabeçalho do Perfil Localizado */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="relative">
-                        <img
-                          src={livePreviewData.avatarUrl}
-                          alt={livePreviewData.fullName || livePreviewData.username}
-                          className="w-11 h-11 rounded-full object-cover border-2 border-amber-400/80 shadow-md bg-neutral-900"
-                          onError={(e: any) => { e.target.style.display = 'none'; }}
-                        />
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-neutral-950 flex items-center justify-center text-[10px] font-black border border-neutral-900">
-                          ✓
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-white truncate">
-                            {livePreviewData.fullName || `@${livePreviewData.username}`}
-                          </span>
-                          <span className="text-[10px] text-pink-400 font-mono">@{livePreviewData.username}</span>
-                        </div>
-                        <div className="text-[11px] text-neutral-400 truncate flex items-center gap-2">
-                          {livePreviewData.followersCount > 0 && (
-                            <span><strong>{livePreviewData.followersCount.toLocaleString('pt-BR')}</strong> seguidores</span>
-                          )}
-                          {livePreviewData.bio && (
-                            <span className="text-[10px] text-neutral-500 truncate max-w-[200px]" title={livePreviewData.bio}>
-                              • {livePreviewData.bio}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="shrink-0 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Localizado</span>
-                    </span>
-                  </div>
-
-                  {/* Sugestão de Paleta Harmônica */}
-                  {livePreviewData.suggestedPalette && (
-                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-neutral-950/70 border border-neutral-800 text-[11px]">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <Wand2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="text-neutral-300">
-                          Paleta Recomendada: <strong className="text-amber-300">{livePreviewData.suggestedPalette.paletteName}</strong>
-                        </span>
-                        <span className="text-[10px] text-neutral-500 truncate hidden sm:inline">({livePreviewData.suggestedPalette.reason})</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAiForm((p: any) => ({ ...p, selectedPalette: livePreviewData.suggestedPalette.paletteId }));
-                          applyThemePreset(livePreviewData.suggestedPalette.paletteId);
-                        }}
-                        className="shrink-0 px-2.5 py-1 rounded-md bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-[10px] font-bold cursor-pointer transition"
-                      >
-                        Aplicar Cores
-                      </button>
-                    </div>
+              {/* Prévia do Perfil Encontrado */}
+              {livePreviewData && (
+                <div className="mt-2.5 p-3 rounded-xl bg-neutral-950 border border-emerald-500/30 flex items-center gap-3">
+                  {livePreviewData.avatarUrl && (
+                    <img
+                      src={livePreviewData.avatarUrl}
+                      alt={livePreviewData.fullName || 'Perfil'}
+                      className="w-12 h-12 rounded-full object-cover border border-emerald-500/40"
+                    />
                   )}
-
-                  {/* 6 Fotos Mais Curtidas para a Galeria */}
-                  <div>
-                    <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-1.5">
-                      <span className="font-semibold text-neutral-300">
-                        📸 6 Fotos de Portfólio & Procedimentos (Galeria do Microsite):
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-white truncate">
+                        {livePreviewData.fullName || livePreviewData.username}
                       </span>
-                      <span className="text-[10px] text-emerald-400 font-medium">Foto de perfil no cabeçalho</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     </div>
-                    <div className="grid grid-cols-6 gap-1.5">
-                      {(livePreviewData.posts || []).slice(0, 6).map((post: any, idx: number) => (
-                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-neutral-800 bg-neutral-950 group">
-                          <img
-                            src={post.displayUrl}
-                            alt={`Foto ${idx + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-110 transition duration-200"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-[9px] text-white font-bold">
-                            ❤️ {post.likesCount ? (post.likesCount >= 1000 ? `${(post.likesCount/1000).toFixed(1)}k` : post.likesCount) : idx + 1}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
+                      {livePreviewData.biography || 'Perfil verificado com sucesso'}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Seleção rápida de Paleta de Cores em 1 Clique */}
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-neutral-300 mb-2 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-amber-400" />
-                  <span>4. Escolha a Paleta de Cores Inicial (1 Clique)</span>
-                </span>
-                <span className="text-[10px] text-neutral-500">
-                  Pode ser trocada a qualquer momento sem perder dados
-                </span>
+            {/* Campo Opcional: Link do Google Maps */}
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-red-400" />
+                <span>Link do Google Maps / Google Meu Negócio</span>
+                <span className="text-xs text-neutral-500 font-normal">(Opcional)</span>
               </label>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: 'darkGold', name: 'Dark Luxury Gold', bg: '#0c0b0b', accent: '#d4af37', label: 'Dark & Ouro' },
-                  { id: 'roseGoldQuartz', name: 'Rose Gold Quartzo', bg: '#1c1618', accent: '#dfa2aa', label: 'Rose Gold' },
-                  { id: 'navyLaw', name: 'Navy Royal & Gold', bg: '#0f172a', accent: '#d4af37', label: 'Navy Royal' },
-                  { id: 'royalAmethyst', name: 'Ametista Imperial', bg: '#0d0714', accent: '#c084fc', label: 'Ametista Roxo' },
-                  { id: 'tiffanyDiamond', name: 'Tiffany & Diamante', bg: '#061112', accent: '#0abab5', label: 'Verde Tiffany' },
-                  { id: 'nobleOlive', name: 'Oliva Nobre & Ouro', bg: '#0f140e', accent: '#d4af37', label: 'Verde Oliva' },
-                  { id: 'emeraldNails', name: 'Esmeralda Nobre', bg: '#081c15', accent: '#52b788', label: 'Esmeralda' },
-                  { id: 'blackCherryGold', name: 'Black Cherry & Ouro', bg: '#0f0307', accent: '#f43f5e', label: 'Black Cherry' },
-                  { id: 'blushNudeGlam', name: 'Nude Blush Cetim', bg: '#140e11', accent: '#fb7185', label: 'Blush Nude' },
-                  { id: 'pearlChampagne', name: 'Pérola & Champanhe', bg: '#faf7f2', accent: '#b45309', label: 'Pérola Clean' },
-                  { id: 'terracottaWarm', name: 'Terracota Orgânico', bg: '#fcfaf6', accent: '#c2410c', label: 'Terracota' },
-                  { id: 'stealthTitanium', name: 'Stealth Titanium P&B', bg: '#000000', accent: '#f8fafc', label: 'Preto & Branco' },
-                ].map((thm) => {
-                  const isSelected = (aiForm.selectedPalette || data.theme) === thm.id;
-                  return (
-                    <button
-                      key={thm.id}
-                      type="button"
-                      onClick={() => {
-                        setAiForm((p: any) => ({ ...p, selectedPalette: thm.id }));
-                        applyThemePreset(thm.id);
-                      }}
-                      className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex items-center gap-2.5 ${
-                        isSelected
-                          ? 'bg-amber-500/15 border-amber-400 ring-1 ring-amber-400/50'
-                          : 'bg-neutral-950/70 border-neutral-800 hover:border-neutral-700'
-                      }`}
-                    >
-                      <div
-                        className="w-5 h-5 rounded-full shrink-0 border border-white/20 shadow flex items-center justify-center text-[10px]"
-                        style={{ backgroundColor: thm.bg }}
-                      >
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: thm.accent }} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-bold text-white truncate">{thm.label}</div>
-                        <div className="text-[9px] text-neutral-400 truncate">{thm.name}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <input
+                type="text"
+                placeholder="Cole o link do Google Maps para puxar avaliações e localização"
+                value={aiForm.googleMaps}
+                onChange={(e) => setAiForm((p: any) => ({ ...p, googleMaps: e.target.value.trim() }))}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white placeholder-neutral-500 focus:outline-none"
+              />
             </div>
 
-            {/* Detalhes Opcionais (Accordion) */}
-            <details className="pt-1 text-xs text-neutral-400 border-t border-neutral-800/80">
-              <summary className="cursor-pointer hover:text-amber-300 font-semibold py-2 select-none flex items-center gap-1.5">
-                <Plus className="w-3.5 h-3.5 text-amber-400" />
-                <span>Mais informações opcionais (Google Maps, Nicho ou Observações)</span>
-              </summary>
-              <div className="space-y-3 pt-2 pb-1">
-                <div>
-                  <label className="block text-[11px] font-medium text-neutral-300 mb-1 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-red-400" />
-                    <span>Link do Google Maps / Google Meu Negócio</span>
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://maps.google.com/?cid=..."
-                    value={aiForm.googleMaps}
-                    onChange={(e) => setAiForm((p: any) => ({ ...p, googleMaps: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white placeholder-neutral-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-neutral-300 mb-1">
-                    Nicho ou Observações Específicas
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Especialista em Mega Hair, Advogada Trabalhista, Barbeiro Visagista"
-                    value={aiForm.businessNiche}
-                    onChange={(e) => setAiForm((p: any) => ({ ...p, businessNiche: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white placeholder-neutral-500 focus:outline-none"
-                  />
-                </div>
+            {aiError && (
+              <div className="p-2.5 rounded-lg bg-red-500/15 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{aiError}</span>
               </div>
-            </details>
-          </div>
+            )}
 
-          {aiError && (
-            <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-              <span>{aiError}</span>
-            </div>
-          )}
-
-          {/* Botão de Criação em Segundos */}
-          <div className="pt-2">
+            {/* Botão Principal de Criação por IA */}
             <button
               type="button"
               disabled={aiGenerating}
               onClick={handleAiGenerateMicrosite}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:brightness-110 disabled:opacity-50 text-neutral-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer transition"
+              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:brightness-110 disabled:opacity-50 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer transition"
             >
-              <Sparkles className="w-5 h-5 fill-neutral-950" />
-              <span>
-                {aiGenerating
-                  ? aiStepIndex === 0
-                    ? '🔍 Extraindo Fotos e Dados do Instagram...'
-                    : aiStepIndex === 1
-                    ? '✨ Formatando Layout, Serviços e WhatsApp...'
-                    : '💾 Salvando e Cadastrando no Painel de Clientes...'
-                  : '🚀 Criar Microsite Completo em Segundos'}
-              </span>
+              {aiGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-neutral-950" />
+                  <span>
+                    {aiStepIndex === 0 && 'Conectando ao Instagram & mapeando procedimentos...'}
+                    {aiStepIndex === 1 && 'Escrevendo textos de alta conversão & selecionando fotos...'}
+                    {aiStepIndex >= 2 && 'Montando microsite e cadastrando no Painel...'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 fill-neutral-950" />
+                  <span>✨ Gerar Microsite Pronto com IA em 1 Clique</span>
+                </>
+              )}
             </button>
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 mt-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Cadastra automaticamente o cliente no Painel Administrativo com mensalidade e link pronto.</span>
-            </div>
+          </div>
 
-            {/* Gerador de Abordagem WhatsApp em 1 Clique */}
-            <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-neutral-950 to-neutral-950 border border-emerald-500/30 space-y-3">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
-                    📲
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Proposta Pronta para o WhatsApp</h4>
-                    <p className="text-[10px] text-neutral-400">Texto persuasivo de apresentação sem falar de preço</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyProposal}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow ${
-                    copiedProposal
-                      ? 'bg-emerald-500 text-neutral-950 font-black'
-                      : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                  }`}
-                >
-                  {copiedProposal ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
-                  <span>{copiedProposal ? 'Copiado para o WhatsApp!' : 'Copiar Mensagem Pronta'}</span>
-                </button>
-              </div>
-              <textarea
-                readOnly
-                rows={4}
-                value={generateWhatsappProposalText()}
-                className="w-full p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[11px] font-sans text-neutral-300 focus:outline-none resize-none"
-              />
+          {/* Gerador de Proposta Comercial Pronta para WhatsApp */}
+          <div className="mt-4 p-4 rounded-xl bg-neutral-950/70 border border-neutral-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Mensagem Comercial de Apresentação (WhatsApp)</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyProposal}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+              >
+                {copiedProposal ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                <span>{copiedProposal ? 'Copiada!' : 'Copiar Mensagem'}</span>
+              </button>
             </div>
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              Copie o texto pronto e envie para o WhatsApp do cliente para apresentar o microsite com autoridade.
+            </p>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* MODO 2: SCRIPT SEQUENCIAL PARA O GEMINI */}
+      {/* MODO 3: SCRIPT GEMINI                                                     */}
       {/* ========================================================================= */}
       {quickCreationMode === 'gemini_script' && (
         <div className="space-y-4 p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800 shadow-xl">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Copy className="w-4 h-4 text-amber-400" />
-              <span>Criar com Script Sequencial no Gemini</span>
+              <span>Geração Via Gemini (Código Personalizado)</span>
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
-              Copie o script para o Gemini te pedir sequencialmente o cliente, Instagram e Google Maps, e depois cole aqui o código JSON entregue.
+              Copie o prompt estruturado, cole no Google Gemini e em seguida cole o JSON gerado aqui para importar tudo pronto.
             </p>
           </div>
 
-          {/* PASSO 1: COPIAR SCRIPT */}
-          <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                <span className="w-4 h-4 rounded-full bg-amber-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">1</span>
-                Passo 1: Copie o Script e abra o Gemini
-              </span>
-              <a
-                href="https://gemini.google.com/app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] font-bold text-amber-300 hover:text-amber-200 underline flex items-center gap-1"
-              >
-                <span>Abrir Gemini (gemini.google.com)</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-            <p className="text-xs text-neutral-400">
-              O Gemini fará 3 perguntas sequenciais para você, buscará dados na web e gerará a página com o perfil e serviços do cliente.
-            </p>
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => handleCopyGeminiScript(false)}
-              className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow ${
-                copiedGeminiScript
-                  ? 'bg-emerald-500 text-neutral-950'
-                  : 'bg-amber-400 hover:bg-amber-300 text-neutral-950'
-              }`}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
-              {copiedGeminiScript ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>
-                {copiedGeminiScript
-                  ? 'Script Sequencial Copiado! Cole agora no Gemini'
-                  : '📋 Copiar Script Sequencial para o Gemini'}
-              </span>
+              {copiedGeminiScript ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedGeminiScript ? 'Prompt Copiado!' : '1. Copiar Prompt do Gemini'}</span>
             </button>
-            <details className="text-[10px] text-neutral-400">
-              <summary className="cursor-pointer hover:text-amber-300 font-semibold select-none">
-                👁️ Visualizar texto completo do Script
-              </summary>
-              <textarea
-                readOnly
-                rows={5}
-                value={buildGeminiSequentialScript(false)}
-                className="w-full mt-2 p-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-[10px] font-mono text-neutral-300 focus:outline-none"
-              />
-            </details>
           </div>
 
-          {/* PASSO 2: COLAR CÓDIGO */}
-          <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-                <span className="w-4 h-4 rounded-full bg-emerald-400 text-neutral-950 text-[10px] font-black flex items-center justify-center">2</span>
-                Passo 2: Cole o código que o Gemini te entregou
-              </span>
-              {geminiPastedCode.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setGeminiPastedCode('')}
-                  className="text-[10px] text-neutral-400 hover:text-red-300 cursor-pointer"
-                >
-                  Limpar código
-                </button>
-              )}
-            </div>
-
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-neutral-300">
+              2. Cole o Código JSON retornado pelo Gemini:
+            </label>
             <textarea
               rows={5}
-              placeholder='Cole aqui o bloco de código JSON que o Gemini gerou (ex: { "adminClient": { ... }, "microsite": { ... } })...'
+              placeholder="Cole aqui o código JSON entregue pelo Gemini..."
               value={geminiPastedCode}
-              onChange={(e) => {
-                setAiError(null);
-                setGeminiPastedCode(e.target.value);
-              }}
-              className="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-amber-400 text-xs font-mono text-emerald-200 placeholder-neutral-500 focus:outline-none resize-y"
+              onChange={(e) => setGeminiPastedCode(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-neutral-200 font-mono focus:outline-none"
             />
 
             <div className="space-y-1.5 pt-0.5">
@@ -758,7 +1102,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
                   className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
                 />
                 <span>
-                  📸 Puxar automaticamente as <strong>fotos de portfólio/serviços e avatar real do Instagram</strong>
+                  📸 Puxar automaticamente as <strong>fotos reais de portfólio e avatar do Instagram</strong>
                 </span>
               </label>
               <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer select-none">
@@ -769,7 +1113,7 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
                   className="rounded border-neutral-700 bg-neutral-900 text-amber-400 focus:ring-amber-500"
                 />
                 <span>
-                  🛡️ Já criar com a <strong>Área de Administração pronta</strong> (Cadastrar cliente, subdomínio e mensalidade no Painel)
+                  🛡️ Já criar com a <strong>Área de Administração pronta</strong> (Cadastrar no Painel)
                 </span>
               </label>
             </div>
@@ -790,8 +1134,8 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
               <Sparkles className="w-4 h-4 fill-neutral-950" />
               <span>
                 {geminiImporting
-                  ? 'Montando Página + Puxando Fotos do Instagram + Criando Área Admin...'
-                  : '✨ Importar Código & Criar Página + Área de Administração Pronta'}
+                  ? 'Montando Página + Puxando Fotos do Instagram...'
+                  : '✨ Importar Código & Montar Microsite'}
               </span>
             </button>
           </div>
@@ -799,95 +1143,8 @@ A página conta com agendamento direto no seu WhatsApp, galeria de destaques e c
       )}
 
       {/* ========================================================================= */}
-      {/* MODO 3: CRIAÇÃO MANUAL RÁPIDA (DIRETA SEM IA) */}
+      {/* ATALHOS RÁPIDOS PARA OUTRAS ABAS                                         */}
       {/* ========================================================================= */}
-      {quickCreationMode === 'manual_quick' && (
-        <div className="space-y-4 p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800 shadow-xl">
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Edit3 className="w-4 h-4 text-amber-400" />
-              <span>Preenchimento Manual Direto</span>
-            </h3>
-            <p className="text-xs text-neutral-400 mt-1">
-              Digite diretamente os dados essenciais e veja o microsite ser atualizado em tempo real na tela ao lado.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                Nome do Negócio / Profissional
-              </label>
-              <input
-                type="text"
-                value={data.profile.name}
-                onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, name: e.target.value } }))}
-                className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                Especialidade / Título Principal
-              </label>
-              <input
-                type="text"
-                value={data.profile.title}
-                onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, title: e.target.value } }))}
-                className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1">
-                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                <span>WhatsApp de Atendimento</span>
-              </label>
-              <input
-                type="text"
-                value={data.profile.whatsapp}
-                onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, whatsapp: e.target.value } }))}
-                className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-emerald-300 font-mono focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1">
-                <Instagram className="w-3.5 h-3.5 text-pink-400" />
-                <span>Instagram @</span>
-              </label>
-              <input
-                type="text"
-                value={data.profile.instagram}
-                onChange={(e) => setData((p) => ({ ...p, profile: { ...p.profile, instagram: e.target.value.replace('@', '') } }))}
-                className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white focus:outline-none"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-neutral-300 mb-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-red-400" />
-                <span>Endereço / Localização</span>
-              </label>
-              <input
-                type="text"
-                value={data.locationCard.address}
-                onChange={(e) => setData((p) => ({ ...p, locationCard: { ...p.locationCard, address: e.target.value } }))}
-                className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 focus:border-amber-400 text-xs text-white focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => handleSaveMicrosite(false)}
-              className="w-full py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition cursor-pointer"
-            >
-              <Save className="w-4 h-4 text-neutral-950" />
-              <span>Salvar Microsite e Atualizar no Painel de Clientes</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Atalhos Rápidos para Outras Abas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
         <button
           type="button"

@@ -301,7 +301,20 @@ async function testFirestoreConnection() {
 testFirestoreConnection();
 
 export default function App() {
-  const [data, setData] = useState(INITIAL_DATA);
+  const [data, setData] = useState<typeof INITIAL_DATA>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('luxebio_editor_active_draft');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object' && parsed.profile?.name) {
+            return { ...INITIAL_DATA, ...parsed };
+          }
+        }
+      } catch {}
+    }
+    return INITIAL_DATA;
+  });
   const [activeTab, setActiveTab] = useState('quickCreate');
   const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
   const [activeFaqId, setActiveFaqId] = useState<string | null>(null);
@@ -320,6 +333,17 @@ export default function App() {
       setIsSimulatorLoading(false);
     }, durationMs);
   };
+
+  // Preserva automaticamente todo rascunho em edição no localStorage (proteção contra recarregamento e perda acidental)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem('luxebio_editor_active_draft', JSON.stringify(data));
+      } catch {}
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [data]);
 
   const getDaysUntilDue = (dueDateStr: string): number => {
     if (!dueDateStr) return 999;
@@ -2215,14 +2239,20 @@ export default function App() {
           } else {
               const existingData = existing.data || {};
               const idbData = idbSite.data || {};
+              // Prioriza sempre as edições do usuário salvas no IndexedDB sobre templates iniciais
               const mergedData = {
-                ...idbData,
                 ...existingData,
+                ...idbData,
                 profile: {
-                  ...idbData.profile,
                   ...existingData.profile,
-                  avatarUrl: (existingData.profile?.avatarUrl && String(existingData.profile.avatarUrl).trim()) || idbData.profile?.avatarUrl || '',
-                  aboutPhotoUrl: (existingData.profile?.aboutPhotoUrl && String(existingData.profile.aboutPhotoUrl).trim()) || idbData.profile?.aboutPhotoUrl || '',
+                  ...idbData.profile,
+                  avatarUrl: idbData.profile?.avatarUrl || existingData.profile?.avatarUrl || '',
+                  aboutPhotoUrl: idbData.profile?.aboutPhotoUrl || existingData.profile?.aboutPhotoUrl || '',
+                },
+                aboutMe: {
+                  ...existingData.aboutMe,
+                  ...idbData.aboutMe,
+                  photoUrl: (idbData.aboutMe as any)?.photoUrl || (existingData.aboutMe as any)?.photoUrl || '',
                 },
                 studentGrid: {
                   ...idbData.studentGrid,
@@ -3802,8 +3832,13 @@ export default function App() {
     return builtMicrositeData;
   };
 
-  // Iniciar novo microsite em branco de forma simples e limpa
+  // Iniciar novo microsite em branco de forma simples e limpa com proteção contra perda
   const handleStartNewMicrosite = () => {
+    if (data.profile.name && data.profile.name !== INITIAL_DATA.profile.name) {
+      const confirmNew = window.confirm(`Deseja iniciar um novo microsite? O rascunho de "${data.profile.name}" será limpo para o novo projeto.`);
+      if (!confirmNew) return;
+    }
+    try { localStorage.removeItem('luxebio_editor_active_draft'); } catch {}
     setData(INITIAL_DATA);
     setEditingSiteId(null);
     setSaveForm({
@@ -4217,6 +4252,12 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
 
   const handleImportGeminiCode = async () => {
     setAiError(null);
+    if (editingSiteId) {
+      const confirmNew = window.confirm(`Você está com o microsite "${data.profile.name || 'atual'}" aberto.\n\nDeseja importar como um NOVO microsite separado (Recomendado)?\n\nClique OK para criar um novo microsite separado.\nClique CANCELAR se desejar sobrescrever o microsite aberto.`);
+      if (confirmNew) {
+        setEditingSiteId(null);
+      }
+    }
     const rawInput = geminiPastedCode.trim();
     if (!rawInput) {
       const msg = 'Cole o código JSON entregue pelo Gemini no campo abaixo antes de importar.';
@@ -4712,6 +4753,12 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
 
   const handleAiGenerateMicrosite = async () => {
     setAiError(null);
+    if (editingSiteId) {
+      const confirmNew = window.confirm(`Você está com o microsite "${data.profile.name || 'atual'}" aberto.\n\nDeseja gerar este projeto como um NOVO microsite separado (Recomendado)?\n\nClique OK para criar um novo microsite separado.\nClique CANCELAR se desejar sobrescrever o microsite aberto.`);
+      if (confirmNew) {
+        setEditingSiteId(null);
+      }
+    }
     if (
       !aiForm.instagram.trim() &&
       !aiForm.googleMaps.trim() &&
@@ -5573,23 +5620,16 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     showToast(`📬 Abrindo cliente de e-mail com ${targetSites.length} destinatário(s) em Cópia Oculta (BCC)!`);
   };
 
-  // Save current microsite (E-mail do cliente obrigatório + Planos de Manutenção 29,90 / 49,90 / 79,90 + Taxa de Criação no 1º mês sem mensalidade)
+  // Save current microsite (Salvamento resiliente, sem bloqueios de e-mail e com persistência imediata)
   const handleSaveMicrosite = (asNew = false) => {
-    const cleanEmail = (saveForm.clientEmail || '').trim().toLowerCase();
-    if (!cleanEmail) {
-      setSaveEmailError('O cadastro de um e-mail do cliente é obrigatório para notificações e comunicados.');
-      showToast('⚠️ O cadastro de um e-mail do cliente é obrigatório!');
-      return;
-    }
-    if (!isValidClientEmail(cleanEmail)) {
-      setSaveEmailError('Formato de e-mail inválido. Digite um e-mail válido (ex: contato@cliente.com.br).');
-      showToast('⚠️ Digite um endereço de e-mail válido para o cliente!');
-      return;
+    const clientName = saveForm.clientName.trim() || data.profile.name || 'Novo Cliente';
+    const slug = (saveForm.subdomain.trim() || clientName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'microsite';
+    let cleanEmail = (saveForm.clientEmail || '').trim().toLowerCase();
+    if (!cleanEmail || !isValidClientEmail(cleanEmail)) {
+      cleanEmail = `${slug.replace(/-/g, '')}@biovip.com.br`;
     }
     setSaveEmailError(null);
 
-    const clientName = saveForm.clientName.trim() || data.profile.name || 'Novo Cliente';
-    const slug = (saveForm.subdomain.trim() || clientName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'microsite';
     const selectedPlanObj = MAINTENANCE_PLANS[saveForm.maintenancePlan] || MAINTENANCE_PLANS.pro_4;
     const feeNum = parseBrlCurrency(saveForm.monthlyFee, selectedPlanObj.price);
     const creationFeeNum = parseBrlCurrency(saveForm.creationFee || '79,90', 79.90);
@@ -6174,6 +6214,11 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
   };
 
   const startNewDraftMicrosite = () => {
+    if (data.profile.name && data.profile.name !== INITIAL_DATA.profile.name) {
+      const confirmDraft = window.confirm(`Deseja iniciar um novo rascunho? O rascunho de "${data.profile.name}" será limpo.`);
+      if (!confirmDraft) return;
+    }
+    try { localStorage.removeItem('luxebio_editor_active_draft'); } catch {}
     triggerSimulatorSkeleton(420);
     setEditingSiteId(null);
     setData(INITIAL_DATA);
@@ -11330,6 +11375,8 @@ COMO PUBLICAR NO SERVIDOR:
               geminiImporting={geminiImporting}
               handleImportGeminiCode={handleImportGeminiCode}
               handleSaveMicrosite={handleSaveMicrosite}
+              saveForm={saveForm}
+              setSaveForm={setSaveForm}
             />
           )}
 

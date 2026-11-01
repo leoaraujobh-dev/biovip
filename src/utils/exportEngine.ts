@@ -120,7 +120,26 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     targetData?: typeof INITIAL_DATA,
     options?: ExportCodeOptions
   ): string {
-    const siteData: typeof INITIAL_DATA = targetData || INITIAL_DATA;
+    const siteData: typeof INITIAL_DATA = {
+      ...INITIAL_DATA,
+      ...(targetData || {}),
+      styling: { ...INITIAL_DATA.styling, ...(targetData?.styling || {}) },
+      profile: { ...INITIAL_DATA.profile, ...(targetData?.profile || {}) },
+      announcement: { ...INITIAL_DATA.announcement, ...(targetData?.announcement || {}) },
+      urgencyTimer: { ...INITIAL_DATA.urgencyTimer, ...(targetData?.urgencyTimer || {}) },
+      metrics: { ...INITIAL_DATA.metrics, ...(targetData?.metrics || {}) },
+      processSteps: { ...INITIAL_DATA.processSteps, ...(targetData?.processSteps || {}) },
+      studentGrid: { ...INITIAL_DATA.studentGrid, ...(targetData?.studentGrid || {}) },
+      locationCard: { ...INITIAL_DATA.locationCard, ...(targetData?.locationCard || {}) },
+      services: { ...INITIAL_DATA.services, ...(targetData?.services || {}) },
+      trustBadges: { ...INITIAL_DATA.trustBadges, ...(targetData?.trustBadges || {}) },
+      testimonials: { ...INITIAL_DATA.testimonials, ...(targetData?.testimonials || {}) },
+      qualifierFunnel: { ...INITIAL_DATA.qualifierFunnel, ...(targetData?.qualifierFunnel || {}) },
+      aboutMe: { ...INITIAL_DATA.aboutMe, ...(targetData?.aboutMe || {}) },
+      faq: { ...INITIAL_DATA.faq, ...(targetData?.faq || {}) },
+      seo: { ...INITIAL_DATA.seo, ...(targetData?.seo || {}) },
+      conversion: { ...INITIAL_DATA.conversion, ...(targetData?.conversion || {}) },
+    };
     const baseThemeObj = THEMES[siteData.theme] || THEMES.navyLaw;
     const siteTheme = siteData.customColors?.enabled
       ? {
