@@ -213,6 +213,15 @@ export function persistSavedSitesToStorage(sites: any[]): void {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sites }),
       }).catch(() => {});
+
+      // Se estiver operando no ambiente local (localhost), sincroniza também com o servidor público oficial
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        fetch('https://biovip.com.br/api/saved-sites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sites }),
+        }).catch(() => {});
+      }
     } catch {}
   }
 }

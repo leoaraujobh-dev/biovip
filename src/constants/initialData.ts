@@ -714,7 +714,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
     maintenancePlan: 'basic_1',
     creationFee: 149.90,
     isFirstMonth: false,
-    status: 'disabled',
+    status: 'active',
     updatesThisMonth: 2,
     lastUpdated: '2026-09-28',
     domainType: 'subdomain',

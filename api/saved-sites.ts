@@ -18,6 +18,15 @@ export default async function savedSitesHandler(req: any, res: any) {
   const rootDir = getRootDir();
   const storageFilePath = path.resolve(rootDir, '.saved-sites.json');
 
+  if (res?.setHeader) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  if (method === 'OPTIONS') {
+    return res.status ? res.status(204).end() : null;
+  }
+
   if (method === 'GET') {
     try {
       if (memorySavedSites && memorySavedSites.length > 0) {

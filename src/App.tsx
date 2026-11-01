@@ -2068,6 +2068,13 @@ export default function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sites: idbSites }),
           }).catch(() => {});
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            fetch('https://biovip.com.br/api/saved-sites', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sites: idbSites }),
+            }).catch(() => {});
+          }
         } catch {}
       } else {
         // Fallback localStorage para sync com servidor
@@ -2081,6 +2088,13 @@ export default function App() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sites: parsed }),
               }).catch(() => {});
+              if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                fetch('https://biovip.com.br/api/saved-sites', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sites: parsed }),
+                }).catch(() => {});
+              }
             }
           }
         } catch {}
@@ -9853,8 +9867,18 @@ COMO PUBLICAR NO SERVIDOR:
       } catch {}
     }
 
-    const matchingSites = slug
-      ? savedSites.filter((s) => {
+    // Stopwords de nicho que NUNCA devem ser usados sozinhos para associar clientes diferentes
+    const GENERIC_SLUG_STOPWORDS = new Set([
+      'nail', 'nails', 'studio', 'barber', 'barbearia', 'adv', 'advocacia', 'advogado',
+      'advogada', 'dra', 'dr', 'doutor', 'doutora', 'estetica', 'beleza', 'beauty',
+      'designer', 'design', 'lash', 'sobrancelhas', 'hair', 'salao', 'clinica',
+      'odonto', 'dentista', 'nutri', 'nutricao', 'psico', 'psicologia', 'med',
+      'medicina', 'vip', 'oficial', 'bio'
+    ]);
+
+    // 1. Busca primeiro por correspondência EXATA (precisão máxima, sem falsos positivos)
+    const exactMatch = slug
+      ? savedSites.find((s) => {
           const sSub = (s.subdomain || '').toLowerCase().trim();
           const sCleanSub = sSub.replace(/[^a-z0-9]/g, '');
           const sId = (s.id || '').toLowerCase().trim();
@@ -9866,49 +9890,76 @@ COMO PUBLICAR NO SERVIDOR:
           const sInsta = (s.data?.profile?.instagram || '').toLowerCase().trim().replace(/@/g, '');
           const sCleanInsta = sInsta.replace(/[^a-z0-9]/g, '');
 
-          const clientTokens = `${sClient} ${sProfileName}`
-            .toLowerCase()
-            .split(/[^a-z0-9]+/)
-            .filter((t) => t.length >= 3);
-          const hasTokenMatch = clientTokens.some((t) => cleanSlug.includes(t) || t.includes(cleanSlug));
-
           return (
             sSub === slug ||
             sCleanSub === cleanSlug ||
             sId === slug ||
             sCleanId === cleanSlug ||
-            sClient === slug ||
             sCleanClient === cleanSlug ||
             sCleanProfileName === cleanSlug ||
             sCleanInsta === cleanSlug ||
-            (sCleanClient.length > 3 && cleanSlug.includes(sCleanClient)) ||
-            (cleanSlug.length > 3 && sCleanClient.includes(cleanSlug)) ||
-            (sCleanSub && cleanSlug.includes(sCleanSub)) ||
-            hasTokenMatch ||
-            ((slug === 'doncorleone' || slug === 'dombarber') && (sSub === 'dombarber' || sSub === 'doncorleone' || sId === 'site-1'))
+            ((slug === 'doncorleone' || slug === 'dombarber') && (sSub === 'dombarber' || sSub === 'doncorleone' || sId === 'site-1')) ||
+            ((slug === 'larissanails' || slug === 'larissaalmeida') && (sSub === 'larissanails' || sSub === 'larissaalmeida' || sId === 'site-3'))
           );
+        })
+      : undefined;
+
+    // 2. Extrai a raiz distintiva única do slug ignorando termos genéricos (ex: 'analuizanails' -> 'analuiza')
+    let coreSlugRoot = cleanSlug;
+    GENERIC_SLUG_STOPWORDS.forEach((sw) => {
+      coreSlugRoot = coreSlugRoot.replace(new RegExp(sw, 'g'), '');
+    });
+
+    // 3. Busca por aproximação distintiva (somente clientes ativos e que compartilhem o nome próprio, ex: 'analuiza')
+    const fuzzyMatches = (!exactMatch && slug && coreSlugRoot.length >= 3)
+      ? savedSites.filter((s) => {
+          // Modelos seed suspensos/desativados NUNCA devem ser capturados por aproximação
+          if (s.status === 'disabled' || s.status === 'suspenso_d7') return false;
+
+          const sSub = (s.subdomain || '').toLowerCase().trim();
+          const sCleanSub = sSub.replace(/[^a-z0-9]/g, '');
+          const sClient = (s.clientName || '').toLowerCase().trim();
+          const sCleanClient = sClient.replace(/[^a-z0-9]/g, '');
+          const sProfileName = (s.data?.profile?.name || '').toLowerCase().trim();
+          const sCleanProfile = sProfileName.replace(/[^a-z0-9]/g, '');
+
+          let coreSubRoot = sCleanSub;
+          let coreClientRoot = sCleanClient;
+          let coreProfileRoot = sCleanProfile;
+          GENERIC_SLUG_STOPWORDS.forEach((sw) => {
+            coreSubRoot = coreSubRoot.replace(new RegExp(sw, 'g'), '');
+            coreClientRoot = coreClientRoot.replace(new RegExp(sw, 'g'), '');
+            coreProfileRoot = coreProfileRoot.replace(new RegExp(sw, 'g'), '');
+          });
+
+          // Valida se o núcleo distintivo do nome do cliente bate (ex: 'analuiza' em 'analuizanailstudio')
+          const matchesCoreName =
+            (coreSubRoot.length >= 3 && (coreSubRoot.includes(coreSlugRoot) || coreSlugRoot.includes(coreSubRoot))) ||
+            (coreClientRoot.length >= 3 && (coreClientRoot.includes(coreSlugRoot) || coreSlugRoot.includes(coreClientRoot))) ||
+            (coreProfileRoot.length >= 3 && (coreProfileRoot.includes(coreSlugRoot) || coreSlugRoot.includes(coreProfileRoot)));
+
+          return matchesCoreName;
         })
       : [];
 
     const currentEditorTokens = `${data?.profile?.name || ''} ${data?.profile?.title || ''}`
       .toLowerCase()
       .split(/[^a-z0-9]+/)
-      .filter((t) => t.length >= 3);
+      .filter((t) => t.length >= 3 && !GENERIC_SLUG_STOPWORDS.has(t));
     const currentDataMatches =
       Boolean(cleanSlug) &&
       (Boolean(livePreviewData) ||
-       (data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanSlug) ||
-       cleanSlug.includes((data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+       (coreSlugRoot.length >= 3 && (data?.profile?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(coreSlugRoot)) ||
+       (coreSlugRoot.length >= 3 && (saveForm?.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(coreSlugRoot)) ||
        (saveForm?.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '') === cleanSlug ||
        currentEditorTokens.some((t) => cleanSlug.includes(t) || t.includes(cleanSlug)));
 
     const foundSite =
-      (editingSiteId ? matchingSites.find((s) => s.id === editingSiteId) : undefined) ||
-      matchingSites.find((s) => s.isCustomized) ||
-      matchingSites.find((s) => s.isLandingModel && s.status !== 'disabled') ||
-      matchingSites.find((s) => s.id.startsWith('real-niche-')) ||
-      matchingSites.find((s) => s.status !== 'disabled') ||
-      matchingSites[0] ||
+      (editingSiteId ? (exactMatch?.id === editingSiteId ? exactMatch : fuzzyMatches.find((s) => s.id === editingSiteId)) : undefined) ||
+      exactMatch ||
+      fuzzyMatches.find((s) => s.isCustomized) ||
+      fuzzyMatches.find((s) => s.status !== 'disabled') ||
+      fuzzyMatches[0] ||
       (currentDataMatches
         ? ({
             id: editingSiteId || 'current-preview',
