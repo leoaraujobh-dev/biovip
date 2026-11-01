@@ -1471,6 +1471,7 @@ export default function App() {
 
   const [appSurface, setAppSurface] = useState<'landing' | 'studio' | 'microsite'>(() => detectCreatorSurface());
   const [activePublicSlug, setActivePublicSlug] = useState<string | null>(() => detectPublicMicrositeSlug());
+  const [isHydratingSites, setIsHydratingSites] = useState<boolean>(() => Boolean(detectPublicMicrositeSlug()));
 
   // Automatically cleans up the address bar to show '/slug' without triggering 404 or page reload
   useEffect(() => {
@@ -2058,14 +2059,40 @@ export default function App() {
   useEffect(() => {
     let active = true;
 
-    // Sincronização de nuvem cross-device (/api/saved-sites): restaura o último microsite criado no celular ou PC
-    fetch('/api/saved-sites')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (!active || !json?.success || !Array.isArray(json.sites) || json.sites.length === 0) return;
+    // Sincronização de nuvem cross-device (/api/saved-sites + /.saved-sites.json estático):
+    // Garante que todo microsite publicado seja restaurado instantaneamente em qualquer smartphone ou PC
+    const loadAllRemoteSources = async () => {
+      let remoteSites: SavedMicrosite[] = [];
+      try {
+        const res = await fetch('/api/saved-sites');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.success && Array.isArray(json.sites) && json.sites.length > 0) {
+            remoteSites = json.sites;
+          }
+        }
+      } catch {}
+
+      try {
+        const resStatic = await fetch('/.saved-sites.json');
+        if (resStatic.ok) {
+          const staticJson = await resStatic.json();
+          if (Array.isArray(staticJson) && staticJson.length > 0) {
+            const byId = new Map(remoteSites.map((s) => [s.id, s]));
+            staticJson.forEach((s: SavedMicrosite) => {
+              if (!s || !s.id) return;
+              const exist = byId.get(s.id);
+              byId.set(s.id, exist ? { ...s, ...exist } : s);
+            });
+            remoteSites = Array.from(byId.values());
+          }
+        }
+      } catch {}
+
+      if (active && remoteSites.length > 0) {
         setSavedSites((prev) => {
           const byId = new Map(prev.map((s) => [s.id, s]));
-          json.sites.forEach((remoteSite: SavedMicrosite) => {
+          remoteSites.forEach((remoteSite: SavedMicrosite) => {
             if (!remoteSite || !remoteSite.id) return;
             const existing = byId.get(remoteSite.id);
             if (!existing) {
@@ -2105,8 +2132,13 @@ export default function App() {
           saveSitesToIndexedDb(merged);
           return merged;
         });
-      })
-      .catch(() => {});
+      }
+      if (active) {
+        setIsHydratingSites(false);
+      }
+    };
+
+    loadAllRemoteSources();
 
     loadSitesFromIndexedDb().then((idbSites) => {
       if (!active) return;
@@ -10129,6 +10161,17 @@ COMO PUBLICAR NO SERVIDOR:
       );
     }
 
+    if (isHydratingSites && !foundSite && !demoModel) {
+      return (
+        <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] flex flex-col items-center justify-center p-6 text-center select-none z-[999999]">
+          <div className="w-10 h-10 rounded-full border-2 border-amber-400/20 border-t-amber-400 animate-spin mb-4 shadow-lg shadow-amber-400/10" />
+          <div className="text-amber-300 font-mono text-xs uppercase tracking-widest font-semibold animate-pulse">
+            Carregando Microsite Exclusivo...
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen w-full bg-[#09090b] text-neutral-100 flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none" />
@@ -10145,21 +10188,34 @@ COMO PUBLICAR NO SERVIDOR:
           <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
             <button
               type="button"
-              onClick={() => {
-                fetch('/api/saved-sites')
-                  .then(r => r.ok ? r.json() : null)
-                  .then(j => {
-                    if (j?.success && Array.isArray(j.sites)) {
-                      setSavedSites(prev => {
-                        const byId = new Map(prev.map(s => [s.id, s]));
-                        j.sites.forEach((rs: SavedMicrosite) => byId.set(rs.id, rs));
-                        const merged = Array.from(byId.values());
-                        persistSavedSitesToStorage(merged);
-                        return merged;
-                      });
-                    }
-                  })
-                  .finally(() => window.location.reload());
+              onClick={async () => {
+                let sitesList: any[] = [];
+                try {
+                  const r = await fetch('/api/saved-sites');
+                  const j = await r.json();
+                  if (j?.success && Array.isArray(j.sites)) sitesList = j.sites;
+                } catch {}
+                try {
+                  const r2 = await fetch('/.saved-sites.json');
+                  const j2 = await r2.json();
+                  if (Array.isArray(j2)) {
+                    const byId = new Map(sitesList.map((s) => [s.id, s]));
+                    j2.forEach((s) => {
+                      if (s?.id) byId.set(s.id, { ...s, ...byId.get(s.id) });
+                    });
+                    sitesList = Array.from(byId.values());
+                  }
+                } catch {}
+                if (sitesList.length > 0) {
+                  setSavedSites((prev) => {
+                    const byId = new Map(prev.map((s) => [s.id, s]));
+                    sitesList.forEach((rs) => byId.set(rs.id, rs));
+                    const merged = Array.from(byId.values());
+                    persistSavedSitesToStorage(merged);
+                    return merged;
+                  });
+                }
+                window.location.reload();
               }}
               className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-lg shadow-amber-400/20 flex items-center justify-center gap-1.5"
             >

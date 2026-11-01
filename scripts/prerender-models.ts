@@ -67,6 +67,31 @@ if (estheticsTemplate?.sampleData) {
   modelsToPrerender.push({ slug: 'drafernanda', data: estheticsData });
 }
 
+// 6. Pre-render all saved client microsites from .saved-sites.json (e.g. analuizanailstudio, katherinenails, etc.)
+try {
+  const savedSitesPath = path.resolve(__dirname, '../.saved-sites.json');
+  if (fs.existsSync(savedSitesPath)) {
+    const rawSites = fs.readFileSync(savedSitesPath, 'utf-8');
+    const sites = JSON.parse(rawSites);
+    if (Array.isArray(sites)) {
+      for (const s of sites) {
+        if (!s || !s.subdomain || !s.data) continue;
+        const sub = s.subdomain.trim().toLowerCase();
+        // Skip if already in modelsToPrerender
+        if (modelsToPrerender.some((m) => m.slug === sub)) continue;
+
+        modelsToPrerender.push({
+          slug: sub,
+          data: s.data,
+          aliases: Array.isArray(s.subdomainAliases) ? s.subdomainAliases : [],
+        });
+      }
+    }
+  }
+} catch (err) {
+  console.warn('[Pre-render] Could not load .saved-sites.json for pre-rendering:', err);
+}
+
 console.log(`[Pre-render] Generating ultra-fast static HTML for ${modelsToPrerender.length} models...`);
 
 for (const model of modelsToPrerender) {
