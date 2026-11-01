@@ -169,6 +169,16 @@ export function purgeSiteFromStorage(siteId: string, siteData?: any): void {
       };
     } catch {}
   }
+  // Notifica a API do servidor da exclusão para refletir em todos os dispositivos
+  if (typeof window !== 'undefined' && siteId) {
+    try {
+      fetch('/api/saved-sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deletedSiteId: siteId }),
+      }).catch(() => {});
+    } catch {}
+  }
 }
 
 export function persistSavedSitesToStorage(sites: any[]): void {
@@ -192,6 +202,17 @@ export function persistSavedSitesToStorage(sites: any[]): void {
         }
       });
       localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(lightweight));
+    } catch {}
+  }
+
+  // Sincronização automática com a API do servidor (PC <-> Celular <-> Nuvem)
+  if (typeof window !== 'undefined' && Array.isArray(sites) && sites.length > 0) {
+    try {
+      fetch('/api/saved-sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sites }),
+      }).catch(() => {});
     } catch {}
   }
 }

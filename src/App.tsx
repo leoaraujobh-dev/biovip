@@ -1679,7 +1679,13 @@ export default function App() {
   );
 
   useEffect(() => {
+    // Timeout de segurança para conexões móveis: nunca trava a tela em 'Verificando credenciais...'
+    const safetyTimeout = setTimeout(() => {
+      setAuthLoading(false);
+    }, 1500);
+
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      clearTimeout(safetyTimeout);
       setAdminUser(user);
       setAuthLoading(false);
       if (user && user.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
@@ -1693,7 +1699,10 @@ export default function App() {
         recordAuditLog(`Login Google Firebase bem-sucedido: ${user.email}`, 'success');
       }
     });
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      unsubscribe();
+    };
   }, []);
 
   // Lockout Countdown Timer
@@ -2025,8 +2034,58 @@ export default function App() {
   // Hydrate full-resolution saved sites from IndexedDB on startup (prevents 5MB localStorage quota truncation)
   useEffect(() => {
     let active = true;
+
+    // Sincronização de nuvem cross-device (/api/saved-sites): restaura o último microsite criado no celular ou PC
+    fetch('/api/saved-sites')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!active || !json?.success || !Array.isArray(json.sites) || json.sites.length === 0) return;
+        setSavedSites((prev) => {
+          const byId = new Map(prev.map((s) => [s.id, s]));
+          json.sites.forEach((remoteSite: SavedMicrosite) => {
+            if (!remoteSite || !remoteSite.id) return;
+            const existing = byId.get(remoteSite.id);
+            if (!existing) {
+              byId.set(remoteSite.id, remoteSite);
+            } else if (remoteSite.isCustomized && !existing.isCustomized) {
+              byId.set(remoteSite.id, { ...existing, ...remoteSite });
+            }
+          });
+          const merged = Array.from(byId.values());
+          persistSavedSitesToStorage(merged);
+          return merged;
+        });
+      })
+      .catch(() => {});
+
     loadSitesFromIndexedDb().then((idbSites) => {
-      if (!active || !Array.isArray(idbSites) || idbSites.length === 0) return;
+      if (!active) return;
+      if (Array.isArray(idbSites) && idbSites.length > 0) {
+        // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados com o servidor para acesso mobile
+        try {
+          fetch('/api/saved-sites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sites: idbSites }),
+          }).catch(() => {});
+        } catch {}
+      } else {
+        // Fallback localStorage para sync com servidor
+        try {
+          const rawLocal = localStorage.getItem('luxebio_saved_sites_v1');
+          if (rawLocal) {
+            const parsed = JSON.parse(rawLocal);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              fetch('/api/saved-sites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sites: parsed }),
+              }).catch(() => {});
+            }
+          }
+        } catch {}
+        return;
+      }
       let deletedIds: string[] = [];
       let deletedSlugs: string[] = [];
       try {
@@ -2317,6 +2376,36 @@ export default function App() {
       return updated;
     });
   }, [data, editingSiteId]);
+
+  // Sincronização automática ao acessar um microsite público no celular que ainda não chegou no storage local
+  useEffect(() => {
+    if (appSurface === 'microsite' && activePublicSlug) {
+      const clean = cleanMicrositeSlug(activePublicSlug);
+      const isAlreadyFound = savedSites.some(s => {
+        const sSub = (s.subdomain || '').toLowerCase().trim();
+        const sClean = sSub.replace(/[^a-z0-9]/g, '');
+        return sSub === clean || sClean === clean.replace(/[^a-z0-9]/g, '');
+      });
+      if (!isAlreadyFound) {
+        fetch('/api/saved-sites')
+          .then(res => (res.ok ? res.json() : null))
+          .then(json => {
+            if (json?.success && Array.isArray(json.sites) && json.sites.length > 0) {
+              setSavedSites(prev => {
+                const byId = new Map(prev.map(s => [s.id, s]));
+                json.sites.forEach((remoteSite: SavedMicrosite) => {
+                  if (remoteSite && remoteSite.id) byId.set(remoteSite.id, remoteSite);
+                });
+                const merged = Array.from(byId.values());
+                persistSavedSitesToStorage(merged);
+                return merged;
+              });
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [appSurface, activePublicSlug, savedSites.length]);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -5462,7 +5551,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     }
 
     triggerSimulatorSkeleton(420);
-    setData(JSON.parse(JSON.stringify(site.data)));
+    setData(JSON.parse(JSON.stringify(site.data || INITIAL_DATA)));
     setEditingSiteId(site.id);
     setIsClientsFullscreen(false);
     setAppSurface('studio');
@@ -9923,10 +10012,33 @@ COMO PUBLICAR NO SERVIDOR:
           <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
             <button
               type="button"
-              onClick={goBackToMainDomain}
-              className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-lg shadow-amber-400/20"
+              onClick={() => {
+                fetch('/api/saved-sites')
+                  .then(r => r.ok ? r.json() : null)
+                  .then(j => {
+                    if (j?.success && Array.isArray(j.sites)) {
+                      setSavedSites(prev => {
+                        const byId = new Map(prev.map(s => [s.id, s]));
+                        j.sites.forEach((rs: SavedMicrosite) => byId.set(rs.id, rs));
+                        const merged = Array.from(byId.values());
+                        persistSavedSitesToStorage(merged);
+                        return merged;
+                      });
+                    }
+                  })
+                  .finally(() => window.location.reload());
+              }}
+              className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition cursor-pointer shadow-lg shadow-amber-400/20 flex items-center justify-center gap-1.5"
             >
-              Conhecer a BioVip
+              <RefreshCw className="w-3.5 h-3.5 text-neutral-950" />
+              <span>Sincronizar / Carregar Agora</span>
+            </button>
+            <button
+              type="button"
+              onClick={goBackToMainDomain}
+              className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-neutral-200 border border-white/[0.1] font-semibold text-xs transition cursor-pointer"
+            >
+              Painel BioVip
             </button>
             <a
               href={`https://wa.me/${(landingConfig.agencyWhatsapp || '5531991390202').replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Acessei o microsite ${getCleanBaseDomain()}/${slug} e gostaria de informações.`)}`}

@@ -4,6 +4,7 @@ import instagramPreviewHandler from '../api/instagram-preview.ts';
 import optimizeCopyHandler from '../api/optimize-copy.ts';
 import sendBulkEmailHandler from '../api/send-bulk-email.ts';
 import asaasHandler from '../api/asaas.ts';
+import savedSitesHandler from '../api/saved-sites.ts';
 
 /**
  * Universal Cloudflare Handler (Pages Functions + Workers with Static Assets)
@@ -126,6 +127,8 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
       await optimizeCopyHandler(req, res);
     } else if (path.includes('send-bulk-email')) {
       await sendBulkEmailHandler(req, res);
+    } else if (path.includes('saved-sites')) {
+      await savedSitesHandler(req, res);
     } else if (path.includes('asaas')) {
       await asaasHandler(req, res);
     } else if (env?.ASSETS) {

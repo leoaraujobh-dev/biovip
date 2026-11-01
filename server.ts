@@ -7,6 +7,7 @@ import createProspectMicrositeHandler from './api/create-prospect-microsite.ts';
 import instagramPreviewHandler from './api/instagram-preview.ts';
 import optimizeCopyHandler from './api/optimize-copy.ts';
 import sendBulkEmailHandler from './api/send-bulk-email.ts';
+import savedSitesHandler from './api/saved-sites.ts';
 import {
   getAsaasServerStatus,
   testAsaasConnection,
@@ -132,6 +133,11 @@ app.post('/api/optimize-copy', async (req, res) => {
 // Express API route for Admin Bulk Email Broadcasts (shared with Vercel /api/send-bulk-email)
 app.post('/api/send-bulk-email', async (req, res) => {
   await sendBulkEmailHandler(req, res);
+});
+
+// Express API route for Cross-Device Saved Microsites Persistence (Sync between PC, Mobile and Cloud)
+app.all('/api/saved-sites', async (req, res) => {
+  await savedSitesHandler(req, res);
 });
 
 // Shared server-side persistence for Landing Page Plan Prices, Updates & Agency Config (cross-subdomain sync)
