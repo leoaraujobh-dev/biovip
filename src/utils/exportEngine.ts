@@ -1425,8 +1425,8 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         ${data.aboutMe.headline}
       </h3>
       ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
-      <div style="width: 100%; height: ${(data.aboutMe as any)?.photoHeight || 170}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%; display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
+      <div style="width: 100%; height: ${(data.aboutMe as any)?.photoHeight || 180}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
+        <img src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;${(data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100 ? ` transform: scale(${(data.aboutMe as any).photoScale / 100}); transform-origin: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;` : ''} display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
       </div>` : ''}
       <p style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe.paragraph}

@@ -16,6 +16,10 @@ import {
   User,
   HelpCircle,
   ShieldCheck,
+  SlidersHorizontal,
+  Move,
+  ZoomIn,
+  RotateCcw,
 } from 'lucide-react';
 import { INITIAL_DATA } from '../../../constants/initialData';
 import { ModuleColorControls } from '../ModuleColorControls';
@@ -921,8 +925,13 @@ export function ModulesTab({
                 }));
               };
 
+              const photoHeight = Number((data.aboutMe as any)?.photoHeight) || 180;
+              const photoPosY = (data.aboutMe as any)?.photoPosY !== undefined ? Number((data.aboutMe as any)?.photoPosY) : 50;
+              const photoPosX = (data.aboutMe as any)?.photoPosX !== undefined ? Number((data.aboutMe as any)?.photoPosX) : 50;
+              const photoScale = Number((data.aboutMe as any)?.photoScale) || 100;
+
               return (
-                <div className="p-3 rounded-lg bg-neutral-900/70 border border-neutral-800 space-y-2">
+                <div className="p-3 rounded-lg bg-neutral-900/70 border border-neutral-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
                       <Upload className="w-3.5 h-3.5 text-amber-400" /> Foto em Destaque da Seção (Upload ou URL)
@@ -959,6 +968,10 @@ export function ModulesTab({
                           src={currentAboutPhoto}
                           alt="Miniatura Sobre"
                           className="w-full h-full object-cover block"
+                          style={{
+                            objectPosition: `${photoPosX}% ${photoPosY}%`,
+                            transform: photoScale !== 100 ? `scale(${photoScale / 100})` : undefined,
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-neutral-600 text-[10px] text-center p-1">
@@ -981,6 +994,205 @@ export function ModulesTab({
                       )}
                     </div>
                   </div>
+
+                  {currentAboutPhoto && (
+                    <div className="pt-2.5 border-t border-neutral-800/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1.5">
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                          Enquadramento, Posição & Altura da Foto
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateAboutMe('photoPosY', 25);
+                            updateAboutMe('photoPosX', 50);
+                            updateAboutMe('photoHeight', 200);
+                            updateAboutMe('photoScale', 100);
+                          }}
+                          className="text-[10px] text-neutral-400 hover:text-amber-400 flex items-center gap-1 transition px-2 py-0.5 rounded bg-neutral-800/50 hover:bg-neutral-800"
+                          title="Restaurar enquadramento padrão (foco no rosto, altura 200px)"
+                        >
+                          <RotateCcw className="w-2.5 h-2.5" />
+                          <span>Padrão Rosto</span>
+                        </button>
+                      </div>
+
+                      {/* Posição Vertical Y */}
+                      <div className="space-y-1.5 bg-neutral-950/70 p-2.5 rounded-lg border border-neutral-800/60">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-neutral-300 flex items-center gap-1 font-medium">
+                            <Move className="w-3 h-3 text-amber-400 rotate-90" />
+                            Posição Vertical (Y)
+                          </span>
+                          <span className="font-mono font-bold text-amber-400 text-[10px]">
+                            {photoPosY}% {photoPosY <= 15 ? '(Topo)' : photoPosY <= 35 ? '(Rosto)' : photoPosY <= 65 ? '(Centro)' : '(Base)'}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={photoPosY}
+                          onChange={(e) => updateAboutMe('photoPosY', Number(e.target.value))}
+                          className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                        />
+                        <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                          {[
+                            { label: 'Topo (10%)', val: 10 },
+                            { label: 'Rosto (25%)', val: 25 },
+                            { label: 'Centro (50%)', val: 50 },
+                            { label: 'Base (85%)', val: 85 },
+                          ].map((preset) => (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => updateAboutMe('photoPosY', preset.val)}
+                              className={`py-1 px-1.5 text-[10px] rounded transition font-medium text-center ${
+                                photoPosY === preset.val
+                                  ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm'
+                                  : 'bg-neutral-800/70 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Posição Horizontal X */}
+                      <div className="space-y-1.5 bg-neutral-950/70 p-2.5 rounded-lg border border-neutral-800/60">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-neutral-300 flex items-center gap-1 font-medium">
+                            <Move className="w-3 h-3 text-amber-400" />
+                            Posição Horizontal (X)
+                          </span>
+                          <span className="font-mono font-bold text-amber-400 text-[10px]">
+                            {photoPosX}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={photoPosX}
+                          onChange={(e) => updateAboutMe('photoPosX', Number(e.target.value))}
+                          className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                        />
+                        <div className="grid grid-cols-3 gap-1.5 pt-0.5">
+                          {[
+                            { label: 'Esquerda (20%)', val: 20 },
+                            { label: 'Centro (50%)', val: 50 },
+                            { label: 'Direita (80%)', val: 80 },
+                          ].map((preset) => (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => updateAboutMe('photoPosX', preset.val)}
+                              className={`py-1 px-1.5 text-[10px] rounded transition font-medium text-center ${
+                                photoPosX === preset.val
+                                  ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm'
+                                  : 'bg-neutral-800/70 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Altura da Foto e Zoom em Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {/* Altura da Imagem */}
+                        <div className="space-y-1.5 bg-neutral-950/70 p-2.5 rounded-lg border border-neutral-800/60">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-neutral-300 flex items-center gap-1 font-medium">
+                              <Maximize2 className="w-3 h-3 text-amber-400" />
+                              Altura da Foto
+                            </span>
+                            <span className="font-mono font-bold text-amber-400 text-[10px]">
+                              {photoHeight}px
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="120"
+                            max="450"
+                            step="5"
+                            value={photoHeight}
+                            onChange={(e) => updateAboutMe('photoHeight', Number(e.target.value))}
+                            className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                          />
+                          <div className="grid grid-cols-4 gap-1 pt-0.5">
+                            {[
+                              { label: '160px', val: 160 },
+                              { label: '200px', val: 200 },
+                              { label: '280px', val: 280 },
+                              { label: '360px', val: 360 },
+                            ].map((preset) => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => updateAboutMe('photoHeight', preset.val)}
+                                className={`py-1 text-[10px] rounded transition font-medium text-center ${
+                                  photoHeight === preset.val
+                                    ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50'
+                                    : 'bg-neutral-800/70 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Zoom / Escala */}
+                        <div className="space-y-1.5 bg-neutral-950/70 p-2.5 rounded-lg border border-neutral-800/60">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-neutral-300 flex items-center gap-1 font-medium">
+                              <ZoomIn className="w-3 h-3 text-amber-400" />
+                              Zoom / Escala
+                            </span>
+                            <span className="font-mono font-bold text-amber-400 text-[10px]">
+                              {photoScale}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="100"
+                            max="180"
+                            step="5"
+                            value={photoScale}
+                            onChange={(e) => updateAboutMe('photoScale', Number(e.target.value))}
+                            className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                          />
+                          <div className="grid grid-cols-4 gap-1 pt-0.5">
+                            {[
+                              { label: '100%', val: 100 },
+                              { label: '115%', val: 115 },
+                              { label: '130%', val: 130 },
+                              { label: '150%', val: 150 },
+                            ].map((preset) => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => updateAboutMe('photoScale', preset.val)}
+                                className={`py-1 text-[10px] rounded transition font-medium text-center ${
+                                  photoScale === preset.val
+                                    ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50'
+                                    : 'bg-neutral-800/70 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}

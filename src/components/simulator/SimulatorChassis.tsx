@@ -2126,8 +2126,8 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                   <div
                     className="relative w-full rounded-2xl overflow-hidden shadow bg-black transition-all duration-300"
                     style={{
-                      height: `${(data.aboutMe as any)?.photoHeight || 160}px`,
-                      minHeight: `${(data.aboutMe as any)?.photoHeight || 160}px`,
+                      height: `${(data.aboutMe as any)?.photoHeight || 180}px`,
+                      minHeight: `${(data.aboutMe as any)?.photoHeight || 180}px`,
                     }}
                   >
                     <SimulatorImage
@@ -2138,6 +2138,10 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                       className="w-full h-full object-cover transition-all duration-300"
                       style={{
                         objectPosition: `${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%`,
+                        transform: (data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100
+                          ? `scale(${(data.aboutMe as any).photoScale / 100})`
+                          : undefined,
+                        transformOrigin: `${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%`,
                       }}
                     />
                   </div>

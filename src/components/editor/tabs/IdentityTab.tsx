@@ -385,18 +385,18 @@ export function IdentityTab({
           </div>
         </div>
 
-        {data.profile.aboutPhotoUrl && (
-          <div className="pt-2 border-t border-neutral-900 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {(Boolean(data.profile.aboutPhotoUrl) || Boolean((data.aboutMe as any)?.photoUrl)) && (
+          <div className="pt-2 border-t border-neutral-900 grid grid-cols-1 sm:grid-cols-4 gap-2">
             <div className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-neutral-300">Altura Sobre</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoHeight || 170}px</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoHeight || 180}px</span>
               </div>
               <input
                 type="range"
-                min="100"
-                max="360"
-                value={(data.aboutMe as any)?.photoHeight || 170}
+                min="120"
+                max="450"
+                value={(data.aboutMe as any)?.photoHeight || 180}
                 onChange={(e) => updateAboutMe('photoHeight', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
               />
@@ -426,6 +426,20 @@ export function IdentityTab({
                 max="100"
                 value={(data.aboutMe as any)?.photoPosX ?? 50}
                 onChange={(e) => updateAboutMe('photoPosX', Number(e.target.value))}
+                className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-neutral-300">Zoom / Escala</span>
+                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoScale || 100}%</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="180"
+                value={(data.aboutMe as any)?.photoScale || 100}
+                onChange={(e) => updateAboutMe('photoScale', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
               />
             </div>
