@@ -1002,17 +1002,16 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     ${data.profile.cursivePhrase ? `<div class="cursive-banner">${data.profile.cursivePhrase}</div>` : ''}
 
     <div class="actions">
-      ${data.qualifierFunnel?.enabled ? `
-      <a data-module="qualifierFunnel" href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(`Olá ${data.profile.name}! Quero realizar a Triagem Estratégica / Avaliação VIP.`)}`}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} class="cta-card anim-shimmer funnel-trigger-card ${data.qualifierFunnel.animation && data.qualifierFunnel.animation !== 'none' ? `anim-${data.qualifierFunnel.animation}` : ''}" style="background: ${mc.qualifierFunnel?.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`}; color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')}; border-color: ${theme.accent};">
+      <a data-module="qualifierFunnel" href="${options?.disableLinks ? 'javascript:void(0)' : `https://wa.me/${formatWhatsAppPhone(data.profile.whatsapp)}?text=${encodeURIComponent(`Olá ${data.profile.name}! Quero realizar a Triagem Estratégica / Avaliação VIP.`)}`}" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : 'target="_blank" rel="noopener noreferrer"'} class="cta-card anim-shimmer funnel-trigger-card ${data.qualifierFunnel?.animation && data.qualifierFunnel.animation !== 'none' ? `anim-${data.qualifierFunnel.animation}` : ''}" style="${data.qualifierFunnel?.enabled ? '' : 'display:none; '}background: ${mc.qualifierFunnel?.bgColor || `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`}; color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')}; border-color: ${theme.accent};">
         <div class="cta-left">
           <div class="cta-icon" style="background: rgba(0,0,0,0.14); color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};">⚡</div>
           <div>
-            <div class="cta-title" style="color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};">${data.qualifierFunnel.triggerButtonLabel}</div>
-            <div class="cta-sub" style="color: ${mc.qualifierFunnel?.textColor || (getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') === '#ffffff' ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.78)')};">${data.qualifierFunnel.triggerButtonSubtitle}</div>
+            <div class="cta-title" style="color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')};">${data.qualifierFunnel?.triggerButtonLabel || 'AVALIAÇÃO DE CASO / TRIAGEM VIP'}</div>
+            <div class="cta-sub" style="color: ${mc.qualifierFunnel?.textColor || (getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff') === '#ffffff' ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.78)')};">${data.qualifierFunnel?.triggerButtonSubtitle || 'Descubra a melhor solução para você em 3 perguntas rápidas.'}</div>
           </div>
         </div>
         <div style="color: ${mc.qualifierFunnel?.titleColor || getSafeContrastText(theme.accent, '#0a0a0c', '#ffffff')}; font-size: 16px;">›</div>
-      </a>` : ''}
+      </a>
       ${data.actionCards.map(c => {
         const animClass = c.animation && c.animation !== 'none' ? `anim-${c.animation}` : '';
         const isBooking = c.linkType === 'booking' || c.url === '#booking' || c.url === '#agendar';
@@ -1438,37 +1437,35 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       </div>
     </div>` : ''}
 
-    ${data.aboutMe?.enabled ? `
-    <div class="about-section" style="margin: 24px 0;">
+    <div class="about-section" style="${data.aboutMe?.enabled ? '' : 'display:none; '}margin: 24px 0;">
       <h3 class="about-headline" style="font-size: 14px; text-transform: uppercase; color: ${mc.aboutMe?.titleColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
-        ${data.aboutMe.headline}
+        ${data.aboutMe?.headline || 'Sobre'}
       </h3>
       ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
       <div class="about-photo-wrapper" style="width: 100%; height: ${(data.aboutMe as any)?.photoHeight || 180}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
         <img class="about-photo-img" src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;${(data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100 ? ` transform: scale(${(data.aboutMe as any).photoScale / 100}); transform-origin: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;` : ''} display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
       </div>` : ''}
       <p class="about-paragraph about-bio" style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
-        ${data.aboutMe.paragraph}
+        ${data.aboutMe?.paragraph || ''}
       </p>
-      ${data.aboutMe.closingPhrase ? `
+      ${data.aboutMe?.closingPhrase ? `
       <div class="about-closing" style="text-align: center; font-size: 22px; font-style: italic; margin-top: 8px; font-family: '${theme.fontScript}', cursive, serif; color: ${mc.aboutMe?.titleColor || theme.accent};">
         ${data.aboutMe.closingPhrase}
       </div>` : ''}
-    </div>` : ''}
+    </div>
 
-    ${data.faq?.enabled && data.faq.items?.length > 0 ? `
-    <div class="faq-section" style="margin: 24px 0;">
+    <div class="faq-section" style="${(data.faq?.enabled && data.faq.items?.length > 0) ? '' : 'display:none; '}margin: 24px 0;">
       <h3 class="faq-headline" style="font-size: 14px; text-transform: uppercase; color: ${mc.faq?.headlineColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
-        ${data.faq.headline}
+        ${data.faq?.headline || 'Dúvidas Frequentes'}
       </h3>
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        ${data.faq.items.map(item => `
+        ${(data.faq?.items || []).map(item => `
         <details class="faq-item" style="border-radius: 14px; padding: 12px 14px; background: ${mc.faq?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder};">
           <summary class="faq-question" style="font-size: 12px; font-weight: 600; cursor: pointer; color: ${mc.faq?.titleColor || theme.textMain};">${item.question}</summary>
           <p class="faq-answer" style="font-size: 11px; line-height: 1.45; margin-top: 8px; color: ${mc.faq?.textColor || theme.textMuted};">${item.answer}</p>
         </details>`).join('')}
       </div>
-    </div>` : ''}
+    </div>
 
     <div class="footer">
       <div class="footer-vip-actions">
