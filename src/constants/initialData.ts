@@ -315,7 +315,7 @@ export const INITIAL_DATA = {
     ]
   },
   qualifierFunnel: {
-    enabled: true,
+    enabled: false,
     animation: 'shimmer',
     triggerButtonLabel: 'AVALIAÇÃO DE CASO / TRIAGEM VIP',
     triggerButtonSubtitle: 'Descubra a melhor solução para você em 3 perguntas rápidas.',

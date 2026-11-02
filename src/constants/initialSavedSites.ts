@@ -367,7 +367,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -887,7 +887,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -1425,7 +1425,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -1955,7 +1955,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -2485,7 +2485,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -3015,7 +3015,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -3427,7 +3427,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -3956,7 +3956,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -4486,7 +4486,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -5016,7 +5016,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -5976,7 +5976,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -6456,7 +6456,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",
@@ -6923,7 +6923,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "TRIAGEM VIP / AVALIAÇÃO RÁPIDA",
         "triggerButtonSubtitle": "Descubra a melhor opção em 3 perguntas rápidas",

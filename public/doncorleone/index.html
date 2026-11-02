@@ -769,7 +769,7 @@
     </div>
 
     
-    <div style="margin: 8px 0 14px; padding: 12px 14px; border-radius: 20px; background: rgba(217, 119, 6, 0.14); border: 1px solid rgba(217, 119, 6, 0.35); text-align: center;">
+    <div class="urgency-timer" style="margin: 8px 0 14px; padding: 12px 14px; border-radius: 20px; background: rgba(217, 119, 6, 0.14); border: 1px solid rgba(217, 119, 6, 0.35); text-align: center;">
       <div style="font-size: 10px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #fbbf24;">
         🔥 CONDIÇÃO ESPECIAL DE HOJE
       </div>
@@ -785,16 +785,6 @@
 
     <div class="actions">
       
-      <a data-module="qualifierFunnel" href="https://wa.me/5511999999999?text=Ol%C3%A1%20DON%20CORLEONE%20BARBER!%20Quero%20realizar%20a%20Triagem%20Estrat%C3%A9gica%20%2F%20Avalia%C3%A7%C3%A3o%20VIP." target="_blank" rel="noopener noreferrer" class="cta-card anim-shimmer funnel-trigger-card anim-shimmer" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #0c0a09; border-color: #d97706;">
-        <div class="cta-left">
-          <div class="cta-icon" style="background: rgba(0,0,0,0.14); color: #0c0a09;">⚡</div>
-          <div>
-            <div class="cta-title" style="color: #0c0a09;">AVALIAÇÃO DE CASO / TRIAGEM VIP</div>
-            <div class="cta-sub" style="color: #261b14;">Descubra a melhor solução para você em 3 perguntas rápidas.</div>
-          </div>
-        </div>
-        <div style="color: #0c0a09; font-size: 16px;">›</div>
-      </a>
       
       <a href="javascript:void(0)"  class="cta-card anim-pulse-glow" style="background: linear-gradient(145deg, #211c18 0%, #161310 100%); overflow: visible; margin-top: 18px; flex-direction: row;" onclick="openBookingModal(event); return false;">
         <span class="cta-badge">SEM FILA</span>
@@ -990,7 +980,7 @@
 
       <!-- Trust Badges & Facilidades (Quebra de Objeções) -->
       
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(217, 119, 6, 0.35);">
+        <div class="trust-badges-container" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(217, 119, 6, 0.35);">
           
             <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
               <span style="font-size:16px; line-height:1;">💳</span>
@@ -1028,7 +1018,7 @@
     </div>
 
     
-    <div style="margin: 24px 0;">
+    <div class="testimonials-section" style="margin: 24px 0;">
       <h3 style="font-size: 14px; text-transform: uppercase; color: #fbbf24; margin-bottom: 8px; font-family: 'Cinzel', serif;">
         Depoimentos de Clientes
       </h3>
@@ -1493,6 +1483,12 @@
 
         // 2. Sobre Mim
         var ab = freshData.aboutMe || {};
+        var aboutContainer = document.querySelector('.about-section');
+        if (aboutContainer && ab.enabled === false) {
+          aboutContainer.style.display = 'none';
+        } else if (aboutContainer && ab.enabled !== false) {
+          aboutContainer.style.display = '';
+        }
         var aboutPhoto = p.aboutPhotoUrl || ab.photoUrl;
         if (aboutPhoto) {
           var aboutImg = document.querySelector('.about-photo-img') || document.querySelector('.about-section img') || document.querySelector('[alt="Sobre"]');
@@ -1532,7 +1528,7 @@
         }
 
         // 4. Triagem VIP / Funil de Qualificação
-        var qfEl = document.querySelector('[data-module="qualifierFunnel"], .funnel-trigger-card, .anim-shimmer, [href*="Triagem"], [href*="triagem"]');
+        var qfEl = document.querySelector('[data-module="qualifierFunnel"], .funnel-trigger-card, [href*="Triagem"], [href*="triagem"]');
         if (qfEl) {
           var isQfEnabled = freshData.qualifierFunnel ? freshData.qualifierFunnel.enabled !== false : false;
           qfEl.style.display = isQfEnabled ? '' : 'none';
@@ -1546,7 +1542,7 @@
 
         // 5. Botões de Ação (Action Cards / CTAs)
         if (Array.isArray(freshData.actionCards)) {
-          var actionCardEls = document.querySelectorAll('.cta-card:not([data-module="qualifierFunnel"]):not(.anim-shimmer)');
+          var actionCardEls = document.querySelectorAll('.cta-card:not([data-module="qualifierFunnel"]):not(.funnel-trigger-card)');
           actionCardEls.forEach(function(cardEl, idx) {
             if (idx < freshData.actionCards.length) {
               cardEl.style.display = '';
@@ -1577,6 +1573,14 @@
         }
 
         // 6. Catálogo de Serviços
+        if (freshData.services) {
+          var srvContainer = document.querySelector('.services-container');
+          if (srvContainer && freshData.services.enabled === false) {
+            srvContainer.style.display = 'none';
+          } else if (srvContainer && freshData.services.enabled !== false) {
+            srvContainer.style.display = '';
+          }
+        }
         if (freshData.services && Array.isArray(freshData.services.items)) {
           var serviceCards = document.querySelectorAll('.service-card');
           var newItems = freshData.services.items;
@@ -1609,6 +1613,12 @@
         }
 
         // 7. Dúvidas Frequentes (FAQ)
+        var faqContainer = document.querySelector('.faq-section');
+        if (faqContainer && freshData.faq && freshData.faq.enabled === false) {
+          faqContainer.style.display = 'none';
+        } else if (faqContainer && freshData.faq && freshData.faq.enabled !== false) {
+          faqContainer.style.display = '';
+        }
         if (freshData.faq && Array.isArray(freshData.faq.items) && freshData.faq.items.length > 0) {
           var faqDetails = document.querySelectorAll('.faq-item, details');
           faqDetails.forEach(function(dt, idx) {
@@ -1633,6 +1643,20 @@
           if (utEl) {
             utEl.style.display = freshData.highConversion.urgencyTimer.enabled === false ? 'none' : '';
           }
+        }
+
+        // 9. Métricas, Depoimentos & Trust Badges
+        if (freshData.metrics) {
+          var metEl = document.querySelector('.metrics-container, .stats-row');
+          if (metEl) metEl.style.display = freshData.metrics.enabled === false ? 'none' : '';
+        }
+        if (freshData.testimonials) {
+          var testEl = document.querySelector('.testimonials-section');
+          if (testEl) testEl.style.display = freshData.testimonials.enabled === false ? 'none' : '';
+        }
+        if (freshData.trustBadges) {
+          var tbEl = document.querySelector('.trust-badges-container');
+          if (tbEl) tbEl.style.display = freshData.trustBadges.enabled === false ? 'none' : '';
         }
       }
 

@@ -2566,6 +2566,21 @@ export default function App() {
           if (cleanSub) {
             try {
               localStorage.setItem(`luxebio_live_preview_${cleanSub}`, JSON.stringify(data));
+              if (editingSiteId) {
+                setSavedSites((prev) => {
+                  const siteExists = prev.some((s) => s.id === editingSiteId);
+                  if (!siteExists) return prev;
+                  const updatedList = prev.map((s) =>
+                    s.id === editingSiteId
+                      ? { ...s, data, isCustomized: true, lastUpdated: new Date().toISOString().split('T')[0] }
+                      : s
+                  );
+                  try {
+                    localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updatedList));
+                  } catch {}
+                  return updatedList;
+                });
+              }
             } catch {}
 
             try {

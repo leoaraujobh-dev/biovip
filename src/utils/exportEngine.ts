@@ -987,7 +987,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>
 
     ${data.highConversion?.enabled && data.highConversion?.urgencyTimer?.enabled ? `
-    <div style="margin: 8px 0 14px; padding: 12px 14px; border-radius: ${data.styling.borderRadius}px; background: ${mc.urgencyTimer?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; text-align: center;">
+    <div class="urgency-timer" style="margin: 8px 0 14px; padding: 12px 14px; border-radius: ${data.styling.borderRadius}px; background: ${mc.urgencyTimer?.bgColor || theme.socialBg}; border: 1px solid ${theme.socialBorder}; text-align: center;">
       <div style="font-size: 10px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: ${mc.urgencyTimer?.titleColor || theme.accent};">
         ${data.highConversion.urgencyTimer.headline}
       </div>
@@ -1380,7 +1380,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         };
 
         return `
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${theme.socialBorder};">
+        <div class="trust-badges-container" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding:12px; border-radius:16px; background:${getLuminance(theme.bg) > 0.6 ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${theme.socialBorder};">
           ${badgeItems.map(badge => `
             <div style="display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden;">
               <span style="font-size:16px; line-height:1;">${getBadgeEmoji(badge.icon)}</span>
@@ -1395,7 +1395,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </div>` : ''}
 
     ${data.testimonials?.enabled && data.testimonials.items?.length > 0 ? `
-    <div style="margin: 24px 0;">
+    <div class="testimonials-section" style="margin: 24px 0;">
       <h3 style="font-size: 14px; text-transform: uppercase; color: ${mc.testimonials?.headlineColor || theme.accent}; margin-bottom: 8px; font-family: '${data.styling.fontFamily}', serif;">
         ${data.testimonials.headline}
       </h3>
@@ -1879,6 +1879,12 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
         // 2. Sobre Mim
         var ab = freshData.aboutMe || {};
+        var aboutContainer = document.querySelector('.about-section');
+        if (aboutContainer && ab.enabled === false) {
+          aboutContainer.style.display = 'none';
+        } else if (aboutContainer && ab.enabled !== false) {
+          aboutContainer.style.display = '';
+        }
         var aboutPhoto = p.aboutPhotoUrl || ab.photoUrl;
         if (aboutPhoto) {
           var aboutImg = document.querySelector('.about-photo-img') || document.querySelector('.about-section img') || document.querySelector('[alt="Sobre"]');
@@ -1918,7 +1924,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         }
 
         // 4. Triagem VIP / Funil de Qualificação
-        var qfEl = document.querySelector('[data-module="qualifierFunnel"], .funnel-trigger-card, .anim-shimmer, [href*="Triagem"], [href*="triagem"]');
+        var qfEl = document.querySelector('[data-module="qualifierFunnel"], .funnel-trigger-card, [href*="Triagem"], [href*="triagem"]');
         if (qfEl) {
           var isQfEnabled = freshData.qualifierFunnel ? freshData.qualifierFunnel.enabled !== false : false;
           qfEl.style.display = isQfEnabled ? '' : 'none';
@@ -1932,7 +1938,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
 
         // 5. Botões de Ação (Action Cards / CTAs)
         if (Array.isArray(freshData.actionCards)) {
-          var actionCardEls = document.querySelectorAll('.cta-card:not([data-module="qualifierFunnel"]):not(.anim-shimmer)');
+          var actionCardEls = document.querySelectorAll('.cta-card:not([data-module="qualifierFunnel"]):not(.funnel-trigger-card)');
           actionCardEls.forEach(function(cardEl, idx) {
             if (idx < freshData.actionCards.length) {
               cardEl.style.display = '';
@@ -1963,6 +1969,14 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         }
 
         // 6. Catálogo de Serviços
+        if (freshData.services) {
+          var srvContainer = document.querySelector('.services-container');
+          if (srvContainer && freshData.services.enabled === false) {
+            srvContainer.style.display = 'none';
+          } else if (srvContainer && freshData.services.enabled !== false) {
+            srvContainer.style.display = '';
+          }
+        }
         if (freshData.services && Array.isArray(freshData.services.items)) {
           var serviceCards = document.querySelectorAll('.service-card');
           var newItems = freshData.services.items;
@@ -1995,6 +2009,12 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         }
 
         // 7. Dúvidas Frequentes (FAQ)
+        var faqContainer = document.querySelector('.faq-section');
+        if (faqContainer && freshData.faq && freshData.faq.enabled === false) {
+          faqContainer.style.display = 'none';
+        } else if (faqContainer && freshData.faq && freshData.faq.enabled !== false) {
+          faqContainer.style.display = '';
+        }
         if (freshData.faq && Array.isArray(freshData.faq.items) && freshData.faq.items.length > 0) {
           var faqDetails = document.querySelectorAll('.faq-item, details');
           faqDetails.forEach(function(dt, idx) {
@@ -2019,6 +2039,20 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           if (utEl) {
             utEl.style.display = freshData.highConversion.urgencyTimer.enabled === false ? 'none' : '';
           }
+        }
+
+        // 9. Métricas, Depoimentos & Trust Badges
+        if (freshData.metrics) {
+          var metEl = document.querySelector('.metrics-container, .stats-row');
+          if (metEl) metEl.style.display = freshData.metrics.enabled === false ? 'none' : '';
+        }
+        if (freshData.testimonials) {
+          var testEl = document.querySelector('.testimonials-section');
+          if (testEl) testEl.style.display = freshData.testimonials.enabled === false ? 'none' : '';
+        }
+        if (freshData.trustBadges) {
+          var tbEl = document.querySelector('.trust-badges-container');
+          if (tbEl) tbEl.style.display = freshData.trustBadges.enabled === false ? 'none' : '';
         }
       }
 
