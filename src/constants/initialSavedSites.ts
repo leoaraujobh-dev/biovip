@@ -7356,22 +7356,6 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
             "whatsappMessage": "Olá Germana! Gostaria de saber mais sobre o Taping Terapêutico.",
             "featured": false,
             "imageUrl": "/assets/models/germanazocrato/service-3.jpg"
-          },
-          {
-            "id": "srv-4",
-            "name": "Avaliação & Plano de Tratamento",
-            "category": "Consulta",
-            "description": "Triagem completa para analisar sua fase cirúrgica, indicação médica e traçar o melhor cronograma de sessões.",
-            "price": "Sob Consulta",
-            "oldPrice": "",
-            "duration": "30min",
-            "badge": "PRIMEIRO PASSO",
-            "ctaLabel": "Agendar Avaliação",
-            "actionType": "booking",
-            "customUrl": "",
-            "whatsappMessage": "Olá Germana! Gostaria de agendar uma avaliação inicial.",
-            "featured": false,
-            "imageUrl": "https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&q=80&w=600"
           }
         ]
       },
@@ -7428,7 +7412,7 @@ export const INITIAL_SAVED_SITES: SavedMicrosite[] = [
         ]
       },
       "qualifierFunnel": {
-        "enabled": true,
+        "enabled": false,
         "animation": "shimmer",
         "triggerButtonLabel": "AVALIAÇÃO DE CASO / TRIAGEM VIP",
         "triggerButtonSubtitle": "Descubra a melhor solução para você em 3 perguntas rápidas.",

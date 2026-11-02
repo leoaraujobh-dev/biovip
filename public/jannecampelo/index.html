@@ -785,7 +785,7 @@
 
     <div class="actions">
       
-      <a href="https://wa.me/5511998765432?text=Ol%C3%A1%20JANNE%20CAMPELO!%20Quero%20realizar%20a%20Triagem%20Estrat%C3%A9gica%20%2F%20Avalia%C3%A7%C3%A3o%20VIP." target="_blank" rel="noopener noreferrer" class="cta-card anim-shimmer" style="background: linear-gradient(135deg, #d4af37 0%, #d4af37dd 100%); color: #0a0a0c; border-color: #d4af37;">
+      <a data-module="qualifierFunnel" href="https://wa.me/5511998765432?text=Ol%C3%A1%20JANNE%20CAMPELO!%20Quero%20realizar%20a%20Triagem%20Estrat%C3%A9gica%20%2F%20Avalia%C3%A7%C3%A3o%20VIP." target="_blank" rel="noopener noreferrer" class="cta-card anim-shimmer funnel-trigger-card anim-shimmer" style="background: linear-gradient(135deg, #d4af37 0%, #d4af37dd 100%); color: #0a0a0c; border-color: #d4af37;">
         <div class="cta-left">
           <div class="cta-icon" style="background: rgba(0,0,0,0.14); color: #0a0a0c;">⚡</div>
           <div>
@@ -1531,33 +1531,84 @@
           });
         }
 
-        // 4. Catálogo de Serviços
-        if (freshData.services && Array.isArray(freshData.services.items) && freshData.services.items.length > 0) {
-          var serviceCards = document.querySelectorAll('.service-card');
-          serviceCards.forEach(function(card, idx) {
-            var item = freshData.services.items[idx];
-            if (!item) return;
-            var titleEl = card.querySelector('.service-title, h4');
-            if (titleEl && item.name) titleEl.textContent = item.name;
-            var priceEl = card.querySelector('.service-price');
-            if (priceEl && item.price) priceEl.textContent = item.price;
-            var oldPriceEl = card.querySelector('.service-old-price');
-            if (oldPriceEl) {
-              if (item.oldPrice) {
-                oldPriceEl.textContent = item.oldPrice;
-                oldPriceEl.style.display = '';
-              } else {
-                oldPriceEl.style.display = 'none';
+        // 4. Triagem VIP / Funil de Qualificação
+        var qfEl = document.querySelector('[data-module="qualifierFunnel"], .funnel-trigger-card, .anim-shimmer, [href*="Triagem"], [href*="triagem"]');
+        if (qfEl) {
+          var isQfEnabled = freshData.qualifierFunnel ? freshData.qualifierFunnel.enabled !== false : false;
+          qfEl.style.display = isQfEnabled ? '' : 'none';
+          if (isQfEnabled && freshData.qualifierFunnel) {
+            var qfTitle = qfEl.querySelector('.cta-title');
+            if (qfTitle && freshData.qualifierFunnel.triggerButtonLabel) qfTitle.textContent = freshData.qualifierFunnel.triggerButtonLabel;
+            var qfSub = qfEl.querySelector('.cta-sub');
+            if (qfSub && freshData.qualifierFunnel.triggerButtonSubtitle) qfSub.textContent = freshData.qualifierFunnel.triggerButtonSubtitle;
+          }
+        }
+
+        // 5. Botões de Ação (Action Cards / CTAs)
+        if (Array.isArray(freshData.actionCards)) {
+          var actionCardEls = document.querySelectorAll('.cta-card:not([data-module="qualifierFunnel"]):not(.anim-shimmer)');
+          actionCardEls.forEach(function(cardEl, idx) {
+            if (idx < freshData.actionCards.length) {
+              cardEl.style.display = '';
+              var ac = freshData.actionCards[idx];
+              var acTitle = cardEl.querySelector('.cta-title');
+              if (acTitle && ac.title) acTitle.textContent = ac.title;
+              var acSub = cardEl.querySelector('.cta-sub');
+              if (acSub && ac.subtitle) acSub.textContent = ac.subtitle;
+              var acBadge = cardEl.querySelector('.cta-badge');
+              if (acBadge) {
+                if (ac.badgeText) {
+                  acBadge.textContent = ac.badgeText;
+                  acBadge.style.display = '';
+                } else {
+                  acBadge.style.display = 'none';
+                }
               }
+              var acBtn = cardEl.querySelector('.cta-btn-text');
+              if (acBtn && ac.ctaActionText) acBtn.textContent = ac.ctaActionText;
+              if (ac.whatsappMessage && p.whatsapp) {
+                var cleanPhoneForAc = String(p.whatsapp).replace(/[^0-9]/g, '');
+                cardEl.href = 'https://wa.me/' + cleanPhoneForAc + '?text=' + encodeURIComponent(ac.whatsappMessage);
+              }
+            } else {
+              cardEl.style.display = 'none';
             }
-            var descEl = card.querySelector('.service-desc') || card.querySelector('p');
-            if (descEl && item.description) descEl.textContent = item.description;
-            var srvImg = card.querySelector('img');
-            if (srvImg && item.imageUrl) srvImg.src = item.imageUrl;
           });
         }
 
-        // 5. Dúvidas Frequentes (FAQ)
+        // 6. Catálogo de Serviços
+        if (freshData.services && Array.isArray(freshData.services.items)) {
+          var serviceCards = document.querySelectorAll('.service-card');
+          var newItems = freshData.services.items;
+          serviceCards.forEach(function(card, idx) {
+            if (idx < newItems.length) {
+              card.style.display = '';
+              var item = newItems[idx];
+              var titleEl = card.querySelector('.service-title, h4');
+              if (titleEl && item.name) titleEl.textContent = item.name;
+              var priceEl = card.querySelector('.service-price');
+              if (priceEl && item.price) priceEl.textContent = item.price;
+              var oldPriceEl = card.querySelector('.service-old-price');
+              if (oldPriceEl) {
+                if (item.oldPrice) {
+                  oldPriceEl.textContent = item.oldPrice;
+                  oldPriceEl.style.display = '';
+                } else {
+                  oldPriceEl.style.display = 'none';
+                }
+              }
+              var descEl = card.querySelector('.service-desc') || card.querySelector('p');
+              if (descEl && item.description) descEl.textContent = item.description;
+              var srvImg = card.querySelector('img');
+              if (srvImg && item.imageUrl) srvImg.src = item.imageUrl;
+            } else {
+              // Se o serviço foi removido no criador, oculta o card imediatamente!
+              card.style.display = 'none';
+            }
+          });
+        }
+
+        // 7. Dúvidas Frequentes (FAQ)
         if (freshData.faq && Array.isArray(freshData.faq.items) && freshData.faq.items.length > 0) {
           var faqDetails = document.querySelectorAll('.faq-item, details');
           faqDetails.forEach(function(dt, idx) {
@@ -1568,6 +1619,20 @@
             var ans = dt.querySelector('.faq-answer, p');
             if (ans && item.answer) ans.textContent = item.answer;
           });
+        }
+
+        // 8. Barra de Aviso (Announcement) & Contador de Urgência
+        if (freshData.announcement) {
+          var annEl = document.querySelector('.announcement-bar, [href*="#booking"]');
+          if (annEl) {
+            annEl.style.display = freshData.announcement.enabled === false ? 'none' : '';
+          }
+        }
+        if (freshData.highConversion && freshData.highConversion.urgencyTimer) {
+          var utEl = document.querySelector('.urgency-timer, .countdown-box');
+          if (utEl) {
+            utEl.style.display = freshData.highConversion.urgencyTimer.enabled === false ? 'none' : '';
+          }
         }
       }
 
