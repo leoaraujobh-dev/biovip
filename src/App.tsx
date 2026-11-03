@@ -3618,6 +3618,9 @@ export default function App() {
           cachedPhotos[1] ||
           cachedPhotos[0] ||
           getNicheFallbackImage(generated?.profile?.title || aiForm.businessNiche || '', 3),
+        photoHeight: INITIAL_DATA.aboutMe.photoHeight,
+        photoPosY: INITIAL_DATA.aboutMe.photoPosY,
+        photoPosX: INITIAL_DATA.aboutMe.photoPosX,
         paragraph:
           generated?.aboutMe?.paragraph ||
           generated?.aboutMe?.bioText ||
@@ -5871,7 +5874,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       isLandingModel: site.isLandingModel ?? false,
       isTemporaryDemo: site.isTemporaryDemo ?? false,
       demoDurationDays: site.demoDurationDays || 7,
-      proposalValue: site.proposalValue || '197,00',
+      proposalValue: site.proposalValue != null ? String(site.proposalValue) : '197,00',
       crmStage: site.crmStage || 'demonstracao',
       prospectNotes: site.prospectNotes || '',
       prospectInstagram: site.prospectInstagram || safeData.profile?.instagram || '',
@@ -9244,6 +9247,9 @@ COMO PUBLICAR NO SERVIDOR:
         enabled: true,
         headline: `Sobre ${kit.profile.name}`,
         photoUrl: kit.profile.aboutPhotoUrl || '',
+        photoHeight: INITIAL_DATA.aboutMe.photoHeight,
+        photoPosY: INITIAL_DATA.aboutMe.photoPosY,
+        photoPosX: INITIAL_DATA.aboutMe.photoPosX,
         paragraph: safeMeta.aboutParagraph,
         closingPhrase: safeMeta.aboutClosing,
       },

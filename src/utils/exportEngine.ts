@@ -12,6 +12,7 @@ export interface ExportCodeOptions {
   demoClientName?: string;
   demoWhatsAppPhone?: string;
   landingConfig?: any;
+  customSlug?: string;
 }
 
 export function resolveCreatorFooterInfo(siteData?: any, landingConfig?: any) {
@@ -126,7 +127,14 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       styling: { ...INITIAL_DATA.styling, ...(targetData?.styling || {}) },
       profile: { ...INITIAL_DATA.profile, ...(targetData?.profile || {}) },
       announcement: { ...INITIAL_DATA.announcement, ...(targetData?.announcement || {}) },
-      urgencyTimer: { ...INITIAL_DATA.urgencyTimer, ...(targetData?.urgencyTimer || {}) },
+      highConversion: {
+        ...INITIAL_DATA.highConversion,
+        ...(targetData?.highConversion || {}),
+        urgencyTimer: {
+          ...INITIAL_DATA.highConversion.urgencyTimer,
+          ...((targetData?.highConversion as any)?.urgencyTimer || {}),
+        },
+      },
       metrics: { ...INITIAL_DATA.metrics, ...(targetData?.metrics || {}) },
       processSteps: { ...INITIAL_DATA.processSteps, ...(targetData?.processSteps || {}) },
       studentGrid: { ...INITIAL_DATA.studentGrid, ...(targetData?.studentGrid || {}) },

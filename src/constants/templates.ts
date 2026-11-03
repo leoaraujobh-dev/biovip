@@ -52,6 +52,8 @@ export const NICHE_TEMPLATES: NicheTemplate[] = [
         instagram: 'marianalashvip',
         location: 'Rua Oscar Freire, 1020 - Jardins, São Paulo - SP',
         mapsUrl: 'https://maps.google.com',
+        bio: '',
+        editorialSignature: '',
       },
       metrics: {
         enabled: true,
@@ -144,6 +146,8 @@ export const NICHE_TEMPLATES: NicheTemplate[] = [
         instagram: 'dramarinaalmeida',
         location: 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP',
         mapsUrl: 'https://maps.google.com',
+        bio: '',
+        editorialSignature: '',
       },
       metrics: {
         enabled: true,
@@ -192,6 +196,8 @@ export const NICHE_TEMPLATES: NicheTemplate[] = [
         instagram: 'nobreakbarber',
         location: 'Rua Augusta, 1500 - Consolação, São Paulo - SP',
         mapsUrl: 'https://maps.google.com',
+        bio: '',
+        editorialSignature: '',
       },
       metrics: {
         enabled: true,
@@ -240,6 +246,8 @@ export const NICHE_TEMPLATES: NicheTemplate[] = [
         instagram: 'drlucasodonto',
         location: 'Alameda Santos, 980 - Cerqueira César, São Paulo - SP',
         mapsUrl: 'https://maps.google.com',
+        bio: '',
+        editorialSignature: '',
       },
       metrics: {
         enabled: true,
@@ -288,6 +296,8 @@ export const NICHE_TEMPLATES: NicheTemplate[] = [
         instagram: 'donnaolivabistro',
         location: 'Rua dos Pinheiros, 740 - Pinheiros, São Paulo - SP',
         mapsUrl: 'https://maps.google.com',
+        bio: '',
+        editorialSignature: '',
       },
       metrics: {
         enabled: true,

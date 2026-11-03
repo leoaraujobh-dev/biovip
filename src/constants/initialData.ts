@@ -54,7 +54,9 @@ export const INITIAL_DATA = {
     whatsapp: '5511999999999',
     instagram: 'dramarinaalmeida',
     location: 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP',
-    mapsUrl: 'https://maps.google.com'
+    mapsUrl: 'https://maps.google.com',
+    bio: '',
+    editorialSignature: '',
   },
   metrics: {
     enabled: true,
