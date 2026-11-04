@@ -1526,7 +1526,13 @@ export default function App() {
 
   const [appSurface, setAppSurface] = useState<'landing' | 'studio' | 'microsite'>(() => detectCreatorSurface());
   const [activePublicSlug, setActivePublicSlug] = useState<string | null>(() => detectPublicMicrositeSlug());
-  const [isHydratingSites, setIsHydratingSites] = useState<boolean>(() => Boolean(detectPublicMicrositeSlug()));
+  const [isHydratingSites, setIsHydratingSites] = useState<boolean>(() => {
+    // Sempre inicia como true em qualquer URL de microsite (evita flash de tela branca no mobile)
+    if (typeof window === 'undefined') return false;
+    const p = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const reserved = ['', 'index.html', 'landing', 'home', 'criador', 'studio', 'painel', 'editor', 'admin', 'api', 'assets'];
+    return p.length > 0 && !reserved.includes(p) && !p.includes('.');
+  });
   const [liveStreamData, setLiveStreamData] = useState<any>(null);
 
   // Automatically cleans up the address bar to show '/slug' without triggering 404 or page reload
@@ -2115,6 +2121,11 @@ export default function App() {
   useEffect(() => {
     let active = true;
 
+    // Timeout de segurança para mobile: nunca deixa o spinner de hydration por mais de 6s
+    const hydrationSafetyTimer = setTimeout(() => {
+      if (active) setIsHydratingSites(false);
+    }, 6000);
+
     // Sincronização de nuvem cross-device (/api/saved-sites + /.saved-sites.json estático):
     // Garante que todo microsite publicado seja restaurado instantaneamente em qualquer smartphone ou PC
     const loadAllRemoteSources = async () => {
@@ -2191,6 +2202,7 @@ export default function App() {
       }
       if (active) {
         setIsHydratingSites(false);
+        clearTimeout(hydrationSafetyTimer);
       }
     };
 
@@ -2301,6 +2313,7 @@ export default function App() {
     });
     return () => {
       active = false;
+      clearTimeout(hydrationSafetyTimer);
     };
   }, []);
 
@@ -10414,19 +10427,30 @@ COMO PUBLICAR NO SERVIDOR:
         livePreviewData ||
         (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
+      // Para visitantes normais (mobile sem login), carrega o HTML estático pré-renderizado via `src`
+      // para evitar tela branca causada por falha no generateExportCode em runtime.
+      // Apenas usa srcDoc (geração dinâmica) quando há live preview ativo (admin editando em tempo real).
+      const isLivePreviewActive = Boolean(liveStreamData || livePreviewData);
+      const staticSiteUrl = `/${slug}/index.html`;
+
       let siteHtml = '';
-      try {
-        siteHtml = generateExportCode(resolvedData);
-      } catch (err) {
-        console.error('Falha ao renderizar microsite:', err);
-        siteHtml = demoModel?.realHtml || '';
+      if (isLivePreviewActive) {
+        try {
+          siteHtml = generateExportCode(resolvedData);
+        } catch (err) {
+          console.error('Falha ao renderizar microsite (live preview):', err);
+          siteHtml = demoModel?.realHtml || '';
+        }
       }
 
       return (
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${foundSite.clientName} · BioVip`}
-            srcDoc={siteHtml}
+            {...(isLivePreviewActive
+              ? { srcDoc: siteHtml }
+              : { src: staticSiteUrl }
+            )}
             className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
             style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', backgroundColor: '#09090b' }}
           />
@@ -10435,19 +10459,29 @@ COMO PUBLICAR NO SERVIDOR:
     }
 
     if (demoModel) {
+      // Para modelos demo, usa o HTML estático pré-renderizado quando disponível
+      // e srcDoc apenas quando há live preview ativo do editor
+      const isDemoLivePreview = Boolean(livePreviewData);
+      const demoStaticUrl = `/${slug}/index.html`;
+
       let demoHtml = '';
-      try {
-        demoHtml = livePreviewData ? generateExportCode(livePreviewData) : (demoModel.realHtml || generateExportCode(demoModel.realSiteData));
-      } catch (err) {
-        console.error('Falha ao renderizar modelo demo:', err);
-        demoHtml = demoModel.realHtml || '';
+      if (isDemoLivePreview) {
+        try {
+          demoHtml = generateExportCode(livePreviewData);
+        } catch (err) {
+          console.error('Falha ao renderizar modelo demo (live preview):', err);
+          demoHtml = demoModel.realHtml || '';
+        }
       }
 
       return (
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${demoModel.personaName} — ${demoModel.title}`}
-            srcDoc={demoHtml}
+            {...(isDemoLivePreview
+              ? { srcDoc: demoHtml }
+              : { src: demoStaticUrl }
+            )}
             className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
             style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', backgroundColor: '#09090b' }}
           />
