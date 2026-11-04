@@ -1534,6 +1534,8 @@ export default function App() {
     return p.length > 0 && !reserved.includes(p) && !p.includes('.');
   });
   const [liveStreamData, setLiveStreamData] = useState<any>(null);
+  // Controla fallback para srcDoc quando o arquivo estático não existe (sites criados pelo admin sem build prévio)
+  const [staticSiteFailed, setStaticSiteFailed] = useState<boolean>(false);
 
   // Automatically cleans up the address bar to show '/slug' without triggering 404 or page reload
   useEffect(() => {
@@ -1547,6 +1549,8 @@ export default function App() {
       }
     }
   }, [appSurface, activePublicSlug]);
+  // Reseta o fallback de estático sempre que o slug mudar (evitar estado preso entre navegações)
+  useEffect(() => { setStaticSiteFailed(false); }, [activePublicSlug]);
   const [underConstructionPreviewSite, setUnderConstructionPreviewSite] = useState<SavedMicrosite | null>(null);
   const [paymentSuccessSite, setPaymentSuccessSite] = useState<SavedMicrosite | null>(null);
   const [checkoutAsaasPix, setCheckoutAsaasPix] = useState<{
@@ -10427,18 +10431,33 @@ COMO PUBLICAR NO SERVIDOR:
         livePreviewData ||
         (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
-      // Para visitantes normais (mobile sem login), carrega o HTML estático pré-renderizado via `src`
-      // para evitar tela branca causada por falha no generateExportCode em runtime.
-      // Apenas usa srcDoc (geração dinâmica) quando há live preview ativo (admin editando em tempo real).
+      // Estratégia de carregamento para todos os microsites (mobile e desktop sem login):
+      // 1. Sites pré-renderizados (em INITIAL_SAVED_SITES): carrega via `src` apontando para o HTML estático.
+      //    Se o arquivo não existir por algum motivo, `onError` ativa o fallback para srcDoc.
+      // 2. Sites criados pelo admin após o último build (não estão em INITIAL_SAVED_SITES):
+      //    usa srcDoc com HTML gerado em runtime — garante funcionamento sem depender de arquivo em disco.
+      // 3. Live preview ativo (admin editando): sempre usa srcDoc para tempo real.
       const isLivePreviewActive = Boolean(liveStreamData || livePreviewData);
       const staticSiteUrl = `/${slug}/index.html`;
 
+      // Verifica se existe arquivo estático pré-renderizado para este slug
+      const hasPreRenderedFile = INITIAL_SAVED_SITES.some((s) => {
+        const sSub = (s.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const sId = (s.id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cleanSlug = slug.replace(/[^a-z0-9]/g, '');
+        return sSub === cleanSlug || sId === cleanSlug;
+      });
+
+      // Usa src estático apenas quando: não é live preview E tem arquivo pré-renderizado E não falhou antes
+      const useStaticSrc = !isLivePreviewActive && hasPreRenderedFile && !staticSiteFailed;
+
       let siteHtml = '';
-      if (isLivePreviewActive) {
+      if (!useStaticSrc) {
+        // Gera HTML dinâmico: para live preview, novos sites do admin, ou fallback após falha do estático
         try {
           siteHtml = generateExportCode(resolvedData);
         } catch (err) {
-          console.error('Falha ao renderizar microsite (live preview):', err);
+          console.error('Falha ao renderizar microsite:', err);
           siteHtml = demoModel?.realHtml || '';
         }
       }
@@ -10447,9 +10466,12 @@ COMO PUBLICAR NO SERVIDOR:
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${foundSite.clientName} · BioVip`}
-            {...(isLivePreviewActive
-              ? { srcDoc: siteHtml }
-              : { src: staticSiteUrl }
+            {...(useStaticSrc
+              ? {
+                  src: staticSiteUrl,
+                  onError: () => setStaticSiteFailed(true),
+                }
+              : { srcDoc: siteHtml }
             )}
             className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
             style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', backgroundColor: '#09090b' }}
@@ -10459,15 +10481,29 @@ COMO PUBLICAR NO SERVIDOR:
     }
 
     if (demoModel) {
-      // Para modelos demo, usa o HTML estático pré-renderizado quando disponível
-      // e srcDoc apenas quando há live preview ativo do editor
+      // Modelos demo: mesma estratégia dos microsites de clientes.
+      // Sites pré-renderizados (em INITIAL_SAVED_SITES) → src estático.
+      // Live preview ativo (editor) → srcDoc em tempo real.
+      // Modelos sem arquivo pré-renderizado → srcDoc via generateExportCode.
       const isDemoLivePreview = Boolean(livePreviewData);
       const demoStaticUrl = `/${slug}/index.html`;
 
+      const demoHasPreRenderedFile = INITIAL_SAVED_SITES.some((s) => {
+        const sSub = (s.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const sId = (s.id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cleanSlug = slug.replace(/[^a-z0-9]/g, '');
+        return sSub === cleanSlug || sId === cleanSlug;
+      });
+      // Modelos demo sempre têm arquivo pré-renderizado (são parte do build inicial)
+      // Verifica pelo id ou subdomain do demoModel
+      const demoModelSlugClean = (demoModel.id || demoModel.subdomain || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const demoHasStatic = demoHasPreRenderedFile || (demoModelSlugClean.length > 0 && slug.replace(/[^a-z0-9]/g, '') === demoModelSlugClean);
+      const useDemoStaticSrc = !isDemoLivePreview && demoHasStatic && !staticSiteFailed;
+
       let demoHtml = '';
-      if (isDemoLivePreview) {
+      if (!useDemoStaticSrc) {
         try {
-          demoHtml = generateExportCode(livePreviewData);
+          demoHtml = generateExportCode(livePreviewData || demoModel.realSiteData || demoModel);
         } catch (err) {
           console.error('Falha ao renderizar modelo demo (live preview):', err);
           demoHtml = demoModel.realHtml || '';
@@ -10478,9 +10514,12 @@ COMO PUBLICAR NO SERVIDOR:
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] overflow-hidden m-0 p-0 z-[999999]">
           <iframe
             title={`${demoModel.personaName} — ${demoModel.title}`}
-            {...(isDemoLivePreview
-              ? { srcDoc: demoHtml }
-              : { src: demoStaticUrl }
+            {...(useDemoStaticSrc
+              ? {
+                  src: demoStaticUrl,
+                  onError: () => setStaticSiteFailed(true),
+                }
+              : { srcDoc: demoHtml }
             )}
             className="w-full h-full min-w-full min-h-full border-0 block m-0 p-0"
             style={{ width: '100%', height: '100%', minWidth: '100%', minHeight: '100%', border: 'none', backgroundColor: '#09090b' }}
