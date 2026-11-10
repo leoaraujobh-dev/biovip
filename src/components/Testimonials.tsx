@@ -24,10 +24,12 @@ export default function Testimonials() {
       
       <div className="container-main relative">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary-500/20 text-primary-400 text-xs sm:text-sm font-semibold mb-4 border border-primary-500/30">
-            Resultados Reais com BioVip
+          <span className="inline-block px-4 py-1.5 rounded-full bg-primary-500/20 text-primary-400 text-xs sm:text-sm font-semibold mb-4 border border-primary-500/30 uppercase tracking-wider">
+            RESULTADOS COMPROVADOS
           </span>
-          <h2 className="section-title text-white mb-4">Depoimentos</h2>
+          <h2 className="section-title text-white mb-4 font-serif leading-[1.2] tracking-tight" style={{ lineHeight: '1.2' }}>
+            Quem trocou o link comum pelo BioVip não volta atrás.
+          </h2>
         </div>
 
         <div className="max-w-4xl mx-auto">

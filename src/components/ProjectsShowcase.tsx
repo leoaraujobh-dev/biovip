@@ -13,12 +13,14 @@ export default function ProjectsShowcase() {
       <div className="container-main">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-12 gap-6">
           <div>
-            <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100">
-              Vitrine de Alta Conversão
+            <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100 uppercase tracking-wider">
+              VITRINE DE INSPIRAÇÃO
             </span>
-            <h2 className="section-title mb-4 font-serif">Projetos em Destaque</h2>
-            <p className="section-subtitle max-w-xl text-dark-500 font-sans">
-              Cada BioVip é concebido sob medida para posicionar você no topo absoluto do seu segmento.
+            <h2 className="section-title mb-4 font-serif leading-[1.2] tracking-tight" style={{ lineHeight: '1.2' }}>
+              Veja como nossos clientes elevaram o nível da presença digital no Instagram.
+            </h2>
+            <p className="section-subtitle max-w-xl text-dark-500 font-sans leading-relaxed">
+              De estúdios de cílios e barbearias modernas a clínicas médicas: cada BioVip carrega a identidade única de quem está por trás da marca.
             </p>
           </div>
           <Link

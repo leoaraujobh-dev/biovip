@@ -16,14 +16,14 @@ export default function FaqSection() {
     <section id="faq" className="py-20 lg:py-32 bg-dark-50/60 relative">
       <div className="container-main">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100 uppercase tracking-wider">
             <HelpCircle className="w-4 h-4 text-primary-600" />
-            Tire Suas Dúvidas
+            TIRE SUAS DÚVIDAS
           </span>
-          <h2 className="section-title mb-4 font-serif">
-            Perguntas Frequentes sobre o BioVip
+          <h2 className="section-title mb-4 font-serif leading-[1.2] tracking-tight" style={{ lineHeight: '1.2' }}>
+            Perguntas Frequentes antes de garantir seu BioVip.
           </h2>
-          <p className="section-subtitle mx-auto text-dark-500 font-sans text-base sm:text-lg">
+          <p className="section-subtitle mx-auto text-dark-500 font-sans text-base sm:text-lg leading-relaxed">
             Tudo o que você precisa saber para transformar o link da sua bio em um portal de autoridade.
           </p>
         </div>

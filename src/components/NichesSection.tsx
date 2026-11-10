@@ -33,88 +33,74 @@ interface NicheItem {
 
 const niches: NicheItem[] = [
   {
-    id: 'medicina',
-    name: 'Médicos & Clínicas',
-    badge: 'CRM Integrado',
-    icon: Stethoscope,
-    tagline: 'Autoridade médica ética e agendamento direto com a secretária.',
-    description: 'Projetado conforme as normas éticas do CFM. Apresenta títulos de especialista, corpo clínico, convênios atendidos e triagem inteligente para consultas particulares.',
-    sampleName: 'Dr. Renato Andrade',
-    sampleSlug: 'dr-renato-andrade',
-    samplePhoto: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=900&auto=format&fit=crop',
-    samplePalette: 'Azul Marinho & Prata',
-    subpagesList: ['Procedimentos Cirúrgicos', 'Corpo Clínico & Títulos', 'Agenda de Consultas'],
-    conversionBenefit: '+62% de agendamentos diretos de consultas particulares sem fricção.',
-  },
-  {
-    id: 'odonto',
-    name: 'Odontologia & Harmonização',
-    badge: 'CRO Integrado',
-    icon: Smile,
-    tagline: 'Lentes de contato dental, implantes e harmonização com Antes & Depois.',
-    description: 'Destaque seus casos clínicos com o slider interativo de Antes & Depois. O paciente arrasta a divisória na tela e se apaixona pelo resultado antes mesmo da consulta.',
-    sampleName: 'Dra. Ana Freire',
-    sampleSlug: 'dra-ana-freire',
-    samplePhoto: 'https://images.unsplash.com/photo-1594824813589-a9a7d32e92c2?q=80&w=900&auto=format&fit=crop',
-    samplePalette: 'Nude Nobre & Ouro',
-    subpagesList: ['Tabela de Procedimentos', 'Transformações Antes/Depois', 'Agenda VIP'],
-    conversionBenefit: 'Slider interativo que quadruplica o desejo pelo tratamento estético.',
-  },
-  {
-    id: 'beleza',
-    name: 'Lash, Nails & Estética',
-    badge: 'Alta Conversão',
+    id: 'lash-nail',
+    name: 'Estúdios Lash & Nail',
+    badge: 'Alta Conversão Lash',
     icon: Scissors,
     tagline: 'Design de olhar, alongamento em fibra e estética de luxo.',
-    description: 'Elimine o "qual o valor?" no direct do Instagram. Apresente seu menu de serviços com fotos reais, cuidados pós-procedimento e link direto para a agenda.',
+    description: 'Elimine o "qual o valor?" no direct do Instagram. Apresente seu menu de serviços com fotos reais de antes e depois, cuidados pós-procedimento e link direto para a agenda sem atrito.',
     sampleName: 'Studio Íris',
     sampleSlug: 'studio-iris',
     samplePhoto: 'https://images.unsplash.com/photo-1588516903720-8ceb67f9ef84?q=80&w=900&auto=format&fit=crop',
     samplePalette: 'Rosa Champagne & Dourado',
-    subpagesList: ['Menu de Técnicas', 'Galeria de Olhares', 'Reserva de Horário'],
-    conversionBenefit: 'Fim das dúvidas no WhatsApp com cardápio visual e política de agendamento.',
+    subpagesList: ['Menu de Técnicas de Cílios', 'Galeria de Olhares Reais', 'Reserva de Horário'],
+    conversionBenefit: 'Fim das dúvidas repetitivas no WhatsApp com cardápio visual e política de agendamento clara.',
   },
   {
-    id: 'direito',
-    name: 'Advocacia & Consultoria',
-    badge: 'OAB em Destaque',
+    id: 'barbearias',
+    name: 'Barbearias VIP',
+    badge: 'Agendamento Direto',
+    icon: Scissors,
+    tagline: 'Cortes nobres, barba na toalha quente e clube de assinaturas.',
+    description: 'Transforme o cliente de primeira viagem em cliente recorrente. Mostre sua tabela de serviços completa, portfólio de cortes e botão com agendamento instantâneo no WhatsApp.',
+    sampleName: 'Don Corleone Barbearia',
+    sampleSlug: 'barbearia-classic',
+    samplePhoto: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=900&auto=format&fit=crop',
+    samplePalette: 'Preto Nobre & Dourado',
+    subpagesList: ['Cortes & Barboterapia', 'Clube de Assinatura VIP', 'Agendar Horário'],
+    conversionBenefit: 'Agendamentos automáticos e sem perda de tempo enquanto você atende na cadeira.',
+  },
+  {
+    id: 'clinicas',
+    name: 'Clínicas & Estética',
+    badge: 'CRM & CRO Integrado',
+    icon: Stethoscope,
+    tagline: 'Harmonização facial, dermatologia e procedimentos de alto padrão.',
+    description: 'Destaque seus casos clínicos com o slider interativo de Antes & Depois. O paciente arrasta a divisória na tela e se apaixona pelo resultado antes mesmo da consulta presencial.',
+    sampleName: 'Dra. Ana Freire',
+    sampleSlug: 'dra-ana-freire',
+    samplePhoto: 'https://images.unsplash.com/photo-1594824813589-a9a7d32e92c2?q=80&w=900&auto=format&fit=crop',
+    samplePalette: 'Nude Nobre & Ouro',
+    subpagesList: ['Tabela de Procedimentos', 'Transformações Antes & Depois', 'Agenda VIP'],
+    conversionBenefit: 'Slider interativo que quadruplica o desejo pelo tratamento estético e valoriza seu ticket.',
+  },
+  {
+    id: 'saloes',
+    name: 'Salões de Beleza',
+    badge: 'Experiência Premium',
+    icon: Sparkles,
+    tagline: 'Loiros dos sonhos, mechas, visagismo e rituais capilares.',
+    description: 'Valorize seu passe com uma vitrine visual deslumbrante de transformações. O cliente visualiza a gama de rituais, o currículo dos profissionais e agenda seu horário sem demora.',
+    sampleName: 'Studio Helena Beauté',
+    sampleSlug: 'studio-helena-beaute',
+    samplePhoto: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=900&auto=format&fit=crop',
+    samplePalette: 'Champagne & Rose Gold',
+    subpagesList: ['Menu de Loiros & Mechas', 'Tratamentos & Cronograma', 'Agendar Especialista'],
+    conversionBenefit: 'Menu visual de mechas e tratamentos que valoriza seu posicionamento de luxo.',
+  },
+  {
+    id: 'consultorios',
+    name: 'Consultórios & Advocacia',
+    badge: 'OAB & CFM em Destaque',
     icon: Scale,
-    tagline: 'Elegância sóbria para escritórios de alta complexidade.',
-    description: 'Estrutura refinada com paleta Noir e tipografia serifada. Triagem rápida para atendimento de urgência ou análise de caso empresarial diretamente com o sócio.',
+    tagline: 'Elegância sóbria para consultórios e escritórios de alta complexidade.',
+    description: 'Estrutura refinada com paleta Noir e tipografia serifada de autoridade. Triagem rápida para atendimento de urgência ou análise de caso diretamente com o titular.',
     sampleName: 'Dra. Carolina Freitas',
     sampleSlug: 'carolina-freitas',
     samplePhoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=900&auto=format&fit=crop',
     samplePalette: 'Bordeaux Imperial & Dourado',
     subpagesList: ['Áreas de Atuação', 'Artigos & Pareceres', 'Consulta Jurídica'],
-    conversionBenefit: 'Posicionamento premium que justifica honorários de alto padrão.',
-  },
-  {
-    id: 'imoveis',
-    name: 'Imóveis & Corretores de Luxo',
-    badge: 'CRECI Oficial',
-    icon: Building2,
-    tagline: 'Portfólio imobiliário selecionado para clientes de alto padrão.',
-    description: 'Catálogo de mansões, coberturas e lançamentos com ficha técnica, fotos de alta resolução e botão de agendamento de visita VIP com tour guiado.',
-    sampleName: 'Mansões & Coberturas Jardins',
-    sampleSlug: 'portfolio/portfolio-imoveis-luxo',
-    samplePhoto: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=900&auto=format&fit=crop',
-    samplePalette: 'Esmeralda & Ouro Champanhe',
-    subpagesList: ['Catálogo de Imóveis', 'Lançamentos Exclusivos', 'Agendar Visita VIP'],
-    conversionBenefit: 'Qualificação prévia do comprador antes da visita presencial.',
-  },
-  {
-    id: 'arquitetura',
-    name: 'Arquitetura & Interiores',
-    badge: 'CAU Registrado',
-    icon: Compass,
-    tagline: 'Galeria editorial de projetos residenciais e comerciais.',
-    description: 'Apresentação nobre do seu conceito arquitetônico, publicações na Casa Cor e revista, com questionário de briefing rápido para novos orçamentos.',
-    sampleName: 'Studio Arq & Interiores',
-    sampleSlug: 'portfolio/portfolio-arquitetura-design',
-    samplePhoto: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=900&auto=format&fit=crop',
-    samplePalette: 'Terracota Warm & Marfim',
-    subpagesList: ['Portfólio de Obras', 'Etapas do Projeto', 'Briefing & Orçamento'],
-    conversionBenefit: 'Clientes chegam preparados para investir em projetos autorais.',
+    conversionBenefit: 'Posicionamento sóbrio e refinado que impõe autoridade imediata e justifica honorários.',
   },
 ]
 
@@ -125,15 +111,15 @@ export default function NichesSection() {
     <section id="nichos" className="py-20 lg:py-32 bg-stone-900 text-white relative overflow-hidden">
       <div className="container-main relative">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-300 text-xs sm:text-sm font-semibold mb-4 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-300 text-xs sm:text-sm font-semibold mb-4 border border-amber-500/20 uppercase tracking-wider">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            NICHOS DE ALTA PERFORMANCE
+            DESIGN EXCLUSIVO POR SEGMENTO
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-6">
-            Projetado sob medida para a sua especialidade
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-6 leading-[1.2]" style={{ lineHeight: '1.2' }}>
+            Layouts desenhados sob medida para a estética do seu negócio.
           </h2>
           <p className="text-stone-400 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-sans">
-            Cada profissão possui dinâmicas de conversão únicas. O BioVip entrega estruturas validadas para gerar autoridade no primeiro contato.
+            Clique no seu segmento abaixo e teste ao vivo como o seu cliente vai navegar pelo seu catálogo de serviços, valores e localização:
           </p>
         </div>
 

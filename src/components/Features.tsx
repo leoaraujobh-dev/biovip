@@ -69,14 +69,14 @@ export default function Features() {
     <section id="features" className="py-20 lg:py-32 bg-white">
       <div className="container-main">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100">
-            Diferenciais Exclusivos BioVip
+          <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100 uppercase tracking-wider">
+            ESTRUTURA DE ALTO PADRÃO
           </span>
-          <h2 className="section-title mb-4 font-serif">
-            A arquitetura perfeita para vender serviços de alto valor
+          <h2 className="section-title mb-5 font-serif leading-[1.2] tracking-tight" style={{ lineHeight: '1.2' }}>
+            Por que profissionais de elite estão trocando links grátis pelo padrão BioVip?
           </h2>
-          <p className="section-subtitle mx-auto text-dark-500 font-sans text-base sm:text-lg">
-            Cada detalhe do BioVip foi projetado para transmitir autoridade instantânea e transformar seguidores em clientes pagantes.
+          <p className="section-subtitle mx-auto text-dark-500 font-sans text-base sm:text-lg leading-relaxed">
+            Quando o cliente clica na sua bio e vê uma lista de botões sem graça, seu trabalho parece barato. Veja o que o BioVip entrega para valorizar seu passe logo no primeiro clique:
           </p>
         </div>
 

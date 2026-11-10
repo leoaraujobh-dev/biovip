@@ -68,15 +68,15 @@ export default function ComparisonTable() {
       
       <div className="container-main relative">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-300 text-xs sm:text-sm font-semibold mb-4 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-300 text-xs sm:text-sm font-semibold mb-4 border border-amber-500/20 uppercase tracking-wider">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            ANÁLISE COMPARATIVA DE MERCADO
+            COMPARATIVO REAL
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-6">
-            Por que profissionais de alto valor trocam links genéricos pelo <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200">BioVip</span>?
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-6 leading-[1.2]" style={{ lineHeight: '1.2' }}>
+            A diferença brutal entre perder tempo com curiosos e receber clientes prontos para agendar.
           </h2>
           <p className="text-stone-400 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-sans">
-            Quando o cliente clica na sua bio, ele decide em menos de 3 segundos se você é uma autoridade de alto padrão ou apenas mais um prestador comum.
+            Compare o impacto de um link comum feito por conta própria contra um Microsite BioVip desenhado para vender seus procedimentos e serviços todos os dias.
           </p>
         </div>
 

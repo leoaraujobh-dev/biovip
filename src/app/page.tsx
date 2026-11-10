@@ -13,26 +13,26 @@ import CTA from '@/components/CTA'
 import Footer from '@/components/Footer'
 
 export const metadata = {
-  title: 'BioVip — O Bio Site de Alto Padrão para Profissionais & Marcas de Luxo',
-  description: 'Transforme o link da sua bio em um portal de autoridade, elegância e alta conversão. Retrato com fusão de estúdio, 3 páginas Pro inclusas e rastreamento nativo de leads no WhatsApp.',
+  title: 'BioVip | Microsites de Alta Conversão para Estúdios de Beleza, Barbearias e Clínicas',
+  description: 'Transforme o link da bio do seu Instagram em uma máquina de agendamentos no WhatsApp. Microsites de luxo com catálogo de preços e portfólio prontos em 24h.',
   keywords: [
+    'microsites de alta conversao',
     'bio site de luxo',
+    'estudios de beleza',
+    'barbearias vip',
+    'clinicas e estetica',
     'link da bio alta conversao',
-    'bio site medicos',
-    'bio site clinica estetica',
-    'bio site lash designer',
-    'bio site advogados',
+    'catalogo de precos e portfolio',
+    'agendamentos no whatsapp',
     'substituto linktree profissional',
-    'linktree para medicos',
-    'cartao digital com qr code',
     'biovip'
   ],
   alternates: {
     canonical: 'https://www.biovip.com.br',
   },
   openGraph: {
-    title: 'BioVip — O Bio Site de Alto Padrão para Profissionais & Marcas',
-    description: 'Transforme o link da sua bio em um portal de autoridade e conversão. Fotografia com fusão de estúdio e fechamento direto no WhatsApp.',
+    title: 'BioVip | Microsites de Alta Conversão para Estúdios de Beleza, Barbearias e Clínicas',
+    description: 'Transforme o link da bio do seu Instagram em uma máquina de agendamentos no WhatsApp. Microsites de luxo com catálogo de preços e portfólio prontos em 24h.',
     url: 'https://www.biovip.com.br',
     siteName: 'BioVip',
     locale: 'pt_BR',

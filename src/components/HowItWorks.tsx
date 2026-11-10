@@ -32,14 +32,14 @@ export default function HowItWorks() {
     <section id="como-funciona" className="py-20 lg:py-32 bg-white relative">
       <div className="container-main">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100">
-            Passo a Passo Descomplicado
+          <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold mb-4 border border-primary-100 uppercase tracking-wider">
+            ZERO TRABALHO PARA VOCÊ
           </span>
-          <h2 className="section-title mb-4 font-serif">
-            Como ter o seu BioVip no ar hoje mesmo
+          <h2 className="section-title mb-5 font-serif leading-[1.2] tracking-tight" style={{ lineHeight: '1.2' }}>
+            Você cuida dos seus clientes. Nós entregamos seu Microsite pronto em 3 passos:
           </h2>
-          <p className="section-subtitle mx-auto text-dark-500 font-sans text-base sm:text-lg">
-            Um fluxo fluido e intuitivo para transformar sua presença digital sem dor de cabeça técnica.
+          <p className="section-subtitle mx-auto text-dark-500 font-sans text-base sm:text-lg leading-relaxed">
+            Sem precisar aprender design, mexer em ferramentas complicadas ou perder horas na frente do computador.
           </p>
         </div>
 

@@ -20,10 +20,10 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.biovip.com.br'),
   title: {
-    default: 'BioVip — O Bio Site de Alto Padrão para Profissionais & Marcas de Luxo',
+    default: 'BioVip | Microsites de Alta Conversão para Estúdios de Beleza, Barbearias e Clínicas',
     template: '%s | BioVip',
   },
-  description: 'Transforme o link da sua bio em um portal de autoridade e conversão. Design editorial de luxo, retrato com fusão orgânica de estúdio, 3 páginas Pro inclusas e rastreamento de leads com Meta Pixel e TikTok Pixel no WhatsApp.',
+  description: 'Transforme o link da bio do seu Instagram em uma máquina de agendamentos no WhatsApp. Microsites de luxo com catálogo de preços e portfólio prontos em 24h.',
   keywords: [
     'biovip',
     'bio site de luxo',

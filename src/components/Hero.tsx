@@ -77,22 +77,17 @@ export default function Hero() {
           
           {/* Left Column: Copy & Social Proof */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold border border-primary-200/60 shadow-xs">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs sm:text-sm font-semibold border border-primary-200/60 shadow-xs mb-2">
               <Sparkles className="w-4 h-4 text-primary-600 animate-pulse" />
-              <span>BIOVIP · O PADRÃO OURO DE BIO SITES</span>
+              <span>MICROSITES DE LUXO PRONTOS EM 24H</span>
             </div>
 
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-dark-900 leading-[1.12] tracking-tight">
-              O Bio Site de alto padrão que transforma seguidores em{' '}
-              <span className="relative inline-block text-primary-600">
-                clientes de alto valor
-                <span className="absolute bottom-1.5 left-0 right-0 h-3 bg-primary-100 -z-10 rounded-sm" />
-              </span>
-              .
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-dark-900 leading-[1.2] tracking-tight mb-5" style={{ lineHeight: '1.2' }}>
+              O Fim do Link Amador: Microsites de Alta Conversão que Filtram Curiosos e Lotam sua Agenda.
             </h1>
 
-            <p className="text-base sm:text-lg lg:text-xl text-dark-600 max-w-2xl font-sans leading-relaxed">
-              O fim dos links genéricos e avatares sem vida. O <strong>BioVip</strong> une fotografia com dissolução de estúdio, design editorial de revista, 3 páginas Pro completas e rastreamento nativo de leads no WhatsApp.
+            <p className="text-base sm:text-lg lg:text-xl text-dark-600 max-w-2xl font-sans leading-relaxed mb-6">
+              Substitua árvores de links genéricas por uma vitrine de luxo com catálogo de serviços, preços, portfólio de antes e depois e agendamento direto. Nós criamos e entregamos tudo 100% pronto para você em 24 horas.
             </p>
 
             {/* Micro Trust Points */}
@@ -121,7 +116,7 @@ export default function Hero() {
                 href="/starter"
                 className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-4 shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40 w-full sm:w-auto font-bold"
               >
-                Criar meu BioVip Agora
+                Quero Meu Microsite Pronto em 24h
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link

@@ -37,11 +37,11 @@
   }
 
   .section-title {
-    @apply font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-dark-900;
+    @apply font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-dark-900 leading-[1.2] mb-4;
   }
 
   .section-subtitle {
-    @apply text-lg sm:text-xl text-dark-500 max-w-2xl;
+    @apply text-lg sm:text-xl text-dark-500 max-w-2xl leading-relaxed;
   }
 
   .card-hover {
