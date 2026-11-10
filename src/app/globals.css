@@ -108,4 +108,66 @@
   .btn-anim-glow {
     animation: btn-glow-pulse 2s ease-in-out infinite;
   }
+
+  /* ============================================================ */
+  /* ANIMAÇÕES MODERNAS LUXURY PARA MÓDULOS DE BIOSITE */
+  /* ============================================================ */
+
+  @keyframes luxury-hero-fade {
+    0% { opacity: 0; transform: scale(1.04); filter: blur(4px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+
+  @keyframes luxury-shimmer-sweep {
+    0% { transform: translateX(-150%) skewX(-20deg); }
+    100% { transform: translateX(250%) skewX(-20deg); }
+  }
+
+  @keyframes luxury-glow-breath {
+    0%, 100% {
+      box-shadow: 0 0 15px rgba(226, 184, 87, 0.12), inset 0 0 15px rgba(226, 184, 87, 0.05);
+    }
+    50% {
+      box-shadow: 0 0 28px rgba(226, 184, 87, 0.35), inset 0 0 22px rgba(226, 184, 87, 0.12);
+    }
+  }
+
+  @keyframes luxury-float-card {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .animate-hero-luxury {
+    animation: luxury-hero-fade 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .luxury-glow-card {
+    animation: luxury-glow-breath 3.5s ease-in-out infinite;
+  }
+
+  .luxury-float {
+    animation: luxury-float-card 4s ease-in-out infinite;
+  }
+
+  .luxury-shimmer-overlay {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .luxury-shimmer-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 100%
+    );
+    animation: luxury-shimmer-sweep 3s infinite;
+    pointer-events: none;
+  }
 }

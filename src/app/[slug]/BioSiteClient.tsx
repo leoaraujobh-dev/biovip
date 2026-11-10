@@ -34,6 +34,7 @@ import {
 import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
 import { getBioSite, trackLead } from '@/services/biositeService'
+import BioSiteScrollReveal from '@/components/BioSiteScrollReveal'
 
 interface BioSiteProps {
   slug: string
@@ -692,11 +693,11 @@ export default function BioSiteClient({
         </div>
 
         {/* 3. Retrato de Estúdio com Dissolução Orgânica */}
-        <div className="relative w-full h-[375px] sm:h-[420px] overflow-hidden -mt-7 select-none shrink-0">
+        <div className="relative w-full h-[375px] sm:h-[420px] overflow-hidden -mt-7 select-none shrink-0 animate-hero-luxury">
           <img
             src={effectivePhoto}
             alt={effectiveName}
-            className="w-full h-full object-cover object-top"
+            className="w-full h-full object-cover object-top transition-transform duration-1000 ease-out"
           />
           {/* Fusão Orgânica nos 40% Inferiores */}
           <div
@@ -737,13 +738,13 @@ export default function BioSiteClient({
         </div>
 
         {/* 4. Quick Action Bar (WhatsApp, Instagram, Agenda) */}
-        <div className="px-5 pt-3 pb-2 flex items-center justify-center gap-2">
+        <BioSiteScrollReveal direction="up" delay={60} className="px-5 pt-3 pb-2 flex items-center justify-center gap-2">
           <a
             href={`https://wa.me/${cleanWhatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => handleTrackLead('Barra Rápida WhatsApp')}
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
             style={{
               backgroundColor: `${palette.card}cc`,
               borderColor: `${palette.accent}33`,
@@ -757,7 +758,7 @@ export default function BioSiteClient({
             href="https://instagram.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
             style={{
               backgroundColor: `${palette.card}cc`,
               borderColor: `${palette.accent}33`,
@@ -770,7 +771,7 @@ export default function BioSiteClient({
           <button
             type="button"
             onClick={() => setIsQuizOpen(true)}
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
             style={{
               backgroundColor: palette.accent,
               borderColor: 'rgba(255,255,255,0.4)',
@@ -780,11 +781,11 @@ export default function BioSiteClient({
             <Calendar className="w-3.5 h-3.5" />
             <span>Agendar</span>
           </button>
-        </div>
+        </BioSiteScrollReveal>
 
         {/* 5. Gatilho de Escassez & Urgência com Cronômetro Dinâmico */}
         {urgency?.enabled && (
-          <div className="px-5 pt-2 pb-2">
+          <BioSiteScrollReveal direction="scale" delay={80} className="px-5 pt-2 pb-2">
             <div
               className="p-3 rounded-2xl border flex items-center justify-between text-xs"
               style={{
@@ -807,32 +808,33 @@ export default function BioSiteClient({
                 {formattedTimer}
               </div>
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 6. Frase de Fechamento / Assinatura Cursiva */}
-        <div className="px-6 py-2 text-center text-xs italic opacity-75 font-serif">
+        <BioSiteScrollReveal direction="fade" delay={100} className="px-6 py-2 text-center text-xs italic opacity-75 font-serif">
           "{bio}"
-        </div>
+        </BioSiteScrollReveal>
 
         {/* 7. Botões Nobres de Ação */}
-        <div id="botoes" className="px-5 pt-2 pb-4 space-y-2.5 relative z-10 flex flex-col justify-start">
-          {/* Subpáginas do Plano Pro */}
-          {modelData?.subpages && modelData.subpages.length > 0 && (
-            <div className="flex items-center justify-center gap-1.5 pb-1 flex-wrap">
-              {modelData.subpages.map((sp: any) => (
-                <Link
-                  key={sp.slug}
-                  href={`/${slug}/${sp.slug}`}
-                  className="px-2.5 py-1 rounded-full text-[9px] font-mono tracking-wider uppercase border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition flex items-center gap-1 active:scale-95 shadow-sm"
-                  style={{ color: palette.accent }}
-                >
-                  <Sparkles className="w-2.5 h-2.5" />
-                  {sp.title.split(' ')[0]}
-                </Link>
-              ))}
-            </div>
-          )}
+        <BioSiteScrollReveal direction="up" delay={120}>
+          <div id="botoes" className="px-5 pt-2 pb-4 space-y-2.5 relative z-10 flex flex-col justify-start">
+            {/* Subpáginas do Plano Pro */}
+            {modelData?.subpages && modelData.subpages.length > 0 && (
+              <div className="flex items-center justify-center gap-1.5 pb-1 flex-wrap">
+                {modelData.subpages.map((sp: any) => (
+                  <Link
+                    key={sp.slug}
+                    href={`/${slug}/${sp.slug}`}
+                    className="px-2.5 py-1 rounded-full text-[9px] font-mono tracking-wider uppercase border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition flex items-center gap-1 active:scale-95 shadow-sm"
+                    style={{ color: palette.accent }}
+                  >
+                    <Sparkles className="w-2.5 h-2.5" />
+                    {sp.title.split(' ')[0]}
+                  </Link>
+                ))}
+              </div>
+            )}
 
           {buttonsToRender.map((btn: any) => {
             const isHigh = !!btn.isHighlighted
@@ -946,11 +948,12 @@ export default function BioSiteClient({
               </a>
             )
           })}
-        </div>
+          </div>
+        </BioSiteScrollReveal>
 
         {/* 8. Botão Chamativo de Triagem Anti-Curiosos (Quiz VIP) */}
         {quiz?.enabled && (
-          <div className="px-5 py-2">
+          <BioSiteScrollReveal direction="up" delay={130} className="px-5 py-2">
             <button
               type="button"
               onClick={() => setIsQuizOpen(true)}
@@ -978,12 +981,12 @@ export default function BioSiteClient({
               </div>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" style={{ color: palette.accent }} />
             </button>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 9. Métricas & Prova Social */}
         {metrics && metrics.length > 0 && (
-          <div className="px-5 py-3">
+          <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3">
             <div
               className="p-4 rounded-2xl border grid grid-cols-3 gap-2 text-center"
               style={{
@@ -1005,12 +1008,12 @@ export default function BioSiteClient({
                 </div>
               ))}
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 10. Como Funciona (Jornada em 3 Passos) */}
         {howItWorks && howItWorks.length > 0 && (
-          <div className="px-5 py-3 space-y-2">
+          <BioSiteScrollReveal direction="up" delay={120} className="px-5 py-3 space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: palette.accent }} />
               <h3 className="text-[11px] font-mono uppercase tracking-widest font-bold opacity-80">
@@ -1044,12 +1047,13 @@ export default function BioSiteClient({
                 </div>
               ))}
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 11. Catálogo de Serviços Interativo */}
         {servicesCatalog?.enabled && servicesCatalog.items && servicesCatalog.items.length > 0 && (
-          <div id="catalogo" className="px-5 py-4 space-y-3">
+          <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-4 space-y-3">
+            <div id="catalogo" className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <span
@@ -1182,12 +1186,13 @@ export default function BioSiteClient({
                 <span>Espaço VIP & Café</span>
               </div>
             </div>
-          </div>
+            </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 12. Galeria de Fotos / Portfólio (Smart Masonry) */}
         {modelData?.galleryPhotosList && modelData.galleryPhotosList.length > 0 && (
-          <div className="px-5 py-3 space-y-2">
+          <BioSiteScrollReveal direction="scale" delay={100} className="px-5 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80">
                 PORTFÓLIO & ESTRUTURA VIP
@@ -1214,12 +1219,12 @@ export default function BioSiteClient({
                 </div>
               ))}
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 13. Localização & GPS com "Aberto Agora" */}
         {locationInfo?.enabled && (
-          <div className="px-5 py-3 space-y-2">
+          <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <div
               className="p-4 rounded-2xl border space-y-3"
               style={{
@@ -1290,12 +1295,12 @@ export default function BioSiteClient({
                 </button>
               </div>
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 14. Depoimentos de Clientes (Google Meu Negócio) */}
         {testimonials && testimonials.length > 0 && (
-          <div className="px-5 py-3 space-y-2">
+          <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80">
                 AVALIAÇÕES NO GOOGLE
@@ -1309,7 +1314,7 @@ export default function BioSiteClient({
               {testimonials.map((t: any, idx: number) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-2xl border space-y-1.5"
+                  className="p-3.5 rounded-2xl border space-y-1.5 transition-all duration-300 hover:border-white/30"
                   style={{
                     backgroundColor: `${palette.card}80`,
                     borderColor: `${palette.accent}20`
@@ -1330,12 +1335,12 @@ export default function BioSiteClient({
                 </div>
               ))}
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 15. Sobre a Especialista & Nosso Espaço */}
         {aboutMe?.enabled && (
-          <div className="px-5 py-3 space-y-2">
+          <BioSiteScrollReveal direction="fade" delay={100} className="px-5 py-3 space-y-2">
             <div
               className="p-4 rounded-2xl border space-y-2"
               style={{
@@ -1355,12 +1360,12 @@ export default function BioSiteClient({
                 </div>
               )}
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
         {faq && faq.length > 0 && (
-          <div className="px-5 py-3 space-y-2">
+          <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-1">
               DÚVIDAS FREQUENTES
             </span>
@@ -1385,7 +1390,7 @@ export default function BioSiteClient({
                       {isOpen ? <ChevronUp className="w-3.5 h-3.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 shrink-0" />}
                     </button>
                     {isOpen && (
-                      <div className="px-3 pb-3 pt-0 text-[10px] text-stone-400 font-sans leading-relaxed border-t border-white/5">
+                      <div className="px-3 pb-3 pt-0 text-[10px] text-stone-400 font-sans leading-relaxed border-t border-white/5 animate-fade-in">
                         {item.answer}
                       </div>
                     )}
@@ -1393,11 +1398,11 @@ export default function BioSiteClient({
                 )
               })}
             </div>
-          </div>
+          </BioSiteScrollReveal>
         )}
 
         {/* 17. Ações Mobile de Rodapé: Salvar Contato (.vcf) e Atalho */}
-        <div className="px-5 pt-3 pb-4 space-y-2">
+        <BioSiteScrollReveal direction="up" delay={80} className="px-5 pt-3 pb-4 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -1416,10 +1421,10 @@ export default function BioSiteClient({
               <span>Compartilhar</span>
             </button>
           </div>
-        </div>
+        </BioSiteScrollReveal>
 
         {/* 18. Assinatura e Monograma de Rodapé */}
-        <div className="pt-2 pb-6 text-center flex flex-col items-center">
+        <BioSiteScrollReveal direction="fade" delay={120} className="pt-2 pb-6 text-center flex flex-col items-center">
           <div
             className="w-16 h-px mb-2 opacity-40"
             style={{ backgroundColor: palette.accent }}
@@ -1439,7 +1444,7 @@ export default function BioSiteClient({
           >
             ✨ Desenvolvido com padrão BioVip
           </Link>
-        </div>
+        </BioSiteScrollReveal>
 
         {/* Barra Flutuante de Compartilhamento no Topo */}
         <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
