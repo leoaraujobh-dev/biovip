@@ -443,7 +443,9 @@ export default function StarterClient() {
       localStorage.setItem('biovip_user_site', JSON.stringify(siteData))
       await saveBioSite(slug, siteData)
 
-      // 4. Salvar assinatura no sistema
+      // 4. Salvar assinatura no sistema com status 'pendente' e prazo de 48h
+      const createdAtIso = new Date().toISOString()
+      const deadline48hIso = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
       const newSub = {
         id: `sub-${Date.now().toString().slice(-4)}`,
         clientName: effName,
@@ -456,22 +458,25 @@ export default function StarterClient() {
         planName: planoParam === 'starter' ? 'Iniciante' : planoParam === 'agency' ? 'Agência' : 'Profissional',
         cycle: 'mensal',
         amount: planoParam === 'starter' ? 29 : planoParam === 'agency' ? 199 : 79,
-        status: 'ativa',
+        status: 'pendente',
+        paymentStatus: 'pendente',
+        createdAt: createdAtIso,
+        deadline48h: deadline48hIso,
         paymentMethod: 'pix',
         startDate: new Date().toISOString().split('T')[0],
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         bioSiteUrl: `https://biovip.com.br/${slug}`,
         viewsCount: 1,
         clicksCount: 0,
-        notes: 'Cadastrado no Construtor Online com conta e senha criadas.',
+        notes: 'Bio Site criado com pagamento pendente. Tolerância de 48h para regularização.',
         payments: []
       }
       const existingSubsRaw = localStorage.getItem('biovip_subscriptions')
       const currentSubs = existingSubsRaw ? JSON.parse(existingSubsRaw) : []
       localStorage.setItem('biovip_subscriptions', JSON.stringify([newSub, ...currentSubs]))
 
-      // 5. Redirecionar para a ÁREA DE EDIÇÃO DO BIOSITE
-      router.push(`/conta?edit=${slug}`)
+      // 5. Redirecionar para a ÁREA DE EDIÇÃO DO BIOSITE com aviso de pagamento pendente
+      router.push(`/conta?edit=${slug}&novo=true`)
     } catch (err: any) {
       console.error(err)
       setAccountError(err?.message || 'Erro ao criar conta. Tente novamente.')

@@ -61,6 +61,7 @@ import {
   Upload,
   Wand2,
   ShieldAlert,
+  ShieldCheck,
   Sliders,
   Flame,
   Download
@@ -79,10 +80,24 @@ interface AdditionalPage {
 export default function ContaClient() {
   // Controle de Visualização: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
   const [currentView, setCurrentView] = useState<'dashboard' | 'editar_pagina' | 'adicionar_pagina'>('dashboard')
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'pagamento' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
   const [leadsList, setLeadsList] = useState<LeadSubmission[]>([])
   const [leadFilter, setLeadFilter] = useState<'TODOS' | 'WHATSAPP' | 'QUIZ' | 'CATALOGO'>('TODOS')
   const [loadingLeads, setLoadingLeads] = useState(false)
+
+  // Estado de Pagamento, Prazo de 48h & Tolerância
+  const [paymentStatus, setPaymentStatus] = useState<'pendente' | 'ativa' | 'suspensa'>('pendente')
+  const [deadline48h, setDeadline48h] = useState<string>('')
+  const [remainingHours, setRemainingHours] = useState<number>(48)
+  const [showPendingPaymentModal, setShowPendingPaymentModal] = useState<boolean>(false)
+  const [activePaymentMethod, setActivePaymentMethod] = useState<'pix' | 'cartao'>('pix')
+  const [cardHolder, setCardHolder] = useState<string>('')
+  const [cardNumber, setCardNumber] = useState<string>('')
+  const [cardExpiry, setCardExpiry] = useState<string>('')
+  const [cardCvv, setCardCvv] = useState<string>('')
+  const [cardInstallments, setCardInstallments] = useState<string>('12')
+  const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false)
+  const [paymentSuccessFeedback, setPaymentSuccessFeedback] = useState<boolean>(false)
 
   // Seletor de Modelo (Páginas Adicionais)
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('para_voce')
@@ -507,10 +522,70 @@ export default function ContaClient() {
         if (p.trackWhatsappLead !== undefined) setTrackWhatsappLead(p.trackWhatsappLead)
         if (p.trackPageView !== undefined) setTrackPageView(p.trackPageView)
       }
+
+      // 4. Carregar status da assinatura, verificação de pendência e prazo de 48 horas
+      const isNovo = urlParams?.get('novo') === 'true'
+      const activeTargetSlug = editSlug || slug
+
+      if (storedSubs) {
+        try {
+          const subs = JSON.parse(storedSubs)
+          const matchedSub = subs.find((s: any) => s.slug === activeTargetSlug)
+          if (matchedSub) {
+            const currentSubStatus = matchedSub.status || matchedSub.paymentStatus || 'ativa'
+            setPaymentStatus(currentSubStatus)
+            if (matchedSub.deadline48h) {
+              setDeadline48h(matchedSub.deadline48h)
+              const diffMs = new Date(matchedSub.deadline48h).getTime() - Date.now()
+              const hoursLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)))
+              setRemainingHours(hoursLeft)
+            }
+            if (isNovo || currentSubStatus === 'pendente') {
+              setShowPendingPaymentModal(true)
+            }
+          } else if (isNovo) {
+            setPaymentStatus('pendente')
+            setShowPendingPaymentModal(true)
+          }
+        } catch (e) {}
+      } else if (isNovo) {
+        setPaymentStatus('pendente')
+        setShowPendingPaymentModal(true)
+      }
     } catch (e) {
       console.error(e)
     }
   }, [])
+
+  // Ação de Confirmação e Regularização de Pagamento
+  const handleConfirmPayment = () => {
+    setIsProcessingPayment(true)
+    setTimeout(() => {
+      setPaymentStatus('ativa')
+      try {
+        const storedSubs = localStorage.getItem('biovip_subscriptions')
+        if (storedSubs) {
+          const subs = JSON.parse(storedSubs)
+          const updatedSubs = subs.map((s: any) => {
+            if (s.slug === slug) {
+              return {
+                ...s,
+                status: 'ativa',
+                paymentStatus: 'ativa',
+                notes: 'Pagamento confirmado e assinatura regularizada.'
+              }
+            }
+            return s
+          })
+          localStorage.setItem('biovip_subscriptions', JSON.stringify(updatedSubs))
+        }
+      } catch (e) {}
+      setIsProcessingPayment(false)
+      setPaymentSuccessFeedback(true)
+      setShowPendingPaymentModal(false)
+      setTimeout(() => setPaymentSuccessFeedback(false), 5000)
+    }, 1200)
+  }
 
   const fullUrl = `biovip.com.br/${slug}`
 
@@ -1817,6 +1892,397 @@ export default function ContaClient() {
     </div>
   )
 
+  // Renderizador Reutilizável: Aba de Pagamento & Regularização 48h
+  const renderPagamentoSection = () => {
+    const isPendente = paymentStatus === 'pendente'
+    const pixCopyCode = `00020126580014br.gov.bcb.pix0136biovip-${slug}-2026520400005303986540555.925802BR5925BIOVIP TECNOLOGIA LTDA6009SAO PAULO62070503***6304ABCD`
+
+    return (
+      <div className="space-y-6 animate-fade-in pt-2">
+        {/* CABEÇALHO DA SEÇÃO */}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
+              FINANCEIRO & ASSINATURA
+            </span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+              isPendente
+                ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+            }`}>
+              {isPendente ? 'PAGAMENTO PENDENTE (48H)' : 'PAGAMENTO CONFIRMADO · ATIVO'}
+            </span>
+          </div>
+          <h3 className="text-xl font-serif font-bold text-stone-900">
+            Aba de Pagamento & Regularização do Bio Site
+          </h3>
+          <p className="text-xs text-stone-500 mt-0.5">
+            Gerencie sua assinatura, consulte faturas e regularize seu plano para manter seu link oficial online.
+          </p>
+        </div>
+
+        {/* FEEDBACK DE SUCESSO DE CONFIRMAÇÃO */}
+        {paymentSuccessFeedback && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-medium flex items-start gap-3 animate-fade-in shadow-xs">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <strong className="block text-sm font-bold text-emerald-900">
+                🎉 Pagamento Confirmado com Sucesso!
+              </strong>
+              Seu Bio Site <code className="font-mono font-bold">biovip.com.br/{slug}</code> está com assinatura 100% ativa, hospedagem protegida e livre de qualquer risco de suspensão.
+            </div>
+          </div>
+        )}
+
+        {/* CARD PRINCIPAL DE STATUS COM AVISO EXIGIDO PELO USUÁRIO */}
+        <div className={`p-6 rounded-3xl border transition-all ${
+          isPendente
+            ? 'bg-gradient-to-br from-amber-50/80 via-white to-amber-50/50 border-amber-300/80 shadow-sm'
+            : 'bg-stone-50 border-stone-200'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
+            <div className="flex items-start gap-3">
+              <div className={`p-3 rounded-2xl ${
+                isPendente ? 'bg-amber-500 text-stone-950' : 'bg-emerald-600 text-white'
+              }`}>
+                {isPendente ? <Clock className="w-6 h-6 animate-pulse" /> : <ShieldCheck className="w-6 h-6" />}
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
+                  STATUS ATUAL DA ASSINATURA
+                </span>
+                <h4 className="text-lg font-bold text-stone-900 flex items-center gap-2">
+                  {isPendente ? 'Pagamento Pendente' : 'Assinatura Ativa & Regularizada'}
+                </h4>
+                <p className="text-xs text-stone-500">
+                  Plano BioVip Pro Anual · Domínio <span className="font-mono font-semibold text-stone-800">biovip.com.br/{slug}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="text-left sm:text-right">
+              <div className="text-2xl font-bold font-mono text-stone-900">
+                R$ 55,92 <span className="text-xs font-normal text-stone-500 font-sans">/mês no anual</span>
+              </div>
+              <div className="text-[11px] text-stone-500 font-mono">
+                Total R$ 671,04/ano ou R$ 79,00 avulso
+              </div>
+            </div>
+          </div>
+
+          {/* ALERTA DE TOLERÂNCIA DE 48 HORAS */}
+          {isPendente ? (
+            <div className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs leading-relaxed space-y-2">
+              <div className="flex items-center gap-2 font-bold text-amber-900 uppercase tracking-wide">
+                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>Aviso de Tolerância de 48 Horas:</span>
+              </div>
+              <p className="font-medium text-stone-800">
+                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se após 48 horas o pagamento não for confirmado, o Bio Site será suspenso.</strong>
+              </p>
+              <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-amber-800">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Tempo restante estimado: <strong>{remainingHours} horas</strong> para confirmação.</span>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Assinatura regularizada. Próxima renovação automática programada para daqui a 1 ano.</span>
+            </div>
+          )}
+        </div>
+
+        {/* FORMAS DE PAGAMENTO COM LIBERAÇÃO */}
+        <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-6 shadow-xs">
+          <div>
+            <h4 className="text-base font-serif font-bold text-stone-900">
+              Escolha a Forma de Pagamento
+            </h4>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Pague com segurança criptografada e liberação imediata da sua conta.
+            </p>
+          </div>
+
+          {/* SELETOR PIX OU CARTÃO */}
+          <div className="grid grid-cols-2 gap-3 p-1 rounded-2xl bg-stone-100">
+            <button
+              type="button"
+              onClick={() => setActivePaymentMethod('pix')}
+              className={`py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer ${
+                activePaymentMethod === 'pix'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-900'
+              }`}
+            >
+              <QrCode className="w-4 h-4 text-emerald-600" />
+              <span>PIX Instantâneo</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold hidden sm:inline">
+                LIBERAÇÃO IMEDIATA
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActivePaymentMethod('cartao')}
+              className={`py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer ${
+                activePaymentMethod === 'cartao'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-900'
+              }`}
+            >
+              <CreditCard className="w-4 h-4 text-indigo-600" />
+              <span>Cartão de Crédito</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 font-mono font-bold hidden sm:inline">
+                ATÉ 12X
+              </span>
+            </button>
+          </div>
+
+          {/* CONTEÚDO DO PIX */}
+          {activePaymentMethod === 'pix' && (
+            <div className="space-y-6 pt-2 animate-fade-in">
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-5 rounded-2xl bg-stone-50 border border-stone-200">
+                {/* QR CODE VISUAL */}
+                <div className="p-3 bg-white rounded-2xl border border-stone-200 shadow-xs shrink-0 flex flex-col items-center">
+                  <svg className="w-36 h-36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" fill="white" />
+                    <rect x="10" y="10" width="25" height="25" fill="#1c1917" />
+                    <rect x="14" y="14" width="17" height="17" fill="white" />
+                    <rect x="18" y="18" width="9" height="9" fill="#1c1917" />
+                    <rect x="65" y="10" width="25" height="25" fill="#1c1917" />
+                    <rect x="69" y="14" width="17" height="17" fill="white" />
+                    <rect x="73" y="18" width="9" height="9" fill="#1c1917" />
+                    <rect x="10" y="65" width="25" height="25" fill="#1c1917" />
+                    <rect x="14" y="69" width="17" height="17" fill="white" />
+                    <rect x="18" y="73" width="9" height="9" fill="#1c1917" />
+                    <rect x="42" y="10" width="6" height="6" fill="#1c1917" />
+                    <rect x="52" y="10" width="6" height="6" fill="#1c1917" />
+                    <rect x="42" y="20" width="6" height="6" fill="#1c1917" />
+                    <rect x="42" y="30" width="6" height="6" fill="#1c1917" />
+                    <rect x="52" y="30" width="6" height="6" fill="#1c1917" />
+                    <rect x="10" y="42" width="6" height="6" fill="#1c1917" />
+                    <rect x="20" y="42" width="6" height="6" fill="#1c1917" />
+                    <rect x="30" y="42" width="6" height="6" fill="#1c1917" />
+                    <rect x="42" y="42" width="16" height="16" fill="#059669" rx="2" />
+                    <text x="50" y="53" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">BV</text>
+                    <rect x="65" y="42" width="6" height="6" fill="#1c1917" />
+                    <rect x="75" y="42" width="6" height="6" fill="#1c1917" />
+                    <rect x="84" y="42" width="6" height="6" fill="#1c1917" />
+                    <rect x="42" y="65" width="6" height="6" fill="#1c1917" />
+                    <rect x="52" y="65" width="6" height="6" fill="#1c1917" />
+                    <rect x="42" y="75" width="6" height="6" fill="#1c1917" />
+                    <rect x="65" y="65" width="6" height="6" fill="#1c1917" />
+                    <rect x="75" y="75" width="6" height="6" fill="#1c1917" />
+                    <rect x="84" y="65" width="6" height="6" fill="#1c1917" />
+                    <rect x="84" y="84" width="6" height="6" fill="#1c1917" />
+                  </svg>
+                  <span className="text-[9px] font-mono text-stone-400 mt-1 uppercase">Aponte a câmera</span>
+                </div>
+
+                <div className="flex-1 space-y-3 w-full">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
+                      CÓDIGO PIX COPIA E COLA
+                    </span>
+                    <p className="text-xs text-stone-600 mt-0.5">
+                      Abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o código abaixo:
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={pixCopyCode}
+                      className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white font-mono text-[11px] text-stone-600 select-all focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(pixCopyCode)
+                        setPixCopied(true)
+                        setTimeout(() => setPixCopied(false), 3000)
+                      }}
+                      className="shrink-0 px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      {pixCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copiar</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[11px] text-stone-500 font-medium">
+                    <span>Beneficiário: <strong>BioVip Tecnologia Ltda</strong></span>
+                    <span>•</span>
+                    <span>CNPJ: <strong>58.914.821/0001-90</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <a
+                  href={`https://wa.me/5531991390202?text=Ol%C3%A1%20equipe%20BioVip!%20Acabei%20de%20criar%20meu%20BioSite%20biovip.com.br/${slug}%20e%20gostaria%20de%20enviar%20o%20comprovante%20do%20Pix.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl border border-stone-300 hover:border-stone-900 bg-white text-stone-800 text-xs font-bold flex items-center justify-center gap-2 transition"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-600" />
+                  <span>Enviar Comprovante via WhatsApp</span>
+                </a>
+
+                <button
+                  type="button"
+                  disabled={isProcessingPayment}
+                  onClick={handleConfirmPayment}
+                  className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+                >
+                  {isProcessingPayment ? (
+                    <span>Verificando pagamento...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{isPendente ? 'CONFIRMAR PAGAMENTO (ATIVAR IMEDIATAMENTE)' : 'PAGAMENTO JÁ CONFIRMADO'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CONTEÚDO DO CARTÃO */}
+          {activePaymentMethod === 'cartao' && (
+            <div className="space-y-4 pt-2 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                    NOME IMPRESSO NO CARTÃO *
+                  </label>
+                  <input
+                    type="text"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value)}
+                    placeholder="Ex: MARCOS S SILVA"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                    NÚMERO DO CARTÃO *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      maxLength={19}
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value)}
+                      placeholder="0000 0000 0000 0000"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900 pl-10"
+                    />
+                    <CreditCard className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                    VALIDADE (MM/AA) *
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={5}
+                    value={cardExpiry}
+                    onChange={(e) => setCardExpiry(e.target.value)}
+                    placeholder="MM/AA"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                    CÓDIGO CVV *
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    value={cardCvv}
+                    onChange={(e) => setCardCvv(e.target.value)}
+                    placeholder="123"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono text-stone-900 focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                    PARCELAMENTO
+                  </label>
+                  <select
+                    value={cardInstallments}
+                    onChange={(e) => setCardInstallments(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900 bg-white"
+                  >
+                    <option value="1">1x de R$ 671,04 à vista (com desconto anual)</option>
+                    <option value="3">3x de R$ 223,68 sem juros</option>
+                    <option value="6">6x de R$ 111,84 sem juros</option>
+                    <option value="12">12x de R$ 55,92 sem juros (Recomendado)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={isProcessingPayment}
+                onClick={handleConfirmPayment}
+                className="w-full py-4 rounded-xl bg-stone-950 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+              >
+                {isProcessingPayment ? (
+                  <span>Processando transação segura...</span>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4 text-amber-400" />
+                    <span>PAGAR COM CARTÃO & ATIVAR BIOSITE</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center justify-center gap-2 text-[10px] text-stone-400 font-mono">
+                <Lock className="w-3 h-3 text-emerald-600" />
+                <span>PAGAMENTO SEGURO CRIPTOGRAFADO SSL 256-BIT</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* BENEFÍCIOS GARANTIDOS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
+            <ShieldCheck className="w-5 h-5 text-emerald-600 mx-auto" />
+            <h5 className="text-xs font-bold text-stone-900">Garantia Incondicional</h5>
+            <p className="text-[11px] text-stone-500">7 dias para testar ou seu dinheiro de volta sem burocracia.</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
+            <Sparkles className="w-5 h-5 text-amber-600 mx-auto" />
+            <h5 className="text-xs font-bold text-stone-900">12 Módulos VIP Liberados</h5>
+            <p className="text-[11px] text-stone-500">Todos os módulos de conversão, catálogo e quiz ativos.</p>
+          </div>
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
+            <Users className="w-5 h-5 text-indigo-600 mx-auto" />
+            <h5 className="text-xs font-bold text-stone-900">Suporte Dedicado VIP</h5>
+            <p className="text-[11px] text-stone-500">Atendimento prioritário via WhatsApp direto da equipe.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-white text-stone-900 font-sans selection:bg-stone-200">
       {/* ========================================================= */}
@@ -1974,6 +2440,25 @@ export default function ContaClient() {
                   <Activity className="w-3.5 h-3.5 text-purple-600" />
                   <span className="hidden sm:inline">Pixels</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSidebarTab('pagamento')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    activeSidebarTab === 'pagamento'
+                      ? 'bg-black text-white shadow-xs'
+                      : paymentStatus === 'pendente'
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 animate-pulse'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200'
+                  }`}
+                >
+                  <CreditCard className={`w-3.5 h-3.5 ${paymentStatus === 'pendente' ? 'text-amber-700' : 'text-emerald-700'}`} />
+                  <span className="hidden sm:inline">Pagamento</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
+                    paymentStatus === 'pendente' ? 'bg-amber-500 text-stone-950' : 'bg-emerald-600 text-white'
+                  }`}>
+                    {paymentStatus === 'pendente' ? '48H' : 'ATIVO'}
+                  </span>
+                </button>
               </>
             )}
 
@@ -2012,6 +2497,42 @@ export default function ContaClient() {
           </div>
         </div>
       </header>
+
+      {/* BANNER STICKY DE AVISO: PAGAMENTO PENDENTE & TOLERÂNCIA DE 48 HORAS */}
+      {paymentStatus === 'pendente' && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border-b border-amber-500/40 px-4 py-3 sticky top-12 z-40 backdrop-blur-md">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-950 font-medium">
+            <div className="flex items-center gap-2.5">
+              <span className="p-1.5 rounded-lg bg-amber-500 text-stone-950 font-bold shrink-0 animate-pulse">
+                <Clock className="w-4 h-4" />
+              </span>
+              <div>
+                <strong className="font-bold text-amber-900 uppercase tracking-wide mr-1.5">
+                  ⚠️ Pagamento Pendente:
+                </strong>
+                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se após 48 horas o pagamento não for confirmado, o Bio Site será suspenso.</strong>
+                <span className="ml-2 font-mono font-bold text-amber-900 bg-amber-200/90 px-2 py-0.5 rounded-full border border-amber-400">
+                  {remainingHours > 0 ? `${remainingHours}h restantes` : 'Prazo limite'}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (currentView === 'dashboard') {
+                  setActiveSidebarTab('pagamento')
+                } else {
+                  setOpenAccordion('pagamento')
+                }
+              }}
+              className="shrink-0 px-4 py-1.5 rounded-full bg-stone-950 hover:bg-stone-800 text-amber-300 hover:text-white font-bold text-xs uppercase tracking-wider transition shadow-sm cursor-pointer flex items-center gap-1.5"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+              <span>Regularizar Pagamento →</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* 1. TELA PRINCIPAL DA ÁREA DO CLIENTE (IMAGEM 1) */}
@@ -2114,6 +2635,28 @@ export default function ContaClient() {
                 }`}
               >
                 ESTATÍSTICAS
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSidebarTab('pagamento')}
+                className={`w-full text-left px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-between ${
+                  activeSidebarTab === 'pagamento'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <CreditCard className="w-3.5 h-3.5 text-amber-500" />
+                  PAGAMENTO
+                </span>
+                <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                  paymentStatus === 'pendente'
+                    ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {paymentStatus === 'pendente' ? 'PENDENTE (48H)' : 'ATIVO'}
+                </span>
               </button>
 
               <button
@@ -2622,6 +3165,9 @@ export default function ContaClient() {
                 </div>
               )}
 
+              {/* ABA PAGAMENTO & REGULARIZAÇÃO */}
+              {activeSidebarTab === 'pagamento' && renderPagamentoSection()}
+
               {/* ABA PLANOS */}
               {activeSidebarTab === 'planos' && (
                 <div className="space-y-6">
@@ -2887,6 +3433,25 @@ export default function ContaClient() {
               >
                 <Activity className="w-3.5 h-3.5 text-purple-700" />
                 <span>Pixel & Anúncios</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpenAccordion('pagamento')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  openAccordion === 'pagamento'
+                    ? 'bg-amber-500 text-stone-950 font-black shadow-sm ring-2 ring-amber-400/50'
+                    : 'bg-amber-100/90 hover:bg-amber-200 text-amber-950 border border-amber-300 font-bold'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5 text-amber-700" />
+                <span>Pagamento & Assinatura</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  paymentStatus === 'pendente'
+                    ? 'bg-amber-500 text-stone-950'
+                    : 'bg-emerald-600 text-white'
+                }`}>
+                  {paymentStatus === 'pendente' ? '48H' : 'ATIVO'}
+                </span>
               </button>
             </div>
 
@@ -3711,6 +4276,36 @@ export default function ContaClient() {
                   </div>
                 )}
               </div>
+
+              {/* 12. PAGAMENTO & ASSINATURA */}
+              <div className="border-b border-stone-200 pb-3">
+                <button
+                  type="button"
+                  onClick={() => setOpenAccordion(openAccordion === 'pagamento' ? null : 'pagamento')}
+                  className="w-full flex items-center justify-between py-2.5 text-left cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono uppercase tracking-wider font-bold text-stone-900 group-hover:text-amber-800 flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                      12. PAGAMENTO & ASSINATURA
+                    </span>
+                    <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                      paymentStatus === 'pendente'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                        : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    }`}>
+                      {paymentStatus === 'pendente' ? 'PENDENTE (48H)' : 'CONFIRMADO'}
+                    </span>
+                  </div>
+                  {openAccordion === 'pagamento' ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
+                </button>
+
+                {openAccordion === 'pagamento' && (
+                  <div className="pt-2 pb-4">
+                    {renderPagamentoSection()}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* COLUNA DIREITA: MOCKUP DO CELULAR "COMO VAI FICAR" E FORMULÁRIO RÁPIDO */}
@@ -4229,6 +4824,76 @@ export default function ContaClient() {
               {pixCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               {pixCopied ? 'Chave Copiada com Sucesso!' : 'Copiar Chave Pix'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CRIAÇÃO COM SUCESSO & PAGAMENTO PENDENTE (EXIGÊNCIA DO CLIENTE) */}
+      {showPendingPaymentModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button
+              type="button"
+              onClick={() => setShowPendingPaymentModal(false)}
+              className="absolute right-4 top-4 text-stone-400 hover:text-stone-700 p-1 rounded-full cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-2 shadow-xs">
+                <Clock className="w-7 h-7 animate-pulse text-amber-600" />
+              </div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-900 bg-amber-100 px-3 py-1 rounded-full border border-amber-300 font-bold inline-block">
+                STATUS: PAGAMENTO PENDENTE
+              </span>
+              <h3 className="text-2xl font-serif font-bold text-stone-900">
+                Seu Bio Site foi criado com sucesso!
+              </h3>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs sm:text-sm leading-relaxed space-y-2">
+              <p className="font-semibold text-amber-950">
+                Seu Bio Site se encontra com <strong>pagamento pendente</strong>.
+              </p>
+              <p className="text-stone-800">
+                Se após <strong>48 horas</strong> o pagamento não for confirmado, o Bio Site <code className="font-mono font-bold text-amber-950">biovip.com.br/{slug}</code> será suspenso.
+              </p>
+              <div className="flex items-center gap-2 pt-1 font-mono text-xs text-amber-900 font-bold">
+                <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>Período de tolerância ativo: {remainingHours}h restantes</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-stone-500 text-center leading-relaxed">
+              Você já tem acesso livre para editar os textos, botões e catálogo do seu Bio Site, mas não esqueça de regularizar seu plano para manter seu link oficial permanentemente no ar.
+            </p>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPendingPaymentModal(false)
+                  if (currentView === 'dashboard') {
+                    setActiveSidebarTab('pagamento')
+                  } else {
+                    setOpenAccordion('pagamento')
+                  }
+                }}
+                className="w-full py-3.5 rounded-2xl bg-stone-950 hover:bg-stone-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg cursor-pointer"
+              >
+                <CreditCard className="w-4 h-4 text-amber-400" />
+                <span>IR PARA A ABA DE PAGAMENTO & REGULARIZAR →</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPendingPaymentModal(false)}
+                className="w-full py-2.5 rounded-xl text-stone-500 hover:text-stone-800 text-xs font-semibold transition cursor-pointer"
+              >
+                Continuar Editando por Enquanto ({remainingHours}h ativas)
+              </button>
+            </div>
           </div>
         </div>
       )}

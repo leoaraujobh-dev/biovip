@@ -5,18 +5,89 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export default function EntrarPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Armazena sessão do cliente
-    sessionStorage.setItem('biovip_client_session', email || 'cliente@biovip.com.br')
-    router.push('/conta')
+    setError(null)
+
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail) {
+      setError('Por favor, informe seu e-mail de acesso ou WhatsApp.')
+      return
+    }
+
+    if (!password) {
+      setError('Por favor, digite sua senha de acesso.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // 1. Procurar nas contas cadastradas localmente
+      const storedUsersRaw = typeof window !== 'undefined' ? localStorage.getItem('biovip_users') : null
+      let matchedUser: any = null
+
+      if (storedUsersRaw) {
+        try {
+          const users = JSON.parse(storedUsersRaw)
+          matchedUser = users.find(
+            (u: any) =>
+              (u.email && u.email.toLowerCase() === cleanEmail) ||
+              (u.phone && u.phone.replace(/\D/g, '') === cleanEmail.replace(/\D/g, ''))
+          )
+        } catch (e) {}
+      }
+
+      // Se encontrou usuário com senha cadastrada, validar
+      if (matchedUser) {
+        if (matchedUser.password && matchedUser.password !== password) {
+          setError('Senha incorreta. Verifique os dados digitados e tente novamente.')
+          setLoading(false)
+          return
+        }
+
+        sessionStorage.setItem('biovip_client_session', matchedUser.email || cleanEmail)
+        if (matchedUser.slug) {
+          router.push(`/conta?edit=${matchedUser.slug}`)
+          return
+        }
+      }
+
+      // 2. Verificar se existe biosite com esse email/slug no Supabase
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { data: siteData } = await supabase
+            .from('biosites')
+            .select('slug, name')
+            .or(`slug.eq.${cleanEmail}`)
+            .maybeSingle()
+
+          if (siteData && siteData.slug) {
+            sessionStorage.setItem('biovip_client_session', cleanEmail)
+            router.push(`/conta?edit=${siteData.slug}`)
+            return
+          }
+        } catch (err) {}
+      }
+
+      // 3. Login de demonstração / padrão caso não haja credencial restrita
+      sessionStorage.setItem('biovip_client_session', cleanEmail)
+      router.push('/conta')
+    } catch (err) {
+      setError('Ocorreu um erro ao processar o login. Tente novamente.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -31,9 +102,16 @@ export default function EntrarPage() {
             </span>
             <h1 className="text-2xl font-serif font-bold text-stone-900">Entrar na sua conta.</h1>
             <p className="text-xs text-stone-500">
-              Bem-vindo de volta. Seus números e seu Bio Site estão aqui dentro.
+              Bem-vindo de volta. Seus leads, métricas e o editor do seu Bio Site estão aqui dentro.
             </p>
           </div>
+
+          {error && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
 
           {/* Botão de Login com Google */}
           <button
@@ -60,7 +138,7 @@ export default function EntrarPage() {
 
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             <div>
-              <label className="block text-stone-600 mb-1 font-medium">E-mail ou WhatsApp</label>
+              <label className="block text-stone-600 mb-1 font-medium">E-mail ou WhatsApp cadastrado</label>
               <input
                 type="text"
                 value={email}
@@ -72,20 +150,40 @@ export default function EntrarPage() {
 
             <div>
               <label className="block text-stone-600 mb-1 font-medium">Senha</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Sua senha"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:border-stone-900 focus:outline-none transition"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Sua senha de acesso"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:border-stone-900 focus:outline-none transition pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-stone-950 hover:bg-stone-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
+              disabled={loading}
+              className="w-full py-3.5 bg-stone-950 hover:bg-stone-800 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
             >
-              Entrar <ArrowRight className="w-3.5 h-3.5" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                  <span>Entrando...</span>
+                </>
+              ) : (
+                <>
+                  <span>Entrar na Minha Área</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </button>
           </form>
 
