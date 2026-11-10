@@ -8,24 +8,28 @@ export interface BioSiteScrollRevealProps {
   delay?: number // ms
   direction?: 'up' | 'down' | 'left' | 'right' | 'fade' | 'scale'
   threshold?: number
+  rootMargin?: string
+  stagger?: boolean
 }
 
 /**
  * Componente de animação moderna orientada a scroll para módulos de BioSite.
- * Utiliza curva de desaceleração estilo Apple (cubic-bezier) e foco progressivo.
+ * Utiliza curva de desaceleração estilo Apple (cubic-bezier) e foco progressivo (blur removal).
  */
-export function BioSiteScrollReveal({
+export default function BioSiteScrollReveal({
   children,
   className = '',
   delay = 0,
   direction = 'up',
-  threshold = 0.12
+  threshold = 0.04,
+  rootMargin = '0px 0px 30px 0px',
+  stagger = false
 }: BioSiteScrollRevealProps) {
   const [isVisible, setIsVisible] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Verificação de suporte a IntersectionObserver e prefers-reduced-motion
+    // Verificação de ambiente e preferência do usuário (acessibilidade)
     if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
       setIsVisible(true)
       return
@@ -33,6 +37,17 @@ export function BioSiteScrollReveal({
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReducedMotion) {
+      setIsVisible(true)
+      return
+    }
+
+    const element = ref.current
+    if (!element) return
+
+    // Se o elemento já estiver na viewport inicial (topo da página), revela imediatamente
+    const rect = element.getBoundingClientRect()
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight
+    if (rect.top <= windowHeight && rect.bottom >= 0) {
       setIsVisible(true)
       return
     }
@@ -48,42 +63,36 @@ export function BioSiteScrollReveal({
       },
       {
         threshold,
-        rootMargin: '0px 0px -30px 0px'
+        rootMargin
       }
     )
 
-    if (ref.current) {
-      observer.observe(ref.current)
-    }
-
-    // Fallback de segurança para garantir exibição garantida
-    const safetyTimer = setTimeout(() => setIsVisible(true), 1200)
+    observer.observe(element)
 
     return () => {
       observer.disconnect()
-      clearTimeout(safetyTimer)
     }
-  }, [threshold])
+  }, [threshold, rootMargin])
 
   const getTransitionClasses = () => {
     if (isVisible) {
-      return 'opacity-100 translate-y-0 translate-x-0 scale-100 blur-0'
+      return 'opacity-100 translate-y-0 translate-x-0 scale-100 blur-0 pointer-events-auto'
     }
 
     switch (direction) {
       case 'up':
-        return 'opacity-0 translate-y-7 scale-[0.985] blur-[2px]'
+        return 'opacity-0 translate-y-8 scale-[0.985] blur-[3px] pointer-events-none'
       case 'down':
-        return 'opacity-0 -translate-y-7 scale-[0.985] blur-[2px]'
+        return 'opacity-0 -translate-y-8 scale-[0.985] blur-[3px] pointer-events-none'
       case 'left':
-        return 'opacity-0 translate-x-7 scale-[0.985] blur-[2px]'
+        return 'opacity-0 translate-x-8 scale-[0.985] blur-[3px] pointer-events-none'
       case 'right':
-        return 'opacity-0 -translate-x-7 scale-[0.985] blur-[2px]'
+        return 'opacity-0 -translate-x-8 scale-[0.985] blur-[3px] pointer-events-none'
       case 'scale':
-        return 'opacity-0 scale-95 blur-[3px]'
+        return 'opacity-0 scale-[0.94] blur-[4px] pointer-events-none'
       case 'fade':
       default:
-        return 'opacity-0 scale-[0.99] blur-[2px]'
+        return 'opacity-0 scale-[0.99] blur-[3px] pointer-events-none'
     }
   }
 
@@ -91,15 +100,15 @@ export function BioSiteScrollReveal({
     <div
       ref={ref}
       style={{
-        transitionDuration: '750ms',
+        transitionDuration: '720ms',
         transitionDelay: `${delay}ms`,
         transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
       }}
-      className={`transition-all transform-gpu will-change-transform ${getTransitionClasses()} ${className}`}
+      className={`transition-all transform-gpu will-change-[transform,opacity,filter] ${getTransitionClasses()} ${
+        stagger ? 'stagger-container' : ''
+      } ${className}`}
     >
       {children}
     </div>
   )
 }
-
-export default BioSiteScrollReveal

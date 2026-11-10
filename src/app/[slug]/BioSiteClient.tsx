@@ -148,6 +148,23 @@ export default function BioSiteClient({
   const [modelData, setModelData] = useState<any>(() => {
     return projects.find(p => p.slug === slug)
   })
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const [isPageMounted, setIsPageMounted] = useState(false)
+
+  // Barra de progresso de leitura suave e montagem com fade-in
+  useEffect(() => {
+    setIsPageMounted(true)
+    const handleScroll = () => {
+      const doc = document.documentElement
+      const total = doc.scrollHeight - window.innerHeight
+      if (total > 0) {
+        const current = (window.scrollY / total) * 100
+        setScrollProgress(Math.min(100, Math.max(0, current)))
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -648,7 +665,9 @@ export default function BioSiteClient({
       style={{ backgroundColor: palette.bg }}
     >
       <div
-        className={`relative w-full max-w-[420px] shadow-2xl overflow-hidden flex flex-col ${
+        className={`relative w-full max-w-[420px] shadow-2xl overflow-hidden flex flex-col transition-opacity duration-500 ${
+          isPageMounted ? 'opacity-100' : 'opacity-0'
+        } ${
           isPreview
             ? 'border-0 rounded-none shadow-none min-h-screen'
             : 'border sm:border-stone-800/80 sm:rounded-[48px]'
@@ -658,6 +677,12 @@ export default function BioSiteClient({
           color: palette.text
         }}
       >
+        {/* Barra de Progresso de Leitura Editorial com Brilho Dourado */}
+        <div
+          className="scroll-progress-line absolute top-0 left-0 h-[2.5px] z-50 transition-all duration-150 pointer-events-none"
+          style={{ width: `${scrollProgress}%` }}
+        />
+
         {/* 1. Barra de Alerta Superior (Announcement) */}
         {announcement?.enabled && (
           <div
@@ -686,9 +711,12 @@ export default function BioSiteClient({
           </div>
         )}
 
-        {/* 2. Topo / Ilha Dinâmica & Registro Oficial */}
+        {/* 2. Topo / Ilha Dinâmica com Status de Presença & Registro Oficial */}
         <div className="relative z-20 pt-3 px-6 flex items-center justify-between text-[10px] font-mono tracking-widest uppercase">
-          <div className="w-16 h-4 bg-black rounded-full" />
+          <div className="w-20 h-4 bg-black rounded-full flex items-center justify-between px-2 shadow-inner border border-white/5 select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[7.5px] font-mono text-stone-300 font-semibold tracking-tight">ONLINE</span>
+          </div>
           <span className="font-semibold text-stone-400">{registrationCode}</span>
         </div>
 

@@ -170,4 +170,56 @@
     animation: luxury-shimmer-sweep 3s infinite;
     pointer-events: none;
   }
+
+  /* Shimmer reflexivo sutil em botões nobres e cards VIP */
+  .btn-luxury-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-luxury-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 100%
+    );
+    transform: skewX(-20deg);
+    animation: luxury-shimmer-sweep 4.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    pointer-events: none;
+  }
+
+  /* Skeleton Loading State com shimmer dourado para abertura instantânea */
+  @keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .skeleton-luxury {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(226, 184, 87, 0.08) 37%,
+      rgba(255, 255, 255, 0.03) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 2.2s ease-in-out infinite;
+  }
+
+  /* Barra de progresso de leitura sutil no topo do biosite */
+  .scroll-progress-line {
+    background: linear-gradient(
+      90deg,
+      #E2B857,
+      #FDE047,
+      #E2B857
+    );
+    box-shadow: 0 0 10px rgba(226, 184, 87, 0.5);
+  }
 }

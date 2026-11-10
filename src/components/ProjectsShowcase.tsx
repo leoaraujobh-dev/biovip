@@ -9,20 +9,22 @@ import {
   ExternalLink,
   Sparkles,
   Smartphone,
+  LayoutGrid,
   MousePointer2,
   TrendingUp,
   CheckCircle2
 } from 'lucide-react'
 import { projects } from '@/data/projects'
 
-// Seleção curada dos melhores projetos para a vitrine interativa em iPhones
+// Seleção curada dos melhores projetos para a vitrine interativa (seguindo a curadoria oficial)
 const SHOWCASE_SLUGS = [
   'dra-ana-freire',
-  'studio-helena-beaute',
-  'dom-pedro-barbearia',
-  'valeria-nails-couture',
   'dra-camila-vasconcelos',
+  'studio-helena-beaute',
+  'valeria-nails-couture',
   'isabela-lash-studio',
+  'dr-rodrigo-mendonca',
+  'dom-pedro-barbearia',
   'bistro-le-noir',
   'aurea-joias'
 ]
@@ -43,6 +45,7 @@ const FILTER_OPTIONS: FilterOption[] = [
 ]
 
 export default function ProjectsShowcase() {
+  const [viewMode, setViewMode] = useState<'iphones' | 'grid'>('iphones')
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('TODOS')
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -193,42 +196,72 @@ export default function ProjectsShowcase() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 self-start lg:self-auto shrink-0">
-            {/* Status do Giro Automático + Controles de Navegação do Carrossel */}
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-900/80 border border-stone-800 text-[11px] font-mono text-stone-300">
-                <span className={`w-2 h-2 rounded-full transition-colors ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
-                <span>{isPaused ? 'Pausado no modelo' : 'Giro automático ativo'}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => scrollByDirection('left')}
-                  disabled={!canScrollLeft}
-                  aria-label="Projeto anterior"
-                  className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
-                    canScrollLeft
-                      ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
-                      : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
-                  }`}
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollByDirection('right')}
-                  disabled={!canScrollRight}
-                  aria-label="Próximo projeto"
-                  className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
-                    canScrollRight
-                      ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
-                      : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
-                  }`}
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
+            {/* Alternador de Modo de Visualização: Maquetes iPhone vs Grade de Cards */}
+            <div className="flex items-center p-1 rounded-2xl bg-stone-900/90 border border-stone-800 shadow-md">
+              <button
+                type="button"
+                onClick={() => setViewMode('iphones')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  viewMode === 'iphones'
+                    ? 'bg-[#E2B857] text-stone-950 font-bold shadow-md'
+                    : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>iPhones Interativos</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-[#E2B857] text-stone-950 font-bold shadow-md'
+                    : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Grade de Cards</span>
+              </button>
             </div>
+
+            {/* Status do Giro Automático + Controles de Navegação do Carrossel (somente no modo iPhones) */}
+            {viewMode === 'iphones' && (
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-900/80 border border-stone-800 text-[11px] font-mono text-stone-300">
+                  <span className={`w-2 h-2 rounded-full transition-colors ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
+                  <span>{isPaused ? 'Pausado no modelo' : 'Giro automático ativo'}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => scrollByDirection('left')}
+                    disabled={!canScrollLeft}
+                    aria-label="Projeto anterior"
+                    className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
+                      canScrollLeft
+                        ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
+                        : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollByDirection('right')}
+                    disabled={!canScrollRight}
+                    aria-label="Próximo projeto"
+                    className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
+                      canScrollRight
+                        ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
+                        : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             <Link
               href="/portfolio"
@@ -258,116 +291,181 @@ export default function ProjectsShowcase() {
           ))}
         </div>
 
-        {/* CARROSSEL HORIZONTAL DE IPHONES COM EXIBIÇÃO REAL */}
-        <div
-          ref={carouselRef}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          onTouchStart={() => setIsPaused(true)}
-          onTouchEnd={() => {
-            setTimeout(() => setIsPaused(false), 2500)
-          }}
-          className="flex gap-6 sm:gap-8 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x snap-mandatory scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {filteredProjects.map((project, index) => (
-            <article
-              key={project.slug}
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-              className="snap-center shrink-0 w-[295px] sm:w-[325px] flex flex-col items-center group"
-            >
-              {/* MOCKUP IPHONE COM TELA REAL E ROLAGEM */}
-              <div className="relative mx-auto w-[290px] sm:w-[315px] h-[580px] sm:h-[620px] rounded-[46px] p-[8px] sm:p-[9px] bg-gradient-to-b from-[#2a2a2e] via-[#121215] to-[#202024] border border-stone-700/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.06)] ring-1 ring-black/80 transition-transform duration-300 group-hover:-translate-y-1">
-                {/* Botões Físicos Laterais do iPhone (Volume e Power) */}
-                <span className="absolute -left-[5px] top-24 w-[3px] h-8 bg-stone-600 rounded-l" aria-hidden="true" />
-                <span className="absolute -left-[5px] top-36 w-[3px] h-11 bg-stone-600 rounded-l" aria-hidden="true" />
-                <span className="absolute -right-[5px] top-28 w-[3px] h-12 bg-stone-600 rounded-r" aria-hidden="true" />
+        {/* MODO 1: CARROSSEL HORIZONTAL DE IPHONES COM EXIBIÇÃO REAL */}
+        {viewMode === 'iphones' && (
+          <div
+            ref={carouselRef}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => {
+              setTimeout(() => setIsPaused(false), 2500)
+            }}
+            className="flex gap-6 sm:gap-8 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x snap-mandatory scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {filteredProjects.map((project, index) => (
+              <article
+                key={project.slug}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+                className="snap-center shrink-0 w-[295px] sm:w-[325px] flex flex-col items-center group"
+              >
+                {/* MOCKUP IPHONE COM TELA REAL E ROLAGEM */}
+                <div className="relative mx-auto w-[290px] sm:w-[315px] h-[580px] sm:h-[620px] rounded-[46px] p-[8px] sm:p-[9px] bg-gradient-to-b from-[#2a2a2e] via-[#121215] to-[#202024] border border-stone-700/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.06)] ring-1 ring-black/80 transition-transform duration-300 group-hover:-translate-y-1">
+                  {/* Botões Físicos Laterais do iPhone (Volume e Power) */}
+                  <span className="absolute -left-[5px] top-24 w-[3px] h-8 bg-stone-600 rounded-l" aria-hidden="true" />
+                  <span className="absolute -left-[5px] top-36 w-[3px] h-11 bg-stone-600 rounded-l" aria-hidden="true" />
+                  <span className="absolute -right-[5px] top-28 w-[3px] h-12 bg-stone-600 rounded-r" aria-hidden="true" />
 
-                {/* Ilha Dinâmica (Dynamic Island) no Topo */}
-                <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-30 pointer-events-none flex items-center justify-between px-2.5 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-[#111] ring-1 ring-stone-800" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 animate-pulse" />
-                </div>
+                  {/* Ilha Dinâmica (Dynamic Island) no Topo */}
+                  <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-30 pointer-events-none flex items-center justify-between px-2.5 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-[#111] ring-1 ring-stone-800" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 animate-pulse" />
+                  </div>
 
-                {/* Barra Inferior de Home do iPhone */}
-                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-28 h-1 bg-white/40 rounded-full z-30 pointer-events-none" />
+                  {/* Barra Inferior de Home do iPhone */}
+                  <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-28 h-1 bg-white/40 rounded-full z-30 pointer-events-none" />
 
-                {/* Tela do iPhone com o BioSite Real em Iframe */}
-                <div
-                  className="relative w-full h-full rounded-[38px] overflow-hidden bg-black flex flex-col"
-                  onMouseEnter={() => setActiveScrollHintIndex(index)}
-                  onMouseLeave={() => setActiveScrollHintIndex(null)}
-                >
-                  <iframe
-                    src={`/${project.slug}?preview=true`}
-                    title={`BioVip de ${project.name}`}
-                    className="w-full h-full border-0 bg-transparent"
-                    loading="lazy"
-                    onLoad={handleIframeLoad}
-                    style={{
-                      overflowY: 'auto',
-                      WebkitOverflowScrolling: 'touch'
-                    }}
-                  />
-
-                  {/* Indicador Flutuante Sutil: Rolagem Ativa e Cliques Desativados */}
+                  {/* Tela do iPhone com o BioSite Real em Iframe */}
                   <div
-                    className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-stone-800 text-[10px] font-mono text-stone-300 flex items-center gap-1.5 pointer-events-none shadow-lg transition-opacity duration-300 z-20 ${
-                      activeScrollHintIndex === index ? 'opacity-90' : 'opacity-60'
-                    }`}
+                    className="relative w-full h-full rounded-[38px] overflow-hidden bg-black flex flex-col"
+                    onMouseEnter={() => setActiveScrollHintIndex(index)}
+                    onMouseLeave={() => setActiveScrollHintIndex(null)}
                   >
-                    <MousePointer2 className="w-3 h-3 text-[#E2B857]" />
-                    <span>Role para navegar · Cliques inativos</span>
+                    <iframe
+                      src={`/${project.slug}?preview=true`}
+                      title={`BioVip de ${project.name}`}
+                      className="w-full h-full border-0 bg-transparent"
+                      loading="lazy"
+                      onLoad={handleIframeLoad}
+                      style={{
+                        overflowY: 'auto',
+                        WebkitOverflowScrolling: 'touch'
+                      }}
+                    />
+
+                    {/* Indicador Flutuante Sutil: Rolagem Ativa e Cliques Desativados */}
+                    <div
+                      className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-stone-800 text-[10px] font-mono text-stone-300 flex items-center gap-1.5 pointer-events-none shadow-lg transition-opacity duration-300 z-20 ${
+                        activeScrollHintIndex === index ? 'opacity-90' : 'opacity-60'
+                      }`}
+                    >
+                      <MousePointer2 className="w-3 h-3 text-[#E2B857]" />
+                      <span>Role para navegar · Cliques inativos</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Informações do Cliente & Ação Direta Abaixo do iPhone */}
-              <div className="mt-5 w-full text-center px-2 flex flex-col items-center">
-                <span className="inline-block text-[11px] font-mono uppercase tracking-wider text-[#E2B857] font-semibold mb-1">
-                  {project.category}
-                </span>
+                {/* Informações do Cliente & Ação Direta Abaixo do iPhone */}
+                <div className="mt-5 w-full text-center px-2 flex flex-col items-center">
+                  <span className="inline-block text-[11px] font-mono uppercase tracking-wider text-[#E2B857] font-semibold mb-1">
+                    {project.category}
+                  </span>
 
-                <h3 className="font-serif text-lg font-bold text-white tracking-tight leading-snug line-clamp-1">
-                  {project.name}
-                </h3>
+                  <h3 className="font-serif text-lg font-bold text-white tracking-tight leading-snug line-clamp-1">
+                    {project.name}
+                  </h3>
 
-                <p className="text-xs text-stone-400 font-sans line-clamp-1 mb-3">
-                  {project.role}
-                </p>
+                  <p className="text-xs text-stone-300/80 font-sans line-clamp-2 mb-3 max-w-[280px]">
+                    {project.description}
+                  </p>
 
-                {/* Tags de Funcionalidades */}
-                <div className="flex flex-wrap justify-center gap-1.5 mb-4 max-w-[280px]">
-                  {project.features.slice(0, 2).map((feat) => (
-                    <span
-                      key={feat}
-                      className="px-2 py-0.5 text-[10px] rounded-full bg-stone-900 border border-stone-800 text-stone-300"
-                    >
-                      {feat}
-                    </span>
-                  ))}
-                  {project.features.length > 2 && (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-stone-900 border border-stone-800 text-[#E2B857]">
-                      +{project.features.length - 2} recursos
-                    </span>
-                  )}
+                  {/* Tags de Funcionalidades */}
+                  <div className="flex flex-wrap justify-center gap-1.5 mb-4 max-w-[280px]">
+                    {project.features.slice(0, 3).map((feat) => (
+                      <span
+                        key={feat}
+                        className="px-2 py-0.5 text-[10px] rounded-full bg-stone-900 border border-stone-800 text-stone-300"
+                      >
+                        {feat}
+                      </span>
+                    ))}
+                    {project.features.length > 3 && (
+                      <span className="px-2 py-0.5 text-[10px] rounded-full bg-stone-900 border border-stone-800 text-[#E2B857]">
+                        +{project.features.length - 3} recursos
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Link para Testar Modelo ao Vivo em Tela Cheia */}
+                  <a
+                    href={`/${project.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 w-full max-w-[240px] py-2 px-3 rounded-xl bg-stone-900 hover:bg-[#E2B857] text-stone-300 hover:text-stone-950 border border-stone-800 hover:border-[#E2B857] text-xs font-semibold transition-all duration-200 group/btn"
+                  >
+                    <span>Abrir Modelo ao Vivo</span>
+                    <ExternalLink className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {/* MODO 2: GRADE DE CARDS (VISÃO COMPLETA COM FOTOS, DESCRITIVOS E TAGS) */}
+        {viewMode === 'grid' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {filteredProjects.map((project) => (
+              <article
+                key={project.slug}
+                className="group flex flex-col rounded-3xl bg-stone-900/60 hover:bg-stone-900/90 border border-stone-800/80 hover:border-[#E2B857]/50 transition-all duration-300 overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-1.5"
+              >
+                {/* Imagem do Projeto */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-stone-950">
+                  <img
+                    src={project.image || project.photo}
+                    alt={project.name}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D11] via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-[10px] font-mono uppercase tracking-wider text-[#E2B857] font-semibold">
+                    {project.category}
+                  </span>
                 </div>
 
-                {/* Link para Testar Modelo ao Vivo em Tela Cheia */}
-                <a
-                  href={`/${project.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 w-full max-w-[240px] py-2 px-3 rounded-xl bg-stone-900 hover:bg-[#E2B857] text-stone-300 hover:text-stone-950 border border-stone-800 hover:border-[#E2B857] text-xs font-semibold transition-all duration-200 group/btn"
-                >
-                  <span>Abrir Modelo ao Vivo</span>
-                  <ExternalLink className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
+                {/* Conteúdo do Card */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="font-serif text-lg font-bold text-white mb-2 group-hover:text-[#E2B857] transition-colors">
+                      {project.name}
+                    </h3>
+                    <p className="text-xs text-stone-300 leading-relaxed font-sans line-clamp-3 mb-4">
+                      {project.description}
+                    </p>
+
+                    {/* Tags de Recursos do Projeto */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.features.slice(0, 3).map((feat) => (
+                        <span
+                          key={feat}
+                          className="px-2.5 py-1 text-[11px] rounded-lg bg-stone-950/80 border border-stone-800 text-stone-300 font-sans"
+                        >
+                          {feat}
+                        </span>
+                      ))}
+                      {project.features.length > 3 && (
+                        <span className="px-2 py-1 text-[11px] rounded-lg bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] font-mono font-semibold">
+                          +{project.features.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Link Ver Projeto com Seta */}
+                  <Link
+                    href={`/${project.slug}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#E2B857] hover:text-amber-300 transition-colors pt-4 border-t border-stone-800/80 group/link"
+                  >
+                    <span>Ver projeto</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-1" />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
 
         {/* ESTATÍSTICAS DA VITRINE */}
         <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5 text-center">
