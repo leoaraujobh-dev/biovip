@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -24,6 +24,52 @@ import {
 export default function DemoBarbeariaPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [showBeerModal, setShowBeerModal] = useState(false)
+  const [isPreview, setIsPreview] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const inIframe =
+        window.self !== window.top ||
+        window.location.search.includes('preview=true') ||
+        window.location.search.includes('readonly=true')
+
+      if (inIframe) {
+        setIsPreview(true)
+        const stopClicks = (e: MouseEvent) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        window.addEventListener('click', stopClicks, true)
+
+        const style = document.createElement('style')
+        style.id = 'biovip-preview-style'
+        style.textContent = `
+          * { -webkit-tap-highlight-color: transparent !important; }
+          a, button, [role="button"], input, select, textarea {
+            pointer-events: none !important;
+            cursor: grab !important;
+          }
+          body {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            cursor: grab !important;
+          }
+          ::-webkit-scrollbar {
+            display: none !important;
+          }
+        `
+        document.head.appendChild(style)
+
+        return () => {
+          window.removeEventListener('click', stopClicks, true)
+          const el = document.getElementById('biovip-preview-style')
+          if (el) el.remove()
+        }
+      }
+    }
+  }, [])
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -42,7 +88,9 @@ export default function DemoBarbeariaPage() {
   const whatsappBaseUrl = 'https://wa.me/5511999999999'
 
   return (
-    <div className="min-h-screen bg-[#050507] text-stone-100 flex flex-col items-center justify-start sm:py-8 sm:px-4 font-sans selection:bg-[#E2B857]/30 selection:text-white">
+    <div className={`min-h-screen bg-[#050507] text-stone-100 flex flex-col items-center justify-start font-sans selection:bg-[#E2B857]/30 selection:text-white ${
+      isPreview ? 'p-0 w-full' : 'sm:py-8 sm:px-4'
+    }`}>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 z-50 bg-[#22C55E] text-stone-950 px-4 py-2 rounded-full font-bold text-xs shadow-xl animate-fade-in flex items-center gap-2">
@@ -80,23 +128,27 @@ export default function DemoBarbeariaPage() {
       )}
 
       {/* Top Banner de Demonstração (desktop) */}
-      <div className="hidden sm:flex items-center justify-between w-full max-w-md mb-3 px-3 text-xs text-stone-400">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-mono uppercase tracking-wider text-[11px] text-stone-300 font-semibold">
-            Modelo: Barber Club VIP
-          </span>
+      {!isPreview && (
+        <div className="hidden sm:flex items-center justify-between w-full max-w-md mb-3 px-3 text-xs text-stone-400">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono uppercase tracking-wider text-[11px] text-stone-300 font-semibold">
+              Modelo: Barber Club VIP
+            </span>
+          </div>
+          <Link
+            href="/starter"
+            className="hover:text-amber-300 transition font-mono text-[11px] font-semibold text-amber-400 flex items-center gap-1"
+          >
+            Criar este modelo →
+          </Link>
         </div>
-        <Link
-          href="/starter"
-          className="hover:text-amber-300 transition font-mono text-[11px] font-semibold text-amber-400 flex items-center gap-1"
-        >
-          Criar este modelo →
-        </Link>
-      </div>
+      )}
 
       {/* CONTAINER PRINCIPAL DO SMARTPHONE */}
-      <main className="w-full max-w-md min-h-screen sm:min-h-[844px] bg-[#09090B] sm:rounded-[36px] sm:border sm:border-stone-800/80 sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden relative flex flex-col">
+      <main className={`w-full max-w-md min-h-screen bg-[#09090B] overflow-hidden relative flex flex-col ${
+        isPreview ? 'border-0 rounded-none shadow-none' : 'sm:min-h-[844px] sm:rounded-[36px] sm:border sm:border-stone-800/80 sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]'
+      }`}>
         {/* Ambient Glow no topo */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[340px] h-[200px] bg-gradient-to-b from-[#E2B857]/15 via-amber-600/10 to-transparent blur-3xl pointer-events-none -z-0" />
 

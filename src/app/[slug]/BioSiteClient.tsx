@@ -91,6 +91,58 @@ export default function BioSiteClient({
   // Floating WhatsApp Notification Dismissal
   const [isFloatingWhatsappVisible, setIsFloatingWhatsappVisible] = useState(true)
 
+  // Modo Preview / Vitrine / Iframe (Cliques Inativos e Rolagem Suave)
+  const [isPreview, setIsPreview] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const inIframe =
+        window.self !== window.top ||
+        window.location.search.includes('preview=true') ||
+        window.location.search.includes('readonly=true')
+
+      if (inIframe) {
+        setIsPreview(true)
+        setIsFloatingWhatsappVisible(false)
+
+        // Intercepta e neutraliza qualquer clique na fase de captura
+        const stopClicks = (e: MouseEvent) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        window.addEventListener('click', stopClicks, true)
+
+        // Estilos para desativar cliques e manter a rolagem fluida
+        const style = document.createElement('style')
+        style.id = 'biovip-preview-style'
+        style.textContent = `
+          * { -webkit-tap-highlight-color: transparent !important; }
+          a, button, [role="button"], input, select, textarea {
+            pointer-events: none !important;
+            cursor: grab !important;
+          }
+          body {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            cursor: grab !important;
+          }
+          ::-webkit-scrollbar {
+            display: none !important;
+          }
+        `
+        document.head.appendChild(style)
+
+        return () => {
+          window.removeEventListener('click', stopClicks, true)
+          const el = document.getElementById('biovip-preview-style')
+          if (el) el.remove()
+        }
+      }
+    }
+  }, [])
+
   // Carregar modelo com dados salvos no localStorage (se houver customizações)
   const [modelData, setModelData] = useState<any>(() => {
     return projects.find(p => p.slug === slug)
@@ -589,11 +641,17 @@ export default function BioSiteClient({
 
   return (
     <div
-      className="min-h-screen text-stone-200 flex flex-col items-center justify-center p-0 sm:p-6 font-sans selection:bg-amber-500/20"
+      className={`min-h-screen text-stone-200 flex flex-col items-center justify-center font-sans selection:bg-amber-500/20 ${
+        isPreview ? 'p-0 w-full' : 'p-0 sm:p-6'
+      }`}
       style={{ backgroundColor: palette.bg }}
     >
       <div
-        className="relative w-full max-w-[420px] shadow-2xl overflow-hidden flex flex-col border sm:border-stone-800/80 sm:rounded-[48px]"
+        className={`relative w-full max-w-[420px] shadow-2xl overflow-hidden flex flex-col ${
+          isPreview
+            ? 'border-0 rounded-none shadow-none min-h-screen'
+            : 'border sm:border-stone-800/80 sm:rounded-[48px]'
+        }`}
         style={{
           backgroundColor: palette.bg,
           color: palette.text
@@ -1401,7 +1459,7 @@ export default function BioSiteClient({
         )}
 
         {/* 19. Widget Flutuante de WhatsApp (Pills no Rodapé) */}
-        {isFloatingWhatsappVisible && (
+        {!isPreview && isFloatingWhatsappVisible && (
           <div
             className="fixed right-4 z-40 max-w-[280px] animate-slide-up flex flex-col items-end gap-1.5"
             style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
