@@ -20,7 +20,7 @@ import { Project, projects as defaultProjects } from '@/data/projects'
 import { Subscription } from '@/data/subscriptions'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
 import { applyCanvasOrganicFade, applySilhouetteCutout, readImageAsDataUrl } from '@/utils/imageProcessors'
-import { saveBioSite } from '@/services/biositeService'
+import { saveBioSite, getLeads, LeadSubmission } from '@/services/biositeService'
 import {
   ExternalLink,
   Copy,
@@ -62,7 +62,8 @@ import {
   Wand2,
   ShieldAlert,
   Sliders,
-  Flame
+  Flame,
+  Download
 } from 'lucide-react'
 
 interface AdditionalPage {
@@ -78,7 +79,10 @@ interface AdditionalPage {
 export default function ContaClient() {
   // Controle de Visualização: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
   const [currentView, setCurrentView] = useState<'dashboard' | 'editar_pagina' | 'adicionar_pagina'>('dashboard')
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'vendas' | 'agenda' | 'estatisticas' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
+  const [leadsList, setLeadsList] = useState<LeadSubmission[]>([])
+  const [leadFilter, setLeadFilter] = useState<'TODOS' | 'WHATSAPP' | 'QUIZ' | 'CATALOGO'>('TODOS')
+  const [loadingLeads, setLoadingLeads] = useState(false)
 
   // Seletor de Modelo (Páginas Adicionais)
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('para_voce')
@@ -509,6 +513,45 @@ export default function ContaClient() {
   }, [])
 
   const fullUrl = `biovip.com.br/${slug}`
+
+  // Carregar lista de leads em tempo real
+  useEffect(() => {
+    let isMounted = true
+    async function fetchLeads() {
+      setLoadingLeads(true)
+      try {
+        const data = await getLeads(slug)
+        if (isMounted) setLeadsList(data || [])
+      } catch (err) {
+        console.error('Erro ao buscar leads:', err)
+      } finally {
+        if (isMounted) setLoadingLeads(false)
+      }
+    }
+    fetchLeads()
+    return () => { isMounted = false }
+  }, [slug, activeSidebarTab])
+
+  const handleExportLeadsCsv = () => {
+    if (leadsList.length === 0) return
+    const headers = ['Data', 'BioSite', 'Acao', 'Nome', 'WhatsApp', 'Detalhes']
+    const rows = leadsList.map(l => [
+      l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : '',
+      l.slug,
+      l.action_type,
+      l.client_name || 'Visitante',
+      l.whatsapp || '',
+      JSON.stringify(l.details || {}).replace(/"/g, '""')
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `leads-${slug}-${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   // Salvar alterações de qualquer Bio Site
   const handleSavePage = () => {
@@ -2031,6 +2074,26 @@ export default function ContaClient() {
 
               <button
                 type="button"
+                onClick={() => setActiveSidebarTab('leads')}
+                className={`w-full text-left px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-between ${
+                  activeSidebarTab === 'leads'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 text-emerald-600" />
+                  LEADS & CONTATOS
+                </span>
+                {leadsList.length > 0 && (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                    {leadsList.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveSidebarTab('agenda')}
                 className={`w-full text-left px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
                   activeSidebarTab === 'agenda'
@@ -2319,6 +2382,168 @@ export default function ContaClient() {
                       Nenhuma venda ainda. Assim que alguém fechar uma sacola na sua loja, ela aparece aqui — paga pela página ou combinada no WhatsApp.
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* ABA LEADS & CONTATOS (CRM EM TEMPO REAL COM SUPABASE) */}
+              {activeSidebarTab === 'leads' && (
+                <div className="space-y-8 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
+                        CRM & CONVERSÃO EM TEMPO REAL
+                      </span>
+                      <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
+                        Leads & Triagens
+                      </h2>
+                      <p className="text-xs text-stone-500 mt-1">
+                        Visitantes que clicaram no WhatsApp, preencheram triagens ou solicitaram serviços na sua página.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleExportLeadsCsv}
+                        disabled={leadsList.length === 0}
+                        className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Exportar CSV
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* CARDS DE MÉTRICAS */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                      <span className="text-[10px] font-mono uppercase text-stone-400 font-bold block mb-1">TOTAL DE LEADS</span>
+                      <div className="text-2xl sm:text-3xl font-mono font-bold text-stone-900">{leadsList.length}</div>
+                      <span className="text-[10px] text-stone-500">Capturados</span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200">
+                      <span className="text-[10px] font-mono uppercase text-emerald-700 font-bold block mb-1">WHATSAPP</span>
+                      <div className="text-2xl sm:text-3xl font-mono font-bold text-emerald-900">
+                        {leadsList.filter(l => l.action_type === 'whatsapp_click').length}
+                      </div>
+                      <span className="text-[10px] text-emerald-600">Cliques diretos</span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200">
+                      <span className="text-[10px] font-mono uppercase text-amber-700 font-bold block mb-1">TRIAGENS / QUIZ</span>
+                      <div className="text-2xl sm:text-3xl font-mono font-bold text-amber-900">
+                        {leadsList.filter(l => l.action_type === 'quiz_completed').length}
+                      </div>
+                      <span className="text-[10px] text-amber-600">Funil respondido</span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200">
+                      <span className="text-[10px] font-mono uppercase text-purple-700 font-bold block mb-1">CATÁLOGO</span>
+                      <div className="text-2xl sm:text-3xl font-mono font-bold text-purple-900">
+                        {leadsList.filter(l => l.action_type === 'catalog_inquiry').length}
+                      </div>
+                      <span className="text-[10px] text-purple-600">Interesses em serviços</span>
+                    </div>
+                  </div>
+
+                  {/* FILTROS */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {(['TODOS', 'WHATSAPP', 'QUIZ', 'CATALOGO'] as const).map(tab => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setLeadFilter(tab)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase font-bold transition cursor-pointer ${
+                          leadFilter === tab
+                            ? 'bg-black text-white shadow-xs'
+                            : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
+                        }`}
+                      >
+                        {tab === 'TODOS' ? 'Todos os Leads' : tab === 'WHATSAPP' ? 'WhatsApp' : tab === 'QUIZ' ? 'Triagens' : 'Catálogo'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* LISTA DE LEADS */}
+                  {loadingLeads ? (
+                    <div className="p-12 text-center text-xs font-mono text-stone-400">
+                      Carregando leads do Supabase...
+                    </div>
+                  ) : leadsList.length === 0 ? (
+                    <div className="p-10 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center mx-auto text-stone-500">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-bold text-stone-900 text-sm">Nenhum lead registrado ainda</h3>
+                      <p className="text-xs text-stone-500 max-w-md mx-auto">
+                        Quando um visitante abrir sua página <strong>/{slug}</strong> e clicar em qualquer botão de WhatsApp ou preencher a Triagem Anti-Curiosos, o lead aparecerá aqui instantaneamente sincronizado com o Supabase.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {leadsList
+                        .filter(lead => {
+                          if (leadFilter === 'WHATSAPP') return lead.action_type === 'whatsapp_click'
+                          if (leadFilter === 'QUIZ') return lead.action_type === 'quiz_completed'
+                          if (leadFilter === 'CATALOGO') return lead.action_type === 'catalog_inquiry'
+                          return true
+                        })
+                        .map((lead, idx) => {
+                          const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('pt-BR') : 'Agora há pouco'
+                          const isQuiz = lead.action_type === 'quiz_completed'
+                          const phone = lead.whatsapp || lead.details?.whatsapp
+                          return (
+                            <div
+                              key={lead.id || idx}
+                              className="p-4 rounded-2xl bg-white border border-stone-200/90 shadow-2xs hover:border-stone-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                            >
+                              <div className="space-y-1.5 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                                    isQuiz
+                                      ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                  }`}>
+                                    {isQuiz ? 'TRIAGEM CONCLUÍDA' : 'WHATSAPP LEAD'}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-stone-400">
+                                    {dateStr}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-stone-500 font-bold">
+                                    /{lead.slug}
+                                  </span>
+                                </div>
+
+                                <div className="text-sm font-bold text-stone-900">
+                                  {lead.details?.buttonLabel || lead.client_name || 'Interesse em Atendimento'}
+                                </div>
+
+                                {lead.details?.role && (
+                                  <div className="text-xs text-stone-500">
+                                    Segmento: <span className="text-stone-700 font-medium">{lead.details.role}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {phone && (
+                                  <a
+                                    href={`https://wa.me/${phone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                    WhatsApp
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  )}
                 </div>
               )}
 

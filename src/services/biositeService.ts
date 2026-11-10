@@ -209,3 +209,61 @@ export async function trackLead(lead: LeadSubmission): Promise<void> {
   }
 }
 
+/**
+ * Busca leads capturados para um biosite (ou todos, se admin).
+ * 1º Tenta buscar no Supabase se configurado.
+ * 2º Fallback para o localStorage local.
+ */
+export async function getLeads(slug?: string): Promise<LeadSubmission[]> {
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      let query = supabase.from('leads').select('*').order('created_at', { ascending: false })
+      if (slug) {
+        query = query.eq('slug', slug)
+      }
+      const { data, error } = await query.limit(100)
+      if (!error && data && data.length > 0) {
+        return data.map((item: any) => ({
+          id: item.id,
+          slug: item.slug,
+          client_name: item.client_name,
+          whatsapp: item.whatsapp,
+          action_type: item.action_type,
+          details: item.details,
+          created_at: item.created_at
+        }))
+      }
+    } catch (err) {
+      console.warn('Erro ao consultar leads no Supabase, utilizando fallback local:', err)
+    }
+  }
+
+  // Fallback: localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      if (slug) {
+        const key = 'biovip_leads_' + slug
+        const stored = localStorage.getItem(key)
+        return stored ? JSON.parse(stored) : []
+      } else {
+        const allLeads: LeadSubmission[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('biovip_leads_')) {
+            const val = localStorage.getItem(k)
+            if (val) {
+              const list = JSON.parse(val)
+              allLeads.push(...list)
+            }
+          }
+        }
+        return allLeads.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+      }
+    } catch (e) {
+      console.error('Erro ao ler leads do localStorage:', e)
+    }
+  }
+
+  return []
+}
+
