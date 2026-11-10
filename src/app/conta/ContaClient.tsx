@@ -457,36 +457,87 @@ export default function ContaClient() {
       }
       setAllAvailableBiosites(sites)
 
-      // Verificar parâmetro na URL: ?edit=<slug> ou ?slug=<slug>
+      // 1. Identificar se é Administrador Master autenticado exclusivamente com PIN no /admin
+      const isAdminAuth = typeof window !== 'undefined' && sessionStorage.getItem('biovip_admin_auth') === 'true'
+
+      // 2. Identificar conta do cliente conectado
+      let loggedClient: { name?: string; email?: string; slug?: string; phone?: string } | null = null
+      const rawLogged = typeof window !== 'undefined' ? localStorage.getItem('biovip_logged_client') : null
+      if (rawLogged) {
+        try {
+          loggedClient = JSON.parse(rawLogged)
+        } catch (e) {}
+      }
+      const clientSessionEmail = typeof window !== 'undefined' ? sessionStorage.getItem('biovip_client_session') : null
+
+      // Parâmetros na URL: ?edit=<slug> ou ?slug=<slug> ou ?novo=true
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
       const editSlug = urlParams?.get('edit') || urlParams?.get('slug')
+      const isNovo = urlParams?.get('novo') === 'true'
 
-      if (editSlug) {
+      let parsedSubs: Subscription[] = []
+      if (storedSubs) {
+        try {
+          parsedSubs = JSON.parse(storedSubs)
+        } catch (e) {}
+      }
+
+      let activeSlug = slug
+
+      if (isAdminAuth) {
+        // MODO ADMINISTRADOR AUTENTICADO: acesso completo liberado pelo /admin
         setIsAdminMode(true)
-        setCurrentView('editar_pagina')
-        loadBioSiteData(editSlug)
+        if (editSlug) {
+          activeSlug = editSlug
+          setCurrentView('editar_pagina')
+        }
       } else {
-        // Fluxo padrão do usuário regular
-        let activeSlug = slug
-        if (storedSubs) {
-          const subs = JSON.parse(storedSubs)
-          if (subs.length > 0) {
-            const first = subs[0]
-            if (first.clientName) setBrandName(first.clientName)
-            if (first.businessName) setBusinessTitle(first.businessName)
-            if (first.slug) {
-              setSlug(first.slug)
-              activeSlug = first.slug
-            }
-            if (first.email) setUserEmail(first.email)
-            if (first.whatsapp) setUserPhone(first.whatsapp)
-            if (first.niche) setNiche(first.niche)
+        // MODO CLIENTE: NUNCA exibe atalhos ou painel adm. A edição é estritamente desta conta
+        setIsAdminMode(false)
+
+        // Trava a edição estritamente no Bio Site desta conta
+        if (loggedClient?.slug) {
+          activeSlug = loggedClient.slug
+        } else if (clientSessionEmail) {
+          const clientSub = parsedSubs.find(s => s.email && s.email.toLowerCase() === clientSessionEmail.toLowerCase())
+          if (clientSub?.slug) {
+            activeSlug = clientSub.slug
+          } else if (editSlug) {
+            activeSlug = editSlug
           }
+        } else if (editSlug) {
+          activeSlug = editSlug
+        } else if (parsedSubs.length > 0 && parsedSubs[0].slug) {
+          activeSlug = parsedSubs[0].slug
         }
 
-        // Carregar configurações visuais salvas do BioVip (Paleta, Tipografia, Botões, Foto, etc.)
-        const savedSiteRaw = localStorage.getItem('biovip_site_' + activeSlug) || localStorage.getItem('biovip_user_site')
-        if (savedSiteRaw) {
+        // Se veio de criação ou requisição de edição, abre a tela do editor
+        if (editSlug || isNovo) {
+          setCurrentView('editar_pagina')
+        }
+      }
+
+      setSlug(activeSlug)
+      loadBioSiteData(activeSlug)
+
+      // Atualizar dados cadastrais da conta
+      const matchedClientSub = parsedSubs.find((s: any) => s.slug === activeSlug)
+      if (matchedClientSub) {
+        if (matchedClientSub.clientName) setBrandName(matchedClientSub.clientName)
+        if (matchedClientSub.businessName) setBusinessTitle(matchedClientSub.businessName)
+        if (matchedClientSub.email) setUserEmail(matchedClientSub.email)
+        if (matchedClientSub.whatsapp) setUserPhone(matchedClientSub.whatsapp)
+        if (matchedClientSub.niche) setNiche(matchedClientSub.niche)
+      } else if (loggedClient) {
+        if (loggedClient.name) setBrandName(loggedClient.name)
+        if (loggedClient.email) setUserEmail(loggedClient.email)
+        if (loggedClient.phone) setUserPhone(loggedClient.phone)
+      }
+
+      // Carregar configurações visuais salvas do BioVip (Paleta, Tipografia, Botões, Foto, etc.)
+      const savedSiteRaw = localStorage.getItem('biovip_site_' + activeSlug) || localStorage.getItem('biovip_user_site')
+      if (savedSiteRaw) {
+        try {
           const parsed = JSON.parse(savedSiteRaw)
           if (parsed.paletteId) {
             const pal = PALETTES.find(p => p.id === parsed.paletteId)
@@ -505,12 +556,14 @@ export default function ContaClient() {
           if (parsed.name) setBusinessTitle(parsed.name)
           if (parsed.role) setNiche(parsed.role)
           if (parsed.whatsapp) setUserPhone(parsed.whatsapp)
-        }
+        } catch (e) {}
+      }
 
-        const storedPages = localStorage.getItem('biovip_client_pages')
-        if (storedPages) {
+      const storedPages = localStorage.getItem('biovip_site_' + activeSlug + '_pages') || localStorage.getItem('biovip_client_pages')
+      if (storedPages) {
+        try {
           setAdditionalPages(JSON.parse(storedPages))
-        }
+        } catch (e) {}
       }
 
       const storedPixels = localStorage.getItem('biovip_pixels')
@@ -524,13 +577,10 @@ export default function ContaClient() {
       }
 
       // 4. Carregar status da assinatura, verificação de pendência e prazo de 48 horas
-      const isNovo = urlParams?.get('novo') === 'true'
-      const activeTargetSlug = editSlug || slug
-
       if (storedSubs) {
         try {
           const subs = JSON.parse(storedSubs)
-          const matchedSub = subs.find((s: any) => s.slug === activeTargetSlug)
+          const matchedSub = subs.find((s: any) => s.slug === activeSlug)
           if (matchedSub) {
             const currentSubStatus = matchedSub.status || matchedSub.paymentStatus || 'ativa'
             setPaymentStatus(currentSubStatus)
@@ -2557,12 +2607,20 @@ export default function ContaClient() {
               </h1>
             </div>
 
-            <Link
-              href="/entrar"
-              className="text-xs font-mono uppercase tracking-widest text-stone-400 hover:text-stone-900 transition-colors pt-2"
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem('biovip_client_session')
+                  localStorage.removeItem('biovip_logged_client')
+                  window.location.href = '/entrar'
+                }
+              }}
+              className="text-xs font-mono uppercase tracking-widest text-stone-400 hover:text-stone-900 transition-colors pt-2 cursor-pointer flex items-center gap-1.5"
             >
-              SAIR
-            </Link>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>SAIR</span>
+            </button>
           </div>
 
           {/* GRID COM MENU LATERAL E CONTEÚDO PRINCIPAL (EXATAMENTE COMO NA IMAGEM 1) */}
