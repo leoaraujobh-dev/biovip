@@ -768,65 +768,147 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       )}
 
                       {/* Lista de Itens do Catálogo */}
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         {props.servicesCatalogData.items
                           .filter((item: any) => previewCatalogCategory === 'TODOS' || item.category === previewCatalogCategory)
                           .slice(0, 4)
-                          .map((srv: any) => (
-                            <div
-                              key={srv.id}
-                              className="p-2 rounded-xl border space-y-1 text-left transition"
-                              style={{
-                                backgroundColor: `${props.selectedPalette.card}cc`,
-                                borderColor: `${props.selectedPalette.accent}25`
-                              }}
-                            >
-                              <div className="flex items-start justify-between gap-1">
-                                <div>
-                                  {srv.badge && (
-                                    <span
-                                      className="inline-block px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold uppercase mb-0.5 border"
-                                      style={{
-                                        backgroundColor: `${props.selectedPalette.accent}20`,
-                                        borderColor: `${props.selectedPalette.accent}40`,
-                                        color: props.selectedPalette.accent
-                                      }}
-                                    >
-                                      {srv.badge}
-                                    </span>
-                                  )}
-                                  <h5 className="text-[9px] font-bold text-white leading-tight">
-                                    {srv.name}
-                                  </h5>
-                                </div>
-                                {srv.duration && (
-                                  <span className="text-[7px] font-mono text-stone-400 shrink-0">
-                                    {srv.duration}
-                                  </span>
-                                )}
-                              </div>
+                          .map((srv: any) => {
+                            const hasImage = Boolean(srv.image)
+                            const isCoverLayout = hasImage && srv.imageLayout === 'cover'
 
-                              <p className="text-[7.5px] text-stone-400 font-sans leading-snug line-clamp-2">
-                                {srv.description}
-                              </p>
-
-                              <div className="pt-1 flex items-center justify-between border-t border-white/5">
-                                <span className="text-[9px] font-serif font-bold" style={{ color: props.selectedPalette.accent }}>
-                                  {srv.price}
-                                </span>
-                                <span
-                                  className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-sm"
+                            if (isCoverLayout) {
+                              return (
+                                <div
+                                  key={srv.id}
+                                  className="p-2 rounded-xl border space-y-1.5 text-left transition overflow-hidden"
                                   style={{
-                                    backgroundColor: props.selectedPalette.accent,
-                                    color: props.selectedPalette.buttonText || '#000'
+                                    backgroundColor: `${props.selectedPalette.card}cc`,
+                                    borderColor: `${props.selectedPalette.accent}25`
                                   }}
                                 >
-                                  <span>Reservar</span>
-                                  <span>→</span>
-                                </span>
+                                  {/* Imagem Maior de Destaque no Preview */}
+                                  <div className="w-full h-20 rounded-lg overflow-hidden relative border border-white/10">
+                                    <img
+                                      src={srv.image}
+                                      alt={srv.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    {srv.badge && (
+                                      <span
+                                        className="absolute top-1 left-1 px-1.5 py-0.2 rounded text-[6px] font-mono font-bold uppercase shadow border backdrop-blur-md"
+                                        style={{
+                                          backgroundColor: `${props.selectedPalette.card}e6`,
+                                          borderColor: props.selectedPalette.accent,
+                                          color: props.selectedPalette.accent
+                                        }}
+                                      >
+                                        {srv.badge}
+                                      </span>
+                                    )}
+                                    {srv.duration && (
+                                      <span className="absolute top-1 right-1 bg-black/70 px-1.5 py-0.2 rounded text-[6.5px] font-mono text-stone-200">
+                                        {srv.duration}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <h5 className="text-[9.5px] font-bold text-white leading-tight">
+                                      {srv.name}
+                                    </h5>
+                                    {srv.description && (
+                                      <p className="text-[7.5px] text-stone-300 font-sans leading-snug line-clamp-1 mt-0.5">
+                                        {srv.description}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <div className="pt-1 flex items-center justify-between border-t border-white/5">
+                                    <span className="text-[9px] font-serif font-bold" style={{ color: props.selectedPalette.accent }}>
+                                      {srv.price}
+                                    </span>
+                                    <span
+                                      className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-sm"
+                                      style={{
+                                        backgroundColor: props.selectedPalette.accent,
+                                        color: props.selectedPalette.buttonText || '#000'
+                                      }}
+                                    >
+                                      <span>Reservar</span>
+                                      <span>→</span>
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            return (
+                              <div
+                                key={srv.id}
+                                className="p-2 rounded-xl border space-y-1 text-left transition"
+                                style={{
+                                  backgroundColor: `${props.selectedPalette.card}cc`,
+                                  borderColor: `${props.selectedPalette.accent}25`
+                                }}
+                              >
+                                <div className="flex items-start gap-1.5">
+                                  {hasImage && (
+                                    <img
+                                      src={srv.image}
+                                      alt={srv.name}
+                                      className="w-9 h-9 rounded-lg object-cover shrink-0 border border-white/10"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-1">
+                                      <div>
+                                        {srv.badge && (
+                                          <span
+                                            className="inline-block px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold uppercase mb-0.5 border"
+                                            style={{
+                                              backgroundColor: `${props.selectedPalette.accent}20`,
+                                              borderColor: `${props.selectedPalette.accent}40`,
+                                              color: props.selectedPalette.accent
+                                            }}
+                                          >
+                                            {srv.badge}
+                                          </span>
+                                        )}
+                                        <h5 className="text-[9px] font-bold text-white leading-tight">
+                                          {srv.name}
+                                        </h5>
+                                      </div>
+                                      {srv.duration && (
+                                        <span className="text-[7px] font-mono text-stone-400 shrink-0">
+                                          {srv.duration}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <p className="text-[7.5px] text-stone-400 font-sans leading-snug line-clamp-1 mt-0.5">
+                                      {srv.description}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="pt-1 flex items-center justify-between border-t border-white/5">
+                                  <span className="text-[9px] font-serif font-bold" style={{ color: props.selectedPalette.accent }}>
+                                    {srv.price}
+                                  </span>
+                                  <span
+                                    className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-sm"
+                                    style={{
+                                      backgroundColor: props.selectedPalette.accent,
+                                      color: props.selectedPalette.buttonText || '#000'
+                                    }}
+                                  >
+                                    <span>Reservar</span>
+                                    <span>→</span>
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                       </div>
 
                       {/* Tarja de 4 Diferenciais */}
@@ -1776,6 +1858,98 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             placeholder="Descrição dos benefícios..."
                             className="w-full p-2 rounded-lg bg-stone-950 text-stone-400 border border-stone-800 text-[11px]"
                           />
+
+                          {/* Foto do Serviço / Procedimento e Modo de Exibição */}
+                          <div className="pt-2 border-t border-stone-800/80 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] font-mono text-stone-300 flex items-center gap-1 font-semibold">
+                                <ImageIcon className="w-3 h-3 text-amber-400" />
+                                <span>Foto do Procedimento:</span>
+                              </label>
+
+                              {/* Alternador de Layout da Imagem */}
+                              <div className="flex items-center gap-1 bg-stone-950 p-0.5 rounded-lg border border-stone-800">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...props.servicesCatalogData.items]
+                                    updated[idx].imageLayout = 'thumb'
+                                    props.setServicesCatalogData({ ...props.servicesCatalogData, items: updated })
+                                    props.setHasUnsavedChanges(true)
+                                  }}
+                                  className={`px-2 py-0.5 rounded text-[8.5px] font-mono font-bold transition cursor-pointer ${
+                                    (srv.imageLayout || 'thumb') === 'thumb'
+                                      ? 'bg-amber-500 text-stone-950 shadow-sm'
+                                      : 'text-stone-400 hover:text-white'
+                                  }`}
+                                  title="Foto em miniatura integrada dentro do botão ao lado do nome"
+                                >
+                                  Miniatura
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...props.servicesCatalogData.items]
+                                    updated[idx].imageLayout = 'cover'
+                                    props.setServicesCatalogData({ ...props.servicesCatalogData, items: updated })
+                                    props.setHasUnsavedChanges(true)
+                                  }}
+                                  className={`px-2 py-0.5 rounded text-[8.5px] font-mono font-bold transition cursor-pointer ${
+                                    srv.imageLayout === 'cover'
+                                      ? 'bg-amber-500 text-stone-950 shadow-sm'
+                                      : 'text-stone-400 hover:text-white'
+                                  }`}
+                                  title="Imagem maior de destaque com botão de agendamento e valor abaixo dela"
+                                >
+                                  Imagem Maior
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={srv.image || ''}
+                                onChange={(e) => {
+                                  const updated = [...props.servicesCatalogData.items]
+                                  updated[idx].image = e.target.value
+                                  if (!updated[idx].imageLayout) updated[idx].imageLayout = 'thumb'
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, items: updated })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                placeholder="URL da foto (ex: https://images.unsplash.com/...)"
+                                className="flex-1 p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[10.5px] focus:border-amber-400 focus:outline-none"
+                              />
+                              {srv.image && (
+                                <div className="relative group shrink-0">
+                                  <img
+                                    src={srv.image}
+                                    alt="Thumb"
+                                    className="w-8 h-8 rounded-lg object-cover border border-amber-500/40"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...props.servicesCatalogData.items]
+                                      delete updated[idx].image
+                                      delete updated[idx].imageLayout
+                                      props.setServicesCatalogData({ ...props.servicesCatalogData, items: updated })
+                                      props.setHasUnsavedChanges(true)
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white rounded-full p-0.5 text-[8px] opacity-0 group-hover:opacity-100 transition shadow"
+                                    title="Remover foto"
+                                  >
+                                    <X className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-[9.5px] text-stone-500 leading-snug">
+                              {(srv.imageLayout || 'thumb') === 'cover'
+                                ? '✨ Exibindo como Card Editorial: Imagem grande com valor e agendamento logo abaixo.'
+                                : '✨ Exibindo como Botão com Miniatura: Foto quadrada de 60px ao lado do nome do serviço.'}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>

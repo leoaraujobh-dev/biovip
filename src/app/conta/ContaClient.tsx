@@ -1267,6 +1267,75 @@ export default function ContaClient() {
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs bg-white text-stone-900"
                 />
               </div>
+
+              {/* Foto do Serviço / Procedimento e Modo de Exibição */}
+              <div className="pt-2 border-t border-stone-200 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-semibold text-stone-700 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>Foto do Procedimento:</span>
+                  </label>
+
+                  {/* Alternador de Layout */}
+                  <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg border border-stone-300">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...servicesCatalogData.items]
+                        updated[idx].imageLayout = 'thumb'
+                        setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                        setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded text-[8.5px] font-bold font-mono transition cursor-pointer ${
+                        (item.imageLayout || 'thumb') === 'thumb'
+                          ? 'bg-amber-500 text-stone-950 shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      Miniatura
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...servicesCatalogData.items]
+                        updated[idx].imageLayout = 'cover'
+                        setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                        setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded text-[8.5px] font-bold font-mono transition cursor-pointer ${
+                        item.imageLayout === 'cover'
+                          ? 'bg-amber-500 text-stone-950 shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900'
+                      }`}
+                    >
+                      Imagem Maior
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={item.image || ''}
+                    onChange={(e) => {
+                      const updated = [...servicesCatalogData.items]
+                      updated[idx].image = e.target.value
+                      if (!updated[idx].imageLayout) updated[idx].imageLayout = 'thumb'
+                      setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                      setHasUnsavedChanges(true)
+                    }}
+                    placeholder="URL da foto (ex: https://images.unsplash.com/...)"
+                    className="flex-1 px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs bg-white text-stone-900 focus:border-amber-500 focus:outline-none"
+                  />
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt="Thumb"
+                      className="w-7 h-7 rounded-lg object-cover border border-amber-500 shrink-0"
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>

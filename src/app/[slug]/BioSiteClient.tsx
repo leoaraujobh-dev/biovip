@@ -1132,70 +1132,178 @@ export default function BioSiteClient({
             )}
 
             {/* Lista de Itens do Catálogo */}
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {servicesCatalog.items
                 .filter((item: any) => activeCatalogCategory === 'TODOS' || item.category === activeCatalogCategory)
-                .map((srv: any) => (
-                  <div
-                    key={srv.id}
-                    className="p-3.5 rounded-2xl border space-y-2 transition hover:border-white/30"
-                    style={{
-                      backgroundColor: `${palette.card}cc`,
-                      borderColor: `${palette.accent}25`
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        {srv.badge && (
-                          <span
-                            className="inline-block px-2 py-0.5 rounded text-[8px] font-mono font-bold uppercase mb-1 border"
-                            style={{
-                              backgroundColor: `${palette.accent}20`,
-                              borderColor: `${palette.accent}40`,
-                              color: palette.accent
-                            }}
-                          >
-                            {srv.badge}
-                          </span>
-                        )}
-                        <h4 className="text-xs font-bold text-white leading-tight">
-                          {srv.name}
-                        </h4>
-                      </div>
-                      {srv.duration && (
-                        <span className="text-[9px] font-mono text-stone-400 flex items-center gap-1 shrink-0">
-                          {srv.duration}
-                        </span>
-                      )}
-                    </div>
+                .map((srv: any) => {
+                  const hasImage = Boolean(srv.image)
+                  const isCoverLayout = hasImage && srv.imageLayout === 'cover'
+                  const whatsappBookingUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(
+                    srv.whatsappMessage || `Olá! Gostaria de agendar o procedimento de ${srv.name}.`
+                  )}`
 
-                    <p className="text-[10px] text-stone-400 font-sans leading-relaxed line-clamp-2">
-                      {srv.description}
-                    </p>
-
-                    <div className="pt-1 flex items-center justify-between border-t border-white/5">
-                      <span className="text-xs font-serif font-bold" style={{ color: palette.accent }}>
-                        {srv.price}
-                      </span>
-                      <a
-                        href={`https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(
-                          srv.whatsappMessage || `Olá! Gostaria de agendar o procedimento de ${srv.name}.`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => handleTrackLead(`Agendar Catálogo (${srv.name})`)}
-                        className="py-1 px-3 rounded-lg text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1 shadow-sm active:scale-95"
+                  // MODO 1: Imagem Maior com o link de agendamento abaixo dela ao lado do valor e descrição curta
+                  if (isCoverLayout) {
+                    return (
+                      <div
+                        key={srv.id}
+                        className="p-3.5 rounded-2xl border space-y-3 transition hover:border-white/30 overflow-hidden"
                         style={{
-                          backgroundColor: palette.accent,
-                          color: palette.buttonText || '#000'
+                          backgroundColor: `${palette.card}cc`,
+                          borderColor: `${palette.accent}25`
                         }}
                       >
-                        <span>Reservar</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </a>
+                        {/* Imagem Maior em Destaque */}
+                        <div className="w-full h-40 sm:h-48 rounded-xl overflow-hidden relative border border-white/10 group -mt-0.5">
+                          <img
+                            src={srv.image}
+                            alt={srv.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          {srv.badge && (
+                            <div className="absolute top-2.5 left-2.5">
+                              <span
+                                className="px-2.5 py-1 rounded-lg text-[8px] font-mono font-bold uppercase shadow-lg border backdrop-blur-md"
+                                style={{
+                                  backgroundColor: `${palette.card}e6`,
+                                  borderColor: palette.accent,
+                                  color: palette.accent
+                                }}
+                              >
+                                {srv.badge}
+                              </span>
+                            </div>
+                          )}
+                          {srv.duration && (
+                            <div className="absolute top-2.5 right-2.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[8.5px] font-mono text-stone-200 border border-white/15">
+                              {srv.duration}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Conteúdo Abaixo da Imagem Maior */}
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-white leading-tight">
+                            {srv.name}
+                          </h4>
+                          {srv.description && (
+                            <p className="text-[10.5px] text-stone-300 font-sans leading-relaxed">
+                              {srv.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Rodapé de Ação: Valor e Botão de Agendamento */}
+                        <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                          <div>
+                            <span className="text-[8.5px] font-mono uppercase tracking-wider text-stone-400 block">
+                              Investimento
+                            </span>
+                            <span className="text-sm font-serif font-bold" style={{ color: palette.accent }}>
+                              {srv.price}
+                            </span>
+                          </div>
+                          <a
+                            href={whatsappBookingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => handleTrackLead(`Agendar Catálogo (${srv.name})`)}
+                            className="py-2 px-3.5 rounded-xl text-[10.5px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
+                            style={{
+                              backgroundColor: palette.accent,
+                              color: palette.buttonText || '#000'
+                            }}
+                          >
+                            <span>Agendar Horário</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // MODO 2: Miniatura dentro do botão/card (ou layout clássico sem foto)
+                  return (
+                    <div
+                      key={srv.id}
+                      className="p-3.5 rounded-2xl border space-y-2.5 transition hover:border-white/30"
+                      style={{
+                        backgroundColor: `${palette.card}cc`,
+                        borderColor: `${palette.accent}25`
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Imagem em Miniatura dentro do botão */}
+                        {hasImage && (
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 relative group">
+                            <img
+                              src={srv.image}
+                              alt={srv.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1">
+                            <div>
+                              {srv.badge && (
+                                <span
+                                  className="inline-block px-2 py-0.5 rounded text-[8px] font-mono font-bold uppercase mb-1 border"
+                                  style={{
+                                    backgroundColor: `${palette.accent}20`,
+                                    borderColor: `${palette.accent}40`,
+                                    color: palette.accent
+                                  }}
+                                >
+                                  {srv.badge}
+                                </span>
+                              )}
+                              <h4 className="text-xs font-bold text-white leading-tight">
+                                {srv.name}
+                              </h4>
+                            </div>
+                            {srv.duration && (
+                              <span className="text-[9px] font-mono text-stone-400 flex items-center gap-1 shrink-0">
+                                {srv.duration}
+                              </span>
+                            )}
+                          </div>
+
+                          {srv.description && (
+                            <p className="text-[10px] text-stone-400 font-sans leading-relaxed line-clamp-2 mt-1">
+                              {srv.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex items-center justify-between border-t border-white/5">
+                        <span className="text-xs font-serif font-bold" style={{ color: palette.accent }}>
+                          {srv.price}
+                        </span>
+                        <a
+                          href={whatsappBookingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => handleTrackLead(`Agendar Catálogo (${srv.name})`)}
+                          className="py-1 px-3 rounded-lg text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1 shadow-sm active:scale-95"
+                          style={{
+                            backgroundColor: palette.accent,
+                            color: palette.buttonText || '#000'
+                          }}
+                        >
+                          <span>Reservar</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
             </div>
 
             {/* Tarja de 4 Diferenciais */}

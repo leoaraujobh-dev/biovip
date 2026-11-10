@@ -24,6 +24,8 @@ export interface ServiceItem {
   duration?: string
   badge?: string
   featured?: boolean
+  image?: string
+  imageLayout?: 'thumb' | 'cover'
   whatsappMessage?: string
 }
 
@@ -246,17 +248,21 @@ export const projects: Project[] = [
           duration: '⏱ 2h00',
           badge: 'MAIS PROCURADO',
           featured: true,
+          image: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=600&q=80',
+          imageLayout: 'thumb',
           whatsappMessage: 'Olá Dra. Ana! Gostaria de agendar uma avaliação para Lentes de Resina / Facetas.'
         },
         {
           id: 'srv-2',
           category: 'EXCLUSIVO',
           name: 'Harmonização Orofacial & Toxina Botulínica',
-          description: 'Alinhamento da musculatura facial, sorriso gengival e rejuvenescimento harmônico.',
-          price: 'Sob Consulta',
+          description: 'Alinhamento da musculatura facial, sorriso gengival e rejuvenescimento harmônico com produtos de alta pureza.',
+          price: 'A partir de R$ 1.200',
           duration: '⏱ 1h00',
-          badge: 'EXCLUSIVO',
+          badge: 'DESTAQUE VIP',
           featured: true,
+          image: 'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=800&q=80',
+          imageLayout: 'cover',
           whatsappMessage: 'Olá Dra. Ana! Gostaria de saber mais sobre Harmonização Orofacial.'
         },
         {
