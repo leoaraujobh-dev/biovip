@@ -184,19 +184,21 @@ export default function NichesSection() {
             </div>
 
             <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
-              <Link
-                href="/starter"
+              <a
+                href={`https://wa.me/5511999999999?text=${encodeURIComponent(`Olá! Quero meu BioSite pronto em 24h para ${activeNiche.name}.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-amber-500 text-stone-950 font-bold hover:bg-amber-400 transition"
               >
-                Criar BioVip para {activeNiche.name}
+                Quero Meu BioSite Pronto em 24h
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </a>
               <Link
                 href={`/${activeNiche.sampleSlug}`}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-stone-700 text-stone-300 font-semibold hover:border-amber-400 hover:text-white transition"
               >
                 <Eye className="w-4 h-4" />
-                Ver Demonstração ao Vivo
+                Ver Demonstração do Meu Nicho
               </Link>
             </div>
           </div>

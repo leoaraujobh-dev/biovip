@@ -19,7 +19,7 @@ export default function Header() {
     { href: '/portfolio', label: 'Projetos' },
     { href: '/#nichos', label: 'Nichos' },
     { href: '/#comparativo', label: 'Comparativo' },
-    { href: '/planos', label: 'Planos' },
+    { href: '/#planos', label: 'Planos' },
     { href: '/#faq', label: 'Dúvidas' },
   ]
 
@@ -54,15 +54,25 @@ export default function Header() {
             <Link href="/entrar" className="text-sm font-medium text-dark-600 hover:text-primary-600 transition-colors">
               Entrar
             </Link>
-            <Link href="/starter" className="btn-primary text-sm px-6 py-2.5">
-              Criar meu BioVip
-            </Link>
+            <a
+              href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary text-sm px-5 py-2.5 shadow-md shadow-amber-500/20"
+            >
+              Quero Meu BioSite em 24h
+            </a>
           </div>
 
-          <div className="lg:hidden flex items-center gap-4">
-            <Link href="/starter" className="btn-primary text-sm px-5 py-2">
-              Criar BioVip
-            </Link>
+          <div className="lg:hidden flex items-center gap-3">
+            <a
+              href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary text-xs px-3.5 py-1.5 shadow-sm"
+            >
+              Pedir em 24h
+            </a>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-dark-600 hover:text-dark-900"
@@ -88,12 +98,21 @@ export default function Header() {
                 </Link>
               ))}
               <Link
-                href="/starter"
-                className="btn-primary text-center mt-2"
+                href="/entrar"
+                className="text-base font-medium text-dark-600 hover:text-primary-600 transition-colors px-2 py-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Criar meu BioVip
+                Área do Cliente (Entrar)
               </Link>
+              <a
+                href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary text-center mt-2 py-3"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Quero Meu BioSite em 24h
+              </a>
             </div>
           </div>
         )}

@@ -1,29 +1,28 @@
 'use client'
 
-import { Palette, Layers, Rocket, CheckCircle, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { Palette, Layers, Rocket, CheckCircle, ArrowRight, MessageCircle, Clock, ShieldCheck } from 'lucide-react'
 
 const steps = [
   {
     number: '01',
-    icon: Palette,
-    title: 'Personalize com Estética de Alto Padrão',
-    description: 'Selecione entre paletas nobres de luxo (Esmeralda, Bordeaux, Ouro), tipografias editoriais serifadas ou contemporâneas e envie sua foto de estúdio com efeito de fusão suave.',
-    highlight: 'Sem precisar entender de design ou código.',
+    icon: MessageCircle,
+    title: 'Você Envia seus Dados pelo WhatsApp',
+    description: 'Basta enviar suas fotos, logotipo e lista de procedimentos com valores diretamente para nosso time no WhatsApp. Sem formulários complexos nem perda de tempo.',
+    highlight: 'Zero trabalho técnico ou de design para você.',
   },
   {
     number: '02',
-    icon: Layers,
-    title: 'Ative suas 3 Páginas Pro Adicionais',
-    description: 'Configure seu slider interativo de Antes & Depois, organize sua tabela clara de procedimentos com valores de referência e ative sua agenda de horários VIP.',
-    highlight: 'Estrutura que filtra curiosos e atrai clientes qualificados.',
+    icon: Palette,
+    title: 'Nossa Equipe Cria Tudo em até 24h',
+    description: 'Nossos designers estilizam seu microsite com fotos em fusão de estúdio, catálogo interativo, regras de atendimento e botões de alta conversão 100% configurados.',
+    highlight: 'Entrega garantida em até 24 horas úteis.',
   },
   {
     number: '03',
     icon: Rocket,
-    title: 'Publique na Bio & Rastreie Conversões',
-    description: 'Cole seu link exclusivo no perfil do Instagram e TikTok. O Meta Pixel e TikTok Pixel registram automaticamente cada lead que entra em contato pelo seu WhatsApp.',
-    highlight: 'Pronto em menos de 10 minutos para receber agendamentos.',
+    title: 'No Ar com Acesso Total ao Editor',
+    description: 'Cole seu link na bio do Instagram e receba acesso exclusivo ao nosso painel para alterar preços, horários e fotos sempre que quiser com total autonomia.',
+    highlight: 'Liberdade total pós-entrega sem depender de ninguém.',
   },
 ]
 
@@ -47,7 +46,7 @@ export default function HowItWorks() {
           {/* Connector line for desktop */}
           <div className="hidden md:block absolute top-1/3 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary-200 via-primary-400 to-primary-200 -z-0" />
 
-          {steps.map((step, idx) => {
+          {steps.map((step) => {
             const Icon = step.icon
             return (
               <div
@@ -83,16 +82,17 @@ export default function HowItWorks() {
         </div>
 
         <div className="mt-14 text-center">
-          <Link
-            href="/starter"
+          <a
+            href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn-primary inline-flex items-center gap-2 text-base px-9 py-4 shadow-lg shadow-primary-500/25"
           >
-            Começar Agora Mesmo
+            Quero Meu Microsite Pronto em 24h
             <ArrowRight className="w-5 h-5" />
-          </Link>
+          </a>
         </div>
       </div>
     </section>
   )
 }
-

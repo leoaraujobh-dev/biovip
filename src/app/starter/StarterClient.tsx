@@ -49,7 +49,8 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  Loader2
+  Loader2,
+  ShieldCheck
 } from 'lucide-react'
 
 // SLUGS RESERVADOS DO SISTEMA
@@ -89,6 +90,35 @@ export default function StarterClient() {
   const planoParam = searchParams.get('plano') || 'pro'
   const planoPreco = planoParam === 'starter' ? '29' : planoParam === 'agency' ? '199' : '79'
   const planoNome = planoParam === 'starter' ? 'Iniciante' : planoParam === 'agency' ? 'Agência' : 'Profissional'
+
+  // Proteção da rota: criação de BioSites reservada a administradores / equipe interna
+  const isAdminParam = searchParams.get('admin') === 'true'
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
+  const [pinPrompt, setPinPrompt] = useState(false)
+  const [enteredPin, setEnteredPin] = useState('')
+  const [pinError, setPinError] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const adminPin = sessionStorage.getItem('biovip_admin_auth') === 'true'
+      if (isAdminParam || adminPin) {
+        setIsAuthorized(true)
+      } else {
+        setIsAuthorized(false)
+      }
+    }
+  }, [isAdminParam])
+
+  const handleAdminPinSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (enteredPin === '1234' || enteredPin === '2026') {
+      sessionStorage.setItem('biovip_admin_auth', 'true')
+      setIsAuthorized(true)
+      setPinPrompt(false)
+    } else {
+      setPinError(true)
+    }
+  }
 
   // Etapa atual (1 a 9)
   const [step, setStep] = useState<number>(1)
@@ -482,6 +512,101 @@ export default function StarterClient() {
       setAccountError(err?.message || 'Erro ao criar conta. Tente novamente.')
       setIsSubmittingAccount(false)
     }
+  }
+
+  // TELA DE PROTEÇÃO VIP PARA VISITANTES ANÔNIMOS
+  if (isAuthorized === false) {
+    return (
+      <div className="min-h-screen bg-[#0C0C10] text-stone-100 flex flex-col font-sans">
+        <Header />
+
+        <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-16 flex flex-col items-center justify-center text-center mt-12">
+          <div className="p-8 sm:p-12 rounded-3xl bg-[#141418] border border-[#E2B857]/40 shadow-2xl relative overflow-hidden max-w-xl w-full">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[#E2B857] flex items-center justify-center mx-auto mb-6">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+
+            <span className="inline-block px-3.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-mono font-bold tracking-widest uppercase mb-4 border border-amber-500/30">
+              SERVIÇO FEITO PARA VOCÊ EM 24H
+            </span>
+
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-4 leading-snug">
+              Criação 100% Feita por Especialistas
+            </h1>
+
+            <p className="text-stone-300 text-sm sm:text-base leading-relaxed mb-6 font-sans">
+              No BioVip, você <strong>não precisa perder tempo montando sites sozinho</strong>. Nossa equipe recebe suas fotos e serviços pelo WhatsApp e entrega seu microsite pronto e configurado em até 24 horas.
+            </p>
+
+            <div className="p-4 rounded-2xl bg-black/50 border border-stone-800 text-left text-xs space-y-2 mb-8 text-stone-300 font-sans">
+              <div className="flex items-center gap-2 text-emerald-400 font-semibold font-mono">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Entrega completa em até 24h úteis</span>
+              </div>
+              <div className="flex items-center gap-2 text-emerald-400 font-semibold font-mono">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Autonomia total pós-entrega com editor exclusivo</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <a
+                href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20contratar%20meu%20BioSite%20pronto%20em%2024h."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 px-6 rounded-2xl bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-sm font-mono uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Pedir Meu BioSite no WhatsApp</span>
+              </a>
+
+              <Link
+                href="/entrar"
+                className="w-full py-3.5 px-6 rounded-2xl bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-800 text-xs font-mono font-bold uppercase transition"
+              >
+                Já Sou Cliente (Acessar Editor)
+              </Link>
+            </div>
+
+            {/* Acesso Restrito da Equipe / ADM */}
+            <div className="mt-8 pt-6 border-t border-stone-800/80">
+              {!pinPrompt ? (
+                <button
+                  type="button"
+                  onClick={() => setPinPrompt(true)}
+                  className="text-[11px] font-mono text-stone-500 hover:text-stone-300 transition cursor-pointer"
+                >
+                  🔒 Acesso de Administrador / Equipe
+                </button>
+              ) : (
+                <form onSubmit={handleAdminPinSubmit} className="flex items-center justify-center gap-2 max-w-xs mx-auto">
+                  <input
+                    type="password"
+                    value={enteredPin}
+                    onChange={(e) => {
+                      setEnteredPin(e.target.value)
+                      setPinError(false)
+                    }}
+                    placeholder="PIN do Administrador"
+                    className="p-2 rounded-xl bg-black border border-stone-700 text-xs text-white font-mono text-center w-40"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-2 rounded-xl bg-amber-400 text-stone-950 font-bold text-xs font-mono uppercase cursor-pointer"
+                  >
+                    Entrar
+                  </button>
+                  {pinError && <span className="text-[10px] text-red-400">PIN incorreto</span>}
+                </form>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (

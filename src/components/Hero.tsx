@@ -86,9 +86,19 @@ export default function Hero() {
               O Fim do Link Amador: Microsites de Alta Conversão que Filtram Curiosos e Lotam sua Agenda.
             </h1>
 
-            <p className="text-base sm:text-lg lg:text-xl text-dark-600 max-w-2xl font-sans leading-relaxed mb-6">
-              Substitua árvores de links genéricas por uma vitrine de luxo com catálogo de serviços, preços, portfólio de antes e depois e agendamento direto. Nós criamos e entregamos tudo 100% pronto para você em 24 horas.
+            <p className="text-base sm:text-lg lg:text-xl text-dark-600 max-w-2xl font-sans leading-relaxed mb-4">
+              Substitua árvores de links genéricas por uma vitrine de luxo com catálogo de serviços, preços, portfólio de antes e depois e agendamento direto.
             </p>
+
+            {/* Destaque de Comodidade & Autonomia */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-left max-w-2xl space-y-2">
+              <p className="text-xs sm:text-sm text-amber-950 font-semibold leading-relaxed">
+                ✨ <strong>Zero trabalho para você:</strong> Você só envia suas fotos e serviços pelo WhatsApp. Nós entregamos seu microsite 100% pronto e configurado em até 24 horas.
+              </p>
+              <p className="text-[11px] sm:text-xs text-amber-900/80 leading-relaxed font-sans">
+                🔒 <strong>Autonomia total pós-entrega:</strong> você recebe acesso ao nosso editor exclusivo para alterar preços, horários ou fotos sempre que quiser, sem depender de ninguém.
+              </p>
+            </div>
 
             {/* Micro Trust Points */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-xl pt-1">
@@ -112,18 +122,20 @@ export default function Hero() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-              <Link
-                href="/starter"
+              <a
+                href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-4 shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40 w-full sm:w-auto font-bold"
               >
                 Quero Meu Microsite Pronto em 24h
                 <ArrowRight className="w-5 h-5" />
-              </Link>
+              </a>
               <Link
-                href="/portfolio"
-                className="btn-secondary text-base px-7 py-4 w-full sm:w-auto border-stone-300 hover:border-dark-900 font-semibold"
+                href="#planos"
+                className="btn-secondary text-base px-7 py-4 w-full sm:w-auto border-stone-300 hover:border-dark-900 font-semibold text-center"
               >
-                Ver Casos Reais na Vitrine
+                Ver Planos &amp; Valores
               </Link>
             </div>
 

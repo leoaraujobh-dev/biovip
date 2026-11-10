@@ -141,18 +141,20 @@ export default function ComparisonTable() {
 
         {/* Bottom CTA for table */}
         <div className="mt-12 text-center flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/starter"
+          <a
+            href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-bold hover:from-amber-400 hover:to-amber-500 transition shadow-lg shadow-amber-500/20"
           >
-            Migrar para o BioVip Hoje
+            Quero Meu BioSite Pronto em 24h
             <ArrowRight className="w-5 h-5" />
-          </Link>
+          </a>
           <Link
-            href="/portfolio"
+            href="#planos"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-stone-700 text-stone-300 font-semibold hover:border-amber-400 hover:text-white transition"
           >
-            Ver Modelos em Funcionamento
+            Ver Planos &amp; Valores
           </Link>
         </div>
       </div>

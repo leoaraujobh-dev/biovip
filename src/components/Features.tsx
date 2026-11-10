@@ -97,10 +97,15 @@ export default function Features() {
         </div>
 
         <div className="mt-16 text-center">
-          <Link href="/starter" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-4 shadow-lg shadow-primary-500/20">
-            Começar Meu BioVip Agora
+          <a
+            href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary inline-flex items-center gap-2 text-base px-8 py-4 shadow-lg shadow-primary-500/20"
+          >
+            Quero Meu BioVip Pronto em 24h
             <ArrowRight className="w-5 h-5" aria-hidden="true" />
-          </Link>
+          </a>
         </div>
       </div>
     </section>

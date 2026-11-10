@@ -6,6 +6,7 @@ import ComparisonTable from '@/components/ComparisonTable'
 import NichesSection from '@/components/NichesSection'
 import HowItWorks from '@/components/HowItWorks'
 import ProjectsShowcase from '@/components/ProjectsShowcase'
+import PricingPlans from '@/components/PricingPlans'
 import Testimonials from '@/components/Testimonials'
 import FaqSection from '@/components/FaqSection'
 import { faqs } from '@/data/faqs'
@@ -135,6 +136,7 @@ export default function HomePage() {
         <ComparisonTable />
         <NichesSection />
         <HowItWorks />
+        <PricingPlans />
         <ProjectsShowcase />
         <Testimonials />
         <FaqSection />
