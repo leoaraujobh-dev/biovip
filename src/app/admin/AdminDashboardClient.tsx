@@ -3584,232 +3584,242 @@ export default function AdminDashboardClient() {
               </p>
             </div>
 
-            {/* Banner de cópia do Prompt Oficial */}
-            <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-800/40 flex items-start justify-between gap-3 text-xs">
-              <div>
-                <p className="font-bold text-purple-200 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                  Como gerar o JSON no Gemini?
+            {/* Banner de cópia do Prompt Oficial Interativo */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#161226] to-indigo-950/30 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+              <div className="space-y-1">
+                <p className="font-bold text-purple-200 flex items-center gap-1.5 text-sm">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  Fluxo Inteligente em 2 Etapas (Zero Páginas Genéricas)
                 </p>
-                <p className="text-stone-400 text-[11px] mt-0.5">
-                  Copie nosso prompt oficial mestre, envie ao Gemini junto com o @ e link do Google Maps do cliente e cole a resposta JSON aqui.
+                <p className="text-stone-300 text-xs leading-relaxed max-w-xl">
+                  Ao colar este prompt no Gemini, ele <strong>não criará uma página genérica</strong>. Ele irá te pedir o <strong>Instagram</strong>, o <strong>Google Maps</strong> e o <strong>nicho</strong> do seu cliente. Ao enviar, o Gemini investigará a internet, extrairá depoimentos reais do Maps, fotos e serviços do Instagram, validará os dados e devolverá o JSON 100% autêntico.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => {
-                  const prompt = `Você é o Arquiteto de IA Oficial do BioVip (ecossistema de microsites de luxo e alta conversão para profissionais liberais, clínicas médicas, odontologia, estúdios de beleza e barbearias).
+                  const prompt = `Você é o Agente Especialista em Inteligência Digital e Arquiteto de BioSites de Alto Padrão da plataforma BioVip.
+Sua missão é criar BioSites 100% autênticos, reais e de altíssima conversão para profissionais liberais, clínicas médicas, odontologia estética, barbearias nobres e estúdios de beleza.
 
-Sua missão: Gerar a estrutura JSON COMPLETA, RICA e PERSUASIVA para instanciar um novo BioSite com todos os 18 módulos preenchidos automaticamente.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ REGRA OBRIGATÓRIA #1 (NÃO GERE PÁGINA GENÉRICA):
+Se esta for a sua PRIMEIRA resposta (logo após o usuário colar este prompt inicial), VOCÊ NÃO DEVE EM HIPÓTESE ALGUMA GERAR NENHUM CÓDIGO JSON OU DADOS FICTÍCIOS.
+Em vez disso, cumprimente cordialmente o usuário e peça as seguintes informações essenciais sobre o cliente:
 
-DADOS DE ENTRADA DO CLIENTE:
-- Nome/Negócio: [Nome do Estabelecimento ou Especialista]
-- Nicho: [Ex: Odontologia Estética, Dermatologia, Lash Designer, Barbearia Premium, Advocacia]
-- Instagram: @[usuario]
-- WhatsApp: [DDD + Telefone]
-- Endereço Google Maps: [Endereço Completo com Bairro e Cidade]
-- Especialidades / Procedimentos Principais: [Lista de serviços se houver, ou invente coerentes com alto padrão]
+1. 📱 Instagram Oficial: (@usuario ou link do perfil)
+2. 📍 Perfil no Google Maps / Google Meu Negócio: (Nome comercial exato, link do Maps ou endereço físico)
+3. 🎯 Nicho e Especialidade Principal: (Ex: Harmonização Facial, Barbearia Clássica, Implantes Dentários, Lash Design, Nutrologia, etc.)
+4. 💬 WhatsApp Comercial de Atendimento: (com DDD para redirecionamento dos botões)
+5. 💎 Serviços ou Diferenciais Específicos (Opcional): (Algum valor, técnica ou detalhe adicional que o cliente informou)
 
-DIRETRIZES DE GERAÇÃO:
-1. "theme": Escolha uma das paletas oficiais:
-   - "luxo_nude" (Nude Champagne, editorial para clínicas e estética)
-   - "dourado_vip" (Ouro Imperial, alta autoridade para barbearias e holdings)
-   - "esmeralda_ouro" (Verde Esmeralda Nobre, medicina integrativa e bem-estar)
-   - "rose_quartz" (Rosé Quartz Glamour, lash, nails e estética facial)
-   - "black_ultra" (Preto Titânio Minimalista, barbearias e arquitetura)
-   - "safira_ouro" (Azul Safira & Ouro, advocacia e negócios executivos)
-2. "typographyId": "instrument" | "cormorant" | "playfair" | "outfit"
-3. "buttonStyle": "cartao_nobre" | "vidro_glamour" | "solido_glam" | "shimmer_ouro"
-4. "buttonAnimation": "shimmer" | "pulse" | "glow"
-5. Todos os textos devem ser em Português do Brasil com copywriting magnético de alto padrão (sem clichês amadores).
-6. "galleryPhotos": Array com 4 a 6 URLs de fotos reais e funcionais do Unsplash que combinem com o nicho.
-7. "actionCards": Mínimo 3 botões estratégicos (Agendamento VIP, Catálogo de Procedimentos, Localização & Rotas).
-8. Responda ESTRITAMENTE com o JSON puro, sem blocos de texto antes ou depois.
+Avise ao usuário que assim que ele enviar esses dados, você irá pesquisar ativamente na internet para validar as informações, capturar os depoimentos reais do Google Maps, identificar os procedimentos oferecidos e montar o código completo do BioSite.
 
-FORMATO OBRIGATÓRIO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ REGRA OBRIGATÓRIA #2 (APÓS O USUÁRIO ENVIAR OS DADOS DO CLIENTE):
+Assim que o usuário fornecer o Instagram, o Google Maps e o nicho do cliente, você DEVE REALIZAR UMA PESQUISA ATIVA NA WEB (usando a ferramenta de busca do Google):
+
+1. INVESTIGAÇÃO NO INSTAGRAM:
+- Acesse o perfil do cliente para ler a bio real, títulos profissionais (ex: CRM, CRO, Especialista), slogan e proposta de valor.
+- Analise os destaques e postagens para identificar os serviços e tratamentos reais oferecidos.
+- Identifique o estilo e a identidade visual predominante para escolher a melhor paleta do BioVip:
+  * "luxo_nude": Nude Champagne e tons areia (para clínicas de estética, biomédicas, dermatologia e spas elegantes).
+  * "dourado_vip": Ouro Imperial sobre preto nobre (para barbearias de alto padrão, cirurgiões e holding).
+  * "esmeralda_ouro": Verde Esmeralda Nobre e Ouro (para odontologia, medicina integrativa e bem-estar).
+  * "rose_quartz": Rosé Quartz Glamour (para extensão de cílios, nails designers, maquiadoras e estética facial).
+  * "black_ultra": Preto Titânio e Grafite (para arquitetura, estética masculina e barbearias industriais).
+  * "safira_ouro": Azul Safira Noturno e Dourado (para advocacia, perícia médica e consultorias executivas).
+- Extraia a foto de perfil oficial ou selecione uma imagem de alta resolução compatível que reflita com máxima fidelidade a excelência do profissional.
+- Extraia ou selecione 4 a 6 fotos de alta resolução do portfólio (trabalhos, ambiente da clínica/estúdio) no formato Unsplash compatível.
+
+2. INVESTIGAÇÃO NO GOOGLE MAPS / GOOGLE MEU NEGÓCIO:
+- Valide o endereço físico oficial, bairro e cidade.
+- Extraia a nota média real de avaliações (ex: 4.9★ ou 5.0★).
+- Extraia 2 a 3 DEPOIMENTOS REAIS de clientes verdadeiros postados no perfil do Google Meu Negócio do cliente, com nome da pessoa, nota e relato autêntico.
+- Valide o horário de atendimento comercial (dias da semana e horários de pico).
+
+3. VALIDAÇÃO DOS DADOS:
+- Certifique-se de que os números de WhatsApp e links de rota para o Google Maps estão corretos e prontos para navegação.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ REGRA OBRIGATÓRIA #3 (FORMATO DA RESPOSTA FINAL):
+Após coletar e validar todas as informações reais do cliente, retorne ESTRITAMENTE o bloco de código JSON puro, sem textos introdutórios ou finais, seguindo rigidamente o schema oficial abaixo:
+
 {
   "adminClient": {
-    "clientName": "Nome do Cliente Responsável",
-    "clientPhone": "5531999999999",
-    "clientEmail": "contato@cliente.com.br",
-    "subdomain": "slug-do-cliente",
-    "nicheCategory": "Odontologia Estética",
+    "clientName": "[Nome Completo do Profissional ou Estabelecimento]",
+    "clientPhone": "[Telefone WhatsApp com DDD apenas dígitos, ex: 5531999999999]",
+    "clientEmail": "[E-mail ou contato@nomedocliente.com.br]",
+    "subdomain": "[slug-do-cliente-em-kebab-case]",
+    "nicheCategory": "[Nicho Real]",
     "creationFee": 79.90,
     "monthlyFee": 49.90
   },
   "microsite": {
-    "theme": "luxo_nude",
+    "theme": "[luxo_nude | dourado_vip | esmeralda_ouro | rose_quartz | black_ultra | safira_ouro]",
     "typographyId": "instrument",
     "buttonStyle": "cartao_nobre",
     "buttonAnimation": "shimmer",
     "profile": {
-      "name": "Dra. Ana Freire",
-      "title": "Odontologia Estética & Reabilitação Oral",
-      "registrationCode": "CRO-PE 22.675",
-      "tagline": "Criando sorrisos harmônicos e transformadores com o mais alto rigor técnico e artístico.",
-      "cursivePhrase": "A arte de desenhar sorrisos exclusivos e naturais.",
-      "bio": "Especialista em lentes de contato dental e facetas com atendimento exclusivo sob medida.",
-      "avatarUrl": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85"
+      "name": "[Nome do Profissional ou Clínica]",
+      "title": "[Especialidade e Título Oficial]",
+      "registrationCode": "[Registro Profissional se houver: ex CRM/CRO/OAB ou em branco]",
+      "tagline": "[Slogan de posicionamento extraído do Instagram]",
+      "cursivePhrase": "[Assinatura elegante para a biografia]",
+      "bio": "[Biografia real e persuasiva extraída e refinada do perfil]",
+      "avatarUrl": "[URL da foto de perfil real ou imagem profissional correspondente]"
     },
     "actionCards": [
       {
         "id": "btn-1",
-        "title": "AGENDAMENTO VIP",
-        "subtitle": "Escolha o melhor horário com confirmação prioritária.",
+        "title": "AGENDAMENTO VIP VIA WHATSAPP",
+        "subtitle": "Atendimento prioritário com hora marcada.",
         "variant": "accent",
-        "badgeText": "⭐ MAIS ESCOLHIDO",
+        "badgeText": "⭐ PRIORITÁRIO",
         "linkType": "whatsapp",
-        "whatsappMessage": "Olá! Gostaria de agendar uma consulta de avaliação."
+        "whatsappMessage": "Olá! Gostaria de agendar um horário com [Nome]."
       },
       {
         "id": "btn-2",
-        "title": "CATÁLOGO DE PROCEDIMENTOS",
-        "subtitle": "Conheça nossas técnicas exclusivas e protocolos.",
+        "title": "CATÁLOGO DE SERVIÇOS & VALORES",
+        "subtitle": "Conheça nossos procedimentos e protocolos.",
         "variant": "default",
         "url": "#catalogo"
       },
       {
         "id": "btn-3",
-        "title": "LOCALIZAÇÃO & ROTAS GPS",
-        "subtitle": "Rotas diretas pelo Google Maps e Waze.",
+        "title": "COMO CHEGAR (GOOGLE MAPS & WAZE)",
+        "subtitle": "Rotas e localização privilegiada.",
         "variant": "default",
         "url": "#localizacao"
       }
     ],
     "announcement": {
       "enabled": true,
-      "badge": "CONSULTORIA VIP",
-      "text": "Agenda de avaliações estéticas aberta para este mês."
+      "badge": "AGENDA EXCLUSIVA",
+      "text": "Atendimentos com agendamento antecipado · Poucas vagas disponíveis."
     },
     "urgency": {
       "enabled": true,
-      "headline": "🔥 CONDIÇÃO ESPECIAL DE HOJE",
-      "subtitle": "Garanta seu horário com avaliação prioritária antes que expire:",
-      "minutes": 15
+      "headline": "🔥 VAGAS LIMITADAS PARA ESTA SEMANA",
+      "subtitle": "Reserve seu atendimento exclusivo antes que a agenda feche:",
+      "minutes": 30
     },
     "metrics": {
       "items": [
-        { "value": "+1.400", "label": "SORRISOS TRANSFORMADOS" },
-        { "value": "9 anos", "label": "DE EXPERIÊNCIA CLÍNICA" },
-        { "value": "5.0★", "label": "AVALIAÇÃO NO GOOGLE" }
+        { "value": "[Ex: +2.000]", "label": "[Ex: CLIENTES ATENDIDOS]" },
+        { "value": "[Ex: 8 Anos]", "label": "[Ex: DE TRADIÇÃO & EXCELÊNCIA]" },
+        { "value": "5.0★", "label": "AVALIAÇÃO NO GOOGLE MAPS" }
       ]
     },
     "howItWorks": {
       "items": [
-        { "number": "01", "title": "Triagem & Consulta Inicial", "description": "Você relata seu objetivo pelo WhatsApp e alinhamos o melhor horário para seu atendimento reservado." },
-        { "number": "02", "title": "Planejamento Digital 3D", "description": "Diagnóstico fotográfico e simulação estética personalizada antes de iniciar o procedimento." },
-        { "number": "03", "title": "Execução & Suporte VIP", "description": "Aplicação com técnicas minimamente invasivas e acompanhamento exclusivo da equipe." }
+        { "number": "01", "title": "Triagem & Contato", "description": "Você entra em contato pelo WhatsApp e alinhamos o melhor horário para seu atendimento reservado." },
+        { "number": "02", "title": "Avaliação Personalizada", "description": "Diagnóstico preciso e escolha dos melhores protocolos para seus objetivos." },
+        { "number": "03", "title": "Experiência & Resultados", "description": "Atendimento de excelência em ambiente privativo com suporte contínuo." }
       ]
     },
     "services": {
       "enabled": true,
       "headline": "Procedimentos & Soluções Exclusivas",
-      "subtitle": "Protocolos baseados no mais alto padrão de entrega",
+      "subtitle": "Serviços executados com excelência técnica e materiais premium",
       "categories": ["TODOS", "MAIS PROCURADO", "EXCLUSIVO"],
       "items": [
         {
           "id": "srv-1",
-          "name": "Lentes de Contato Dental em Porcelana",
+          "name": "[Nome do Serviço Principal 1]",
           "category": "MAIS PROCURADO",
-          "duration": "2h00",
+          "duration": "1h00",
           "priceFormatted": "Sob Consulta",
-          "description": "Lâminas ultrafinas de alta resistência desenhadas para harmonia facial e naturalidade.",
+          "description": "[Descrição precisa do serviço e benefícios reais]",
           "badge": "MAIS PROCURADO",
           "featured": true
         },
         {
           "id": "srv-2",
-          "name": "Facetas em Resina Composta Premium",
+          "name": "[Nome do Serviço Principal 2]",
           "category": "MAIS PROCURADO",
-          "duration": "1h30",
+          "duration": "45 min",
           "priceFormatted": "Sob Consulta",
-          "description": "Reabilitação estética rápida com estratificação de cores para efeito perolado impecável.",
-          "badge": "RESULTADO IMEDIATO",
+          "description": "[Descrição do serviço 2]",
+          "badge": "DESTAQUE",
           "featured": false
         },
         {
           "id": "srv-3",
-          "name": "Clareamento Dental a Laser VIP",
+          "name": "[Nome do Serviço Principal 3]",
           "category": "EXCLUSIVO",
-          "duration": "1h00",
+          "duration": "1h30",
           "priceFormatted": "Sob Consulta",
-          "description": "Protocolo fototérmico com barreira gengival para brilho radiante sem sensibilidade.",
+          "description": "[Descrição do serviço 3]",
           "badge": "EXCLUSIVO",
           "featured": false
         }
       ]
     },
     "galleryPhotos": [
-      "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=800&q=80",
+      // 4 a 6 URLs de fotos de alta resolução do portfólio real ou fotos contextuais do nicho
+      "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
     ],
     "locationCard": {
       "enabled": true,
-      "address": "Av. Boa Viagem, 2000 - Sala 801, Recife - PE",
-      "hours": "Seg a Sex · 08:30 às 19:30 | Sáb · 09h às 14h",
-      "openStatus": "Aberto Agora · Atendimento com Hora Marcada",
-      "mapsUrl": "https://maps.google.com"
+      "address": "[Endereço Real Completo com Bairro e Cidade do Google Maps]",
+      "hours": "[Horário de Funcionamento Real]",
+      "openStatus": "Aberto · Atendimento com Hora Marcada",
+      "mapsUrl": "[Link do Google Maps]"
     },
     "testimonials": {
       "items": [
-        { "clientName": "Mariana Albuquerque", "city": "Recife - PE", "text": "A melhor experiência clínica que já tive! O resultado das lentes ficou tão natural que ninguém diz que não são meus dentes de nascença.", "rating": 5 },
-        { "clientName": "Lucas Vasconcelos", "city": "Olinda - PE", "text": "Ambiente espetacular, pontualidade britânica e um atendimento que transmite muita segurança. Recomendo de olhos fechados!", "rating": 5 }
+        { "clientName": "[Nome de Cliente Real do Maps 1]", "city": "[Cidade]", "text": "[Depoimento real extraído do Google Maps]", "rating": 5 },
+        { "clientName": "[Nome de Cliente Real do Maps 2]", "city": "[Cidade]", "text": "[Depoimento real extraído do Google Maps]", "rating": 5 }
       ]
     },
     "aboutMe": {
-      "headline": "Excelência e Arte em Odontologia Estética",
-      "paragraph": "Com quase uma década dedicada à odontologia estética e reabilitação oral, unimos tecnologia digital de ponta ao toque artesanal para elevar a autoestima e a presença de nossos pacientes.",
-      "closingPhrase": "O seu sorriso é o seu cartão de visitas mais valioso."
+      "headline": "[Título da Seção Sobre Mim]",
+      "paragraph": "[História profissional, formação e diferenciais reais do especialista]",
+      "closingPhrase": "[Frase de autoridade final]"
     },
     "faq": {
       "items": [
-        { "question": "Como funciona a primeira consulta de avaliação?", "answer": "Realizamos um escaneamento intraoral e diagnóstico fotográfico completo para apresentar uma simulação do seu resultado antes de qualquer intervenção." },
-        { "question": "Quanto tempo dura o procedimento com lentes ou facetas?", "answer": "Dependendo da técnica selecionada, o tratamento pode ser concluído em apenas 1 a 3 sessões com conforto absoluto." },
-        { "question": "Quais são as opções de pagamento?", "answer": "Aceitamos Pix instantâneo, transferência bancária e parcelamento em até 12x no cartão de crédito." }
+        { "question": "Como funciona o agendamento de consultas ou horários?", "answer": "O agendamento é feito de forma personalizada diretamente via WhatsApp, onde nossa equipe verifica os melhores horários disponíveis." },
+        { "question": "Quais são as formas de pagamento disponíveis?", "answer": "Aceitamos PIX, cartões de crédito com opções de parcelamento e transferência bancária." },
+        { "question": "Onde fica localizado o espaço?", "answer": "[Endereço com pontos de referência e facilidade de estacionamento]." }
       ]
     },
     "qualifierFunnel": {
       "enabled": true,
-      "buttonLabel": "✨ Descobrir Tratamento Ideal (Triagem VIP)",
+      "buttonLabel": "✨ Descobrir o Tratamento Ideal (Triagem Rápida)",
       "headline": "Atendimento Personalizado",
-      "subtitle": "Responda 2 perguntas rápidas para agilizar seu horário no WhatsApp:",
+      "subtitle": "Responda 2 perguntas rápidas para direcionarmos seu horário no WhatsApp:",
       "questions": [
         {
           "id": "q1",
-          "title": "Qual transformação você mais deseja hoje?",
-          "options": [
-            "Lentes de Contato / Facetas",
-            "Clareamento Dental Profissional",
-            "Harmonização do Sorriso & Gengiva"
-          ]
+          "title": "Qual serviço ou transformação você busca?",
+          "options": ["[Opção 1 baseada no nicho]", "[Opção 2 baseada no nicho]", "Outro Procedimento"]
         },
         {
           "id": "q2",
-          "title": "Qual período você prefere para sua consulta?",
-          "options": [
-            "Manhã (08h às 12h)",
-            "Tarde (13h às 18h)",
-            "Sábado pela manhã"
-          ]
+          "title": "Qual período você prefere para o seu atendimento?",
+          "options": ["Manhã", "Tarde", "Sábado"]
         }
       ]
     },
     "subpages": [
-      { "slug": "procedimentos", "title": "Procedimentos & Valores", "description": "Tabela de procedimentos estéticos com detalhes e durações.", "previewType": "services" },
-      { "slug": "transformacoes", "title": "Antes e Depois Sorrisos", "description": "Galeria comparativa interativa de transformações reais.", "previewType": "before_after" }
+      { "slug": "procedimentos", "title": "Procedimentos & Valores", "description": "Tabela de procedimentos com detalhes e durações.", "previewType": "services" },
+      { "slug": "transformacoes", "title": "Galeria de Resultados", "description": "Transformações e portfólio visual exclusivo.", "previewType": "before_after" }
     ]
   }
 }`
                   navigator.clipboard.writeText(prompt)
-                  setPortfolioSuccessToast('Prompt Oficial Gemini copiado com sucesso! Envie ao Gemini e cole o JSON gerado abaixo.')
-                  setTimeout(() => setPortfolioSuccessToast(null), 4000)
+                  setPortfolioSuccessToast('Prompt Mestre Interativo copiado! Cole no Gemini: ele pedirá o Instagram e Maps do cliente antes de gerar.')
+                  setTimeout(() => setPortfolioSuccessToast(null), 5000)
                 }}
-                className="shrink-0 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-purple-900/30"
+                className="shrink-0 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-2 shadow-lg shadow-purple-900/40"
               >
-                <Copy className="w-3.5 h-3.5" />
-                Copiar Prompt Mestre
+                <Copy className="w-4 h-4" />
+                Copiar Prompt Mestre Interativo
               </button>
             </div>
 
