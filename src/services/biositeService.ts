@@ -24,6 +24,7 @@ export interface BioSiteRecord {
   testimonials_list?: any[]
   about_me_section?: any
   faq_list?: any[]
+  gallery_photos_list?: string[]
   pixels?: any
   subpages?: any[]
   updated_at?: string
@@ -81,6 +82,7 @@ export async function getBioSite(slug: string): Promise<any | null> {
           testimonialsList: data.testimonials_list || [],
           aboutMeSection: data.about_me_section,
           faqList: data.faq_list || [],
+          galleryPhotosList: data.gallery_photos_list || [],
           pixels: data.pixels,
           subpages: data.subpages || [],
           updatedAt: data.updated_at
@@ -154,6 +156,7 @@ export async function saveBioSite(slug: string, siteData: any): Promise<{ succes
         testimonials_list: siteData.testimonialsList || [],
         about_me_section: siteData.aboutMeSection || null,
         faq_list: siteData.faqList || [],
+        gallery_photos_list: siteData.galleryPhotosList || siteData.galleryPhotos || [],
         pixels: siteData.pixels || null,
         subpages: siteData.subpages || [],
         updated_at: new Date().toISOString()

@@ -58,7 +58,7 @@ import {
   Bot
 } from 'lucide-react'
 import Link from 'next/link'
-import { getLeads, LeadSubmission } from '@/services/biositeService'
+import { getLeads, LeadSubmission, saveBioSite } from '@/services/biositeService'
 
 const MASTER_PIN = '2026'
 
@@ -488,8 +488,8 @@ export default function AdminDashboardClient() {
         cleanJson = cleanJson.replace(/^```/, '').replace(/```$/, '').trim()
       }
       const data = JSON.parse(cleanJson)
-      const admin = data.adminClient || {}
-      const micro = data.microsite || {}
+      const admin = data.adminClient || data.admin || {}
+      const micro = data.microsite || data.site || {}
       const profile = micro.profile || {}
       const newSlug = (admin.subdomain || profile.instagram || 'cliente-' + Date.now().toString().slice(-4))
         .toLowerCase().trim().replace(/[^a-z0-9-]/g, '-')
@@ -502,6 +502,58 @@ export default function AdminDashboardClient() {
       const clientName = admin.clientName || profile.name || 'Novo Cliente VIP'
       const businessName = profile.name || admin.clientName || 'Empresa VIP'
       const phone = (admin.clientPhone || profile.whatsapp || '').replace(/\D/g, '')
+
+      // Resolução inteligente de paleta
+      const THEME_MAP: Record<string, string> = {
+        roseGoldQuartz: 'rose_quartz',
+        rose_gold: 'rose_quartz',
+        rosegold: 'rose_quartz',
+        goldVip: 'dourado_vip',
+        gold: 'dourado_vip',
+        ouro: 'dourado_vip',
+        dourado: 'dourado_vip',
+        emerald: 'esmeralda_ouro',
+        esmeralda: 'esmeralda_ouro',
+        black: 'black_ultra',
+        blackTitanium: 'black_ultra',
+        dark: 'black_ultra',
+        safira: 'safira_ouro',
+        sapphire: 'safira_ouro',
+        nude: 'luxo_nude',
+        champagne: 'luxo_nude'
+      }
+      const resolvedPaletteId = THEME_MAP[micro.theme || micro.paletteId] || micro.theme || micro.paletteId || 'luxo_nude'
+
+      // Fotos temáticas em alta resolução de fallback no Unsplash
+      const FALLBACK_GALLERY_BY_NICHE: Record<string, string[]> = {
+        beleza: [
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80'
+        ],
+        barbearia: [
+          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=800&q=80'
+        ],
+        saude: [
+          'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80'
+        ]
+      }
+
+      const nicheLower = (admin.nicheCategory || profile.title || '').toLowerCase()
+      const fallbackGallery = nicheLower.includes('barb')
+        ? FALLBACK_GALLERY_BY_NICHE.barbearia
+        : nicheLower.includes('odonto') || nicheLower.includes('medic') || nicheLower.includes('saud')
+        ? FALLBACK_GALLERY_BY_NICHE.saude
+        : FALLBACK_GALLERY_BY_NICHE.beleza
+
+      const galleryPhotosList = micro.galleryPhotos || micro.portfolioGallery?.items || micro.galleryPhotosList || fallbackGallery
 
       const newSub: Subscription = {
         id: `sub-${Date.now().toString().slice(-4)}`,
@@ -534,64 +586,236 @@ export default function AdminDashboardClient() {
         ]
       }
 
+      // Normalização completa dos botões nobres de ação
+      const rawActionCards = micro.actionCards || micro.buttons || []
+      const defaultButtons = [
+        {
+          id: 'btn-1',
+          label: 'AGENDAMENTO VIP',
+          subtitle: 'Atendimento exclusivo com reserva prioritária.',
+          icon: 'calendar',
+          url: `https://wa.me/${phone}?text=${encodeURIComponent(`Olá! Gostaria de agendar um horário com ${businessName}.`)}`,
+          isHighlighted: true,
+          highlightBadge: '⭐ MAIS PROCURADO'
+        },
+        {
+          id: 'btn-2',
+          label: 'CATÁLOGO DE SERVIÇOS',
+          subtitle: 'Conheça nossos procedimentos e valores.',
+          icon: 'sparkles',
+          url: '#catalogo'
+        },
+        {
+          id: 'btn-3',
+          label: 'COMO CHEGAR (LOCALIZAÇÃO)',
+          subtitle: 'Rotas pelo Google Maps e Waze.',
+          icon: 'map',
+          url: micro.locationCard?.mapsUrl || '#localizacao'
+        }
+      ]
+
+      const formattedButtons = rawActionCards.length > 0
+        ? rawActionCards.map((c: any, i: number) => ({
+            id: c.id || `btn-${i + 1}`,
+            label: c.label || c.title || 'Ação VIP',
+            subtitle: c.subtitle || '',
+            icon: c.icon === 'Calendar' || c.icon === 'calendar' ? 'calendar' : c.icon === 'MapPin' || c.icon === 'map' ? 'map' : 'sparkles',
+            url: c.linkType === 'whatsapp' || c.url?.includes('wa.me')
+              ? (c.url || `https://wa.me/${phone}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}`)
+              : c.url || '#',
+            isHighlighted: c.isHighlighted ?? (c.variant === 'accent' || i === 0),
+            highlightBadge: c.highlightBadge || c.badgeText || (i === 0 ? '⭐ MAIS PROCURADO' : undefined)
+          }))
+        : defaultButtons
+
+      // Normalização do Funil de Triagem Anti-Curiosos
+      const rawQuiz = micro.qualifierFunnel || micro.qualifierQuiz
+      const formattedQuiz = rawQuiz ? {
+        enabled: rawQuiz.enabled !== false,
+        buttonLabel: rawQuiz.buttonLabel || '✨ Descobrir Tratamento Ideal (Triagem VIP)',
+        headline: rawQuiz.headline || 'Atendimento Personalizado',
+        subtitle: rawQuiz.subtitle || 'Responda 3 perguntas rápidas para agilizar seu atendimento:',
+        questions: (rawQuiz.questions || []).map((q: any, qIdx: number) => ({
+          id: q.id || `q-${qIdx + 1}`,
+          question: q.question || q.title || 'Qual a sua preferência?',
+          options: (q.options || []).map((opt: any) => typeof opt === 'string' ? opt : opt.label || opt.text || String(opt))
+        }))
+      } : {
+        enabled: true,
+        buttonLabel: '✨ Descobrir Tratamento Ideal (Triagem VIP)',
+        headline: 'Atendimento Personalizado',
+        subtitle: 'Responda 3 perguntas rápidas para agilizar seu atendimento no WhatsApp:',
+        questions: [
+          { id: 'q-1', question: 'Qual é o seu objetivo principal hoje?', options: ['Primeira Consulta / Avaliação', 'Procedimento Específico', 'Dúvidas e Valores'] },
+          { id: 'q-2', question: 'Qual o melhor período para o seu atendimento?', options: ['Manhã (08h às 12h)', 'Tarde (13h às 18h)', 'Sábado'] }
+        ]
+      }
+
+      // Normalização do Catálogo de Procedimentos
+      const rawServices = micro.services || micro.servicesCatalog
+      const formattedServices = rawServices ? {
+        enabled: rawServices.enabled !== false,
+        headline: rawServices.headline || 'Procedimentos & Soluções Exclusivas',
+        subtitle: rawServices.subtitle || 'Soluções de alto padrão sob medida',
+        categories: rawServices.categories || ['TODOS', 'MAIS PROCURADO', 'EXCLUSIVO'],
+        items: (rawServices.items || []).map((s: any, idx: number) => ({
+          id: s.id || `srv-${idx + 1}`,
+          category: s.category || (idx === 0 ? 'MAIS PROCURADO' : 'EXCLUSIVO'),
+          name: s.name || 'Procedimento VIP',
+          description: s.description || 'Protocolo personalizado com diagnóstico detalhado.',
+          price: s.priceFormatted || s.price || 'Sob Consulta',
+          duration: s.duration || s.time || '1h00',
+          badge: s.badge || (idx === 0 ? 'MAIS PROCURADO' : undefined),
+          featured: s.featured ?? (idx === 0),
+          whatsappMessage: s.whatsappMessage || `Olá! Gostaria de saber mais sobre o procedimento de ${s.name}.`
+        }))
+      } : {
+        enabled: true,
+        headline: 'Procedimentos & Soluções Exclusivas',
+        subtitle: 'Soluções personalizadas baseadas no mais alto padrão de entrega',
+        categories: ['TODOS', 'MAIS PROCURADO', 'EXCLUSIVO'],
+        items: [
+          { id: 'srv-1', category: 'MAIS PROCURADO', name: 'Atendimento Principal VIP', description: 'Diagnóstico detalhado e protocolo exclusivo.', price: 'Sob Consulta', duration: '1h30', badge: 'MAIS PROCURADO', featured: true, whatsappMessage: `Olá! Gostaria de agendar o Atendimento Principal.` },
+          { id: 'srv-2', category: 'EXCLUSIVO', name: 'Consultoria Personalizada', description: 'Acompanhamento completo e plano individualizado.', price: 'Sob Consulta', duration: '2h00', badge: 'EXCLUSIVO', featured: false, whatsappMessage: `Olá! Gostaria de informações sobre a Consultoria Personalizada.` }
+        ]
+      }
+
+      // Normalização de Depoimentos Google
+      const rawTestimonials = micro.testimonials?.items || micro.testimonialsList || micro.testimonials
+      const formattedTestimonials = Array.isArray(rawTestimonials) && rawTestimonials.length > 0
+        ? rawTestimonials.map((t: any, idx: number) => ({
+            id: t.id || `rev-${idx + 1}`,
+            clientName: t.clientName || t.name || 'Cliente Verificado',
+            city: t.city || t.role || 'Cliente VIP',
+            text: t.text || t.comment || 'Atendimento impecável! O ambiente é lindo e o resultado superou todas as expectativas.',
+            rating: t.rating || 5,
+            verified: true
+          }))
+        : [
+            { clientName: 'Juliana Mendes', city: 'São Paulo - SP', text: 'Atendimento impecável! O ambiente é lindo, super higienizado e o resultado superou todas as expectativas.', rating: 5, verified: true },
+            { clientName: 'Camila Rodrigues', city: 'Belo Horizonte - MG', text: 'Profissionalismo do mais alto nível. Me senti muito segura e o atendimento foi nota 10!', rating: 5, verified: true }
+          ]
+
+      // Normalização de Dúvidas Frequentes (FAQ)
+      const rawFaq = micro.faq?.items || micro.faqList || micro.faq
+      const formattedFaq = Array.isArray(rawFaq) && rawFaq.length > 0
+        ? rawFaq.map((f: any) => ({
+            question: f.question || f.q || 'Como funciona o agendamento?',
+            answer: f.answer || f.a || 'O agendamento é feito diretamente com nossa equipe pelo WhatsApp para selecionar o melhor horário.'
+          }))
+        : [
+            { question: 'Como funciona o agendamento de consultas ou serviços?', answer: 'O agendamento é realizado diretamente pelo WhatsApp com atendimento exclusivo da nossa equipe para selecionar o melhor dia e horário.' },
+            { question: 'Quais são as formas de pagamento aceitas?', answer: 'Aceitamos Pix instantâneo, transferência bancária e cartões de crédito em até 12x.' },
+            { question: 'Onde está localizado o espaço de atendimento?', answer: 'Estamos situados em endereço nobre com fácil acesso, estacionamento com manobrista e total discrição para seu conforto.' }
+          ]
+
+      // Normalização da Jornada em 3 Passos (Como Funciona)
+      const rawHowItWorks = micro.howItWorks?.items || micro.howItWorksSteps || micro.howItWorks
+      const formattedHowItWorks = Array.isArray(rawHowItWorks) && rawHowItWorks.length > 0
+        ? rawHowItWorks.map((h: any, idx: number) => ({
+            number: h.number || `0${idx + 1}`,
+            title: h.title || 'Etapa de Atendimento',
+            description: h.description || 'Alinhamento completo da sua necessidade com foco total em excelência.'
+          }))
+        : [
+            { number: '01', title: 'Primeiro Contato & Triagem', description: 'Você relata sua necessidade pelo WhatsApp ou formulário e alinhamos a prioridade.' },
+            { number: '02', title: 'Avaliação Estratégica', description: 'Diagnóstico detalhado do seu objetivo com plano de ação sob medida.' },
+            { number: '03', title: 'Execução & Acompanhamento', description: 'Atendimento de alta excelência e suporte contínuo em todas as etapas.' }
+          ]
+
+      // Normalização de Subpáginas Pro
+      const rawSubpages = micro.subpages
+      const formattedSubpages = Array.isArray(rawSubpages) && rawSubpages.length > 0
+        ? rawSubpages.map((sp: any) => ({
+            slug: sp.slug,
+            title: sp.title,
+            description: sp.description,
+            previewType: sp.previewType || 'services'
+          }))
+        : [
+            { slug: 'procedimentos', title: 'Procedimentos & Preços', description: 'Tabela de tratamentos e protocolos exclusivos.', previewType: 'services' },
+            { slug: 'transformacoes', title: 'Antes e Depois Resultados', description: 'Comparativo interativo de transformações e casos reais.', previewType: 'before_after' },
+            { slug: 'agenda-vip', title: 'Agendamento com a Equipe', description: 'Consulte os dias e horários livres com confirmação imediata.', previewType: 'booking' }
+          ]
+
       const siteData = {
         slug: newSlug,
         name: businessName,
         role: profile.title || admin.nicheCategory || 'Especialista VIP',
         category: admin.nicheCategory || 'Serviços de Alto Padrão',
         registrationCode: profile.registrationCode || 'REGISTRO OFICIAL',
-        monogram: businessName.split(' ').map((n: string) => n[0]).slice(0, 2).join(''),
-        photo: profile.avatarUrl || DEMO_PHOTOS.mulher,
-        paletteId: micro.theme || 'luxo_nude',
-        typographyId: 'instrument',
-        buttonStyle: 'cartao_nobre',
-        buttonAnimation: 'shimmer',
-        bio: profile.cursivePhrase || profile.tagline || 'Excelência e sofisticação em cada detalhe.',
+        monogram: profile.monogram || businessName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase(),
+        photo: profile.avatarUrl || profile.photo || DEMO_PHOTOS.mulher,
+        paletteId: resolvedPaletteId,
+        typographyId: micro.typographyId || 'instrument',
+        buttonStyle: micro.buttonStyle || 'cartao_nobre',
+        buttonAnimation: micro.buttonAnimation || 'shimmer',
+        bio: profile.cursivePhrase || profile.tagline || profile.bio || 'Excelência e sofisticação em cada detalhe.',
         whatsapp: phone,
-        buttons: (micro.actionCards || []).map((c: any, i: number) => ({
-          id: c.id || `btn-${i + 1}`,
-          label: c.title || 'Ação VIP',
-          subtitle: c.subtitle || '',
-          icon: c.icon === 'Calendar' ? 'calendar' : c.icon === 'MapPin' ? 'map' : 'sparkles',
-          url: c.linkType === 'whatsapp' ? `https://wa.me/${phone}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}` : c.url || '#',
-          isHighlighted: c.variant === 'accent' || i === 0,
-          highlightBadge: c.badgeText || (i === 0 ? '⭐ MAIS PROCURADO' : undefined)
-        })),
+        buttons: formattedButtons,
         announcement: micro.announcement || { enabled: true, badge: 'AGENDA VIP ABERTA', text: 'Últimos horários disponíveis para esta semana.' },
-        urgency: { enabled: true, headline: '🔥 CONDIÇÃO ESPECIAL DE HOJE', subtitle: 'Garanta sua vaga com atendimento prioritário antes que expire:', minutes: 15 },
-        qualifierQuiz: micro.qualifierFunnel ? {
-          enabled: micro.qualifierFunnel.enabled !== false,
-          buttonLabel: micro.qualifierFunnel.buttonLabel || '✨ Descobrir Tratamento Ideal (Triagem VIP)',
-          headline: micro.qualifierFunnel.headline || 'Atendimento Personalizado',
-          subtitle: micro.qualifierFunnel.subtitle || 'Responda 3 perguntas rápidas para agilizar seu atendimento:',
-          questions: micro.qualifierFunnel.questions || []
-        } : undefined,
-        metricsList: micro.metrics?.items || [{ value: '+500', label: 'CLIENTES' }, { value: '8 anos', label: 'EXPERIÊNCIA' }, { value: '5.0★', label: 'GOOGLE' }],
+        urgency: micro.urgency || { enabled: true, headline: '🔥 CONDIÇÃO ESPECIAL DE HOJE', subtitle: 'Garanta sua vaga com atendimento prioritário antes que expire:', minutes: 15 },
+        qualifierQuiz: formattedQuiz,
+        metricsList: micro.metrics?.items || micro.metricsList || [
+          { value: '+1.000', label: 'CLIENTES ATENDIDOS' },
+          { value: '8 anos', label: 'DE EXPERIÊNCIA' },
+          { value: '5.0★', label: 'AVALIAÇÃO NO GOOGLE' }
+        ],
+        howItWorksSteps: formattedHowItWorks,
+        servicesCatalog: formattedServices,
+        galleryPhotosList: galleryPhotosList,
         locationInfo: micro.locationCard ? {
           enabled: micro.locationCard.enabled !== false,
           address: micro.locationCard.address || 'Endereço Comercial',
           hours: micro.locationCard.hours || 'Seg a Sáb · 08:30 às 19:30',
           openStatus: micro.locationCard.openStatus || 'Aberto Agora · Hora Marcada',
           mapsUrl: micro.locationCard.mapsUrl || 'https://maps.google.com'
-        } : undefined,
-        servicesCatalog: micro.services ? {
-          enabled: micro.services.enabled !== false,
-          headline: micro.services.headline || 'Procedimentos Exclusivos',
-          subtitle: micro.services.subtitle || 'Protocolos de alto padrão',
-          categories: ['TODOS', 'MAIS PROCURADO', 'EXCLUSIVO'],
-          items: (micro.services.items || []).map((s: any) => ({
-            ...s,
-            whatsappMessage: s.whatsappMessage || `Olá! Gostaria de agendar ${s.name}.`
-          }))
-        } : undefined,
-        testimonialsList: micro.testimonials?.items || [],
-        aboutMeSection: micro.aboutMe || undefined,
-        faqList: micro.faq?.items || []
+        } : {
+          enabled: true,
+          address: 'Av. Principal, 1000 - Edifício Business Center',
+          hours: 'Seg a Sáb · 08:30 às 19:30',
+          openStatus: 'Aberto Agora · Hora Marcada',
+          mapsUrl: 'https://maps.google.com'
+        },
+        testimonialsList: formattedTestimonials,
+        aboutMeSection: micro.aboutMe || {
+          enabled: true,
+          headline: `Sobre ${businessName}`,
+          paragraph: profile.tagline || 'Dedicamo-nos a proporcionar experiências exclusivas e transformadoras, combinando técnicas avançadas com um padrão rigoroso de excelência.',
+          closingPhrase: profile.cursivePhrase || 'Sua melhor versão com sofisticação e segurança.'
+        },
+        faqList: formattedFaq,
+        subpages: formattedSubpages
       }
 
+      // 1. Salvar no localStorage específico do site
       localStorage.setItem('biovip_site_' + newSlug, JSON.stringify(siteData))
-      setSubscriptions(prev => [newSub, ...prev])
-      setPaymentSuccessToast(`BioSite de "${newSub.clientName}" importado com sucesso via IA Gemini!`)
+
+      // 2. Salvar na lista de projetos de portfólio (para permitir edição em /conta?edit=slug)
+      try {
+        const savedProjectsRaw = localStorage.getItem('biovip_portfolio_projects')
+        let portfolioList = savedProjectsRaw ? JSON.parse(savedProjectsRaw) : []
+        portfolioList = portfolioList.filter((p: any) => p.slug !== newSlug)
+        portfolioList.unshift({
+          ...siteData,
+          inPortfolio: true,
+          isPortfolioModel: true,
+          stats: { views: '1.2K', clicks: '420', conversion: '35.0%' }
+        })
+        localStorage.setItem('biovip_portfolio_projects', JSON.stringify(portfolioList))
+      } catch (e) {
+        console.warn('Erro ao atualizar lista de portfólio:', e)
+      }
+
+      // 3. Persistência em nuvem Supabase (se configurado)
+      saveBioSite(newSlug, siteData).catch(e => console.warn('Sync Supabase:', e))
+
+      // 4. Registrar nova assinatura ativa
+      const updatedSubs = [newSub, ...subscriptions.filter(s => s.slug !== newSlug)]
+      setSubscriptions(updatedSubs)
+      localStorage.setItem('biovip_subscriptions', JSON.stringify(updatedSubs))
+
+      setPaymentSuccessToast(`BioSite de "${newSub.clientName}" importado com sucesso! Todos os 18 módulos preenchidos e ativos.`)
       setIsGeminiModalOpen(false)
       setGeminiJsonInput('')
       setGeminiError(null)
@@ -3374,88 +3598,218 @@ export default function AdminDashboardClient() {
               <button
                 type="button"
                 onClick={() => {
-                  const prompt = `Você é o BioVip Specialist AI. Crie a estrutura JSON completa para um microsite de luxo e seu cadastro no sistema de assinaturas.
+                  const prompt = `Você é o Arquiteto de IA Oficial do BioVip (ecossistema de microsites de luxo e alta conversão para profissionais liberais, clínicas médicas, odontologia, estúdios de beleza e barbearias).
 
-Entradas:
+Sua missão: Gerar a estrutura JSON COMPLETA, RICA e PERSUASIVA para instanciar um novo BioSite com todos os 18 módulos preenchidos automaticamente.
+
+DADOS DE ENTRADA DO CLIENTE:
 - Nome/Negócio: [Nome do Estabelecimento ou Especialista]
-- Nicho: [Ex: Estética Avançada, Barbearia Premium, Advocacia]
+- Nicho: [Ex: Odontologia Estética, Dermatologia, Lash Designer, Barbearia Premium, Advocacia]
 - Instagram: @[usuario]
 - WhatsApp: [DDD + Telefone]
-- Endereço Google Maps: [Endereço Completo]
+- Endereço Google Maps: [Endereço Completo com Bairro e Cidade]
+- Especialidades / Procedimentos Principais: [Lista de serviços se houver, ou invente coerentes com alto padrão]
 
-Responda APENAS com um JSON puro no formato:
+DIRETRIZES DE GERAÇÃO:
+1. "theme": Escolha uma das paletas oficiais:
+   - "luxo_nude" (Nude Champagne, editorial para clínicas e estética)
+   - "dourado_vip" (Ouro Imperial, alta autoridade para barbearias e holdings)
+   - "esmeralda_ouro" (Verde Esmeralda Nobre, medicina integrativa e bem-estar)
+   - "rose_quartz" (Rosé Quartz Glamour, lash, nails e estética facial)
+   - "black_ultra" (Preto Titânio Minimalista, barbearias e arquitetura)
+   - "safira_ouro" (Azul Safira & Ouro, advocacia e negócios executivos)
+2. "typographyId": "instrument" | "cormorant" | "playfair" | "outfit"
+3. "buttonStyle": "cartao_nobre" | "vidro_glamour" | "solido_glam" | "shimmer_ouro"
+4. "buttonAnimation": "shimmer" | "pulse" | "glow"
+5. Todos os textos devem ser em Português do Brasil com copywriting magnético de alto padrão (sem clichês amadores).
+6. "galleryPhotos": Array com 4 a 6 URLs de fotos reais e funcionais do Unsplash que combinem com o nicho.
+7. "actionCards": Mínimo 3 botões estratégicos (Agendamento VIP, Catálogo de Procedimentos, Localização & Rotas).
+8. Responda ESTRITAMENTE com o JSON puro, sem blocos de texto antes ou depois.
+
+FORMATO OBRIGATÓRIO:
 {
   "adminClient": {
-    "clientName": "Nome do Cliente",
+    "clientName": "Nome do Cliente Responsável",
     "clientPhone": "5531999999999",
     "clientEmail": "contato@cliente.com.br",
     "subdomain": "slug-do-cliente",
-    "nicheCategory": "Estética Avançada",
+    "nicheCategory": "Odontologia Estética",
     "creationFee": 79.90,
     "monthlyFee": 49.90
   },
   "microsite": {
-    "theme": "roseGoldQuartz",
+    "theme": "luxo_nude",
+    "typographyId": "instrument",
+    "buttonStyle": "cartao_nobre",
+    "buttonAnimation": "shimmer",
     "profile": {
-      "name": "Nome Comercial",
-      "title": "Especialista em Harmonização Facial",
-      "registrationCode": "CRBM 12345",
-      "tagline": "Realçando sua beleza natural com exclusividade",
-      "cursivePhrase": "A arte de harmonizar com naturalidade e sofisticação."
+      "name": "Dra. Ana Freire",
+      "title": "Odontologia Estética & Reabilitação Oral",
+      "registrationCode": "CRO-PE 22.675",
+      "tagline": "Criando sorrisos harmônicos e transformadores com o mais alto rigor técnico e artístico.",
+      "cursivePhrase": "A arte de desenhar sorrisos exclusivos e naturais.",
+      "bio": "Especialista em lentes de contato dental e facetas com atendimento exclusivo sob medida.",
+      "avatarUrl": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85"
     },
     "actionCards": [
-      { "id": "btn-1", "title": "Agendar Consulta VIP", "subtitle": "Atendimento com hora marcada", "variant": "accent", "badgeText": "⭐ MAIS PROCURADO", "linkType": "whatsapp", "whatsappMessage": "Olá! Gostaria de agendar uma consulta." }
+      {
+        "id": "btn-1",
+        "title": "AGENDAMENTO VIP",
+        "subtitle": "Escolha o melhor horário com confirmação prioritária.",
+        "variant": "accent",
+        "badgeText": "⭐ MAIS ESCOLHIDO",
+        "linkType": "whatsapp",
+        "whatsappMessage": "Olá! Gostaria de agendar uma consulta de avaliação."
+      },
+      {
+        "id": "btn-2",
+        "title": "CATÁLOGO DE PROCEDIMENTOS",
+        "subtitle": "Conheça nossas técnicas exclusivas e protocolos.",
+        "variant": "default",
+        "url": "#catalogo"
+      },
+      {
+        "id": "btn-3",
+        "title": "LOCALIZAÇÃO & ROTAS GPS",
+        "subtitle": "Rotas diretas pelo Google Maps e Waze.",
+        "variant": "default",
+        "url": "#localizacao"
+      }
     ],
-    "announcement": { "enabled": true, "badge": "AGENDA ABERTA", "text": "Últimos horários para esta semana." },
-    "urgency": { "enabled": true, "headline": "🔥 CONDIÇÃO ESPECIAL", "subtitle": "Reserve agora:", "minutes": 15 },
+    "announcement": {
+      "enabled": true,
+      "badge": "CONSULTORIA VIP",
+      "text": "Agenda de avaliações estéticas aberta para este mês."
+    },
+    "urgency": {
+      "enabled": true,
+      "headline": "🔥 CONDIÇÃO ESPECIAL DE HOJE",
+      "subtitle": "Garanta seu horário com avaliação prioritária antes que expire:",
+      "minutes": 15
+    },
     "metrics": {
       "items": [
-        { "value": "+1.200", "label": "PACIENTES ATENDIDOS" },
-        { "value": "7 anos", "label": "EXPERIÊNCIA" },
-        { "value": "5.0★", "label": "AVALIAÇÃO GOOGLE" }
+        { "value": "+1.400", "label": "SORRISOS TRANSFORMADOS" },
+        { "value": "9 anos", "label": "DE EXPERIÊNCIA CLÍNICA" },
+        { "value": "5.0★", "label": "AVALIAÇÃO NO GOOGLE" }
       ]
     },
-    "locationCard": {
-      "enabled": true,
-      "address": "Av. Principal, 1000 - Sala 502",
-      "hours": "Seg a Sex · 09h às 19h",
-      "openStatus": "Aberto Agora · Agendamento VIP",
-      "mapsUrl": "https://maps.google.com"
+    "howItWorks": {
+      "items": [
+        { "number": "01", "title": "Triagem & Consulta Inicial", "description": "Você relata seu objetivo pelo WhatsApp e alinhamos o melhor horário para seu atendimento reservado." },
+        { "number": "02", "title": "Planejamento Digital 3D", "description": "Diagnóstico fotográfico e simulação estética personalizada antes de iniciar o procedimento." },
+        { "number": "03", "title": "Execução & Suporte VIP", "description": "Aplicação com técnicas minimamente invasivas e acompanhamento exclusivo da equipe." }
+      ]
     },
     "services": {
       "enabled": true,
-      "headline": "Procedimentos Exclusivos",
-      "subtitle": "Protocolos sob medida",
+      "headline": "Procedimentos & Soluções Exclusivas",
+      "subtitle": "Protocolos baseados no mais alto padrão de entrega",
+      "categories": ["TODOS", "MAIS PROCURADO", "EXCLUSIVO"],
       "items": [
-        { "id": "srv-1", "name": "Harmonização Facial Full Face", "category": "EXCLUSIVO", "duration": "90 min", "priceFormatted": "R$ 2.400", "description": "Planejamento 3D e aplicação de ácido hialurônico de alta pureza." }
+        {
+          "id": "srv-1",
+          "name": "Lentes de Contato Dental em Porcelana",
+          "category": "MAIS PROCURADO",
+          "duration": "2h00",
+          "priceFormatted": "Sob Consulta",
+          "description": "Lâminas ultrafinas de alta resistência desenhadas para harmonia facial e naturalidade.",
+          "badge": "MAIS PROCURADO",
+          "featured": true
+        },
+        {
+          "id": "srv-2",
+          "name": "Facetas em Resina Composta Premium",
+          "category": "MAIS PROCURADO",
+          "duration": "1h30",
+          "priceFormatted": "Sob Consulta",
+          "description": "Reabilitação estética rápida com estratificação de cores para efeito perolado impecável.",
+          "badge": "RESULTADO IMEDIATO",
+          "featured": false
+        },
+        {
+          "id": "srv-3",
+          "name": "Clareamento Dental a Laser VIP",
+          "category": "EXCLUSIVO",
+          "duration": "1h00",
+          "priceFormatted": "Sob Consulta",
+          "description": "Protocolo fototérmico com barreira gengival para brilho radiante sem sensibilidade.",
+          "badge": "EXCLUSIVO",
+          "featured": false
+        }
+      ]
+    },
+    "galleryPhotos": [
+      "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80"
+    ],
+    "locationCard": {
+      "enabled": true,
+      "address": "Av. Boa Viagem, 2000 - Sala 801, Recife - PE",
+      "hours": "Seg a Sex · 08:30 às 19:30 | Sáb · 09h às 14h",
+      "openStatus": "Aberto Agora · Atendimento com Hora Marcada",
+      "mapsUrl": "https://maps.google.com"
+    },
+    "testimonials": {
+      "items": [
+        { "clientName": "Mariana Albuquerque", "city": "Recife - PE", "text": "A melhor experiência clínica que já tive! O resultado das lentes ficou tão natural que ninguém diz que não são meus dentes de nascença.", "rating": 5 },
+        { "clientName": "Lucas Vasconcelos", "city": "Olinda - PE", "text": "Ambiente espetacular, pontualidade britânica e um atendimento que transmite muita segurança. Recomendo de olhos fechados!", "rating": 5 }
+      ]
+    },
+    "aboutMe": {
+      "headline": "Excelência e Arte em Odontologia Estética",
+      "paragraph": "Com quase uma década dedicada à odontologia estética e reabilitação oral, unimos tecnologia digital de ponta ao toque artesanal para elevar a autoestima e a presença de nossos pacientes.",
+      "closingPhrase": "O seu sorriso é o seu cartão de visitas mais valioso."
+    },
+    "faq": {
+      "items": [
+        { "question": "Como funciona a primeira consulta de avaliação?", "answer": "Realizamos um escaneamento intraoral e diagnóstico fotográfico completo para apresentar uma simulação do seu resultado antes de qualquer intervenção." },
+        { "question": "Quanto tempo dura o procedimento com lentes ou facetas?", "answer": "Dependendo da técnica selecionada, o tratamento pode ser concluído em apenas 1 a 3 sessões com conforto absoluto." },
+        { "question": "Quais são as opções de pagamento?", "answer": "Aceitamos Pix instantâneo, transferência bancária e parcelamento em até 12x no cartão de crédito." }
       ]
     },
     "qualifierFunnel": {
       "enabled": true,
       "buttonLabel": "✨ Descobrir Tratamento Ideal (Triagem VIP)",
-      "headline": "Triagem Personalizada",
-      "subtitle": "Responda 3 perguntas rápidas:",
+      "headline": "Atendimento Personalizado",
+      "subtitle": "Responda 2 perguntas rápidas para agilizar seu horário no WhatsApp:",
       "questions": [
         {
           "id": "q1",
-          "title": "Qual procedimento você deseja realizar?",
+          "title": "Qual transformação você mais deseja hoje?",
           "options": [
-            { "label": "Harmonização Facial", "tag": "Procedimento: Harmonização" },
-            { "label": "Bioestimulador de Colágeno", "tag": "Procedimento: Bioestimulador" }
+            "Lentes de Contato / Facetas",
+            "Clareamento Dental Profissional",
+            "Harmonização do Sorriso & Gengiva"
+          ]
+        },
+        {
+          "id": "q2",
+          "title": "Qual período você prefere para sua consulta?",
+          "options": [
+            "Manhã (08h às 12h)",
+            "Tarde (13h às 18h)",
+            "Sábado pela manhã"
           ]
         }
       ]
-    }
+    },
+    "subpages": [
+      { "slug": "procedimentos", "title": "Procedimentos & Valores", "description": "Tabela de procedimentos estéticos com detalhes e durações.", "previewType": "services" },
+      { "slug": "transformacoes", "title": "Antes e Depois Sorrisos", "description": "Galeria comparativa interativa de transformações reais.", "previewType": "before_after" }
+    ]
   }
 }`
                   navigator.clipboard.writeText(prompt)
-                  setPortfolioSuccessToast('Prompt Oficial Gemini copiado para a área de transferência!')
-                  setTimeout(() => setPortfolioSuccessToast(null), 3500)
+                  setPortfolioSuccessToast('Prompt Oficial Gemini copiado com sucesso! Envie ao Gemini e cole o JSON gerado abaixo.')
+                  setTimeout(() => setPortfolioSuccessToast(null), 4000)
                 }}
-                className="shrink-0 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-[11px] transition cursor-pointer flex items-center gap-1 shadow-xs"
+                className="shrink-0 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-purple-900/30"
               >
-                <Copy className="w-3 h-3" />
-                Copiar Prompt
+                <Copy className="w-3.5 h-3.5" />
+                Copiar Prompt Mestre
               </button>
             </div>
 
