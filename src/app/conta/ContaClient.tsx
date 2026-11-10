@@ -17,7 +17,7 @@ import {
   HIGHLIGHT_BADGES,
   NICHES_LIST
 } from '@/data/bioSiteDesign'
-import { Project, projects as defaultProjects } from '@/data/projects'
+import { Project, StudentGridConfig, projects as defaultProjects } from '@/data/projects'
 import { Subscription } from '@/data/subscriptions'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
 import { applyCanvasOrganicFade, applySilhouetteCutout, readImageAsDataUrl } from '@/utils/imageProcessors'
@@ -153,6 +153,24 @@ export default function ContaClient() {
     'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
   ])
+
+  // Configuração Oficial de Galeria e Portfólio (BioVip Original)
+  const [galleryConfig, setGalleryConfig] = useState<StudentGridConfig>({
+    enabled: true,
+    badge: 'PORTFÓLIO & ESTRUTURA VIP',
+    headline: 'Resultados Reais & Portfólio em Destaque',
+    subtitle: 'Registros reais do nosso padrão de entrega e procedimentos',
+    layout: 'mosaic',
+    aspectRatio: 'square',
+    enableLightbox: true,
+    photos: [
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
+    ],
+    captions: []
+  })
 
   // Pixel & Tráfego Pago (Diferencial Competitivo Exclusivo)
   const [metaPixelId, setMetaPixelId] = useState('')
@@ -348,8 +366,14 @@ export default function ContaClient() {
         if (parsed.testimonialsList) setTestimonialsData(parsed.testimonialsList)
         if (parsed.aboutMeSection) setAboutMeData(parsed.aboutMeSection)
         if (parsed.faqList) setFaqData(parsed.faqList)
-        if (parsed.galleryPhotosList && Array.isArray(parsed.galleryPhotosList)) {
+        if (parsed.galleryConfig) {
+          setGalleryConfig(parsed.galleryConfig)
+          if (parsed.galleryConfig.photos && Array.isArray(parsed.galleryConfig.photos)) {
+            setGalleryPhotos(parsed.galleryConfig.photos)
+          }
+        } else if (parsed.galleryPhotosList && Array.isArray(parsed.galleryPhotosList)) {
           setGalleryPhotos(parsed.galleryPhotosList)
+          setGalleryConfig(prev => ({ ...prev, photos: parsed.galleryPhotosList }))
         }
         if (parsed.subpages && parsed.subpages.length > 0) {
           setAdditionalPages(parsed.subpages.map((sp: any, idx: number) => ({
@@ -412,8 +436,14 @@ export default function ContaClient() {
       if (foundProj.testimonialsList) setTestimonialsData(foundProj.testimonialsList as any)
       if (foundProj.aboutMeSection) setAboutMeData(foundProj.aboutMeSection as any)
       if (foundProj.faqList) setFaqData(foundProj.faqList as any)
-      if ((foundProj as any).galleryPhotosList && Array.isArray((foundProj as any).galleryPhotosList)) {
+      if (foundProj.galleryConfig) {
+        setGalleryConfig(foundProj.galleryConfig)
+        if (foundProj.galleryConfig.photos && Array.isArray(foundProj.galleryConfig.photos)) {
+          setGalleryPhotos(foundProj.galleryConfig.photos)
+        }
+      } else if ((foundProj as any).galleryPhotosList && Array.isArray((foundProj as any).galleryPhotosList)) {
         setGalleryPhotos((foundProj as any).galleryPhotosList)
+        setGalleryConfig(prev => ({ ...prev, photos: (foundProj as any).galleryPhotosList }))
       }
       if (foundProj.subpages && foundProj.subpages.length > 0) {
         setAdditionalPages(foundProj.subpages.map((sp, idx) => ({
@@ -724,7 +754,8 @@ export default function ContaClient() {
       testimonialsList: testimonialsData,
       aboutMeSection: aboutMeData,
       faqList: faqData,
-      galleryPhotosList: galleryPhotos,
+      galleryConfig,
+      galleryPhotosList: galleryConfig.photos || galleryPhotos,
       subpages: additionalPages.map(ap => ({
         slug: ap.slug,
         title: ap.title,
@@ -2483,8 +2514,13 @@ export default function ContaClient() {
         setAboutMeData={setAboutMeData}
         faqData={faqData}
         setFaqData={setFaqData}
-        galleryPhotos={galleryPhotos}
-        setGalleryPhotos={setGalleryPhotos}
+        galleryPhotos={galleryConfig.photos || galleryPhotos}
+        setGalleryPhotos={(v: string[]) => {
+          setGalleryPhotos(v)
+          setGalleryConfig(prev => ({ ...prev, photos: v }))
+        }}
+        galleryConfig={galleryConfig}
+        setGalleryConfig={setGalleryConfig}
         metaPixelId={metaPixelId}
         setMetaPixelId={setMetaPixelId}
         tiktokPixelId={tiktokPixelId}

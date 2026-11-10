@@ -105,7 +105,9 @@
     animation: btn-float-subtle 3s ease-in-out infinite;
   }
 
-  .btn-anim-glow {
+  .btn-anim-glow,
+  .pulse-glow,
+  .btn-pulse-glow {
     animation: btn-glow-pulse 2s ease-in-out infinite;
   }
 

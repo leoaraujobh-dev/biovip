@@ -50,7 +50,14 @@ import {
   ToggleLeft,
   ToggleRight,
   Download,
-  Share2
+  Share2,
+  Scissors,
+  GraduationCap,
+  ChevronLeft,
+  ZoomIn,
+  ArrowUp,
+  ArrowDown,
+  Eye
 } from 'lucide-react'
 
 import {
@@ -61,6 +68,7 @@ import {
   DEMO_PHOTOS,
   NICHES_LIST
 } from '@/data/bioSiteDesign'
+import { StudentGridConfig } from '@/data/projects'
 
 export interface BioSiteEditorProps {
   slug: string
@@ -126,6 +134,8 @@ export interface BioSiteEditorProps {
   setFaqData: (v: any) => void
   galleryPhotos?: string[]
   setGalleryPhotos?: (v: string[]) => void
+  galleryConfig?: StudentGridConfig
+  setGalleryConfig?: (v: StudentGridConfig) => void
   metaPixelId: string
   setMetaPixelId: (v: string) => void
   tiktokPixelId: string
@@ -194,6 +204,228 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const [previewFaqOpenIndex, setPreviewFaqOpenIndex] = useState<number | null>(null)
   const [previewCatalogCategory, setPreviewCatalogCategory] = useState<string>('TODOS')
   const [previewCopiedAddress, setPreviewCopiedAddress] = useState(false)
+  const [previewLightboxIndex, setPreviewLightboxIndex] = useState<number | null>(null)
+
+  // Configurações Oficiais de Galeria & Portfólio (BioVip Original)
+  const defaultGalleryPhotos = [
+    'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=700',
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700'
+  ]
+
+  const effectiveGalleryConfig: StudentGridConfig = props.galleryConfig || {
+    enabled: true,
+    badge: 'PORTFÓLIO & ESTRUTURA VIP',
+    headline: 'Resultados Reais & Portfólio em Destaque',
+    subtitle: 'Registros reais do nosso padrão de entrega e procedimentos',
+    layout: 'mosaic',
+    aspectRatio: 'square',
+    enableLightbox: true,
+    photos: (props.galleryPhotos && props.galleryPhotos.length > 0) ? props.galleryPhotos : defaultGalleryPhotos,
+    captions: []
+  }
+
+  const updateGalleryConfig = (updater: (prev: StudentGridConfig) => StudentGridConfig) => {
+    const updated = updater(effectiveGalleryConfig)
+    if (props.setGalleryConfig) {
+      props.setGalleryConfig(updated)
+    }
+    if (props.setGalleryPhotos) {
+      props.setGalleryPhotos(updated.photos)
+    }
+    props.setHasUnsavedChanges(true)
+  }
+
+  const [newGalleryCaption, setNewGalleryCaption] = useState('')
+
+  const GALLERY_PRESETS = {
+    beauty: [
+      'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=700'
+    ],
+    barber: [
+      'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&q=80&w=700'
+    ],
+    health: [
+      'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=700'
+    ],
+    exec: [
+      'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=700',
+      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=700'
+    ]
+  }
+
+  const compressImage = (file: File, maxWidth = 800, quality = 0.82): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const src = e.target?.result as string
+        if (!src) return resolve('')
+        const img = new (window as any).Image()
+        img.onload = () => {
+          try {
+            let { width, height } = img
+            if (width > maxWidth || height > maxWidth) {
+              if (width > height) {
+                height = Math.round((height * maxWidth) / width)
+                width = maxWidth
+              } else {
+                width = Math.round((width * maxWidth) / height)
+                height = maxWidth
+              }
+            }
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height)
+              resolve(canvas.toDataURL('image/jpeg', quality))
+              return
+            }
+          } catch (err) {}
+          resolve(src)
+        }
+        img.onerror = () => resolve(src)
+        img.src = src
+      }
+      reader.onerror = () => resolve('')
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleButtonImageUpload = async (btnIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const dataUrl = await compressImage(file, 600, 0.85)
+    if (dataUrl) {
+      const updated = [...props.buttons]
+      updated[btnIndex] = {
+        ...updated[btnIndex],
+        cardImage: dataUrl,
+        imagePosition: updated[btnIndex].imagePosition === 'none' ? 'right' : (updated[btnIndex].imagePosition || 'right'),
+        imageFitStyle: updated[btnIndex].imageFitStyle || 'popout'
+      }
+      props.setButtons(updated)
+      props.setHasUnsavedChanges(true)
+    }
+    e.target.value = ''
+  }
+
+  const moveButton = (fromIdx: number, toIdx: number) => {
+    if (toIdx < 0 || toIdx >= props.buttons.length) return
+    const updated = [...props.buttons]
+    const [moved] = updated.splice(fromIdx, 1)
+    updated.splice(toIdx, 0, moved)
+    props.setButtons(updated)
+    props.setHasUnsavedChanges(true)
+  }
+
+  const duplicateButton = (btnIndex: number) => {
+    const target = props.buttons[btnIndex]
+    const cloned = {
+      ...target,
+      id: `btn-${Date.now()}`,
+      label: `${target.label || 'Botão'} (Cópia)`
+    }
+    const updated = [...props.buttons]
+    updated.splice(btnIndex + 1, 0, cloned)
+    props.setButtons(updated)
+    props.setHasUnsavedChanges(true)
+  }
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    const newPhotos: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const url = await compressImage(files[i], 800, 0.82)
+      if (url) newPhotos.push(url)
+    }
+    if (newPhotos.length > 0) {
+      updateGalleryConfig(prev => ({
+        ...prev,
+        photos: [...prev.photos, ...newPhotos]
+      }))
+    }
+    e.target.value = ''
+  }
+
+  const handleReplaceGalleryPhoto = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const dataUrl = await compressImage(file, 800, 0.82)
+    if (dataUrl) {
+      updateGalleryConfig(prev => {
+        const nextPhotos = [...prev.photos]
+        nextPhotos[index] = dataUrl
+        return { ...prev, photos: nextPhotos }
+      })
+    }
+    e.target.value = ''
+  }
+
+  const moveGalleryPhoto = (fromIdx: number, toIdx: number) => {
+    updateGalleryConfig(prev => {
+      if (toIdx < 0 || toIdx >= prev.photos.length) return prev
+      const nextPhotos = [...prev.photos]
+      const nextCaptions = [...(prev.captions || [])]
+      const [movedPhoto] = nextPhotos.splice(fromIdx, 1)
+      const movedCaption = nextCaptions[fromIdx] || ''
+      nextCaptions.splice(fromIdx, 1)
+      nextPhotos.splice(toIdx, 0, movedPhoto)
+      nextCaptions.splice(toIdx, 0, movedCaption)
+      return { ...prev, photos: nextPhotos, captions: nextCaptions }
+    })
+  }
+
+  const removeGalleryPhoto = (idx: number) => {
+    updateGalleryConfig(prev => {
+      const nextPhotos = prev.photos.filter((_, i) => i !== idx)
+      const nextCaptions = (prev.captions || []).filter((_, i) => i !== idx)
+      return { ...prev, photos: nextPhotos, captions: nextCaptions }
+    })
+  }
+
+  const updateGalleryCaption = (idx: number, caption: string) => {
+    updateGalleryConfig(prev => {
+      const nextCaptions = [...(prev.captions || [])]
+      while (nextCaptions.length <= idx) nextCaptions.push('')
+      nextCaptions[idx] = caption
+      return { ...prev, captions: nextCaptions }
+    })
+  }
+
+  const loadGalleryPreset = (presetKey: 'beauty' | 'barber' | 'health' | 'exec') => {
+    const photos = GALLERY_PRESETS[presetKey]
+    if (photos) {
+      updateGalleryConfig(prev => ({
+        ...prev,
+        photos
+      }))
+    }
+  }
 
   const handleCopyPix = () => {
     if (typeof window !== 'undefined' && navigator.clipboard) {
@@ -605,36 +837,116 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* Botões Principais de Ação */}
+                  {/* Botões Principais de Ação (Configurações BioVip Oficial) */}
                   <div className="w-full space-y-1.5 mt-2">
-                    {props.buttons.map((btn: any) => {
-                      const isHigh = !!btn.isHighlighted
+                    {props.buttons.map((btn: any, btnIdx: number) => {
+                      const isHigh = !!btn.isHighlighted || btn.variant === 'accent' || btnIdx === 0
+                      const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? '⭐ MAIS ESCOLHIDO' : '')
+                      const titleText = btn.label || btn.title
+                      const subtitleText = btn.subtitle || ''
+                      const cardImg = btn.cardImage || btn.image
+                      const imgPos = btn.imagePosition || (cardImg ? 'right' : 'none')
+                      const imgFit = btn.imageFitStyle || 'popout'
+                      const ctaAction = btn.ctaActionText
+                      const anim = btn.animation || (isHigh ? 'pulse-glow' : 'none')
+                      const animClass = anim === 'pulse-glow' ? 'btn-anim-pulse' : anim === 'bounce' ? 'btn-anim-bounce' : anim === 'shimmer' ? 'relative overflow-hidden' : ''
+
+                      let cardBg = props.selectedPalette.card || '#14161c'
+                      let cardBorder = isHigh ? props.selectedPalette.accent : `${props.selectedPalette.accent}33`
+                      let textColor = props.selectedPalette.text
+
+                      if (btn.customBg) {
+                        cardBg = btn.customBg
+                      } else if (btn.variant === 'accent' || props.buttonStyle === 'solido_glam' || props.buttonStyle === 'solido') {
+                        cardBg = props.selectedPalette.accent
+                        textColor = props.selectedPalette.buttonText || '#000000'
+                        cardBorder = 'rgba(255,255,255,0.45)'
+                      } else if (props.buttonStyle === 'vidro_glamour' || props.buttonStyle === 'vidro') {
+                        cardBg = 'rgba(255, 255, 255, 0.08)'
+                        cardBorder = 'rgba(255, 255, 255, 0.22)'
+                      }
+
+                      if (btn.customText) textColor = btn.customText
+
                       return (
                         <div
                           key={btn.id}
-                          className="w-full p-2 rounded-xl border text-left flex items-center justify-between gap-1.5 shadow-sm transition"
+                          className={`w-full p-2 rounded-xl border text-left flex items-center justify-between gap-1.5 shadow-sm transition relative overflow-hidden ${animClass}`}
                           style={{
-                            backgroundColor: props.selectedPalette.card || '#14161c',
-                            borderColor: isHigh ? props.selectedPalette.accent : `${props.selectedPalette.accent}33`,
-                            color: props.selectedPalette.text
+                            backgroundColor: cardBg,
+                            borderColor: cardBorder,
+                            color: textColor
                           }}
                         >
-                          <div className="min-w-0 flex-1">
-                            <span className="font-bold text-[10px] block leading-tight truncate">
-                              {btn.label}
-                            </span>
-                            {btn.subtitle && (
-                              <span className="text-[8px] opacity-70 block truncate">
-                                {btn.subtitle}
+                          {/* Efeito Shimmer */}
+                          {(anim === 'shimmer' || props.buttonStyle === 'shimmer_ouro') && (
+                            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                              <div
+                                className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]"
+                                style={{ animation: 'btn-shimmer-sweep 2.8s infinite' }}
+                              />
+                            </div>
+                          )}
+
+                          {badgeText && (
+                            <div
+                              className="absolute -top-1 right-2 px-1.5 py-0.2 rounded-full text-[6.5px] font-mono font-bold uppercase z-10 border shadow"
+                              style={{
+                                backgroundColor: props.selectedPalette.accent,
+                                color: props.selectedPalette.buttonText || '#000',
+                                borderColor: 'rgba(255,255,255,0.4)'
+                              }}
+                            >
+                              {badgeText}
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            {cardImg && imgPos === 'left' && (
+                              <div className={`shrink-0 overflow-hidden border border-white/20 ${imgFit === 'popout' ? 'w-6 h-6 rounded-full ring-1 ring-amber-400' : 'w-6 h-6 rounded-md'}`}>
+                                <img src={cardImg} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+
+                            <div className="min-w-0 flex-1">
+                              <span className="font-bold text-[9.5px] block leading-tight truncate">
+                                {titleText}
+                              </span>
+                              {subtitleText && (
+                                <span className="text-[7.5px] opacity-70 block truncate">
+                                  {subtitleText}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            {cardImg && imgPos === 'right' && (
+                              <div className={`shrink-0 overflow-hidden border border-white/20 ${imgFit === 'popout' ? 'w-6 h-6 rounded-full ring-1 ring-amber-400' : 'w-6 h-6 rounded-md'}`}>
+                                <img src={cardImg} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+
+                            {ctaAction && (
+                              <span
+                                className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold uppercase border"
+                                style={{
+                                  backgroundColor: `${props.selectedPalette.accent}20`,
+                                  borderColor: `${props.selectedPalette.accent}40`,
+                                  color: textColor
+                                }}
+                              >
+                                {ctaAction}
                               </span>
                             )}
+
+                            <span
+                              className="text-[10px] font-bold"
+                              style={{ color: props.selectedPalette.accent }}
+                            >
+                              →
+                            </span>
                           </div>
-                          <span
-                            className="text-[11px] font-bold shrink-0"
-                            style={{ color: props.selectedPalette.accent }}
-                          >
-                            →
-                          </span>
                         </div>
                       )
                     })}
@@ -939,40 +1251,170 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* 12. Galeria de Fotos / Portfólio (Smart Masonry) */}
-                  {((props.galleryPhotos && props.galleryPhotos.length > 0) || props.additionalPages?.some((p: any) => p.templateId === 'before_after')) && (
+                  {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
+                  {effectiveGalleryConfig.enabled && effectiveGalleryConfig.photos && effectiveGalleryConfig.photos.length > 0 && (
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div className="flex items-center justify-between">
-                        <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80">
-                          PORTFÓLIO & ESTRUTURA VIP
+                        <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300">
+                          {effectiveGalleryConfig.badge || 'PORTFÓLIO & ESTRUTURA VIP'}
                         </span>
                         <span className="text-[7px] font-mono text-stone-400">
-                          {(props.galleryPhotos || []).length} fotos
+                          {effectiveGalleryConfig.photos.length} fotos
                         </span>
                       </div>
 
-                      {/* Grade de Fotos Reais do Portfólio */}
-                      <div className="grid grid-cols-3 gap-1">
-                        {(props.galleryPhotos && props.galleryPhotos.length > 0 ? props.galleryPhotos : [
-                          'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
-                          'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=400&q=80',
-                          'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=400&q=80'
-                        ]).slice(0, 6).map((imgUrl: string, i: number) => (
+                      {effectiveGalleryConfig.headline && (
+                        <p className="text-[9px] font-bold text-stone-200 leading-tight">
+                          {effectiveGalleryConfig.headline}
+                        </p>
+                      )}
+
+                      {/* Layout 1: Carrossel Touch Deslizante */}
+                      {effectiveGalleryConfig.layout === 'carousel-snap' && (
+                        <div className="flex gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-none py-0.5">
+                          {effectiveGalleryConfig.photos.map((imgUrl: string, i: number) => (
+                            <div
+                              key={i}
+                              onClick={() => {
+                                if (effectiveGalleryConfig.enableLightbox) setPreviewLightboxIndex(i)
+                              }}
+                              className={`snap-center shrink-0 w-[70%] rounded-lg overflow-hidden border border-white/10 relative group bg-stone-900 cursor-pointer shadow-sm ${
+                                effectiveGalleryConfig.aspectRatio === 'portrait'
+                                  ? 'aspect-[4/5]'
+                                  : effectiveGalleryConfig.aspectRatio === 'landscape'
+                                  ? 'aspect-[4/3]'
+                                  : 'aspect-square'
+                              }`}
+                            >
+                              <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-1.5">
+                                {effectiveGalleryConfig.captions?.[i] && (
+                                  <span className="text-[7px] text-stone-200 line-clamp-1 font-medium">
+                                    {effectiveGalleryConfig.captions[i]}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Layout 2: Grade 2 Colunas */}
+                      {effectiveGalleryConfig.layout === 'grid-2col' && (
+                        <div className="grid grid-cols-2 gap-1">
+                          {effectiveGalleryConfig.photos.slice(0, 6).map((imgUrl: string, i: number) => (
+                            <div
+                              key={i}
+                              onClick={() => {
+                                if (effectiveGalleryConfig.enableLightbox) setPreviewLightboxIndex(i)
+                              }}
+                              className={`rounded-lg overflow-hidden border border-white/10 relative group bg-stone-900 cursor-pointer ${
+                                effectiveGalleryConfig.aspectRatio === 'portrait'
+                                  ? 'aspect-[4/5]'
+                                  : effectiveGalleryConfig.aspectRatio === 'landscape'
+                                  ? 'aspect-[4/3]'
+                                  : 'aspect-square'
+                              }`}
+                            >
+                              <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                              {effectiveGalleryConfig.captions?.[i] && (
+                                <div className="absolute bottom-0 inset-x-0 bg-black/70 p-1 text-[6.5px] text-white line-clamp-1">
+                                  {effectiveGalleryConfig.captions[i]}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Layout 3: Mosaico Dinâmico Bento (1ª Foto Grande + Grade) */}
+                      {effectiveGalleryConfig.layout === 'mosaic' && (
+                        <div className="grid grid-cols-2 gap-1">
                           <div
-                            key={i}
-                            className="aspect-square rounded-lg overflow-hidden border border-white/10 relative group bg-stone-900"
+                            onClick={() => {
+                              if (effectiveGalleryConfig.enableLightbox) setPreviewLightboxIndex(0)
+                            }}
+                            className="col-span-2 aspect-[16/10] rounded-xl overflow-hidden border border-amber-400/30 relative group bg-stone-900 cursor-pointer shadow-md"
                           >
-                            <img
-                              src={imgUrl}
-                              alt={`Portfólio ${i + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Sparkles className="w-2.5 h-2.5 text-white" />
+                            <img src={effectiveGalleryConfig.photos[0]} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-between p-2">
+                              <span className="self-start px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-amber-400 text-stone-950 uppercase">
+                                ⭐ Destaque
+                              </span>
+                              {effectiveGalleryConfig.captions?.[0] && (
+                                <span className="text-[7.5px] text-white line-clamp-1 font-medium">
+                                  {effectiveGalleryConfig.captions[0]}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        ))}
-                      </div>
+                          {effectiveGalleryConfig.photos.slice(1, 5).map((imgUrl: string, i: number) => (
+                            <div
+                              key={i + 1}
+                              onClick={() => {
+                                if (effectiveGalleryConfig.enableLightbox) setPreviewLightboxIndex(i + 1)
+                              }}
+                              className="aspect-square rounded-lg overflow-hidden border border-white/10 relative group bg-stone-900 cursor-pointer"
+                            >
+                              <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Layout 4: Cards Expandidos */}
+                      {effectiveGalleryConfig.layout === 'scroll-cards' && (
+                        <div className="space-y-1.5">
+                          {effectiveGalleryConfig.photos.slice(0, 3).map((imgUrl: string, i: number) => (
+                            <div
+                              key={i}
+                              onClick={() => {
+                                if (effectiveGalleryConfig.enableLightbox) setPreviewLightboxIndex(i)
+                              }}
+                              className="rounded-xl overflow-hidden border border-white/10 bg-stone-900/60 p-1 space-y-1 cursor-pointer"
+                            >
+                              <div className="w-full aspect-[16/10] rounded-lg overflow-hidden">
+                                <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                              </div>
+                              {effectiveGalleryConfig.captions?.[i] && (
+                                <p className="text-[7.5px] text-stone-300 px-1 line-clamp-1">
+                                  {effectiveGalleryConfig.captions[i]}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Layout 5: Grade 3 Colunas (smart_masonry / grid3) */}
+                      {(effectiveGalleryConfig.layout === 'grid3' || effectiveGalleryConfig.layout === 'smart_masonry') && (
+                        <div className="grid grid-cols-3 gap-1">
+                          {effectiveGalleryConfig.photos.slice(0, 6).map((imgUrl: string, i: number) => (
+                            <div
+                              key={i}
+                              onClick={() => {
+                                if (effectiveGalleryConfig.enableLightbox) setPreviewLightboxIndex(i)
+                              }}
+                              className={`rounded-lg overflow-hidden border border-white/10 relative group bg-stone-900 cursor-pointer ${
+                                effectiveGalleryConfig.aspectRatio === 'portrait'
+                                  ? 'aspect-[4/5]'
+                                  : effectiveGalleryConfig.aspectRatio === 'landscape'
+                                  ? 'aspect-[4/3]'
+                                  : 'aspect-square'
+                              }`}
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`Portfólio ${i + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Sparkles className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1534,80 +1976,147 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 3. SEÇÃO: BOTÕES & LINKS PRINCIPAIS */}
+            {/* 3. SEÇÃO: BOTÕES & LINKS PRINCIPAIS (BIOVIP ORIGINAL) */}
             {/* ======================================================= */}
             {activeSection === 'botoes' && (
               <div className="space-y-4 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase text-stone-300 font-bold">
-                    Botões Principais ({props.buttons.length})
-                  </span>
+                <div className="flex items-center justify-between pb-1 border-b border-stone-800/60">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono uppercase text-stone-200 font-bold">
+                        Botões VIP de Alta Conversão
+                      </span>
+                      <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+                        {props.buttons.length} BOTÕES
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-stone-400 mt-0.5">
+                      Suporte a fotos pop-out, pills de ação, badges e mensagens automáticas de WhatsApp.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       const newBtn = {
-                        id: `btn-${Date.now()}`,
-                        label: 'NOVO BOTÃO DE AÇÃO',
-                        subtitle: 'Toque para conversar no WhatsApp',
-                        icon: 'whatsapp',
-                        url: `https://wa.me/${props.userPhone || '5511999999999'}`,
-                        isHighlighted: false
+                        id: `cta-${Date.now()}`,
+                        label: 'AGENDAR HORÁRIO VIP',
+                        subtitle: 'Toque para atendimento prioritário e sem fila',
+                        icon: 'calendar',
+                        url: '#booking',
+                        linkType: 'booking' as const,
+                        whatsappMessage: `Olá! Gostaria de consultar horários disponíveis no ${props.businessTitle || 'studio'}.`,
+                        animation: 'pulse-glow' as const,
+                        variant: 'accent' as const,
+                        badgeText: 'MAIS PROCURADO',
+                        ctaActionText: 'RESERVAR HORÁRIO',
+                        imagePosition: 'none' as const,
+                        imageFitStyle: 'popout' as const,
+                        isHighlighted: true
                       }
                       props.setButtons([...props.buttons, newBtn])
                       props.setHasUnsavedChanges(true)
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[#E2B857] text-stone-950 font-bold text-[11px] uppercase flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-[#E2B857] hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs uppercase flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Adicionar
+                    <Plus className="w-3.5 h-3.5" /> Adicionar Botão VIP
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {props.buttons.map((btn: any, idx: number) => (
                     <div
-                      key={btn.id}
-                      className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5"
+                      key={btn.id || `btn-${idx}`}
+                      className="p-3.5 sm:p-4 rounded-2xl bg-stone-900 border border-stone-800/90 hover:border-stone-700 transition space-y-3 shadow-md"
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono text-amber-400 font-bold">
-                          BOTÃO #{idx + 1}
-                        </span>
-                        {props.buttons.length > 1 && (
+                      {/* Top Bar do Card de Botão */}
+                      <div className="flex items-center justify-between pb-2 border-b border-stone-800/70">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono font-bold flex items-center justify-center">
+                            #{idx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-stone-200 truncate max-w-[180px]">
+                            {btn.label || btn.title || 'Botão sem título'}
+                          </span>
+                          {btn.badgeText && (
+                            <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-amber-400 text-stone-950">
+                              {btn.badgeText}
+                            </span>
+                          )}
+                          {btn.cardImage && (
+                            <span className="text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded-full">
+                              📷 COM FOTO
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Ações: Mover, Duplicar, Excluir */}
+                        <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => {
-                              props.setButtons(props.buttons.filter((b: any) => b.id !== btn.id))
+                            disabled={idx === 0}
+                            onClick={() => moveButton(idx, idx - 1)}
+                            className="p-1 rounded bg-stone-800 text-stone-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition"
+                            title="Mover para cima"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === props.buttons.length - 1}
+                            onClick={() => moveButton(idx, idx + 1)}
+                            className="p-1 rounded bg-stone-800 text-stone-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition"
+                            title="Mover para baixo"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => duplicateButton(idx)}
+                            className="p-1 rounded bg-stone-800 text-stone-300 hover:text-amber-400 cursor-pointer transition"
+                            title="Duplicar botão"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          {props.buttons.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                props.setButtons(props.buttons.filter((b: any) => b.id !== btn.id))
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="p-1 rounded bg-stone-800 text-stone-400 hover:text-red-400 cursor-pointer transition"
+                              title="Remover botão"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Textos: Título Principal e Subtítulo */}
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Título Principal do Botão
+                          </label>
+                          <input
+                            type="text"
+                            value={btn.label || btn.title || ''}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].label = e.target.value
+                              updated[idx].title = e.target.value
+                              props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            className="text-stone-500 hover:text-red-400 transition"
-                            title="Remover botão"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                            placeholder="Ex: AGENDAR HORÁRIO VIP"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
-                          Título Principal
-                        </label>
-                        <input
-                          type="text"
-                          value={btn.label}
-                          onChange={(e) => {
-                            const updated = [...props.buttons]
-                            updated[idx].label = e.target.value
-                            props.setButtons(updated)
-                            props.setHasUnsavedChanges(true)
-                          }}
-                          className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
-                            Subtítulo
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Subtítulo / Descrição Curta
                           </label>
                           <input
                             type="text"
@@ -1618,12 +2127,45 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-[11px]"
+                            placeholder="Ex: Toque para atendimento prioritário e sem fila"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-[11px] focus:border-amber-400 focus:outline-none"
                           />
                         </div>
+                      </div>
+
+                      {/* Tipo de Destino e Ação */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
-                          <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
-                            Ícone
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Tipo de Ação / Link
+                          </label>
+                          <select
+                            value={btn.linkType || (btn.url?.includes('wa.me') ? 'whatsapp' : btn.url?.startsWith('#') ? btn.url.replace('#', '') : 'custom')}
+                            onChange={(e) => {
+                              const nextType = e.target.value as any
+                              const updated = [...props.buttons]
+                              updated[idx].linkType = nextType
+                              if (nextType === 'booking') updated[idx].url = '#booking'
+                              else if (nextType === 'catalogo') updated[idx].url = '#catalogo'
+                              else if (nextType === 'quiz') updated[idx].url = '#quiz'
+                              else if (nextType === 'maps') updated[idx].url = 'https://maps.google.com'
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-medium focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="whatsapp">💬 WhatsApp (Conversa Direta)</option>
+                            <option value="booking">📅 Agendamento Online (#booking)</option>
+                            <option value="catalogo">✨ Catálogo de Serviços (#catalogo)</option>
+                            <option value="quiz">🎯 Triagem / Quiz VIP (#quiz)</option>
+                            <option value="maps">📍 Localização / Google Maps</option>
+                            <option value="custom">🔗 Link Personalizado / Externo</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Ícone do Botão
                           </label>
                           <select
                             value={btn.icon || 'whatsapp'}
@@ -1633,62 +2175,247 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
                             <option value="whatsapp">WhatsApp</option>
                             <option value="calendar">Agenda / Calendário</option>
+                            <option value="sparkles">Brilho / VIP / Estrela</option>
                             <option value="map">Localização / Mapa</option>
-                            <option value="sparkles">Estrela / VIP</option>
+                            <option value="scissors">Tesoura / Barbearia / Salão</option>
+                            <option value="star">Estrela Destaque</option>
+                            <option value="message">Mensagem / Bate-papo</option>
                           </select>
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
-                          Link de Destino
-                        </label>
-                        <input
-                          type="text"
-                          value={btn.url || ''}
-                          onChange={(e) => {
-                            const updated = [...props.buttons]
-                            updated[idx].url = e.target.value
-                            props.setButtons(updated)
-                            props.setHasUnsavedChanges(true)
-                          }}
-                          className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-[10px] font-mono"
-                        />
-                      </div>
-
-                      {/* Destaque ⭐ */}
-                      <div className="pt-1 flex items-center justify-between border-t border-stone-800/80">
-                        <label className="flex items-center gap-2 text-xs text-stone-300 cursor-pointer">
+                      {/* Se for WhatsApp: Mensagem Automática */}
+                      {(btn.linkType === 'whatsapp' || btn.url?.includes('wa.me')) ? (
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-emerald-400 mb-1 flex items-center gap-1 font-bold">
+                            <MessageCircle className="w-3 h-3 text-emerald-400" /> Mensagem Pré-formatada de WhatsApp
+                          </label>
                           <input
-                            type="checkbox"
-                            checked={!!btn.isHighlighted}
+                            type="text"
+                            value={btn.whatsappMessage || ''}
                             onChange={(e) => {
                               const updated = [...props.buttons]
-                              updated[idx].isHighlighted = e.target.checked
+                              updated[idx].whatsappMessage = e.target.value
+                              const phone = props.userPhone || '5531991390202'
+                              updated[idx].url = `https://wa.me/${phone}?text=${encodeURIComponent(e.target.value)}`
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            className="accent-amber-400 rounded"
+                            placeholder="Ex: Olá! Vim pelo site e gostaria de agendar uma consulta."
+                            className="w-full p-2 rounded-xl bg-stone-950 text-emerald-200 border border-emerald-500/30 text-xs focus:border-emerald-400 focus:outline-none"
                           />
-                          <span>⭐ Destacar este botão</span>
-                        </label>
-
-                        {btn.isHighlighted && (
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Link de Destino (URL)
+                          </label>
                           <input
                             type="text"
-                            value={btn.highlightBadge || '⭐ MAIS ESCOLHIDO'}
+                            value={btn.url || ''}
                             onChange={(e) => {
                               const updated = [...props.buttons]
+                              updated[idx].url = e.target.value
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="https://... ou #booking ou #catalogo"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-[10px] font-mono focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Badges, Pills de Ação e Efeitos VIP */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Badge Superior (Pill Superior)
+                          </label>
+                          <input
+                            type="text"
+                            value={btn.badgeText || btn.highlightBadge || ''}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].badgeText = e.target.value
                               updated[idx].highlightBadge = e.target.value
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            className="p-1 rounded-lg bg-stone-950 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-bold"
+                            placeholder="Ex: MAIS PROCURADO, AGENDA ABERTA"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold uppercase focus:border-amber-400 focus:outline-none"
                           />
+                        </div>
+
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Texto de Ação Direta (Pill Direita)
+                          </label>
+                          <input
+                            type="text"
+                            value={btn.ctaActionText || ''}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].ctaActionText = e.target.value
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Ex: RESERVAR HORÁRIO, VER VALORES"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-bold uppercase focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Animação & Estilo Visual */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Animação VIP do Botão
+                          </label>
+                          <select
+                            value={btn.animation || (btn.isHighlighted ? 'pulse-glow' : 'none')}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].animation = e.target.value as any
+                              if (e.target.value === 'pulse-glow') updated[idx].isHighlighted = true
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="pulse-glow">✨ Pulso Luminoso (Glow VIP)</option>
+                            <option value="shimmer">💫 Reflexo Metálico (Shimmer Sweep)</option>
+                            <option value="bounce">⚡ Saltinho Suave (Bounce)</option>
+                            <option value="none">Sem Animação</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
+                            Variante de Cor / Destaque
+                          </label>
+                          <select
+                            value={btn.variant || (btn.isHighlighted ? 'accent' : 'default')}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].variant = e.target.value as any
+                              updated[idx].isHighlighted = e.target.value === 'accent'
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="accent">⭐ Dourado / Accent (Foco Total)</option>
+                            <option value="default">Elegante Escuro (Borda Fina)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Foto no Botão (BioVip Original: Pop-out ou Framed) */}
+                      <div className="p-3 rounded-xl bg-stone-950/80 border border-stone-800/80 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
+                            <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
+                            Foto Integrada ao Botão
+                          </label>
+                          {btn.cardImage && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...props.buttons]
+                                updated[idx].cardImage = ''
+                                updated[idx].imagePosition = 'none'
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="text-[9px] font-mono text-red-400 hover:underline cursor-pointer"
+                            >
+                              Remover Foto
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
+                              Posição da Foto
+                            </label>
+                            <select
+                              value={btn.imagePosition || (btn.cardImage ? 'right' : 'none')}
+                              onChange={(e) => {
+                                const updated = [...props.buttons]
+                                updated[idx].imagePosition = e.target.value as any
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-[11px]"
+                            >
+                              <option value="none">Sem Imagem</option>
+                              <option value="right">Direita (Ao lado do texto/seta)</option>
+                              <option value="left">Esquerda (Miniatura inicial)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
+                              Estilo da Foto
+                            </label>
+                            <select
+                              value={btn.imageFitStyle || 'popout'}
+                              onChange={(e) => {
+                                const updated = [...props.buttons]
+                                updated[idx].imageFitStyle = e.target.value as any
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-[11px]"
+                            >
+                              <option value="popout">Avatar Pop-Out (Salta do botão com aro)</option>
+                              <option value="framed">Moldura Retangular Elegante</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {btn.imagePosition !== 'none' && (
+                          <div className="flex items-center gap-2 pt-1">
+                            {btn.cardImage && (
+                              <img
+                                src={btn.cardImage}
+                                alt="Foto do botão"
+                                className={`w-8 h-8 object-cover border border-amber-400/50 shrink-0 ${
+                                  btn.imageFitStyle === 'framed' ? 'rounded-md' : 'rounded-full'
+                                }`}
+                              />
+                            )}
+                            <input
+                              type="text"
+                              value={btn.cardImage || ''}
+                              onChange={(e) => {
+                                const updated = [...props.buttons]
+                                updated[idx].cardImage = e.target.value
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              placeholder="URL da imagem (https://...)"
+                              className="flex-1 p-1.5 rounded-lg bg-stone-900 text-stone-300 border border-stone-800 text-[10px] font-mono focus:border-amber-400 focus:outline-none"
+                            />
+                            <label
+                              className="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white border border-stone-700 text-[10px] font-mono cursor-pointer flex items-center gap-1 shrink-0 transition"
+                              title="Subir foto do seu computador"
+                            >
+                              <Upload className="w-3 h-3 text-amber-400" />
+                              <span>Upload</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleButtonImageUpload(idx, e)}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1990,69 +2717,352 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </div>
                 </div>
 
-                {/* Galeria de Fotos de Portfólio / Resultados */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase text-stone-300 font-bold">
-                      Galeria de Resultados &amp; Espaço
-                    </span>
-                    <span className="text-[10px] font-mono text-amber-400">
-                      {props.galleryPhotos?.length || 4} FOTOS
-                    </span>
+                {/* Galeria Oficial de Fotos & Portfólio (studentGrid / BioVip Oficial) */}
+                <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-4">
+                  {/* Header do Módulo com Switch */}
+                  <div className="flex items-center justify-between pb-2 border-b border-stone-800/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                        <ImageIcon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-stone-200">
+                            Galeria de Fotos &amp; Portfólio
+                          </span>
+                          <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            {effectiveGalleryConfig.photos?.length || 0} FOTOS
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-stone-400">
+                          Layouts responsivos, carrossel touch, mosaico e zoom lightbox
+                        </p>
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-[10px] font-mono font-bold uppercase text-stone-400">
+                        {effectiveGalleryConfig.enabled ? 'ATIVADA' : 'DESATIVADA'}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={effectiveGalleryConfig.enabled}
+                        onChange={(e) => updateGalleryConfig(prev => ({ ...prev, enabled: e.target.checked }))}
+                        className="accent-amber-500 w-4 h-4 cursor-pointer"
+                      />
+                    </label>
                   </div>
 
-                  {/* Grid de fotos atuais */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {(props.galleryPhotos || [
-                      'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
-                      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
-                      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
-                      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
-                    ]).map((url: string, i: number) => (
-                      <div key={i} className="aspect-square rounded-xl overflow-hidden border border-stone-800 relative group">
-                        <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                        {props.setGalleryPhotos && (
+                  {effectiveGalleryConfig.enabled && (
+                    <div className="space-y-4 pt-1">
+                      {/* Textos: Badge, Headline e Subtitle */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                            Badge Superior
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ex: PORTFÓLIO VIP"
+                            value={effectiveGalleryConfig.badge || ''}
+                            onChange={(e) => updateGalleryConfig(prev => ({ ...prev, badge: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-amber-300 font-bold uppercase focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                            Título da Galeria
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Resultados Reais & Portfólio"
+                            value={effectiveGalleryConfig.headline || ''}
+                            onChange={(e) => updateGalleryConfig(prev => ({ ...prev, headline: e.target.value }))}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-100 font-semibold focus:border-amber-400 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
+                          Subtítulo Explicativo
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Transformações reais geradas pelo método e registros de alto padrão"
+                          value={effectiveGalleryConfig.subtitle || ''}
+                          onChange={(e) => updateGalleryConfig(prev => ({ ...prev, subtitle: e.target.value }))}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-300 focus:border-amber-400 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* 4 Formatos de Exibição no Celular (BioVip Original) */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10.5px] font-mono uppercase font-bold text-stone-300 block">
+                          Formato de Exibição no Celular
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {[
+                            { id: 'carousel-snap', label: '🎠 Carrossel Touch', desc: 'Deslize horizontal fluido' },
+                            { id: 'grid-2col', label: '📱 Grade 2 Colunas', desc: 'Fotos lado a lado' },
+                            { id: 'mosaic', label: '🎨 Mosaico Dinâmico', desc: 'Destaque 1ª grande + grid' },
+                            { id: 'scroll-cards', label: '🃏 Cards Expandidos', desc: '1 por vez com foco total' }
+                          ].map((t) => {
+                            const isSelected = (effectiveGalleryConfig.layout || 'carousel-snap') === t.id
+                            return (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => updateGalleryConfig(prev => ({ ...prev, layout: t.id as any }))}
+                                className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                                  isSelected
+                                    ? 'border-amber-400 bg-amber-500/15 text-amber-200 shadow-sm'
+                                    : 'border-stone-800 bg-stone-950/70 text-stone-400 hover:text-stone-200'
+                                }`}
+                              >
+                                <div className="text-[11px] font-bold">{t.label}</div>
+                                <div className="text-[9px] opacity-75 mt-0.5 leading-snug">{t.desc}</div>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Proporção das Imagens & Lightbox */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-mono uppercase font-semibold text-stone-300 block">
+                            Formato das Imagens (Proporção)
+                          </label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                            {[
+                              { id: 'auto', label: '🤖 Auto' },
+                              { id: 'square', label: '1:1 Quadrado' },
+                              { id: 'portrait', label: '4:5 Retrato' },
+                              { id: 'landscape', label: '4:3 Paisagem' }
+                            ].map((t) => {
+                              const isSelected = (effectiveGalleryConfig.aspectRatio || 'auto') === t.id
+                              return (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => updateGalleryConfig(prev => ({ ...prev, aspectRatio: t.id as any }))}
+                                  className={`py-1.5 px-2 rounded-lg border text-center text-[10px] font-medium transition cursor-pointer ${
+                                    isSelected
+                                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                      : 'border-stone-800 bg-stone-950/70 text-stone-400 hover:text-stone-200'
+                                  }`}
+                                >
+                                  {t.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-semibold text-stone-200 block">
+                              Zoom Lightbox
+                            </span>
+                            <span className="text-[9.5px] text-stone-400 block">
+                              Toque na foto para ampliar em tela cheia com legendas
+                            </span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={effectiveGalleryConfig.enableLightbox !== false}
+                            onChange={(e) => updateGalleryConfig(prev => ({ ...prev, enableLightbox: e.target.checked }))}
+                            className="accent-amber-500 w-4 h-4 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Presets de Fotos por Nicho (BioVip Original) */}
+                      <div className="space-y-1.5 pt-2 border-t border-stone-800/80">
+                        <label className="text-[10px] font-mono uppercase font-bold text-amber-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                          Preencher Fotos com Exemplos de Alto Padrão por Nicho:
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => loadGalleryPreset('beauty')}
+                            className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
+                          >
+                            💅 Beleza &amp; Lash
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => loadGalleryPreset('barber')}
+                            className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
+                          >
+                            ✂️ Barbearia
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => loadGalleryPreset('health')}
+                            className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
+                          >
+                            🩺 Saúde &amp; Clínica
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => loadGalleryPreset('exec')}
+                            className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
+                          >
+                            💼 Executivo &amp; Cursos
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Gerenciamento das Fotos: Upload e Lista */}
+                      <div className="space-y-2 pt-2 border-t border-stone-800/80">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-stone-200">
+                            Fotos na Galeria ({effectiveGalleryConfig.photos?.length || 0})
+                          </label>
+                          <label className="text-[10.5px] font-mono text-amber-400 hover:text-amber-300 hover:underline cursor-pointer flex items-center gap-1.5 font-bold">
+                            <Upload className="w-3.5 h-3.5" />
+                            + Upload Direto do Computador
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={handleGalleryUpload}
+                            />
+                          </label>
+                        </div>
+
+                        {/* Grid de Cards de Fotos */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[460px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-stone-800">
+                          {effectiveGalleryConfig.photos?.map((photoUrl: string, i: number) => {
+                            const caption = (effectiveGalleryConfig.captions || [])[i] || ''
+                            return (
+                              <div
+                                key={i}
+                                className="p-2 rounded-xl bg-stone-950 border border-stone-800 space-y-2 relative group"
+                              >
+                                <div className="relative aspect-square rounded-lg overflow-hidden border border-stone-800/80 bg-black">
+                                  <img
+                                    src={photoUrl}
+                                    alt={caption || `Foto ${i + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[8px] font-mono font-bold text-white">
+                                    #{i + 1}
+                                  </span>
+
+                                  {/* Botão Zoom Lightbox */}
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewLightboxIndex(i)}
+                                    className="absolute bottom-1 right-1 p-1 rounded-md bg-black/70 text-white hover:bg-black/90 cursor-pointer transition shadow"
+                                    title="Visualizar no Lightbox"
+                                  >
+                                    <ZoomIn className="w-3 h-3 text-amber-400" />
+                                  </button>
+                                </div>
+
+                                {/* Legenda opcional da foto */}
+                                <div>
+                                  <input
+                                    type="text"
+                                    placeholder="Legenda da foto..."
+                                    value={caption}
+                                    onChange={(e) => updateGalleryCaption(i, e.target.value)}
+                                    className="w-full px-2 py-1 text-[10px] rounded-lg bg-stone-900 border border-stone-800 text-stone-200 placeholder:text-stone-500 focus:border-amber-400 focus:outline-none"
+                                  />
+                                </div>
+
+                                {/* Controles: Mover, Substituir, Excluir */}
+                                <div className="flex items-center justify-between gap-1 pt-0.5">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      disabled={i === 0}
+                                      onClick={() => moveGalleryPhoto(i, i - 1)}
+                                      className="p-1 rounded bg-stone-900 text-stone-300 hover:bg-stone-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                      title="Mover para esquerda"
+                                    >
+                                      <ChevronLeft className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={i === (effectiveGalleryConfig.photos?.length || 0) - 1}
+                                      onClick={() => moveGalleryPhoto(i, i + 1)}
+                                      className="p-1 rounded bg-stone-900 text-stone-300 hover:bg-stone-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                      title="Mover para direita"
+                                    >
+                                      <ChevronRight className="w-3 h-3" />
+                                    </button>
+                                  </div>
+
+                                  <div className="flex items-center gap-1">
+                                    <label
+                                      className="p-1 rounded bg-stone-900 hover:bg-amber-500/20 text-stone-300 hover:text-amber-400 transition cursor-pointer"
+                                      title="Substituir foto por arquivo local"
+                                    >
+                                      <Upload className="w-3 h-3" />
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleReplaceGalleryPhoto(i, e)}
+                                      />
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeGalleryPhoto(i)}
+                                      className="p-1 rounded bg-stone-900 hover:bg-red-500/20 text-stone-400 hover:text-red-400 transition cursor-pointer"
+                                      title="Excluir foto"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* Adicionar por URL */}
+                        <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            placeholder="Cole a URL da imagem aqui (https://...)"
+                            value={newGalleryUrl}
+                            onChange={(e) => setNewGalleryUrl(e.target.value)}
+                            className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-200 focus:border-amber-400 focus:outline-none font-mono"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Legenda da imagem (opcional)"
+                            value={newGalleryCaption}
+                            onChange={(e) => setNewGalleryCaption(e.target.value)}
+                            className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-200 focus:border-amber-400 focus:outline-none"
+                          />
                           <button
                             type="button"
                             onClick={() => {
-                              const cur = props.galleryPhotos || []
-                              props.setGalleryPhotos!(cur.filter((_, idx) => idx !== i))
-                              props.setHasUnsavedChanges(true)
+                              if (newGalleryUrl.trim()) {
+                                updateGalleryConfig(prev => ({
+                                  ...prev,
+                                  photos: [...prev.photos, newGalleryUrl.trim()],
+                                  captions: [...(prev.captions || []), newGalleryCaption.trim()]
+                                }))
+                                setNewGalleryUrl('')
+                                setNewGalleryCaption('')
+                              }
                             }}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600/90 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                            title="Remover foto"
+                            className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono uppercase flex items-center justify-center gap-1 cursor-pointer transition shadow"
                           >
-                            ×
+                            <Plus className="w-3.5 h-3.5" /> Adicionar
                           </button>
-                        )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Adicionar nova foto */}
-                  {props.setGalleryPhotos && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <input
-                        type="text"
-                        value={newGalleryUrl}
-                        onChange={(e) => setNewGalleryUrl(e.target.value)}
-                        placeholder="URL de nova foto (https://...)"
-                        className="flex-1 p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-mono"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (newGalleryUrl.trim()) {
-                            const cur = props.galleryPhotos || []
-                            props.setGalleryPhotos!([...cur, newGalleryUrl.trim()])
-                            setNewGalleryUrl('')
-                            props.setHasUnsavedChanges(true)
-                          }
-                        }}
-                        className="px-3 py-2 rounded-xl bg-amber-400 text-stone-950 text-xs font-mono font-bold uppercase cursor-pointer"
-                      >
-                        + Foto
-                      </button>
                     </div>
                   )}
                 </div>
@@ -2843,6 +3853,111 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 )
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal Interativo Oficial BioVip */}
+      {previewLightboxIndex !== null && effectiveGalleryConfig.photos[previewLightboxIndex] && (
+        <div
+          className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex flex-col justify-between items-center p-3 sm:p-6 select-none animate-fade-in"
+          onClick={() => setPreviewLightboxIndex(null)}
+        >
+          {/* Barra Superior */}
+          <div
+            className="w-full max-w-4xl flex items-center justify-between text-white py-2 px-3 border-b border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                {effectiveGalleryConfig.badge || 'PORTFÓLIO OFICIAL'}
+              </span>
+              <span className="text-xs font-bold text-stone-200 hidden sm:inline">
+                {effectiveGalleryConfig.headline || 'Galeria de Procedimentos & Resultados'}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-mono text-stone-400">
+                Foto {previewLightboxIndex + 1} de {effectiveGalleryConfig.photos.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewLightboxIndex(null)}
+                className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center transition cursor-pointer"
+                title="Fechar (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Imagem Central com Setas de Navegação */}
+          <div
+            className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-3 px-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {effectiveGalleryConfig.photos.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPreviewLightboxIndex((previewLightboxIndex - 1 + effectiveGalleryConfig.photos.length) % effectiveGalleryConfig.photos.length)
+                }}
+                className="absolute left-2 sm:left-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+
+            <div className="relative max-h-[72vh] max-w-full flex items-center justify-center">
+              <img
+                src={effectiveGalleryConfig.photos[previewLightboxIndex]}
+                alt={`Portfólio ampliado ${previewLightboxIndex + 1}`}
+                className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10"
+              />
+            </div>
+
+            {effectiveGalleryConfig.photos.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPreviewLightboxIndex((previewLightboxIndex + 1) % effectiveGalleryConfig.photos.length)
+                }}
+                className="absolute right-2 sm:right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Legenda e Miniaturas Inferiores */}
+          <div
+            className="w-full max-w-4xl flex flex-col items-center gap-2 px-3 py-2 border-t border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {effectiveGalleryConfig.captions?.[previewLightboxIndex] && (
+              <p className="text-xs sm:text-sm text-stone-300 font-medium text-center italic max-w-xl">
+                &ldquo;{effectiveGalleryConfig.captions[previewLightboxIndex]}&rdquo;
+              </p>
+            )}
+
+            {effectiveGalleryConfig.photos.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto max-w-full py-1 px-2">
+                {effectiveGalleryConfig.photos.map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPreviewLightboxIndex(idx)}
+                    className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition shrink-0 cursor-pointer ${
+                      idx === previewLightboxIndex ? 'border-amber-400 scale-105' : 'border-transparent opacity-50 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={p} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

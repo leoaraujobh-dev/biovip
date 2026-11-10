@@ -29,7 +29,12 @@ import {
   Users,
   Star,
   X,
-  HelpCircle
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight,
+  Scissors,
+  GraduationCap,
+  Phone
 } from 'lucide-react'
 import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
@@ -83,8 +88,9 @@ export default function BioSiteClient({
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
 
-  // Galeria de Fotos Modal
+  // Galeria de Fotos & Lightbox Fullscreen (BioVip Original)
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   // Urgency Countdown Timer (14:52)
   const [timerSeconds, setTimerSeconds] = useState(14 * 60 + 52)
@@ -649,7 +655,51 @@ export default function BioSiteClient({
     }
   ]
 
-  const galleryList: string[] = modelData?.galleryPhotosList || modelData?.galleryPhotos || (Array.isArray(modelData?.portfolioGallery) ? modelData?.portfolioGallery : modelData?.portfolioGallery?.items) || []
+  const rawGallery = modelData?.galleryConfig || modelData?.studentGrid
+  const galleryListFallback: string[] = modelData?.galleryPhotosList || modelData?.galleryPhotos || (Array.isArray(modelData?.portfolioGallery) ? modelData?.portfolioGallery : modelData?.portfolioGallery?.items) || []
+
+  const galleryConfig = {
+    enabled: rawGallery?.enabled !== false,
+    badge: rawGallery?.badge || rawGallery?.badgeText || modelData?.galleryBadge || 'PORTFÓLIO & ESTRUTURA VIP',
+    headline: rawGallery?.headline || modelData?.galleryHeadline || 'Resultados Reais & Portfólio em Destaque',
+    subtitle: rawGallery?.subtitle || modelData?.gallerySubtitle || 'Registros reais do nosso padrão de entrega e procedimentos',
+    layout: (rawGallery?.layout || modelData?.galleryLayout || 'mosaic') as 'carousel-snap' | 'grid-2col' | 'mosaic' | 'scroll-cards' | 'grid3' | 'smart_masonry',
+    aspectRatio: (rawGallery?.aspectRatio || modelData?.galleryAspectRatio || 'square') as 'auto' | 'square' | 'portrait' | 'landscape',
+    enableLightbox: rawGallery?.enableLightbox !== false,
+    photos: (rawGallery?.photos && rawGallery.photos.length > 0)
+      ? rawGallery.photos
+      : galleryListFallback.length > 0
+      ? galleryListFallback
+      : [
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop'
+        ],
+    captions: (rawGallery?.captions || modelData?.galleryCaptions || []) as string[]
+  }
+
+  const galleryPhotosList: string[] = galleryConfig.photos
+  const galleryCaptions: string[] = galleryConfig.captions
+  const galleryList: string[] = galleryPhotosList
+
+  // Navegação por teclado no Lightbox (Escape, Setas)
+  useEffect(() => {
+    if (lightboxIndex === null) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxIndex(null)
+      if (e.key === 'ArrowLeft' && galleryPhotosList.length > 0) {
+        setLightboxIndex(prev => prev === null ? null : (prev - 1 + galleryPhotosList.length) % galleryPhotosList.length)
+      }
+      if (e.key === 'ArrowRight' && galleryPhotosList.length > 0) {
+        setLightboxIndex(prev => prev === null ? null : (prev + 1) % galleryPhotosList.length)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxIndex, galleryPhotosList.length])
 
   // Enviar Triagem Quiz para o WhatsApp
   const handleFinishQuiz = () => {
@@ -873,17 +923,53 @@ export default function BioSiteClient({
               </div>
             )}
 
-          {buttonsToRender.map((btn: any) => {
-            const isHigh = !!btn.isHighlighted
-            const animClass = buttonAnimation === 'pulse' || (isHigh && buttonAnimation === 'none')
+          {buttonsToRender.map((btn: any, btnIdx: number) => {
+            const isHigh = !!btn.isHighlighted || btn.variant === 'accent' || btnIdx === 0
+            const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? '⭐ MAIS ESCOLHIDO' : '')
+            const titleText = btn.title || btn.label
+            const subtitleText = btn.subtitle || ''
+            const anim = btn.animation || (isHigh ? 'pulse-glow' : 'none')
+            const animClass = anim === 'pulse' || anim === 'pulse-glow'
               ? 'btn-anim-pulse'
-              : buttonAnimation === 'bounce'
+              : anim === 'bounce'
               ? 'btn-anim-bounce'
-              : buttonAnimation === 'glow' || isHigh
+              : anim === 'glow' || anim === 'pulse-glow'
               ? 'btn-anim-glow'
               : ''
 
-            const isShimmer = buttonAnimation === 'shimmer' || buttonStyle === 'shimmer_ouro' || isHigh
+            const isShimmer = anim === 'shimmer' || anim === 'shimmer-sweep' || buttonStyle === 'shimmer_ouro' || isHigh
+
+            // Foto no botão (cardImage)
+            const cardImg = btn.cardImage || btn.image
+            const imgPos = btn.imagePosition || (cardImg ? 'right' : 'none')
+            const imgFit = btn.imageFitStyle || 'popout'
+            const ctaAction = btn.ctaActionText
+
+            // Redirecionamentos inteligentes do BioVip oficial
+            let href = btn.url || '#'
+            if (btn.linkType === 'whatsapp' || btn.linkType === 'booking') {
+              const defaultMsg = `Olá! Vim pelo BioSite de ${effectiveName} e gostaria de agendar um horário.`
+              const msg = btn.whatsappMessage || defaultMsg
+              href = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(msg)}`
+            } else if (btn.linkType === 'catalogo') {
+              href = '#catalogo'
+            } else if (btn.linkType === 'quiz') {
+              href = '#quiz'
+            } else if (btn.linkType === 'maps' || btn.linkType === 'location') {
+              href = locationInfo?.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(locationInfo?.address || address)}`
+            }
+
+            const handleClick = (e: React.MouseEvent) => {
+              handleTrackLead(titleText)
+              if (btn.linkType === 'quiz' || href === '#quiz') {
+                e.preventDefault()
+                setIsQuizOpen(true)
+              } else if (btn.linkType === 'catalogo' || href === '#catalogo') {
+                e.preventDefault()
+                const el = document.getElementById('catalogo') || document.getElementById('module-services')
+                if (el) el.scrollIntoView({ behavior: 'smooth' })
+              }
+            }
 
             let cardBg: string = palette.card || '#14161c'
             let cardBorder: string = isHigh ? palette.accent : `${palette.accent}33`
@@ -895,11 +981,9 @@ export default function BioSiteClient({
             let iconColor: string = palette.accent
             let arrowColor: string = palette.accent
 
-            if (buttonStyle === 'vidro_glamour' || buttonStyle === 'vidro') {
-              cardBg = 'rgba(255, 255, 255, 0.08)'
-              cardBorder = 'rgba(255, 255, 255, 0.22)'
-              cardShadow = '0 12px 32px 0 rgba(0,0,0,0.4), inset 0 1px 1px 0 rgba(255,255,255,0.25)'
-            } else if (buttonStyle === 'solido_glam' || buttonStyle === 'solido') {
+            if (btn.customBg) {
+              cardBg = btn.customBg
+            } else if (btn.variant === 'accent' || buttonStyle === 'solido_glam' || buttonStyle === 'solido') {
               cardBg = palette.accent
               textColor = palette.buttonText || '#000000'
               cardBorder = 'rgba(255,255,255,0.45)'
@@ -907,16 +991,37 @@ export default function BioSiteClient({
               iconBorder = 'rgba(0,0,0,0.22)'
               iconColor = palette.buttonText || '#000000'
               arrowColor = palette.buttonText || '#000000'
+            } else if (buttonStyle === 'vidro_glamour' || buttonStyle === 'vidro') {
+              cardBg = 'rgba(255, 255, 255, 0.08)'
+              cardBorder = 'rgba(255, 255, 255, 0.22)'
+              cardShadow = '0 12px 32px 0 rgba(0,0,0,0.4), inset 0 1px 1px 0 rgba(255,255,255,0.25)'
+            }
+
+            if (btn.customText) {
+              textColor = btn.customText
+            }
+
+            const renderBtnIcon = (iconName: string) => {
+              const ic = (iconName || '').toLowerCase()
+              if (ic === 'calendar') return <Calendar className="w-4 h-4" />
+              if (ic === 'map' || ic === 'mappin') return <MapPin className="w-4 h-4" />
+              if (ic === 'whatsapp' || ic === 'messagecircle') return <MessageCircle className="w-4 h-4" />
+              if (ic === 'scissors') return <Scissors className="w-4 h-4" />
+              if (ic === 'graduationcap') return <GraduationCap className="w-4 h-4" />
+              if (ic === 'phone') return <Phone className="w-4 h-4" />
+              if (ic === 'clock') return <Clock className="w-4 h-4" />
+              if (ic === 'star') return <Star className="w-4 h-4" />
+              return <Sparkles className="w-4 h-4" />
             }
 
             return (
               <a
                 key={btn.id}
-                href={btn.url}
-                target={btn.url.startsWith('#') ? '_self' : '_blank'}
+                href={href}
+                target={href.startsWith('#') ? '_self' : '_blank'}
                 rel="noopener noreferrer"
-                onClick={() => handleTrackLead(btn.label)}
-                className={`group p-4 transition-all duration-300 flex items-center justify-between cursor-pointer active:scale-[0.98] relative overflow-hidden ${animClass}`}
+                onClick={handleClick}
+                className={`group p-3.5 sm:p-4 transition-all duration-300 flex items-center justify-between cursor-pointer active:scale-[0.98] relative overflow-hidden ${animClass}`}
                 style={{
                   background: cardBg,
                   borderColor: cardBorder,
@@ -939,7 +1044,7 @@ export default function BioSiteClient({
                   </div>
                 )}
 
-                {isHigh && (
+                {badgeText && (
                   <div
                     className="absolute -top-1.5 right-4 px-2 py-0.5 rounded-full text-[8px] font-mono font-bold uppercase shadow-lg flex items-center gap-1 z-10 border"
                     style={{
@@ -948,11 +1053,22 @@ export default function BioSiteClient({
                       borderColor: 'rgba(255,255,255,0.4)'
                     }}
                   >
-                    {btn.highlightBadge || '⭐ MAIS ESCOLHIDO'}
+                    <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                    {badgeText}
                   </div>
                 )}
 
-                <div className="flex items-center gap-3.5 relative z-10 overflow-hidden">
+                <div className="flex items-center gap-3 relative z-10 overflow-hidden flex-1 min-w-0">
+                  {cardImg && imgPos === 'left' && (
+                    <div
+                      className={`shrink-0 overflow-hidden border border-white/20 shadow-md ${
+                        imgFit === 'popout' ? 'w-11 h-11 rounded-full ring-2 ring-amber-400/40' : 'w-11 h-11 rounded-xl'
+                      }`}
+                    >
+                      <img src={cardImg} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
                   <div
                     className="w-9 h-9 flex items-center justify-center shrink-0 border rounded-xl"
                     style={{
@@ -961,27 +1077,49 @@ export default function BioSiteClient({
                       color: iconColor
                     }}
                   >
-                    {btn.icon === 'calendar' ? (
-                      <Calendar className="w-4 h-4" />
-                    ) : btn.icon === 'map' ? (
-                      <MapPin className="w-4 h-4" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
+                    {renderBtnIcon(btn.icon)}
+                  </div>
+                  <div className="text-left overflow-hidden flex-1 min-w-0">
+                    <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider font-mono truncate">
+                      {titleText}
+                    </div>
+                    {subtitleText && (
+                      <div className="text-[10px] mt-0.5 line-clamp-1 font-sans opacity-70">
+                        {subtitleText}
+                      </div>
                     )}
                   </div>
-                  <div className="text-left overflow-hidden">
-                    <div className="text-[11px] font-bold uppercase tracking-wider font-mono truncate">
-                      {btn.label}
-                    </div>
-                    <div className="text-[10px] mt-0.5 line-clamp-1 font-sans opacity-70">
-                      {btn.subtitle}
-                    </div>
-                  </div>
                 </div>
-                <ArrowRight
-                  className="w-4 h-4 group-hover:translate-x-1 transition-all shrink-0 ml-2 relative z-10"
-                  style={{ color: arrowColor }}
-                />
+
+                <div className="flex items-center gap-2 relative z-10 shrink-0 ml-2">
+                  {cardImg && imgPos === 'right' && (
+                    <div
+                      className={`shrink-0 overflow-hidden border border-white/20 shadow-md ${
+                        imgFit === 'popout' ? 'w-11 h-11 rounded-full ring-2 ring-amber-400/40' : 'w-11 h-11 rounded-xl'
+                      }`}
+                    >
+                      <img src={cardImg} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  {ctaAction && (
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[8.5px] font-mono font-bold uppercase tracking-wider border shadow-sm hidden sm:inline-block"
+                      style={{
+                        backgroundColor: `${palette.accent}25`,
+                        borderColor: `${palette.accent}50`,
+                        color: textColor
+                      }}
+                    >
+                      {ctaAction}
+                    </span>
+                  )}
+
+                  <ArrowRight
+                    className="w-4 h-4 group-hover:translate-x-1 transition-all shrink-0"
+                    style={{ color: arrowColor }}
+                  />
+                </div>
               </a>
             )
           })}
@@ -1335,37 +1473,255 @@ export default function BioSiteClient({
           </BioSiteScrollReveal>
         )}
 
-        {/* 12. Galeria de Fotos / Portfólio (Smart Masonry) */}
-        {galleryList && galleryList.length > 0 && (
-          <BioSiteScrollReveal direction="scale" delay={100} className="px-5 py-3 space-y-2">
+        {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
+        {galleryConfig.enabled && galleryPhotosList && galleryPhotosList.length > 0 && (
+          <BioSiteScrollReveal direction="scale" delay={100} className="px-5 py-3 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80">
-                PORTFÓLIO & ESTRUTURA VIP
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300">
+                  {galleryConfig.badge || 'PORTFÓLIO & ESTRUTURA VIP'}
+                </span>
+              </div>
               <span className="text-[9px] font-mono text-stone-400">
-                {galleryList.length} registros
+                {galleryPhotosList.length} registros
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {galleryList.slice(0, 6).map((imgUrl: string, i: number) => (
+
+            {galleryConfig.headline && (
+              <h3 className="text-sm font-bold text-stone-100">
+                {galleryConfig.headline}
+              </h3>
+            )}
+            {galleryConfig.subtitle && (
+              <p className="text-[10px] text-stone-400 -mt-1 leading-relaxed">
+                {galleryConfig.subtitle}
+              </p>
+            )}
+
+            {/* Layout 1: Carrossel Touch Deslizante */}
+            {galleryConfig.layout === 'carousel-snap' && (
+              <div className="relative">
+                <div className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory scrollbar-none py-1 px-0.5">
+                  {galleryPhotosList.map((imgUrl: string, i: number) => {
+                    const caption = galleryCaptions[i] || ''
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          if (galleryConfig.enableLightbox) setLightboxIndex(i)
+                        }}
+                        className={`snap-center shrink-0 w-[78%] sm:w-[65%] rounded-2xl overflow-hidden border border-white/10 relative group cursor-pointer shadow-lg ${
+                          galleryConfig.aspectRatio === 'portrait'
+                            ? 'aspect-[4/5]'
+                            : galleryConfig.aspectRatio === 'landscape'
+                            ? 'aspect-[4/3]'
+                            : 'aspect-square'
+                        }`}
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={caption || `Portfólio ${i + 1}`}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3">
+                          {caption && (
+                            <p className="text-[10px] font-medium text-stone-200 line-clamp-2 drop-shadow-md">
+                              {caption}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between mt-1 text-[8px] font-mono text-stone-400">
+                            <span>#{i + 1}</span>
+                            <span className="flex items-center gap-1 opacity-70">
+                              <Sparkles className="w-2.5 h-2.5 text-amber-300" /> Zoom
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Layout 2: Grade 2 Colunas Clássica */}
+            {galleryConfig.layout === 'grid-2col' && (
+              <div className="grid grid-cols-2 gap-2">
+                {galleryPhotosList.slice(0, 8).map((imgUrl: string, i: number) => {
+                  const caption = galleryCaptions[i] || ''
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        if (galleryConfig.enableLightbox) setLightboxIndex(i)
+                      }}
+                      className={`rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group shadow-md ${
+                        galleryConfig.aspectRatio === 'portrait'
+                          ? 'aspect-[4/5]'
+                          : galleryConfig.aspectRatio === 'landscape'
+                          ? 'aspect-[4/3]'
+                          : 'aspect-square'
+                      }`}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={caption || `Portfólio ${i + 1}`}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                        <span className="text-[8px] font-mono font-bold text-amber-300">
+                          #{i + 1}
+                        </span>
+                        {caption && (
+                          <span className="text-[9px] font-sans text-white line-clamp-2">
+                            {caption}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Layout 3: Mosaico Dinâmico Bento (1ª Foto Grande + Grade) */}
+            {galleryConfig.layout === 'mosaic' && (
+              <div className="grid grid-cols-2 gap-2">
+                {/* 1ª Foto em Destaque Grande */}
                 <div
-                  key={i}
-                  onClick={() => setPreviewPhoto(imgUrl)}
-                  className="aspect-square rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group"
+                  onClick={() => {
+                    if (galleryConfig.enableLightbox) setLightboxIndex(0)
+                  }}
+                  className="col-span-2 aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden border border-amber-400/30 relative cursor-pointer group shadow-xl"
                 >
                   <img
-                    src={imgUrl}
-                    alt={`Portfólio ${i + 1}`}
+                    src={galleryPhotosList[0]}
+                    alt={galleryCaptions[0] || 'Destaque'}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-between p-3.5">
+                    <span className="self-start px-2 py-0.5 rounded-full text-[8px] font-mono font-bold uppercase bg-amber-400 text-stone-950">
+                      ⭐ DESTAQUE PRINCIPAL
+                    </span>
+                    <div>
+                      {galleryCaptions[0] && (
+                        <p className="text-xs font-semibold text-stone-100 line-clamp-2">
+                          {galleryCaptions[0]}
+                        </p>
+                      )}
+                      <span className="text-[9px] font-mono text-stone-400 flex items-center gap-1 mt-0.5">
+                        <Sparkles className="w-3 h-3 text-amber-400" /> Toque para ampliar em tela cheia
+                      </span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Demais Fotos em 2 Colunas */}
+                {galleryPhotosList.slice(1, 5).map((imgUrl: string, i: number) => {
+                  const actualIdx = i + 1
+                  const caption = galleryCaptions[actualIdx] || ''
+                  return (
+                    <div
+                      key={actualIdx}
+                      onClick={() => {
+                        if (galleryConfig.enableLightbox) setLightboxIndex(actualIdx)
+                      }}
+                      className="aspect-square rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group shadow-md"
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={caption || `Portfólio ${actualIdx + 1}`}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center">
+                        {caption ? (
+                          <span className="text-[9px] text-white line-clamp-2 font-medium">
+                            {caption}
+                          </span>
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Layout 4: Cards Expandidos (1 por vez com foco total) */}
+            {galleryConfig.layout === 'scroll-cards' && (
+              <div className="space-y-3">
+                {galleryPhotosList.slice(0, 4).map((imgUrl: string, i: number) => {
+                  const caption = galleryCaptions[i] || ''
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        if (galleryConfig.enableLightbox) setLightboxIndex(i)
+                      }}
+                      className="rounded-2xl overflow-hidden border border-white/10 bg-stone-900/40 p-2 space-y-2 cursor-pointer group shadow-lg"
+                    >
+                      <div className="w-full aspect-[16/10] rounded-xl overflow-hidden relative">
+                        <img
+                          src={imgUrl}
+                          alt={caption || `Registro ${i + 1}`}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[8px] font-mono font-bold bg-black/70 text-amber-300 border border-white/10">
+                          #{i + 1}
+                        </span>
+                      </div>
+                      {caption && (
+                        <p className="text-[11px] text-stone-200 px-1 font-medium leading-relaxed">
+                          {caption}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Layout 5: Grade Editorial 3 Colunas (smart_masonry / grid3) */}
+            {(galleryConfig.layout === 'grid3' || galleryConfig.layout === 'smart_masonry') && (
+              <div className="grid grid-cols-3 gap-1.5">
+                {galleryPhotosList.slice(0, 6).map((imgUrl: string, i: number) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      if (galleryConfig.enableLightbox) setLightboxIndex(i)
+                    }}
+                    className={`rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group ${
+                      galleryConfig.aspectRatio === 'portrait'
+                        ? 'aspect-[4/5]'
+                        : galleryConfig.aspectRatio === 'landscape'
+                        ? 'aspect-[4/3]'
+                        : 'aspect-square'
+                    }`}
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Portfólio ${i + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </BioSiteScrollReveal>
         )}
 
@@ -1742,21 +2098,108 @@ export default function BioSiteClient({
           </div>
         )}
 
-        {/* Modal de Zoom de Foto do Portfólio */}
-        {previewPhoto && (
+        {/* Visualizador Lightbox em Tela Cheia VIP (BioVip Original) */}
+        {lightboxIndex !== null && galleryPhotosList[lightboxIndex] && (
           <div
-            onClick={() => setPreviewPhoto(null)}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col justify-between items-center p-3 sm:p-6 select-none animate-fade-in"
+            onClick={() => setLightboxIndex(null)}
           >
-            <div className="relative max-w-sm w-full aspect-square rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
-              <img src={previewPhoto} alt="Visualização" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => setPreviewPhoto(null)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
-              >
-                ✕
-              </button>
+            {/* Barra Superior */}
+            <div
+              className="w-full max-w-4xl flex items-center justify-between text-white py-2 px-3 border-b border-white/10"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                  {galleryConfig.badge || 'PORTFÓLIO OFICIAL'}
+                </span>
+                <span className="text-xs font-bold text-stone-200 hidden sm:inline">
+                  {galleryConfig.headline || 'Galeria de Procedimentos & Resultados'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] font-mono text-stone-400">
+                  Foto {lightboxIndex + 1} de {galleryPhotosList.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(null)}
+                  className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center transition cursor-pointer"
+                  title="Fechar (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Imagem Central com Setas de Navegação */}
+            <div
+              className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-3 px-2"
+              onClick={e => e.stopPropagation()}
+            >
+              {galleryPhotosList.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setLightboxIndex((lightboxIndex - 1 + galleryPhotosList.length) % galleryPhotosList.length)
+                  }}
+                  className="absolute left-2 sm:left-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center shadow-lg transition active:scale-90 cursor-pointer"
+                  title="Foto anterior (←)"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+
+              <img
+                src={galleryPhotosList[lightboxIndex]}
+                alt={`Foto ${lightboxIndex + 1}`}
+                className="max-h-[72vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10"
+              />
+
+              {galleryPhotosList.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setLightboxIndex((lightboxIndex + 1) % galleryPhotosList.length)
+                  }}
+                  className="absolute right-2 sm:right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center shadow-lg transition active:scale-90 cursor-pointer"
+                  title="Próxima foto (→)"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Barra Inferior com Legenda e Miniaturas */}
+            <div
+              className="w-full max-w-2xl flex flex-col items-center gap-2 pb-2"
+              onClick={e => e.stopPropagation()}
+            >
+              {galleryCaptions[lightboxIndex] && (
+                <div className="px-4 py-2 rounded-xl bg-stone-900/90 border border-white/10 text-xs text-stone-200 text-center max-w-lg shadow-lg">
+                  {galleryCaptions[lightboxIndex]}
+                </div>
+              )}
+              {galleryPhotosList.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto max-w-full py-1 px-2">
+                  {galleryPhotosList.map((thumbUrl: string, tIdx: number) => (
+                    <button
+                      key={tIdx}
+                      type="button"
+                      onClick={() => setLightboxIndex(tIdx)}
+                      className={`w-10 h-10 rounded-lg overflow-hidden border transition shrink-0 cursor-pointer ${
+                        tIdx === lightboxIndex
+                          ? 'border-amber-400 ring-2 ring-amber-400/50 scale-105'
+                          : 'border-white/20 opacity-50 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

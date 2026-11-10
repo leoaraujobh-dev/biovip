@@ -1,11 +1,41 @@
 export interface ProjectButton {
   id: string
   label: string
+  title?: string
   subtitle: string
   icon: string
   url: string
+  linkType?: 'booking' | 'catalogo' | 'whatsapp' | 'maps' | 'custom' | 'quiz' | 'location'
+  whatsappMessage?: string
+  openInNewTab?: boolean
   isHighlighted?: boolean
   highlightBadge?: string
+  badgeText?: string
+  animation?: 'pulse-glow' | 'shimmer' | 'shimmer-sweep' | 'bounce' | 'none'
+  variant?: 'accent' | 'default' | 'card' | 'gold' | 'glass'
+  customBg?: string
+  customText?: string
+  bgImage?: string
+  imagePosition?: 'none' | 'left' | 'right' | 'cover'
+  cardImage?: string
+  imageFitStyle?: 'popout' | 'framed' | 'cover'
+  imageSize?: number
+  ctaActionText?: string
+}
+
+export type ActionCard = ProjectButton
+
+export interface StudentGridConfig {
+  enabled?: boolean
+  headline?: string
+  subtitle?: string
+  badge?: string
+  badgeText?: string
+  layout?: 'carousel-snap' | 'grid-2col' | 'mosaic' | 'scroll-cards' | 'smart_masonry' | 'grid3'
+  aspectRatio?: 'auto' | 'square' | 'portrait' | 'landscape'
+  enableLightbox?: boolean
+  photos: string[]
+  captions?: string[]
 }
 
 export interface ProjectSubPage {
@@ -91,6 +121,7 @@ export interface Project {
     description: string
   }[]
   galleryPhotosList?: string[]
+  galleryConfig?: StudentGridConfig
   servicesCatalog?: {
     enabled: boolean
     headline: string
