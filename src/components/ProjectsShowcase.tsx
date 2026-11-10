@@ -46,6 +46,7 @@ export default function ProjectsShowcase() {
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('TODOS')
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
+  const [isPaused, setIsPaused] = useState(false)
   const [activeScrollHintIndex, setActiveScrollHintIndex] = useState<number | null>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
 
@@ -98,6 +99,26 @@ export default function ProjectsShowcase() {
       }
     }
   }, [filteredProjects])
+
+  // Auto-rotação contínua do carrossel (pausa automaticamente ao passar o mouse sobre qualquer modelo)
+  useEffect(() => {
+    if (isPaused) return
+
+    const timer = setInterval(() => {
+      if (!carouselRef.current) return
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current
+      const scrollAmount = window.innerWidth < 640 ? 310 : 360
+
+      // Se alcançou o final do carrossel, volta suavemente para o início
+      if (scrollLeft >= scrollWidth - clientWidth - 25) {
+        carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+      } else {
+        carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+      }
+    }, 3800)
+
+    return () => clearInterval(timer)
+  }, [isPaused, filteredProjects])
 
   const scrollByDirection = (direction: 'left' | 'right') => {
     if (!carouselRef.current) return
@@ -172,34 +193,41 @@ export default function ProjectsShowcase() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 self-start lg:self-auto shrink-0">
-            {/* Controles de Navegação do Carrossel */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => scrollByDirection('left')}
-                disabled={!canScrollLeft}
-                aria-label="Projeto anterior"
-                className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
-                  canScrollLeft
-                    ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
-                    : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
-                }`}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollByDirection('right')}
-                disabled={!canScrollRight}
-                aria-label="Próximo projeto"
-                className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
-                  canScrollRight
-                    ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
-                    : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
-                }`}
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+            {/* Status do Giro Automático + Controles de Navegação do Carrossel */}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-900/80 border border-stone-800 text-[11px] font-mono text-stone-300">
+                <span className={`w-2 h-2 rounded-full transition-colors ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
+                <span>{isPaused ? 'Pausado no modelo' : 'Giro automático ativo'}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => scrollByDirection('left')}
+                  disabled={!canScrollLeft}
+                  aria-label="Projeto anterior"
+                  className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
+                    canScrollLeft
+                      ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
+                      : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollByDirection('right')}
+                  disabled={!canScrollRight}
+                  aria-label="Próximo projeto"
+                  className={`w-11 h-11 rounded-full flex items-center justify-center border transition ${
+                    canScrollRight
+                      ? 'border-stone-700 bg-stone-900/90 text-stone-200 hover:border-[#E2B857] hover:text-[#E2B857] hover:scale-105 active:scale-95'
+                      : 'border-stone-800 bg-stone-900/40 text-stone-600 cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <Link
@@ -233,12 +261,20 @@ export default function ProjectsShowcase() {
         {/* CARROSSEL HORIZONTAL DE IPHONES COM EXIBIÇÃO REAL */}
         <div
           ref={carouselRef}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => {
+            setTimeout(() => setIsPaused(false), 2500)
+          }}
           className="flex gap-6 sm:gap-8 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x snap-mandatory scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {filteredProjects.map((project, index) => (
             <article
               key={project.slug}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
               className="snap-center shrink-0 w-[295px] sm:w-[325px] flex flex-col items-center group"
             >
               {/* MOCKUP IPHONE COM TELA REAL E ROLAGEM */}

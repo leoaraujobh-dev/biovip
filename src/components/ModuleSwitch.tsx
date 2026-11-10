@@ -70,3 +70,4 @@ export const ModuleSwitch: React.FC<ModuleSwitchProps> = ({
 };
 
 export default ModuleSwitch;
+
