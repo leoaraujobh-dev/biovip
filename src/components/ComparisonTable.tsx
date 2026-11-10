@@ -142,7 +142,7 @@ export default function ComparisonTable() {
         {/* Bottom CTA for table */}
         <div className="mt-12 text-center flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+            href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-bold hover:from-amber-400 hover:to-amber-500 transition shadow-lg shadow-amber-500/20"

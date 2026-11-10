@@ -85,7 +85,7 @@ export default function DemoBarbeariaPage() {
     }
   }
 
-  const whatsappBaseUrl = 'https://wa.me/5511999999999'
+  const whatsappBaseUrl = 'https://wa.me/5531991390202'
 
   return (
     <div className={`min-h-screen bg-[#050507] text-stone-100 flex flex-col items-center justify-start font-sans selection:bg-[#E2B857]/30 selection:text-white ${

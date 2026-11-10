@@ -123,7 +123,7 @@ export default function Hero() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
               <a
-                href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+                href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-4 shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40 w-full sm:w-auto font-bold"

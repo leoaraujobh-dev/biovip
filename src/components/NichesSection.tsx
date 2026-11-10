@@ -185,7 +185,7 @@ export default function NichesSection() {
 
             <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
               <a
-                href={`https://wa.me/5511999999999?text=${encodeURIComponent(`Olá! Quero meu BioSite pronto em 24h para ${activeNiche.name}.`)}`}
+                href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Quero meu BioSite pronto em 24h para ${activeNiche.name}.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-amber-500 text-stone-950 font-bold hover:bg-amber-400 transition"

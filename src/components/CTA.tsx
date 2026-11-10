@@ -19,7 +19,7 @@ export default function CTA() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
+            href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
             target="_blank"
             rel="noopener noreferrer"
             className="btn-primary bg-white text-primary-600 hover:bg-primary-50 inline-flex items-center justify-center gap-2 text-base px-8 py-4 shadow-xl shadow-black/10 font-bold w-full sm:w-auto"
@@ -29,7 +29,7 @@ export default function CTA() {
             <ArrowRight className="w-5 h-5" aria-hidden="true" />
           </a>
           <a
-            href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20falar%20com%20um%20especialista%20sobre%20meu%20BioSite."
+            href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostaria%20de%20falar%20com%20um%20especialista%20sobre%20meu%20BioSite."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-white/10 border-2 border-white/30 rounded-xl hover:bg-white/20 hover:border-white/50 transition-all duration-200 backdrop-blur-sm w-full sm:w-auto"

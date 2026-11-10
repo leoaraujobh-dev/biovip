@@ -42,7 +42,7 @@ export const OFFICIAL_PLANS: Plan[] = [
       { name: 'Filtro anti-curiosos com regras de atendimento', included: false }
     ],
     ctaText: 'Quero Meu BioVip Pronto em 24h',
-    ctaHref: 'https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20garantir%20meu%20BioSite%20Plano%20B%C3%A1sico%20pronto%20em%2024h.'
+    ctaHref: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20garantir%20meu%20BioSite%20Plano%20B%C3%A1sico%20pronto%20em%2024h.'
   },
 
   // 2. PLANO PRO (MAIS ESCOLHIDO)
@@ -67,7 +67,7 @@ export const OFFICIAL_PLANS: Plan[] = [
       { name: 'Métricas de acessos e cliques no painel', included: true }
     ],
     ctaText: 'Garantir Plano Pro no WhatsApp',
-    ctaHref: 'https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20o%20Plano%20Pro%20com%20Cat%C3%A1logo%20e%20Funil%20pronto%20em%2024h.'
+    ctaHref: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20o%20Plano%20Pro%20com%20Cat%C3%A1logo%20e%20Funil%20pronto%20em%2024h.'
   },
 
   // 3. PLANO VIP ILIMITADO
@@ -89,7 +89,7 @@ export const OFFICIAL_PLANS: Plan[] = [
       { name: 'Relatório mensal de cliques e conversões', included: true }
     ],
     ctaText: 'Contratar Plano VIP no WhatsApp',
-    ctaHref: 'https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20o%20Plano%20VIP%20com%20design%20exclusivo%20e%20dom%C3%ADnio%20configurado.'
+    ctaHref: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20o%20Plano%20VIP%20com%20design%20exclusivo%20e%20dom%C3%ADnio%20configurado.'
   }
 ]
 

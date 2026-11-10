@@ -1952,7 +1952,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         props.setUserPhone(e.target.value)
                         props.setHasUnsavedChanges(true)
                       }}
-                      placeholder="5511999999999"
+                      placeholder="5531991390202"
                       className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
                     />
                   </div>

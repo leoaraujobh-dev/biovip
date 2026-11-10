@@ -29,7 +29,7 @@ export const UpgradeVipModal: React.FC<UpgradeVipModalProps> = ({
   const whatsappMessage = encodeURIComponent(
     `Olá! Gostaria de fazer o upgrade da minha conta para o ${targetPlanName} para liberar o módulo "${data.moduleName}".`
   )
-  const whatsappUrl = `https://wa.me/5511999999999?text=${whatsappMessage}`
+  const whatsappUrl = `https://wa.me/5531991390202?text=${whatsappMessage}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">

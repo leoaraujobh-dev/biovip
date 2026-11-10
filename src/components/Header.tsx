@@ -55,7 +55,7 @@ export default function Header() {
               Entrar
             </Link>
             <a
-              href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
+              href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary text-sm px-5 py-2.5 shadow-md shadow-amber-500/20"
@@ -66,7 +66,7 @@ export default function Header() {
 
           <div className="lg:hidden flex items-center gap-3">
             <a
-              href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
+              href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary text-xs px-3.5 py-1.5 shadow-sm"
@@ -105,7 +105,7 @@ export default function Header() {
                 Área do Cliente (Entrar)
               </Link>
               <a
-                href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
+                href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20em%2024h."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary text-center mt-2 py-3"
