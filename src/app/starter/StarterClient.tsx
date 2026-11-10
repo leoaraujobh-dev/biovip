@@ -16,6 +16,9 @@ import {
   BUTTON_ANIMATIONS,
   HIGHLIGHT_BADGES
 } from '@/data/bioSiteDesign'
+import { projects as defaultProjects } from '@/data/projects'
+import { saveBioSite } from '@/services/biositeService'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import {
   Sparkles,
   ArrowRight,
@@ -41,8 +44,20 @@ import {
   Trash2,
   ChevronDown,
   Globe,
-  HelpCircle
+  HelpCircle,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
+
+// SLUGS RESERVADOS DO SISTEMA
+const RESERVED_SLUGS = [
+  'admin', 'conta', 'entrar', 'planos', 'portfolio', 'privacidade', 
+  'starter', 'api', 'login', 'register', 'bio', 'biovip', 'suporte', 
+  'ajuda', 'termos', 'checkout', 'dashboard', 'painel'
+]
 
 // ÍCONES DISPONÍVEIS PARA OS BOTÕES
 const BUTTON_ICONS = [
@@ -126,8 +141,109 @@ export default function StarterClient() {
   const [clientQuotes, setClientQuotes] = useState<string[]>([])
   const [newQuote, setNewQuote] = useState<string>('')
 
-  // 9. Endereço
+  // 9. Endereço & Validação de Slug Único
   const [slug, setSlug] = useState<string>('teste')
+  const [isSlugChecking, setIsSlugChecking] = useState<boolean>(false)
+  const [slugStatus, setSlugStatus] = useState<{ available: boolean; message: string }>({
+    available: true,
+    message: 'Disponível: biovip.com.br/teste'
+  })
+
+  // 10. Criação de Conta (E-mail e Senha)
+  const [accountName, setAccountName] = useState<string>('')
+  const [accountEmail, setAccountEmail] = useState<string>('')
+  const [accountPhone, setAccountPhone] = useState<string>('')
+  const [accountPassword, setAccountPassword] = useState<string>('')
+  const [accountConfirmPassword, setAccountConfirmPassword] = useState<string>('')
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [accountError, setAccountError] = useState<string | null>(null)
+  const [isSubmittingAccount, setIsSubmittingAccount] = useState<boolean>(false)
+
+  // Validação em tempo real do endereço (slug)
+  useEffect(() => {
+    const cleanSlug = slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '')
+    if (!cleanSlug) {
+      setSlugStatus({ available: false, message: 'Digite o endereço desejado para o seu Bio Site.' })
+      return
+    }
+    if (cleanSlug.length < 3) {
+      setSlugStatus({ available: false, message: 'O endereço deve ter no mínimo 3 caracteres.' })
+      return
+    }
+    if (RESERVED_SLUGS.includes(cleanSlug)) {
+      setSlugStatus({
+        available: false,
+        message: `O endereço "${cleanSlug}" é reservado pelo sistema. Por favor, escolha outro.`
+      })
+      return
+    }
+    // 1. Verificar se já existe nos modelos de portfólio
+    const isModelUsed = defaultProjects.some(p => p.slug === cleanSlug)
+    if (isModelUsed) {
+      setSlugStatus({
+        available: false,
+        message: `O endereço "biovip.com.br/${cleanSlug}" já está em uso por outro profissional.`
+      })
+      return
+    }
+    // 2. Verificar se já existe no localStorage (assinaturas ou sites locais)
+    try {
+      const storedSubs = localStorage.getItem('biovip_subscriptions')
+      if (storedSubs) {
+        const subs = JSON.parse(storedSubs)
+        if (subs.some((s: any) => s.slug === cleanSlug)) {
+          setSlugStatus({
+            available: false,
+            message: `O endereço "biovip.com.br/${cleanSlug}" já foi registrado por outro cliente.`
+          })
+          return
+        }
+      }
+      const existingSite = localStorage.getItem('biovip_site_' + cleanSlug)
+      if (existingSite) {
+        setSlugStatus({
+          available: false,
+          message: `O endereço "biovip.com.br/${cleanSlug}" já está cadastrado neste navegador.`
+        })
+        return
+      }
+    } catch (e) {}
+
+    // 3. Verificação assíncrona no Supabase (se configurado) com debounce
+    let active = true
+    setIsSlugChecking(true)
+    const timer = setTimeout(async () => {
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { data } = await supabase.from('biosites').select('slug').eq('slug', cleanSlug).maybeSingle()
+          if (!active) return
+          if (data && data.slug) {
+            setSlugStatus({
+              available: false,
+              message: `O endereço "biovip.com.br/${cleanSlug}" já está cadastrado no sistema.`
+            })
+            setIsSlugChecking(false)
+            return
+          }
+        } catch (err) {
+          console.warn('Erro ao verificar slug no Supabase:', err)
+        }
+      }
+      if (active) {
+        setSlugStatus({
+          available: true,
+          message: `Disponível: biovip.com.br/${cleanSlug}`
+        })
+        setIsSlugChecking(false)
+      }
+    }, 250)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [slug])
+
   const [pixCopied, setPixCopied] = useState<boolean>(false)
   const [isPixActive, setIsPixActive] = useState<boolean>(false)
   const pixStudioKey = '12.345.678/0001-90'
@@ -197,45 +313,80 @@ export default function StarterClient() {
     }
   }
 
-  // Finalização do Cadastro / Conta
-  const handleCreateAccount = () => {
-    // Salvar no localStorage de assinaturas para aparecer instantaneamente no /admin
-    const newSub = {
-      id: `sub-${Date.now().toString().slice(-4)}`,
-      clientName: brandName,
-      businessName: `${brandName} ${niche}`,
-      email: `${slug}@cliente.com.br`,
-      whatsapp: buttons[0]?.value || '5531999999999',
-      niche: niche,
-      slug: slug,
-      planId: planoParam,
-      planName: planoParam === 'starter' ? 'Iniciante' : planoParam === 'agency' ? 'Agência' : 'Profissional',
-      cycle: 'mensal',
-      amount: planoParam === 'starter' ? 29 : planoParam === 'agency' ? 199 : 79,
-      status: 'pendente',
-      paymentMethod: 'pix',
-      startDate: new Date().toISOString().split('T')[0],
-      nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      bioSiteUrl: `https://biovip.com.br/${slug}`,
-      viewsCount: 1,
-      clicksCount: 0,
-      notes: 'Cadastrado através do Construtor Online (Passo 9).',
-      payments: []
+  // Finalização do Cadastro com E-mail e Senha e Redirecionamento para a Área de Edição
+  const handleCreateAccountAndGoToEditor = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    setAccountError(null)
+
+    // Validações
+    const effName = (accountName || brandName).trim()
+    if (!effName) {
+      setAccountError('Por favor, informe seu nome completo.')
+      return
     }
 
+    const effEmail = accountEmail.trim().toLowerCase()
+    if (!effEmail || !effEmail.includes('@') || !effEmail.includes('.')) {
+      setAccountError('Por favor, informe um endereço de e-mail válido.')
+      return
+    }
+
+    if (!accountPassword || accountPassword.length < 6) {
+      setAccountError('A senha de acesso deve ter pelo menos 6 dígitos.')
+      return
+    }
+
+    if (accountPassword !== accountConfirmPassword) {
+      setAccountError('A confirmação da senha não coincide com a senha digitada.')
+      return
+    }
+
+    // Se o slug não estiver disponível, aborta
+    if (!slugStatus.available) {
+      setAccountError('O endereço escolhido não está disponível. Por favor, volte ao passo 9 e altere.')
+      return
+    }
+
+    setIsSubmittingAccount(true)
+
     try {
-      const existing = localStorage.getItem('biovip_subscriptions')
-      const currentSubs = existing ? JSON.parse(existing) : []
-      localStorage.setItem('biovip_subscriptions', JSON.stringify([newSub, ...currentSubs]))
+      const effPhone = (accountPhone || buttons[0]?.value || '5531991390202').replace(/\D/g, '')
 
+      // 1. Armazenar sessão do cliente
+      sessionStorage.setItem('biovip_client_session', effEmail)
+      localStorage.setItem('biovip_logged_client', JSON.stringify({
+        email: effEmail,
+        name: effName,
+        phone: effPhone,
+        slug
+      }))
+
+      // 2. Salvar na lista de contas cadastradas
+      const existingUsersRaw = localStorage.getItem('biovip_users')
+      const currentUsers = existingUsersRaw ? JSON.parse(existingUsersRaw) : []
+      const updatedUsers = [
+        ...currentUsers.filter((u: any) => u.email !== effEmail),
+        {
+          name: effName,
+          email: effEmail,
+          phone: effPhone,
+          password: accountPassword,
+          slug,
+          createdAt: new Date().toISOString()
+        }
+      ]
+      localStorage.setItem('biovip_users', JSON.stringify(updatedUsers))
+
+      // 3. Montar dados completos do Bio Site (12 Módulos VIP inclusos)
       const nicheContent = generateNicheContent(niche)
-
       const siteData = {
         slug,
-        name: brandName,
+        name: effName,
+        businessTitle: effName,
         role: niche,
         category: niche,
         registrationCode: 'REGISTRO OFICIAL',
+        monogram: effName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'BV',
         photo: customPhotoUrl || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem),
         paletteId: selectedPalette.id,
         typographyId: selectedTypography.id,
@@ -250,24 +401,82 @@ export default function StarterClient() {
           isHighlighted: !!b.isHighlighted,
           highlightBadge: b.highlightBadge
         })),
-        whatsapp: '5531991390202',
+        whatsapp: effPhone || '5531991390202',
         announcement: nicheContent.announcement,
         urgency: nicheContent.urgency,
         qualifierQuiz: nicheContent.qualifierQuiz,
         metricsList: nicheContent.metricsList,
         howItWorksSteps: nicheContent.howItWorksSteps,
+        galleryPhotosList: [
+          'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80'
+        ],
         servicesCatalog: nicheContent.servicesCatalog,
         locationInfo: nicheContent.locationInfo,
-        faqList: nicheContent.faqList
+        testimonialsList: [
+          {
+            id: 't-1',
+            clientName: 'Cliente VIP',
+            name: 'Cliente VIP',
+            city: 'Sua Cidade - UF',
+            role: 'Cliente Satisfeito',
+            text: 'Excelente atendimento, superou todas as expectativas com pontualidade e alto padrão.',
+            rating: 5,
+            date: 'recentemente',
+            verified: true
+          }
+        ],
+        aboutMeSection: {
+          headline: `Sobre ${effName}`,
+          bio: `Atendimento exclusivo em ${niche} com foco em alto padrão e dedicação total aos clientes.`,
+          closingPhrase: 'Excelência em cada detalhe.'
+        },
+        faqList: nicheContent.faqList,
+        subpages: [
+          { slug: 'servicos', title: 'Serviços & Procedimentos', description: 'Tabela de tratamentos e investimentos.', previewType: 'services' },
+          { slug: 'agendamento', title: 'Agendamento Direto', description: 'Consulte os dias livres com confirmação prioritária.', previewType: 'booking' }
+        ]
       }
+
+      // Salva no localStorage e sincroniza com o Supabase
       localStorage.setItem('biovip_site_' + slug, JSON.stringify(siteData))
       localStorage.setItem('biovip_user_site', JSON.stringify(siteData))
-    } catch (e) {
-      console.error(e)
-    }
+      await saveBioSite(slug, siteData)
 
-    // Redireciona para o admin ou WhatsApp
-    router.push(`/admin`)
+      // 4. Salvar assinatura no sistema
+      const newSub = {
+        id: `sub-${Date.now().toString().slice(-4)}`,
+        clientName: effName,
+        businessName: `${effName} (${niche})`,
+        email: effEmail,
+        whatsapp: effPhone,
+        niche: niche,
+        slug: slug,
+        planId: planoParam,
+        planName: planoParam === 'starter' ? 'Iniciante' : planoParam === 'agency' ? 'Agência' : 'Profissional',
+        cycle: 'mensal',
+        amount: planoParam === 'starter' ? 29 : planoParam === 'agency' ? 199 : 79,
+        status: 'ativa',
+        paymentMethod: 'pix',
+        startDate: new Date().toISOString().split('T')[0],
+        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        bioSiteUrl: `https://biovip.com.br/${slug}`,
+        viewsCount: 1,
+        clicksCount: 0,
+        notes: 'Cadastrado no Construtor Online com conta e senha criadas.',
+        payments: []
+      }
+      const existingSubsRaw = localStorage.getItem('biovip_subscriptions')
+      const currentSubs = existingSubsRaw ? JSON.parse(existingSubsRaw) : []
+      localStorage.setItem('biovip_subscriptions', JSON.stringify([newSub, ...currentSubs]))
+
+      // 5. Redirecionar para a ÁREA DE EDIÇÃO DO BIOSITE
+      router.push(`/conta?edit=${slug}`)
+    } catch (err: any) {
+      console.error(err)
+      setAccountError(err?.message || 'Erro ao criar conta. Tente novamente.')
+      setIsSubmittingAccount(false)
+    }
   }
 
   return (
@@ -275,10 +484,10 @@ export default function StarterClient() {
       <Header />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 mt-16 lg:mt-20">
-        {/* Barra de Progresso Superior Exata (Linha Fina com 9 divisões) */}
+        {/* Barra de Progresso Superior Exata (Linha Fina com 10 divisões) */}
         <div className="mb-8">
           <div className="text-[11px] font-mono tracking-widest text-stone-400 uppercase mb-3">
-            PASSO {step} DE 9 · {
+            PASSO {step} DE 10 · {
               step === 1 ? 'VOCÊ' :
               step === 2 ? 'FOTO' :
               step === 3 ? 'PALETA' :
@@ -286,11 +495,12 @@ export default function StarterClient() {
               step === 5 ? 'TIPOGRAFIA' :
               step === 6 ? 'BOTÕES' :
               step === 7 ? 'SEUS LINKS' :
-              step === 8 ? 'PROVA SOCIAL' : 'ENDEREÇO'
+              step === 8 ? 'PROVA SOCIAL' :
+              step === 9 ? 'ENDEREÇO' : 'CRIAR CONTA'
             }
           </div>
-          <div className="grid grid-cols-9 gap-1.5 h-1 w-full bg-stone-200 rounded-full overflow-hidden">
-            {Array.from({ length: 9 }).map((_, idx) => (
+          <div className="grid grid-cols-10 gap-1.5 h-1 w-full bg-stone-200 rounded-full overflow-hidden">
+            {Array.from({ length: 10 }).map((_, idx) => (
               <div
                 key={idx}
                 className={`h-full transition-colors duration-200 ${
@@ -1295,7 +1505,7 @@ export default function StarterClient() {
 
             {/* ==================== PASSO 9: SEU ENDEREÇO ==================== */}
             {step === 9 && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-fade-in">
                 <div>
                   <span className="text-xs font-mono uppercase text-stone-400 tracking-wider">9. SEU ENDEREÇO</span>
                   <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 mt-1">Seu endereço</h1>
@@ -1306,138 +1516,59 @@ export default function StarterClient() {
 
                 <div className="space-y-4">
                   <div>
-                    <div className="flex items-center text-sm font-mono border-b-2 border-stone-900 pb-2">
+                    <div className={`flex items-center text-sm font-mono border-b-2 pb-2 transition-colors ${
+                      slugStatus.available ? 'border-stone-900' : 'border-rose-500'
+                    }`}>
                       <span className="text-stone-400">biovip.com.br/</span>
                       <input
                         type="text"
                         value={slug}
                         onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                        className="font-bold text-stone-900 focus:outline-none flex-1 ml-1"
-                        placeholder="teste"
+                        className={`font-bold focus:outline-none flex-1 ml-1 ${
+                          slugStatus.available ? 'text-stone-900' : 'text-rose-600'
+                        }`}
+                        placeholder="seu-nome"
                       />
+                      {isSlugChecking && (
+                        <Loader2 className="w-4 h-4 text-stone-400 animate-spin ml-2" />
+                      )}
                     </div>
-                    <div className="text-xs text-emerald-700 font-mono mt-2 flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5" /> Disponível: biovip.com.br/{slug || 'teste'}
-                    </div>
+
+                    {isSlugChecking ? (
+                      <div className="text-xs text-stone-500 font-mono mt-2 flex items-center gap-1.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-400" />
+                        <span>Verificando disponibilidade no BioVip...</span>
+                      </div>
+                    ) : slugStatus.available ? (
+                      <div className="text-xs text-emerald-700 font-mono mt-2 flex items-center gap-1.5 font-medium animate-fade-in">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>{slugStatus.message}</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-rose-600 font-mono mt-2 flex items-center gap-1.5 font-bold animate-fade-in bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>{slugStatus.message}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pl-4 border-l-2 border-stone-300 py-1 text-xs text-stone-500 leading-relaxed">
                     Escolha com calma: tudo o mais você edita depois na sua área, mas o endereço fica.
                   </div>
 
-                  {/* CHECKOUT PIX INSTANTÂNEO (MELHORIA 2) */}
                   <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-700" /> Ativação Imediata via Pix (R$ {planoPreco},00)
+                        <Sparkles className="w-3.5 h-3.5 text-amber-700" /> Próxima Etapa: Conta de Acesso
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 font-bold">
-                        SEM ESPERA
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 font-bold">
+                        PASSO FINAL
                       </span>
                     </div>
-
-                    <p className="text-xs text-stone-600 leading-snug">
-                      Pague agora e seu Bio Site entra no ar em menos de 1 minuto sem precisar falar com ninguém.
+                    <p className="text-xs text-stone-600 leading-relaxed">
+                      Ao avançar, você criará sua conta de acesso (e-mail e senha) para entrar imediatamente na <strong>Área de Edição do BioSite</strong> com os 12 Módulos VIP, catálogo e estatísticas.
                     </p>
-
-                    <div className="p-3 bg-white rounded-xl border border-stone-200 text-xs font-mono space-y-2">
-                      <div className="text-[10px] text-stone-400 uppercase">Chave Pix do Estúdio:</div>
-                      <div className="font-bold text-stone-900 select-all break-all">{pixStudioKey}</div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(pixStudioKey)
-                          setPixCopied(true)
-                          setTimeout(() => setPixCopied(false), 2000)
-                        }}
-                        className="w-full py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        {pixCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        {pixCopied ? 'Chave Copiada com Sucesso!' : 'Copiar Chave Pix'}
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Ativa como paga e redireciona direto para o bio site real!
-                        const newSub = {
-                          id: `sub-${Date.now().toString().slice(-4)}`,
-                          clientName: brandName,
-                          businessName: `${brandName} ${niche}`,
-                          email: `${slug}@cliente.com.br`,
-                          whatsapp: buttons[0]?.value || '5531999999999',
-                          niche: niche,
-                          slug: slug,
-                          planId: planoParam,
-                          planName: planoParam === 'starter' ? 'Iniciante' : planoParam === 'agency' ? 'Agência' : 'Profissional',
-                          cycle: 'mensal',
-                          amount: Number(planoPreco),
-                          status: 'ativa',
-                          paymentMethod: 'pix',
-                          startDate: new Date().toISOString().split('T')[0],
-                          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                          bioSiteUrl: `https://biovip.com.br/${slug}`,
-                          viewsCount: 1,
-                          clicksCount: 0,
-                          notes: 'Ativado instantaneamente via Pix Checkout no Construtor.',
-                          payments: [{ id: `pay-${Date.now()}`, date: new Date().toISOString().split('T')[0], amount: Number(planoPreco), method: 'pix', status: 'pago' }]
-                        }
-
-                        try {
-                          const existing = localStorage.getItem('biovip_subscriptions')
-                          const currentSubs = existing ? JSON.parse(existing) : []
-                          localStorage.setItem('biovip_subscriptions', JSON.stringify([newSub, ...currentSubs]))
-
-                          const nicheContent = generateNicheContent(niche)
-
-                          const siteData = {
-                            slug,
-                            name: brandName,
-                            role: niche,
-                            category: niche,
-                            registrationCode: 'REGISTRO OFICIAL',
-                            photo: customPhotoUrl || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem),
-                            paletteId: selectedPalette.id,
-                            typographyId: selectedTypography.id,
-                            buttonStyle: buttonStyle || 'cartao_nobre',
-                            buttonAnimation: buttonAnimation,
-                            buttons: buttons.map((b, i) => ({
-                              id: `btn-${i + 1}`,
-                              label: b.label,
-                              subtitle: b.subtitle || (b.targetType === 'whatsapp' ? 'Conversar diretamente' : 'Toque para abrir'),
-                              icon: b.icon || 'sparkles',
-                              url: b.targetType === 'whatsapp' ? `https://wa.me/55${b.value.replace(/\D/g, '')}` : b.value,
-                              isHighlighted: !!b.isHighlighted,
-                              highlightBadge: b.highlightBadge
-                            })),
-                            whatsapp: '5531991390202',
-                            announcement: nicheContent.announcement,
-                            urgency: nicheContent.urgency,
-                            qualifierQuiz: nicheContent.qualifierQuiz,
-                            metricsList: nicheContent.metricsList,
-                            howItWorksSteps: nicheContent.howItWorksSteps,
-                            servicesCatalog: nicheContent.servicesCatalog,
-                            locationInfo: nicheContent.locationInfo,
-                            faqList: nicheContent.faqList
-                          }
-                          localStorage.setItem('biovip_site_' + slug, JSON.stringify(siteData))
-                          localStorage.setItem('biovip_user_site', JSON.stringify(siteData))
-                        } catch (e) {
-                          console.error(e)
-                        }
-
-                        router.push(`/${slug}`)
-                      }}
-                      className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:brightness-110 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-4 h-4" /> Já Realizei o Pix · Ver Meu Bio Site no Ar
-                    </button>
                   </div>
-
-                  <p className="text-xs text-stone-500 leading-relaxed">
-                    A conta guarda esta página, as visitas e as páginas adicionais. O que você montou fica salvo e volta quando terminar.
-                  </p>
 
                   <div className="pt-2">
                     <a
@@ -1446,9 +1577,136 @@ export default function StarterClient() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-xs text-stone-500 hover:text-stone-900 transition font-medium"
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> Prefiro falar antes
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> Prefiro falar antes via WhatsApp
                     </a>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ==================== PASSO 10: CRIAR CONTA COM E-MAIL E SENHA ==================== */}
+            {step === 10 && (
+              <div className="space-y-6 animate-fade-in">
+                <div>
+                  <span className="text-xs font-mono uppercase text-stone-400 tracking-wider">10. CONTA & ACESSO</span>
+                  <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 mt-1">Crie sua conta</h1>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Crie seu e-mail e senha para ter acesso exclusivo à área de edição do seu Bio Site em <strong className="font-mono text-stone-900">biovip.com.br/{slug}</strong>.
+                  </p>
+                </div>
+
+                {accountError && (
+                  <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-medium flex items-center gap-2 animate-fade-in">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{accountError}</span>
+                  </div>
+                )}
+
+                <div className="p-6 rounded-3xl bg-white border border-stone-200/90 shadow-sm space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                      NOME COMPLETO OU NOME DA MARCA *
+                    </label>
+                    <input
+                      type="text"
+                      value={accountName || brandName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="Ex: Dra. Ana Freire"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                        WHATSAPP DE ATENDIMENTO *
+                      </label>
+                      <input
+                        type="tel"
+                        value={accountPhone || buttons[0]?.value || ''}
+                        onChange={(e) => setAccountPhone(e.target.value)}
+                        placeholder="Ex: (81) 98765-4321"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                        E-MAIL DE ACESSO (LOGIN) *
+                      </label>
+                      <input
+                        type="email"
+                        value={accountEmail}
+                        onChange={(e) => setAccountEmail(e.target.value)}
+                        placeholder="seuemail@exemplo.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                        SENHA (MÍNIMO 6 DÍGITOS) *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={accountPassword}
+                          onChange={(e) => setAccountPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900 pr-9"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
+                        CONFIRMAR SENHA *
+                      </label>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={accountConfirmPassword}
+                        onChange={(e) => setAccountConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 flex items-start gap-2 leading-relaxed">
+                    <Sparkles className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Seu endereço reservado:</strong> <code className="font-mono font-bold text-amber-950">biovip.com.br/{slug}</code>.
+                      Ao clicar abaixo, sua conta é ativada e você é direcionado diretamente para a tela de edição do BioSite.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isSubmittingAccount}
+                    onClick={handleCreateAccountAndGoToEditor}
+                    className="w-full py-4 rounded-2xl bg-stone-950 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-xl cursor-pointer"
+                  >
+                    {isSubmittingAccount ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                        <span>Criando sua conta & preparando editor...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4 text-amber-400" />
+                        <span>CRIAR CONTA & ENTRAR NA ÁREA DE EDIÇÃO →</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -1480,13 +1738,31 @@ export default function StarterClient() {
                 >
                   CONTINUAR →
                 </button>
+              ) : step === 9 ? (
+                <button
+                  type="button"
+                  disabled={!slugStatus.available || isSlugChecking}
+                  onClick={() => {
+                    if (slugStatus.available && !isSlugChecking) {
+                      setStep(10)
+                    }
+                  }}
+                  className={`px-8 py-3.5 rounded-full text-xs font-bold tracking-wide transition shadow-xl flex items-center gap-2 ${
+                    slugStatus.available && !isSlugChecking
+                      ? 'bg-stone-950 hover:bg-stone-800 text-white cursor-pointer'
+                      : 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                  }`}
+                >
+                  {isSlugChecking ? 'VERIFICANDO...' : 'AVANÇAR PARA CRIAR CONTA →'}
+                </button>
               ) : (
                 <button
                   type="button"
-                  onClick={handleCreateAccount}
-                  className="px-8 py-3.5 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold tracking-wide transition shadow-xl cursor-pointer flex items-center gap-2"
+                  disabled={isSubmittingAccount}
+                  onClick={handleCreateAccountAndGoToEditor}
+                  className="px-8 py-3.5 rounded-full bg-stone-950 hover:bg-stone-800 disabled:opacity-50 text-white text-xs font-bold tracking-wide transition shadow-xl cursor-pointer flex items-center gap-2"
                 >
-                  CRIAR MINHA CONTA →
+                  {isSubmittingAccount ? 'CRIANDO CONTA...' : 'ENTRAR NA ÁREA DE EDIÇÃO →'}
                 </button>
               )}
             </div>

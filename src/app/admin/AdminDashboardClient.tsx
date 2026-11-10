@@ -58,6 +58,7 @@ import {
   Bot
 } from 'lucide-react'
 import Link from 'next/link'
+import { getLeads, LeadSubmission } from '@/services/biositeService'
 
 const MASTER_PIN = '2026'
 
@@ -76,7 +77,11 @@ export default function AdminDashboardClient() {
   const [bioSiteTypeFilter, setBioSiteTypeFilter] = useState<'todos' | 'modelos' | 'clientes'>('todos')
 
   // Abas do painel
-  const [activeTab, setActiveTab] = useState<'assinaturas' | 'vencimentos' | 'gateways' | 'metricas' | 'portfolio'>('assinaturas')
+  const [activeTab, setActiveTab] = useState<'assinaturas' | 'vencimentos' | 'gateways' | 'metricas' | 'portfolio' | 'leads'>('assinaturas')
+  const [allLeads, setAllLeads] = useState<LeadSubmission[]>([])
+  const [leadClientFilter, setLeadClientFilter] = useState<string>('todos')
+  const [leadActionFilter, setLeadActionFilter] = useState<string>('todos')
+  const [loadingAllLeads, setLoadingAllLeads] = useState<boolean>(false)
 
   // Portfólio & Vitrine de Modelos
   const [portfolioList, setPortfolioList] = useState<Project[]>(defaultProjects)
