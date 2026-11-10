@@ -213,20 +213,60 @@ export const BIOVIP_MODULES: Record<ModuleKey, ModuleMetadata> = {
   }
 };
 
-// Hierarquia de planos para verificação de permissões
-export const PLAN_RANKS: Record<PlanTier, number> = {
+// Níveis numéricos para comparação hierárquica simples
+export const PLAN_WEIGHT: Record<PlanTier, number> = {
   basico: 1,
   pro: 2,
   vip: 3
 };
 
+export const PLAN_RANKS = PLAN_WEIGHT;
+
 /**
- * Verifica se um plano possui acesso a determinado módulo
+ * Verifica se um plano possui acesso a determinado módulo.
+ */
+export function hasModuleAccess(userPlan: PlanTier, moduleKey: ModuleKey): boolean {
+  const moduleInfo = BIOVIP_MODULES[moduleKey];
+  if (!moduleInfo) return false;
+
+  return PLAN_WEIGHT[userPlan] >= PLAN_WEIGHT[moduleInfo.minPlanRequired];
+}
+
+/**
+ * Alias para verificação de acesso
  */
 export function canAccessModule(moduleKey: ModuleKey, userPlan: PlanTier): boolean {
-  const moduleMeta = BIOVIP_MODULES[moduleKey];
-  if (!moduleMeta) return false;
-  return PLAN_RANKS[userPlan] >= PLAN_RANKS[moduleMeta.minPlanRequired];
+  return hasModuleAccess(userPlan, moduleKey);
+}
+
+/**
+ * Retorna dados detalhados para preencher o Modal de Upgrade caso o acesso seja negado.
+ */
+export function getUpgradeTarget(userPlan: PlanTier, moduleKey: ModuleKey) {
+  const moduleInfo = BIOVIP_MODULES[moduleKey];
+  if (!moduleInfo) {
+    return {
+      isAllowed: false,
+      targetPlan: 'pro' as PlanTier,
+      moduleName: 'Módulo',
+      upgradeHook: '',
+      priceDifference: '+R$ 20,00/mês'
+    };
+  }
+
+  const isAllowed = hasModuleAccess(userPlan, moduleKey);
+
+  return {
+    isAllowed,
+    targetPlan: moduleInfo.minPlanRequired,
+    moduleName: moduleInfo.name,
+    upgradeHook: moduleInfo.upgradeHook,
+    // Define a chamada de valor para o modal
+    priceDifference:
+      moduleInfo.minPlanRequired === 'pro'
+        ? '+R$ 20,00/mês'
+        : '+R$ 50,00/mês'
+  };
 }
 
 /**
@@ -242,3 +282,4 @@ export function getModulesByCategory(category: ModuleMetadata['category']): Modu
 export function getAvailableModulesForPlan(plan: PlanTier): ModuleMetadata[] {
   return Object.values(BIOVIP_MODULES).filter(m => canAccessModule(m.id, plan));
 }
+
