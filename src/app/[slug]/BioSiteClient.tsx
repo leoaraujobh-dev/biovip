@@ -532,7 +532,7 @@ export default function BioSiteClient({
     minutes: 15
   }
 
-  const quiz = modelData?.qualifierQuiz || {
+  const quiz = modelData?.qualifierQuiz || modelData?.quiz || {
     enabled: true,
     buttonLabel: '✨ Descobrir Tratamento Ideal (Triagem VIP)',
     headline: 'Atendimento Personalizado',
@@ -556,19 +556,24 @@ export default function BioSiteClient({
     ]
   }
 
-  const metrics = modelData?.metricsList || [
+  const metrics = modelData?.metricsList || modelData?.metrics?.items || (Array.isArray(modelData?.metrics) ? modelData?.metrics : null) || [
     { value: '+1.000', label: 'CLIENTES ATENDIDOS' },
     { value: '8 anos', label: 'DE EXPERIÊNCIA' },
     { value: '5.0★', label: 'AVALIAÇÃO NO GOOGLE' }
   ]
 
-  const howItWorks = modelData?.howItWorksSteps || [
+  const howItWorks = modelData?.howItWorksSteps || modelData?.howItWorks?.items || (Array.isArray(modelData?.howItWorks) ? modelData?.howItWorks : null) || [
     { number: '01', title: 'Primeiro Contato & Triagem', description: 'Você relata sua necessidade pelo WhatsApp ou formulário e alinhamos a prioridade.' },
     { number: '02', title: 'Avaliação Estratégica', description: 'Diagnóstico detalhado do seu objetivo com plano de ação sob medida.' },
     { number: '03', title: 'Execução & Acompanhamento', description: 'Atendimento de alta excelência e suporte contínuo em todas as etapas.' }
   ]
 
-  const servicesCatalog = modelData?.servicesCatalog || {
+  const rawServices = modelData?.servicesCatalog || modelData?.services
+  const servicesCatalog = rawServices?.items
+    ? rawServices
+    : Array.isArray(rawServices)
+    ? { enabled: true, headline: 'Procedimentos & Soluções Exclusivas', categories: ['TODOS'], items: rawServices }
+    : rawServices || {
     enabled: true,
     headline: 'Procedimentos & Soluções Exclusivas',
     subtitle: 'Soluções personalizadas baseadas no mais alto padrão de entrega',
@@ -599,7 +604,7 @@ export default function BioSiteClient({
     ]
   }
 
-  const locationInfo = modelData?.locationInfo || {
+  const locationInfo = modelData?.locationInfo || modelData?.locationCard || {
     enabled: true,
     address: address,
     hours: 'Seg a Sáb · 08:30 às 19:30',
@@ -607,7 +612,7 @@ export default function BioSiteClient({
     mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(address)}`
   }
 
-  const testimonials = modelData?.testimonialsList || [
+  const testimonials = modelData?.testimonialsList || modelData?.testimonials?.items || (Array.isArray(modelData?.testimonials) ? modelData?.testimonials : null) || [
     {
       clientName: 'Juliana Mendes',
       city: 'São Paulo - SP',
@@ -622,14 +627,14 @@ export default function BioSiteClient({
     }
   ]
 
-  const aboutMe = modelData?.aboutMeSection || {
+  const aboutMe = modelData?.aboutMeSection || modelData?.aboutMe || {
     enabled: true,
     headline: `Sobre ${effectiveName}`,
     paragraph: 'Com vasta trajetória no segmento de alto padrão, nosso propósito é entregar resultados de autoridade com ética, pontualidade e sofisticação em cada atendimento.',
     closingPhrase: 'Excelência e cuidado em cada detalhe.'
   }
 
-  const faq = modelData?.faqList || [
+  const faq = modelData?.faqList || modelData?.faq?.items || (Array.isArray(modelData?.faq) ? modelData?.faq : null) || [
     {
       question: 'Como funciona o agendamento de horários?',
       answer: 'Basta escolher o procedimento no catálogo ou clicar no botão de WhatsApp para falar diretamente com nossa equipe executiva.'
@@ -643,6 +648,8 @@ export default function BioSiteClient({
       answer: 'Aceitamos Pix com confirmação imediata e cartões de crédito em até 12 parcelas.'
     }
   ]
+
+  const galleryList: string[] = modelData?.galleryPhotosList || modelData?.galleryPhotos || (Array.isArray(modelData?.portfolioGallery) ? modelData?.portfolioGallery : modelData?.portfolioGallery?.items) || []
 
   // Enviar Triagem Quiz para o WhatsApp
   const handleFinishQuiz = () => {
@@ -725,6 +732,8 @@ export default function BioSiteClient({
           <img
             src={effectivePhoto}
             alt={effectiveName}
+            fetchPriority="high"
+            decoding="async"
             className="w-full h-full object-cover object-top transition-transform duration-1000 ease-out"
           />
           {/* Fusão Orgânica nos 40% Inferiores */}
@@ -1219,18 +1228,18 @@ export default function BioSiteClient({
         )}
 
         {/* 12. Galeria de Fotos / Portfólio (Smart Masonry) */}
-        {modelData?.galleryPhotosList && modelData.galleryPhotosList.length > 0 && (
+        {galleryList && galleryList.length > 0 && (
           <BioSiteScrollReveal direction="scale" delay={100} className="px-5 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80">
                 PORTFÓLIO & ESTRUTURA VIP
               </span>
               <span className="text-[9px] font-mono text-stone-400">
-                {modelData.galleryPhotosList.length} registros
+                {galleryList.length} registros
               </span>
             </div>
             <div className="grid grid-cols-3 gap-1.5">
-              {modelData.galleryPhotosList.slice(0, 6).map((imgUrl: string, i: number) => (
+              {galleryList.slice(0, 6).map((imgUrl: string, i: number) => (
                 <div
                   key={i}
                   onClick={() => setPreviewPhoto(imgUrl)}
@@ -1239,6 +1248,8 @@ export default function BioSiteClient({
                   <img
                     src={imgUrl}
                     alt={`Portfólio ${i + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -45,12 +45,28 @@ export default function SubPageClient({
   const [leadTrackedToast, setLeadTrackedToast] = useState<string | null>(null)
   const [copiedLink, setCopiedLink] = useState(false)
 
-  const cleanWhatsapp = whatsapp.replace(/\D/g, '')
+  // Recupera dados salvos localmente e fallback do projeto
+  const [modelData, setModelData] = useState<any>(() => {
+    return projects.find(p => p.slug === slug)
+  })
 
-  // Recupera paleta e tipografia do projeto
-  const proj = projects.find(p => p.slug === slug)
-  const palette = proj ? (PALETTES.find(p => p.id === proj.paletteId) || PALETTES[0]) : PALETTES[0]
-  const typography = proj ? (TYPOGRAPHIES.find(t => t.id === proj.typographyId) || TYPOGRAPHIES[0]) : TYPOGRAPHIES[0]
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('biovip_site_' + slug)
+      if (saved) {
+        setModelData((prev: any) => ({ ...(prev || {}), ...JSON.parse(saved) }))
+      }
+    } catch (e) {}
+  }, [slug])
+
+  const effWhatsapp = modelData?.whatsapp || whatsapp
+  const cleanWhatsapp = effWhatsapp.replace(/\D/g, '')
+
+  // Recupera paleta e tipografia do projeto com suporte a edições
+  const resolvedPaletteId = modelData?.paletteId || 'luxo_nude'
+  const resolvedTypographyId = modelData?.typographyId || 'instrument'
+  const palette = PALETTES.find(p => p.id === resolvedPaletteId) || PALETTES[0]
+  const typography = TYPOGRAPHIES.find(t => t.id === resolvedTypographyId) || TYPOGRAPHIES[0]
 
   const handleTrackLead = (actionLabel: string) => {
     if (typeof window !== 'undefined') {
