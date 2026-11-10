@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Layers,
   Wand2,
   Upload,
@@ -35,7 +36,19 @@ import {
   Sliders,
   Check,
   Menu,
-  X
+  X,
+  Link as LinkIcon,
+  MessageCircle,
+  MapPin,
+  Flame,
+  HelpCircle,
+  Navigation,
+  Award,
+  Users,
+  Info,
+  Car,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react'
 
 import {
@@ -109,6 +122,8 @@ export interface BioSiteEditorProps {
   setAboutMeData: (v: any) => void
   faqData: any
   setFaqData: (v: any) => void
+  galleryPhotos?: string[]
+  setGalleryPhotos?: (v: string[]) => void
   metaPixelId: string
   setMetaPixelId: (v: string) => void
   tiktokPixelId: string
@@ -134,9 +149,10 @@ export interface BioSiteEditorProps {
   isProcessingPayment: boolean
 }
 
-type SectionTabId =
+export type SectionTabId =
   | 'paleta'
   | 'cabecalho'
+  | 'botoes'
   | 'catalogo'
   | 'portfolio'
   | 'social'
@@ -144,21 +160,23 @@ type SectionTabId =
   | 'pixel'
   | 'assinatura'
 
-interface SectionItem {
+export interface SectionItem {
   id: SectionTabId
   title: string
   subtitle: string
   icon: any
+  badge?: string
   isVip?: boolean
 }
 
-const SECTIONS: SectionItem[] = [
+export const SECTION_ITEMS: SectionItem[] = [
   { id: 'paleta', title: 'Paleta & Tipografia', subtitle: 'Cores, fontes e estilos de botão', icon: Palette },
   { id: 'cabecalho', title: 'Cabeçalho & Perfil', subtitle: 'Foto, nome, bio e IA', icon: User },
-  { id: 'catalogo', title: 'Catálogo de Serviços', subtitle: 'Procedimentos, preços e links', icon: ShoppingBag },
-  { id: 'portfolio', title: 'Portfólio & Páginas', subtitle: 'Antes & Depois e subpáginas', icon: ImageIcon },
-  { id: 'social', title: 'Prova Social & Avaliações', subtitle: 'Google reviews e depoimentos', icon: Star },
-  { id: 'vip', title: 'Módulos VIP', subtitle: '12 seções VIP de conversão', icon: Crown, isVip: true },
+  { id: 'botoes', title: 'Botões & Links Principais', subtitle: 'WhatsApp, agendamento e destaques', icon: LinkIcon },
+  { id: 'catalogo', title: 'Catálogo de Serviços', subtitle: 'Procedimentos, preços e durações', icon: ShoppingBag, badge: 'PRO' },
+  { id: 'portfolio', title: 'Portfólio & Galeria', subtitle: 'Fotos de resultados e subpáginas', icon: ImageIcon },
+  { id: 'social', title: 'Prova Social & Depoimentos', subtitle: 'Google reviews e métricas', icon: Star },
+  { id: 'vip', title: 'Módulos VIP de Conversão', subtitle: '8 ferramentas de fechamento', icon: Crown, isVip: true },
   { id: 'pixel', title: 'Píxel, Anúncios & SEO', subtitle: 'Meta, TikTok e Google Analytics', icon: Zap },
   { id: 'assinatura', title: 'Assinatura & Domínio', subtitle: 'Status 48h, PIX e endereço', icon: CreditCard }
 ]
@@ -169,6 +187,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const [mobileMode, setMobileMode] = useState<'editor' | 'preview'>('editor')
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [copiedPix, setCopiedPix] = useState(false)
+  const [openVipAccordion, setOpenVipAccordion] = useState<string | null>('announcement')
+  const [newGalleryUrl, setNewGalleryUrl] = useState('')
 
   const handleCopyPix = () => {
     if (typeof window !== 'undefined' && navigator.clipboard) {
@@ -178,163 +198,156 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
     }
   }
 
-  const activeSectionObj = SECTIONS.find(s => s.id === activeSection) || SECTIONS[0]
+  const currentSectionMeta = SECTION_ITEMS.find(s => s.id === activeSection) || SECTION_ITEMS[0]
 
   return (
-    <div className="h-screen w-full flex flex-col bg-[#0A0A0E] text-stone-100 overflow-hidden font-sans selection:bg-[#E2B857]/30 selection:text-white">
+    <div className="h-screen w-screen overflow-hidden bg-[#0A0A0C] text-stone-200 flex flex-col font-sans select-none">
       {/* ========================================================= */}
-      {/* BARRA SUPERIOR (NAVBAR FIXA GLOBAL) */}
+      {/* BARRA SUPERIOR UNIFICADA (DESKTOP E MOBILE) */}
       {/* ========================================================= */}
-      <header className="h-14 sm:h-16 bg-[#0D0D11] border-b border-stone-800/80 px-4 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-30">
-        {/* Esquerda: Logo, Voltar e Slug */}
+      <header className="h-14 border-b border-stone-800/80 bg-[#0D0D11]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-30 shrink-0">
         <div className="flex items-center gap-3">
           <button
-            type="button"
             onClick={props.onBackToDashboard}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white border border-stone-800 text-xs font-mono font-semibold transition flex items-center gap-1.5 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-700/80 hover:border-amber-400 bg-stone-900/80 text-xs font-mono uppercase tracking-wider text-stone-300 hover:text-white transition cursor-pointer"
             title="Voltar para Minha Área"
           >
-            <ArrowLeft className="w-4 h-4 text-amber-400" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Minha Área</span>
           </button>
 
           <div className="h-4 w-px bg-stone-800 hidden sm:block" />
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold hidden md:inline">
-              EDITANDO:
+            <span className="text-[10px] font-mono text-stone-400 uppercase hidden md:inline">
+              Editando:
             </span>
-            <code className="text-xs font-mono font-bold text-amber-300 bg-stone-900/90 px-2.5 py-1 rounded-lg border border-amber-500/20">
+            <code className="px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-semibold">
               /{props.slug}
             </code>
-            <span className="hidden lg:inline text-xs font-serif text-stone-400 truncate max-w-[140px]">
-              ({props.businessTitle || props.brandName})
-            </span>
+            {props.businessTitle && (
+              <span className="text-xs text-stone-400 truncate max-w-[120px] sm:max-w-xs hidden lg:inline">
+                ({props.businessTitle})
+              </span>
+            )}
           </div>
         </div>
 
         {/* Centro (Desktop): Alternador Mobile/Desktop & Ver ao Vivo */}
-        <div className="hidden lg:flex items-center gap-2 bg-[#141418] p-1 rounded-xl border border-stone-800">
-          <button
-            type="button"
-            onClick={() => setPreviewViewport('mobile')}
-            className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition flex items-center gap-1.5 cursor-pointer ${
-              previewViewport === 'mobile'
-                ? 'bg-[#E2B857] text-stone-950 font-bold shadow-xs'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Mobile</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewViewport('desktop')}
-            className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition flex items-center gap-1.5 cursor-pointer ${
-              previewViewport === 'desktop'
-                ? 'bg-[#E2B857] text-stone-950 font-bold shadow-xs'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            <span>Desktop</span>
-          </button>
-        </div>
+        <div className="hidden lg:flex items-center gap-2">
+          <div className="flex items-center bg-stone-900/90 border border-stone-800 rounded-full p-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setPreviewViewport('mobile')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium transition cursor-pointer ${
+                previewViewport === 'mobile'
+                  ? 'bg-amber-400 text-stone-950 font-bold shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobile</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewViewport('desktop')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium transition cursor-pointer ${
+                previewViewport === 'desktop'
+                  ? 'bg-amber-400 text-stone-950 font-bold shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Desktop</span>
+            </button>
+          </div>
 
-        {/* Direita: Ações Rápidas & Salvar */}
-        <div className="flex items-center gap-2.5">
           <a
             href={`/${props.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white border border-stone-800 text-xs font-semibold transition"
-            title="Abrir BioSite no ar em nova aba"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-800 hover:border-stone-700 bg-stone-900/50 text-xs text-stone-400 hover:text-white transition font-mono"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+            <ExternalLink className="w-3.5 h-3.5" />
             <span>Ver no ar</span>
           </a>
 
-          {/* Botão de Preenchimento Rápido com IA */}
           <button
             type="button"
             onClick={props.handleAiAutoFill}
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
-              props.aiFillSuccess
-                ? 'bg-emerald-600 text-white border-emerald-500'
-                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'
-            }`}
-            title="Preencher com Inteligência Artificial baseado no nicho"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/40 hover:border-amber-400 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-mono text-amber-300 font-bold transition shadow-sm cursor-pointer"
+            title="Preencher textos, bio e serviços com IA"
           >
-            <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>{props.aiFillSuccess ? 'Preenchido com IA!' : 'Preencher com IA'}</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
+            <span>Preencher com IA</span>
           </button>
+        </div>
 
-          {/* Botão Salvar Global */}
+        {/* Lado Direito: Notificação de Salvo & Botão Salvar Principal */}
+        <div className="flex items-center gap-2">
+          {props.savedSuccess && (
+            <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full animate-fade-in">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Salvo com sucesso!</span>
+            </span>
+          )}
+
           <button
             type="button"
-            onClick={() => {
-              props.handleSavePage()
-              props.setSavedSuccess(true)
-              setTimeout(() => props.setSavedSuccess(false), 3000)
-            }}
-            className="px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl bg-gradient-to-r from-[#E2B857] via-[#F3D78A] to-[#E2B857] hover:brightness-105 active:scale-95 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#E2B857]/20 transition cursor-pointer"
+            onClick={props.handleSavePage}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-[#E2B857] hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs uppercase tracking-wider font-mono shadow-md hover:shadow-amber-500/20 active:scale-95 transition cursor-pointer"
           >
-            {props.savedSuccess ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-stone-950" />
-                <span>Salvo!</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 text-stone-950" />
-                <span>Salvar</span>
-              </>
-            )}
+            <Save className="w-4 h-4" />
+            <span>Salvar</span>
           </button>
         </div>
       </header>
 
-      {/* BANNER DE AVISO: PAGAMENTO PENDENTE NO TOPO */}
-      {props.paymentStatus === 'pendente' && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 text-xs text-amber-200 flex items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
-            <span>
-              <strong>Pagamento Pendente:</strong> Confirme sua ativação em até <strong>48h</strong> para evitar suspensão.
-            </span>
+      {/* ========================================================= */}
+      {/* BARRA MOBILE: MODO EDITOR vs PRÉVIA */}
+      {/* ========================================================= */}
+      <div className="lg:hidden h-11 border-b border-stone-800 bg-[#121216] px-4 flex items-center justify-between z-20 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            {currentSectionMeta.icon && <currentSectionMeta.icon className="w-3.5 h-3.5" />}
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveSection('assinatura')
-              setMobileMode('editor')
-            }}
-            className="px-2.5 py-0.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-[11px] uppercase tracking-wide shrink-0 transition"
-          >
-            Ativar Agora
-          </button>
+          <div>
+            <h2 className="text-xs font-bold text-white leading-tight uppercase font-mono">
+              {currentSectionMeta.title}
+            </h2>
+            <p className="text-[9px] text-stone-400 line-clamp-1">
+              {currentSectionMeta.subtitle}
+            </p>
+          </div>
         </div>
-      )}
+
+        <button
+          onClick={() => setIsMobileDrawerOpen(true)}
+          className="p-1.5 rounded-lg border border-stone-800 text-stone-300 hover:text-white bg-stone-900 text-xs flex items-center gap-1 font-mono"
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* ========================================================= */}
       {/* CORPO PRINCIPAL (DESKTOP: 3 COLUNAS | MOBILE: ADAPTADO) */}
       {/* ========================================================= */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* --------------------------------------------------------- */}
-        {/* COLUNA 1 — Menu de Navegação / Seções (w-64 a w-72) */}
+        {/* COLUNA 1 — Menu de Navegação / Seções (Desktop: w-72) */}
         {/* --------------------------------------------------------- */}
-        <aside className="hidden lg:flex w-64 xl:w-72 bg-[#0D0D11] border-r border-stone-800/80 flex-col shrink-0 overflow-y-auto">
+        <aside className="hidden lg:flex w-72 border-r border-stone-800/80 bg-[#0D0D11] flex-col shrink-0 select-none">
           <div className="p-4 border-b border-stone-800/60 flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 font-bold">
-              ESTRUTURA DA PÁGINA
+            <span className="text-[11px] font-mono uppercase tracking-widest text-stone-400 font-bold">
+              Estrutura da Página
             </span>
-            <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-              8 BLOCOS
+            <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+              {SECTION_ITEMS.length} BLOCOS
             </span>
           </div>
 
-          <nav className="p-3 space-y-1.5 flex-1">
-            {SECTIONS.map((sec, idx) => {
+          <nav className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-stone-800">
+            {SECTION_ITEMS.map((sec) => {
               const Icon = sec.icon
               const isActive = activeSection === sec.id
               return (
@@ -342,57 +355,65 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   key={sec.id}
                   type="button"
                   onClick={() => setActiveSection(sec.id)}
-                  className={`w-full p-3 rounded-2xl text-left transition-all flex items-center gap-3 cursor-pointer group ${
+                  className={`w-full p-3 rounded-2xl text-left transition-all flex items-center justify-between gap-3 cursor-pointer group ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#E2B857]/20 via-[#E2B857]/10 to-transparent text-[#E2B857] border-l-4 border-[#E2B857] shadow-sm font-bold'
-                      : 'text-stone-300 hover:text-white hover:bg-stone-900/80 border-l-4 border-transparent'
+                      ? 'bg-amber-500/15 border border-amber-400/50 shadow-md shadow-amber-950/30 text-amber-200'
+                      : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60 border border-transparent'
                   }`}
                 >
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${
-                      isActive
-                        ? 'bg-[#E2B857] text-stone-950 font-bold shadow-xs'
-                        : 'bg-stone-900 text-stone-400 group-hover:text-[#E2B857] border border-stone-800'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold truncate block">
-                        {sec.title}
-                      </span>
-                      {sec.isVip && (
-                        <span className="text-[8px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500 text-stone-950 font-black">
-                          VIP
-                        </span>
-                      )}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        isActive
+                          ? 'bg-amber-400 text-stone-950 font-bold'
+                          : 'bg-stone-900/90 border border-stone-800 text-stone-400 group-hover:text-stone-200 group-hover:border-stone-700'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] text-stone-500 block truncate">
-                      {sec.subtitle}
-                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold truncate block ${isActive ? 'text-amber-300' : 'text-stone-200'}`}>
+                          {sec.title}
+                        </span>
+                        {sec.badge && (
+                          <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            {sec.badge}
+                          </span>
+                        )}
+                        {sec.isVip && (
+                          <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500 text-stone-950">
+                            VIP
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-stone-500 truncate mt-0.5 group-hover:text-stone-400">
+                        {sec.subtitle}
+                      </p>
+                    </div>
                   </div>
-                  <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition ${isActive ? 'text-[#E2B857] translate-x-0.5' : 'text-stone-600'}`} />
+                  <ChevronRight
+                    className={`w-4 h-4 shrink-0 transition-transform ${
+                      isActive ? 'text-amber-400 translate-x-0.5' : 'text-stone-600 group-hover:text-stone-400'
+                    }`}
+                  />
                 </button>
               )
             })}
           </nav>
 
-          {/* Rodapé da Coluna 1 com dados rápidos */}
-          <div className="p-4 border-t border-stone-800/60 bg-[#09090C] text-[11px] text-stone-400 space-y-2">
-            <div className="flex items-center justify-between">
+          {/* Rodapé da Coluna 1: Status do BioSite */}
+          <div className="p-4 border-t border-stone-800/60 bg-[#09090C] text-[11px] space-y-2">
+            <div className="flex items-center justify-between text-stone-400">
               <span>Status do BioSite:</span>
-              <span className={`font-mono font-bold px-2 py-0.5 rounded-full text-[10px] ${
-                props.paymentStatus === 'ativa'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              }`}>
-                {props.paymentStatus === 'ativa' ? '100% NO AR' : 'PENDENTE (48H)'}
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                100% NO AR
               </span>
             </div>
-            <div className="flex items-center justify-between text-stone-500 text-[10px]">
+            <div className="flex items-center justify-between text-stone-500 font-mono text-[10px]">
               <span>Plano Atual:</span>
-              <span className="text-stone-300 font-semibold">BioVip Pro</span>
+              <span className="text-amber-400 font-bold">BioVip Pro</span>
             </div>
           </div>
         </aside>
@@ -401,16 +422,21 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
         {/* COLUNA 2 — Palco Central / Canvas de Visualização (flex-1) */}
         {/* --------------------------------------------------------- */}
         <section
-          className={`flex-1 bg-[#060608] flex flex-col items-center justify-center p-3 lg:p-6 overflow-hidden relative ${
+          className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-6 bg-[#070709] relative overflow-hidden ${
             mobileMode === 'editor' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          {/* Ambient Glow sutil */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[580px] bg-gradient-to-b from-amber-500/5 via-stone-800/10 to-transparent blur-3xl pointer-events-none -z-0" />
-
-          {/* IPHONE MOCKUP FIXO E CENTRALIZADO (ATUALIZAÇÃO EM TEMPO REAL) */}
+          {/* Fundo com iluminação sutil de estúdio */}
           <div
-            className={`relative select-none transition-all duration-300 ${
+            className="absolute inset-0 pointer-events-none opacity-20"
+            style={{
+              background: `radial-gradient(circle at 50% 35%, ${props.selectedPalette.accent}33 0%, transparent 65%)`
+            }}
+          />
+
+          {/* Smartphone Frame Mockup */}
+          <div
+            className={`relative transition-all duration-300 flex flex-col items-center justify-center max-w-full ${
               previewViewport === 'desktop' && 'lg:max-w-xl lg:w-full'
             }`}
             style={{
@@ -434,16 +460,39 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   color: props.selectedPalette.text
                 }}
               >
+                {/* 1. Barra de Anúncio Superior (se ativada) */}
+                {props.announcementData?.enabled && (
+                  <div
+                    className="py-1.5 px-3 text-[8px] font-mono font-bold flex items-center justify-center gap-1.5 border-b"
+                    style={{
+                      backgroundColor: `${props.selectedPalette.accent}20`,
+                      borderColor: `${props.selectedPalette.accent}40`,
+                      color: props.selectedPalette.text
+                    }}
+                  >
+                    <span
+                      className="px-1.5 py-0.2 rounded-full uppercase text-[7px]"
+                      style={{
+                        backgroundColor: props.selectedPalette.accent,
+                        color: props.selectedPalette.buttonText || '#000'
+                      }}
+                    >
+                      ● {props.announcementData.badge}
+                    </span>
+                    <span className="truncate">{props.announcementData.text}</span>
+                  </div>
+                )}
+
                 {/* Ilha Dinâmica e Registro no Topo */}
-                <div className="relative z-20 pt-2.5 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase">
-                  <div className="w-14 h-3.5 bg-black rounded-full mx-auto" />
-                  <span className="font-bold opacity-80 absolute right-4 top-3 text-[8px]">
+                <div className="relative z-20 pt-2 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase">
+                  <div className="w-14 h-3 bg-black rounded-full mx-auto" />
+                  <span className="font-bold opacity-80 absolute right-4 top-2 text-[8px]">
                     {props.registrationCode}
                   </span>
                 </div>
 
                 {/* Foto do Perfil com Efeito de Fusão de Estúdio */}
-                <div className="relative w-full h-44 overflow-hidden -mt-3 select-none shrink-0">
+                <div className="relative w-full h-40 overflow-hidden -mt-2 select-none shrink-0">
                   <img
                     src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
                     alt={props.businessTitle || props.brandName}
@@ -460,22 +509,81 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 </div>
 
                 {/* Bloco de Informações Principais */}
-                <div className="px-4 pt-1 pb-6 flex-1 flex flex-col items-center">
+                <div className="px-3.5 pt-1 pb-6 flex-1 flex flex-col items-center">
+                  <span
+                    className="text-[8px] font-mono uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border mb-1"
+                    style={{
+                      backgroundColor: `${props.selectedPalette.card}cc`,
+                      color: props.selectedPalette.accent,
+                      borderColor: `${props.selectedPalette.accent}33`
+                    }}
+                  >
+                    {props.niche.toUpperCase()}
+                  </span>
+
                   <h3
-                    className="font-bold text-xl leading-tight text-balance"
+                    className="font-bold text-lg leading-tight text-balance"
                     style={{ fontFamily: props.selectedTypography.cssFont }}
                   >
                     {props.businessTitle || props.brandName}
                   </h3>
 
-                  <p className="text-[9px] uppercase tracking-[0.2em] font-mono mt-0.5 opacity-70">
-                    {props.niche}
-                  </p>
-
                   {/* Avaliações Google */}
-                  <div className="mt-1 text-amber-400 text-[10px]">
-                    ★★★★★ <span className="font-mono text-[9px] opacity-80">{props.rating} ({props.reviewsCount})</span>
+                  <div className="mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono">
+                    <span>★★★★★</span>
+                    <span className="opacity-80">{props.rating} ({props.reviewsCount})</span>
                   </div>
+
+                  {/* Barra Rápida (WhatsApp & Agendar) */}
+                  <div className="w-full grid grid-cols-2 gap-1.5 mt-2">
+                    <div
+                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1"
+                      style={{
+                        backgroundColor: `${props.selectedPalette.card}cc`,
+                        borderColor: `${props.selectedPalette.accent}33`,
+                        color: props.selectedPalette.text
+                      }}
+                    >
+                      <MessageCircle className="w-2.5 h-2.5 text-emerald-400" />
+                      <span>WhatsApp</span>
+                    </div>
+                    <div
+                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1"
+                      style={{
+                        backgroundColor: props.selectedPalette.accent,
+                        borderColor: 'transparent',
+                        color: props.selectedPalette.buttonText || '#000'
+                      }}
+                    >
+                      <span>Agendar VIP</span>
+                    </div>
+                  </div>
+
+                  {/* Banner de Urgência & Cronômetro */}
+                  {props.urgencyData?.enabled && (
+                    <div
+                      className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left"
+                      style={{
+                        backgroundColor: `${props.selectedPalette.card}ee`,
+                        borderColor: `${props.selectedPalette.accent}40`
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Flame className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
+                        <div className="min-w-0">
+                          <p className="text-[8px] font-bold text-amber-300 font-mono truncate">
+                            {props.urgencyData.headline}
+                          </p>
+                          <p className="text-[7px] text-stone-400 truncate">
+                            {props.urgencyData.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/50 text-amber-300 shrink-0">
+                        14:52
+                      </span>
+                    </div>
+                  )}
 
                   {/* Subpáginas Pro */}
                   {props.additionalPages.length > 0 && (
@@ -492,14 +600,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* Botões do Mockup */}
-                  <div className="w-full space-y-2 mt-2">
+                  {/* Botões Principais de Ação */}
+                  <div className="w-full space-y-1.5 mt-2">
                     {props.buttons.map((btn: any) => {
                       const isHigh = !!btn.isHighlighted
                       return (
                         <div
                           key={btn.id}
-                          className="w-full p-2.5 rounded-xl border text-left flex items-center justify-between gap-2 shadow-sm transition"
+                          className="w-full p-2 rounded-xl border text-left flex items-center justify-between gap-1.5 shadow-sm transition"
                           style={{
                             backgroundColor: props.selectedPalette.card || '#14161c',
                             borderColor: isHigh ? props.selectedPalette.accent : `${props.selectedPalette.accent}33`,
@@ -507,17 +615,17 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           }}
                         >
                           <div className="min-w-0 flex-1">
-                            <span className="font-bold text-[11px] block leading-tight truncate">
+                            <span className="font-bold text-[10px] block leading-tight truncate">
                               {btn.label}
                             </span>
                             {btn.subtitle && (
-                              <span className="text-[9px] opacity-70 block truncate">
+                              <span className="text-[8px] opacity-70 block truncate">
                                 {btn.subtitle}
                               </span>
                             )}
                           </div>
                           <span
-                            className="text-xs font-bold shrink-0"
+                            className="text-[11px] font-bold shrink-0"
                             style={{ color: props.selectedPalette.accent }}
                           >
                             →
@@ -527,15 +635,78 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     })}
                   </div>
 
+                  {/* Botão de Quiz Anti-curiosos */}
+                  {props.quizData?.enabled && (
+                    <div
+                      className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer"
+                      style={{
+                        backgroundColor: `${props.selectedPalette.card}ff`,
+                        borderColor: props.selectedPalette.accent,
+                        color: props.selectedPalette.text
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+                        <span className="text-[8px] font-bold font-mono uppercase truncate">
+                          {props.quizData.buttonLabel}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-bold" style={{ color: props.selectedPalette.accent }}>
+                        →
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Métricas de Autoridade */}
+                  {props.metricsData && props.metricsData.length > 0 && (
+                    <div
+                      className="w-full grid grid-cols-3 gap-1 p-2 rounded-xl border mt-2 text-center"
+                      style={{
+                        backgroundColor: `${props.selectedPalette.card}80`,
+                        borderColor: `${props.selectedPalette.accent}20`
+                      }}
+                    >
+                      {props.metricsData.map((m: any, idx: number) => (
+                        <div key={idx}>
+                          <div className="font-serif text-[10px] font-bold" style={{ color: props.selectedPalette.accent }}>
+                            {m.value}
+                          </div>
+                          <div className="text-[6px] font-mono uppercase opacity-70 truncate">
+                            {m.label}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Catálogo VIP Resumo */}
+                  {props.servicesCatalogData?.enabled && (
+                    <div
+                      className="w-full p-2 rounded-xl border mt-2 text-left space-y-1"
+                      style={{
+                        backgroundColor: `${props.selectedPalette.card}80`,
+                        borderColor: `${props.selectedPalette.accent}25`
+                      }}
+                    >
+                      <div className="flex items-center justify-between text-[8px] font-mono uppercase font-bold" style={{ color: props.selectedPalette.accent }}>
+                        <span>CATÁLOGO VIP</span>
+                        <span>{props.servicesCatalogData.items?.length || 0} itens</span>
+                      </div>
+                      <p className="text-[9px] font-bold truncate">
+                        {props.servicesCatalogData.headline}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Tagline / Bio no Rodapé do Celular */}
                   {props.tagline && (
-                    <p className="text-[10px] mt-4 opacity-75 font-serif italic max-w-xs leading-relaxed">
+                    <p className="text-[8px] mt-3 opacity-75 font-serif italic max-w-xs leading-relaxed">
                       &quot;{props.tagline}&quot;
                     </p>
                   )}
 
                   {/* Selo BioVip Discreto */}
-                  <div className="mt-auto pt-6 text-[8px] font-mono opacity-50 tracking-widest uppercase">
+                  <div className="mt-auto pt-4 text-[7px] font-mono opacity-50 tracking-widest uppercase">
                     biovip.com.br/{props.slug}
                   </div>
                 </div>
@@ -548,48 +719,50 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
         {/* COLUNA 3 — Painel de Edição do Bloco Ativo (w-80 a w-96) */}
         {/* --------------------------------------------------------- */}
         <section
-          className={`w-full lg:w-80 xl:w-96 bg-[#141418] border-l border-stone-800/80 flex flex-col shrink-0 h-full overflow-hidden ${
+          className={`w-full lg:w-96 border-l border-stone-800/80 bg-[#121216] flex flex-col shrink-0 select-none ${
             mobileMode === 'preview' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          {/* Topo da Coluna 3: Título da Seção Ativa */}
-          <div className="p-4 border-b border-stone-800/80 bg-[#101014] flex items-center justify-between">
+          {/* Cabeçalho do Bloco Ativo na Coluna 3 */}
+          <div className="p-4 border-b border-stone-800/80 flex items-center justify-between shrink-0 bg-[#0E0E12]">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#E2B857]/15 text-[#E2B857] flex items-center justify-center font-bold">
-                <activeSectionObj.icon className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+                {currentSectionMeta.icon && <currentSectionMeta.icon className="w-4 h-4" />}
               </div>
               <div>
-                <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                  {activeSectionObj.title}
+                <h2 className="text-xs font-mono uppercase font-bold text-white tracking-wide">
+                  {currentSectionMeta.title}
                 </h2>
                 <p className="text-[10px] text-stone-400">
-                  {activeSectionObj.subtitle}
+                  {currentSectionMeta.subtitle}
                 </p>
               </div>
             </div>
 
-            {/* No mobile: Botão para abrir gaveta de seções */}
             <button
               type="button"
-              onClick={() => setIsMobileDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-lg bg-stone-900 text-stone-300 hover:text-white border border-stone-800"
+              onClick={props.handleSavePage}
+              className="px-3 py-1 rounded-lg bg-[#E2B857] hover:bg-amber-400 text-stone-950 text-[10px] font-mono font-bold uppercase transition cursor-pointer"
             >
-              <Menu className="w-4 h-4" />
+              Salvar
             </button>
           </div>
 
-          {/* Área de Formulário com Scroll Vertical Independente */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
+          {/* Área de Formulário com Rolagem Independente */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin scrollbar-thumb-stone-800">
+            {/* ======================================================= */}
             {/* 1. SEÇÃO: PALETA & TIPOGRAFIA */}
+            {/* ======================================================= */}
             {activeSection === 'paleta' && (
               <div className="space-y-5 animate-fade-in">
+                {/* Paletas de Cores */}
                 <div>
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-stone-300 mb-2">
-                    Paleta de Cores ({PALETTES.length} opções)
+                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
+                    Paleta de Cores ({PALETTES.length} opções luxo)
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {PALETTES.map((pal: any) => {
-                      const isSelected = props.selectedPalette.id === pal.id
+                    {PALETTES.map((pal) => {
+                      const isSel = props.selectedPalette.id === pal.id
                       return (
                         <button
                           key={pal.id}
@@ -598,36 +771,34 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             props.setSelectedPalette(pal)
                             props.setHasUnsavedChanges(true)
                           }}
-                          className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
-                            isSelected
-                              ? 'border-[#E2B857] bg-[#E2B857]/10 ring-1 ring-[#E2B857]'
-                              : 'border-stone-800 bg-stone-900/80 hover:border-stone-700'
+                          className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                            isSel
+                              ? 'border-amber-400 bg-amber-500/10 shadow-sm'
+                              : 'border-stone-800 bg-stone-900/60 hover:border-stone-700'
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-bold text-stone-200 truncate">
-                              {pal.name}
-                            </span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#E2B857]" />}
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.bg }} />
+                            <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.card }} />
+                            <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.accent }} />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="w-4 h-4 rounded-full border border-black/40" style={{ backgroundColor: pal.bg }} />
-                            <span className="w-4 h-4 rounded-full border border-black/40" style={{ backgroundColor: pal.accent }} />
-                            <span className="w-4 h-4 rounded-full border border-black/40" style={{ backgroundColor: pal.card || '#222' }} />
-                          </div>
+                          <span className={`text-[11px] font-bold block truncate ${isSel ? 'text-amber-300' : 'text-stone-300'}`}>
+                            {pal.name}
+                          </span>
                         </button>
                       )
                     })}
                   </div>
                 </div>
 
-                <div className="border-t border-stone-800 pt-4">
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-stone-300 mb-2">
+                {/* Tipografia Editorial */}
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
                     Tipografia Editorial
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {TYPOGRAPHIES.map((typo: any) => {
-                      const isSelected = props.selectedTypography.id === typo.id
+                  <div className="space-y-1.5">
+                    {TYPOGRAPHIES.map((typo) => {
+                      const isSel = props.selectedTypography.id === typo.id
                       return (
                         <button
                           key={typo.id}
@@ -636,136 +807,247 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             props.setSelectedTypography(typo)
                             props.setHasUnsavedChanges(true)
                           }}
-                          className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
-                            isSelected
-                              ? 'border-[#E2B857] bg-[#E2B857]/10 ring-1 ring-[#E2B857]'
-                              : 'border-stone-800 bg-stone-900/80 hover:border-stone-700'
+                          className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                            isSel
+                              ? 'border-amber-400 bg-amber-500/10 text-amber-300 font-bold'
+                              : 'border-stone-800 bg-stone-900/60 text-stone-300 hover:border-stone-700'
                           }`}
                         >
-                          <span className="text-xs font-bold block" style={{ fontFamily: typo.cssFont }}>
-                            {typo.name}
-                          </span>
-                          <span className="text-[10px] text-stone-400 block truncate">
-                            {typo.category}
-                          </span>
+                          <div>
+                            <span className="text-xs block" style={{ fontFamily: typo.cssFont }}>
+                              {typo.name}
+                            </span>
+                            <span className="text-[9px] font-mono text-stone-500">
+                              {typo.desc || typo.category}
+                            </span>
+                          </div>
+                          {isSel && <Check className="w-4 h-4 text-amber-400" />}
                         </button>
                       )
                     })}
                   </div>
                 </div>
 
-                <div className="border-t border-stone-800 pt-4">
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-stone-300 mb-2">
-                    Estilo dos Botões (10 Modelos)
+                {/* Estilos e Efeitos de Botão */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                      Estilo do Botão
+                    </label>
+                    <select
+                      value={props.buttonStyle}
+                      onChange={(e) => {
+                        props.setButtonStyle(e.target.value)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-mono"
+                    >
+                      {BUTTON_STYLES.map((bs) => (
+                        <option key={bs.id} value={bs.id}>
+                          {bs.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                      Animação do Botão
+                    </label>
+                    <select
+                      value={props.buttonAnimation}
+                      onChange={(e) => {
+                        props.setButtonAnimation(e.target.value)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-mono"
+                    >
+                      {BUTTON_ANIMATIONS.map((ba) => (
+                        <option key={ba.id} value={ba.id}>
+                          {ba.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Tratamento da Foto */}
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
+                    Efeito de Retrato
                   </label>
-                  <select
-                    value={props.buttonStyle}
-                    onChange={(e) => {
-                      props.setButtonStyle(e.target.value)
-                      props.setHasUnsavedChanges(true)
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-semibold focus:border-[#E2B857] focus:outline-none"
-                  >
-                    {BUTTON_STYLES.map((bs: any) => (
-                      <option key={bs.id} value={bs.id}>
-                        {bs.name} — {bs.description}
-                      </option>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'organico', label: 'Fusão Orgânica' },
+                      { id: 'original', label: 'Foto Pura' },
+                      { id: 'silhueta', label: 'Silhueta VIP' }
+                    ].map((treat) => (
+                      <button
+                        key={treat.id}
+                        type="button"
+                        onClick={() => {
+                          props.setPhotoTreatment(treat.id as any)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className={`p-2 rounded-xl border text-center text-xs font-mono transition cursor-pointer ${
+                          props.photoTreatment === treat.id
+                            ? 'border-amber-400 bg-amber-500/10 text-amber-300 font-bold'
+                            : 'border-stone-800 bg-stone-900/60 text-stone-400 hover:text-stone-200'
+                        }`}
+                      >
+                        {treat.label}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
             )}
 
+            {/* ======================================================= */}
             {/* 2. SEÇÃO: CABEÇALHO & PERFIL */}
+            {/* ======================================================= */}
             {activeSection === 'cabecalho' && (
               <div className="space-y-4 animate-fade-in">
-                {/* Preenchimento com IA em Destaque */}
-                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Assistente de IA BioVip
+                {/* Banner de IA para Preenchimento Automático */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase text-amber-300 font-black block">
+                      ✨ Inteligência Artificial BioVip
                     </span>
-                    <button
-                      type="button"
-                      onClick={props.handleAiAutoFill}
-                      className="px-3 py-1 rounded-lg bg-amber-500 text-stone-950 font-black text-[11px] uppercase tracking-wide hover:bg-amber-400 transition cursor-pointer"
-                    >
-                      {props.aiFillSuccess ? 'Preenchido!' : 'Gerar Tudo com IA'}
-                    </button>
+                    <p className="text-[11px] text-stone-300 leading-tight mt-0.5">
+                      Gere bio, especialidade e textos de alta conversão para o seu nicho.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-stone-400 leading-relaxed">
-                    Clique para preencher títulos, bio e botões automaticamente de acordo com o nicho selecionado.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={props.handleAiAutoFill}
+                    className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono shrink-0 shadow-sm cursor-pointer"
+                  >
+                    Gerar
+                  </button>
                 </div>
 
+                {/* Foto de Perfil */}
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-1">
-                    Nome / Marca
+                    Foto do Perfil / Retrato de Estúdio
                   </label>
-                  <input
-                    type="text"
-                    value={props.businessTitle}
-                    onChange={(e) => {
-                      props.setBusinessTitle(e.target.value)
-                      props.setHasUnsavedChanges(true)
-                    }}
-                    placeholder="Ex: Dra. Rafaela Martins"
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs focus:border-[#E2B857] focus:outline-none"
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden border border-stone-700 bg-stone-900 shrink-0">
+                      <img
+                        src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <input
+                        type="text"
+                        value={props.customPhotoSrc || ''}
+                        onChange={(e) => {
+                          props.setCustomPhotoSrc(e.target.value || null)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="URL da Foto (https://...)"
+                        className="w-full p-2 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => props.setDemoGender('mulher')}
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                            props.demoGender === 'mulher' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'border-stone-800 text-stone-400'
+                          }`}
+                        >
+                          Feminino
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => props.setDemoGender('homem')}
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                            props.demoGender === 'homem' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'border-stone-800 text-stone-400'
+                          }`}
+                        >
+                          Masculino
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Nome e Título */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                      Nome da Marca
+                    </label>
+                    <input
+                      type="text"
+                      value={props.brandName}
+                      onChange={(e) => {
+                        props.setBrandName(e.target.value)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                      Título de Exibição
+                    </label>
+                    <input
+                      type="text"
+                      value={props.businessTitle}
+                      onChange={(e) => {
+                        props.setBusinessTitle(e.target.value)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-bold"
+                    />
+                  </div>
+                </div>
+
+                {/* Nicho e Especialidade */}
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-1">
-                    Especialidade / Nicho
+                  <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                    Nicho / Categoria
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={props.niche}
                     onChange={(e) => {
                       props.setNiche(e.target.value)
                       props.setHasUnsavedChanges(true)
                     }}
-                    placeholder="Ex: Lash Designer & Estética VIP"
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs focus:border-[#E2B857] focus:outline-none"
-                  />
+                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs mb-1.5"
+                  >
+                    {NICHES_LIST.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
+                {/* Bio / Frase de Autoridade */}
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-1">
-                    Slogan / Bio de Apresentação
+                  <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                    Bio / Frase de Autoridade
                   </label>
                   <textarea
-                    rows={2}
+                    rows={3}
                     value={props.tagline}
                     onChange={(e) => {
                       props.setTagline(e.target.value)
                       props.setHasUnsavedChanges(true)
                     }}
-                    placeholder="Ex: Transformando olhares com naturalidade e elegância."
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs focus:border-[#E2B857] focus:outline-none resize-none"
+                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs leading-relaxed"
                   />
                 </div>
 
+                {/* WhatsApp e Registro Oficial */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Registro (CRM/CRO/OAB)
-                    </label>
-                    <input
-                      type="text"
-                      value={props.registrationCode}
-                      onChange={(e) => {
-                        props.setRegistrationCode(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      placeholder="Ex: CRO 45.291-SP"
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs focus:border-[#E2B857] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      WhatsApp Principal
+                      WhatsApp Comercial
                     </label>
                     <input
                       type="text"
@@ -774,30 +1056,48 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         props.setUserPhone(e.target.value)
                         props.setHasUnsavedChanges(true)
                       }}
-                      placeholder="Ex: 5511999999999"
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs focus:border-[#E2B857] focus:outline-none"
+                      placeholder="5511999999999"
+                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                      Registro Oficial
+                    </label>
+                    <input
+                      type="text"
+                      value={props.registrationCode}
+                      onChange={(e) => {
+                        props.setRegistrationCode(e.target.value)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      placeholder="CRO-PE 22.675"
+                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 3. SEÇÃO: CATÁLOGO DE SERVIÇOS */}
-            {activeSection === 'catalogo' && (
+            {/* ======================================================= */}
+            {/* 3. SEÇÃO: BOTÕES & LINKS PRINCIPAIS */}
+            {/* ======================================================= */}
+            {activeSection === 'botoes' && (
               <div className="space-y-4 animate-fade-in">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono uppercase text-stone-300 font-bold">
-                    Botões de Ação ({props.buttons.length})
+                    Botões Principais ({props.buttons.length})
                   </span>
                   <button
                     type="button"
                     onClick={() => {
                       const newBtn = {
                         id: `btn-${Date.now()}`,
-                        label: 'NOVO SERVIÇO VIP',
-                        subtitle: 'Toque para agendar no WhatsApp',
-                        icon: 'calendar',
-                        url: `https://wa.me/${props.userPhone || '5511999999999'}`
+                        label: 'NOVO BOTÃO DE AÇÃO',
+                        subtitle: 'Toque para conversar no WhatsApp',
+                        icon: 'whatsapp',
+                        url: `https://wa.me/${props.userPhone || '5511999999999'}`,
+                        isHighlighted: false
                       }
                       props.setButtons([...props.buttons, newBtn])
                       props.setHasUnsavedChanges(true)
@@ -808,11 +1108,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </button>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {props.buttons.map((btn: any, idx: number) => (
                     <div
                       key={btn.id}
-                      className="p-3 rounded-xl bg-stone-900 border border-stone-800 space-y-2"
+                      className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-mono text-amber-400 font-bold">
@@ -826,56 +1126,298 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setHasUnsavedChanges(true)
                             }}
                             className="text-stone-500 hover:text-red-400 transition"
+                            title="Remover botão"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
-                      <input
-                        type="text"
-                        value={btn.label}
-                        onChange={(e) => {
-                          const updated = [...props.buttons]
-                          updated[idx].label = e.target.value
-                          props.setButtons(updated)
-                          props.setHasUnsavedChanges(true)
-                        }}
-                        placeholder="Texto do Botão"
-                        className="w-full p-2 rounded-lg bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold"
-                      />
-                      <input
-                        type="text"
-                        value={btn.subtitle || ''}
-                        onChange={(e) => {
-                          const updated = [...props.buttons]
-                          updated[idx].subtitle = e.target.value
-                          props.setButtons(updated)
-                          props.setHasUnsavedChanges(true)
-                        }}
-                        placeholder="Subtítulo ou preço (opcional)"
-                        className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-[11px]"
-                      />
-                      <input
-                        type="text"
-                        value={btn.url || ''}
-                        onChange={(e) => {
-                          const updated = [...props.buttons]
-                          updated[idx].url = e.target.value
-                          props.setButtons(updated)
-                          props.setHasUnsavedChanges(true)
-                        }}
-                        placeholder="Link (WhatsApp ou URL)"
-                        className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-400 border border-stone-800 text-[10px] font-mono"
-                      />
+
+                      <div>
+                        <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
+                          Título Principal
+                        </label>
+                        <input
+                          type="text"
+                          value={btn.label}
+                          onChange={(e) => {
+                            const updated = [...props.buttons]
+                            updated[idx].label = e.target.value
+                            props.setButtons(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
+                            Subtítulo
+                          </label>
+                          <input
+                            type="text"
+                            value={btn.subtitle || ''}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].subtitle = e.target.value
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-[11px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
+                            Ícone
+                          </label>
+                          <select
+                            value={btn.icon || 'whatsapp'}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].icon = e.target.value
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs"
+                          >
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="calendar">Agenda / Calendário</option>
+                            <option value="map">Localização / Mapa</option>
+                            <option value="sparkles">Estrela / VIP</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
+                          Link de Destino
+                        </label>
+                        <input
+                          type="text"
+                          value={btn.url || ''}
+                          onChange={(e) => {
+                            const updated = [...props.buttons]
+                            updated[idx].url = e.target.value
+                            props.setButtons(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-[10px] font-mono"
+                        />
+                      </div>
+
+                      {/* Destaque ⭐ */}
+                      <div className="pt-1 flex items-center justify-between border-t border-stone-800/80">
+                        <label className="flex items-center gap-2 text-xs text-stone-300 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!btn.isHighlighted}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].isHighlighted = e.target.checked
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="accent-amber-400 rounded"
+                          />
+                          <span>⭐ Destacar este botão</span>
+                        </label>
+
+                        {btn.isHighlighted && (
+                          <input
+                            type="text"
+                            value={btn.highlightBadge || '⭐ MAIS ESCOLHIDO'}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].highlightBadge = e.target.value
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="p-1 rounded-lg bg-stone-950 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-bold"
+                          />
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* 4. SEÇÃO: PORTFÓLIO & PÁGINAS */}
+            {/* ======================================================= */}
+            {/* 4. SEÇÃO: CATÁLOGO DE SERVIÇOS */}
+            {/* ======================================================= */}
+            {activeSection === 'catalogo' && (
+              <div className="space-y-4 animate-fade-in">
+                {/* Switch Liga/Desliga */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-bold text-white uppercase font-mono">
+                      Catálogo Interativo VIP
+                    </h3>
+                    <p className="text-[10px] text-stone-400">
+                      Tabela visual com preços, durações e agendamento instantâneo.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      props.setServicesCatalogData({
+                        ...props.servicesCatalogData,
+                        enabled: !props.servicesCatalogData?.enabled
+                      })
+                      props.setHasUnsavedChanges(true)
+                    }}
+                    className={`p-1.5 rounded-xl border text-xs font-mono font-bold transition cursor-pointer ${
+                      props.servicesCatalogData?.enabled
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-stone-800 text-stone-400 border-stone-700'
+                    }`}
+                  >
+                    {props.servicesCatalogData?.enabled ? 'LIGADO' : 'DESLIGADO'}
+                  </button>
+                </div>
+
+                {props.servicesCatalogData?.enabled && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                        Título do Catálogo
+                      </label>
+                      <input
+                        type="text"
+                        value={props.servicesCatalogData.headline || ''}
+                        onChange={(e) => {
+                          props.setServicesCatalogData({
+                            ...props.servicesCatalogData,
+                            headline: e.target.value
+                          })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-bold"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-mono uppercase text-stone-300 font-bold">
+                        Procedimentos ({props.servicesCatalogData.items?.length || 0})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newItem = {
+                            id: `srv-${Date.now()}`,
+                            category: 'PRINCIPAL',
+                            name: 'Novo Procedimento Exclusivo',
+                            description: 'Descrição dos benefícios e resultados para o cliente.',
+                            price: 'R$ 220',
+                            duration: '⏱ 1h',
+                            badge: 'EXCLUSIVO'
+                          }
+                          const updated = {
+                            ...props.servicesCatalogData,
+                            items: [...(props.servicesCatalogData.items || []), newItem]
+                          }
+                          props.setServicesCatalogData(updated)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-[#E2B857] text-stone-950 font-bold text-[10px] uppercase flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Adicionar
+                      </button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {(props.servicesCatalogData.items || []).map((srv: any, idx: number) => (
+                        <div
+                          key={srv.id || idx}
+                          className="p-3 rounded-xl bg-stone-900 border border-stone-800 space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-mono text-amber-400 font-bold">
+                              #{idx + 1} - {srv.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const filtered = props.servicesCatalogData.items.filter((_: any, i: number) => i !== idx)
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  items: filtered
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="text-stone-500 hover:text-red-400 transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <input
+                            type="text"
+                            value={srv.name}
+                            onChange={(e) => {
+                              const updatedItems = [...props.servicesCatalogData.items]
+                              updatedItems[idx].name = e.target.value
+                              props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Nome do Procedimento"
+                            className="w-full p-2 rounded-lg bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold"
+                          />
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={srv.price}
+                              onChange={(e) => {
+                                const updatedItems = [...props.servicesCatalogData.items]
+                                updatedItems[idx].price = e.target.value
+                                props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              placeholder="Preço (ex: R$ 250)"
+                              className="w-full p-1.5 rounded-lg bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
+                            />
+                            <input
+                              type="text"
+                              value={srv.duration || ''}
+                              onChange={(e) => {
+                                const updatedItems = [...props.servicesCatalogData.items]
+                                updatedItems[idx].duration = e.target.value
+                                props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              placeholder="Duração (ex: ⏱ 1h)"
+                              className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-xs font-mono"
+                            />
+                          </div>
+
+                          <textarea
+                            rows={2}
+                            value={srv.description || ''}
+                            onChange={(e) => {
+                              const updatedItems = [...props.servicesCatalogData.items]
+                              updatedItems[idx].description = e.target.value
+                              props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Descrição dos benefícios..."
+                            className="w-full p-2 rounded-lg bg-stone-950 text-stone-400 border border-stone-800 text-[11px]"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ======================================================= */}
+            {/* 5. SEÇÃO: PORTFÓLIO & GALERIA */}
+            {/* ======================================================= */}
             {activeSection === 'portfolio' && (
               <div className="space-y-4 animate-fade-in">
+                {/* Subpáginas Pro Integradas */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800">
                   <h3 className="font-bold text-xs text-white uppercase tracking-wider mb-1">
                     Páginas Pro Integradas ({props.additionalPages.length}/3)
@@ -885,7 +1427,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </p>
 
                   <div className="space-y-2">
-                    {props.additionalPages.map((pg: any, idx: number) => (
+                    {props.additionalPages.map((pg: any) => (
                       <div
                         key={pg.id}
                         className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between gap-2"
@@ -901,60 +1443,558 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     ))}
                   </div>
                 </div>
+
+                {/* Galeria de Fotos de Portfólio / Resultados */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-stone-300 font-bold">
+                      Galeria de Resultados &amp; Espaço
+                    </span>
+                    <span className="text-[10px] font-mono text-amber-400">
+                      {props.galleryPhotos?.length || 4} FOTOS
+                    </span>
+                  </div>
+
+                  {/* Grid de fotos atuais */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(props.galleryPhotos || [
+                      'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
+                      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+                      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
+                      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
+                    ]).map((url: string, i: number) => (
+                      <div key={i} className="aspect-square rounded-xl overflow-hidden border border-stone-800 relative group">
+                        <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                        {props.setGalleryPhotos && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cur = props.galleryPhotos || []
+                              props.setGalleryPhotos!(cur.filter((_, idx) => idx !== i))
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600/90 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                            title="Remover foto"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Adicionar nova foto */}
+                  {props.setGalleryPhotos && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        value={newGalleryUrl}
+                        onChange={(e) => setNewGalleryUrl(e.target.value)}
+                        placeholder="URL de nova foto (https://...)"
+                        className="flex-1 p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newGalleryUrl.trim()) {
+                            const cur = props.galleryPhotos || []
+                            props.setGalleryPhotos!([...cur, newGalleryUrl.trim()])
+                            setNewGalleryUrl('')
+                            props.setHasUnsavedChanges(true)
+                          }
+                        }}
+                        className="px-3 py-2 rounded-xl bg-amber-400 text-stone-950 text-xs font-mono font-bold uppercase cursor-pointer"
+                      >
+                        + Foto
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* 5. SEÇÃO: PROVA SOCIAL & AVALIAÇÕES */}
+            {/* ======================================================= */}
+            {/* 6. SEÇÃO: PROVA SOCIAL & DEPOIMENTOS */}
+            {/* ======================================================= */}
             {activeSection === 'social' && (
               <div className="space-y-4 animate-fade-in">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Nota Google (1.0 a 5.0)
-                    </label>
-                    <input
-                      type="text"
-                      value={props.rating}
-                      onChange={(e) => {
-                        props.setRating(e.target.value)
+                {/* Nota do Google */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
+                  <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
+                    Avaliações do Google Meu Negócio
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase text-stone-400 mb-1">
+                        Nota Geral (1.0 a 5.0)
+                      </label>
+                      <input
+                        type="text"
+                        value={props.rating}
+                        onChange={(e) => {
+                          props.setRating(e.target.value)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-mono font-bold text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase text-stone-400 mb-1">
+                        Número de Reviews
+                      </label>
+                      <input
+                        type="text"
+                        value={props.reviewsCount}
+                        onChange={(e) => {
+                          props.setReviewsCount(e.target.value)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-mono font-bold text-center"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Métricas de Autoridade */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
+                  <span className="text-[10px] font-mono uppercase text-stone-300 font-bold block">
+                    Métricas de Autoridade (3 Destaques)
+                  </span>
+                  <div className="space-y-2">
+                    {(props.metricsData || []).map((m: any, idx: number) => (
+                      <div key={idx} className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={m.value}
+                          onChange={(e) => {
+                            const updated = [...props.metricsData]
+                            updated[idx].value = e.target.value
+                            props.setMetricsData(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Valor (ex: +1.000)"
+                          className="p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold text-center"
+                        />
+                        <input
+                          type="text"
+                          value={m.label}
+                          onChange={(e) => {
+                            const updated = [...props.metricsData]
+                            updated[idx].label = e.target.value
+                            props.setMetricsData(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Rótulo (ex: CLIENTES)"
+                          className="p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs font-mono uppercase"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Depoimentos de Clientes */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-stone-300 font-bold">
+                      Depoimentos ({props.testimonialsData?.length || 0})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTestimonial = {
+                          clientName: 'Cliente VIP',
+                          city: 'São Paulo - SP',
+                          text: 'Experiência maravilhosa, atendimento impecável e resultado incrível!',
+                          rating: 5
+                        }
+                        props.setTestimonialsData([...(props.testimonialsData || []), newTestimonial])
                         props.setHasUnsavedChanges(true)
                       }}
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono font-bold text-center"
-                    />
+                      className="px-2.5 py-1 rounded-lg bg-[#E2B857] text-stone-950 font-bold text-[10px] uppercase flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Número de Avaliações
-                    </label>
-                    <input
-                      type="text"
-                      value={props.reviewsCount}
-                      onChange={(e) => {
-                        props.setReviewsCount(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono font-bold text-center"
-                    />
-                  </div>
+
+                  {(props.testimonialsData || []).map((t: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-xl bg-stone-900 border border-stone-800 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-amber-400 font-bold">
+                          DEPOIMENTO #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const filtered = props.testimonialsData.filter((_: any, i: number) => i !== idx)
+                            props.setTestimonialsData(filtered)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="text-stone-500 hover:text-red-400 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={t.clientName}
+                          onChange={(e) => {
+                            const updated = [...props.testimonialsData]
+                            updated[idx].clientName = e.target.value
+                            props.setTestimonialsData(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Nome da Cliente"
+                          className="p-1.5 rounded-lg bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold"
+                        />
+                        <input
+                          type="text"
+                          value={t.city}
+                          onChange={(e) => {
+                            const updated = [...props.testimonialsData]
+                            updated[idx].city = e.target.value
+                            props.setTestimonialsData(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Cidade / Cargo"
+                          className="p-1.5 rounded-lg bg-stone-950 text-stone-400 border border-stone-800 text-xs"
+                        />
+                      </div>
+
+                      <textarea
+                        rows={2}
+                        value={t.text}
+                        onChange={(e) => {
+                          const updated = [...props.testimonialsData]
+                          updated[idx].text = e.target.value
+                          props.setTestimonialsData(updated)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Texto da avaliação..."
+                        className="w-full p-2 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-[11px] leading-relaxed"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* 6. SEÇÃO: MÓDULOS VIP (12 SEÇÕES DE CONVERSÃO) */}
+            {/* ======================================================= */}
+            {/* 7. SEÇÃO: MÓDULOS VIP DE CONVERSÃO (8 MÓDULOS) */}
+            {/* ======================================================= */}
             {activeSection === 'vip' && (
-              <div className="space-y-4 animate-fade-in">
+              <div className="space-y-3.5 animate-fade-in">
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/40">
                   <span className="text-[10px] font-mono text-amber-300 font-black uppercase tracking-wider block mb-1">
-                    👑 12 MÓDULOS VIP DISPONÍVEIS
+                    👑 8 MÓDULOS VIP DE ALTA CONVERSÃO
                   </span>
                   <p className="text-xs text-stone-300 leading-relaxed">
-                    Personalize módulos de gatilhos de escassez, cronômetro de urgência, quiz qualificador e catálogo completo.
+                    Personalize gatilhos de escassez, cronômetro de urgência, quiz qualificador, GPS e FAQ sanfonado.
                   </p>
+                </div>
+
+                {/* 1. Barra de Aviso Superior */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      📢 Barra de Aviso Superior
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.setAnnouncementData({
+                          ...props.announcementData,
+                          enabled: !props.announcementData?.enabled
+                        })
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                        props.announcementData?.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {props.announcementData?.enabled ? 'LIGADO' : 'DESLIGADO'}
+                    </button>
+                  </div>
+                  {props.announcementData?.enabled && (
+                    <div className="space-y-2 pt-1">
+                      <input
+                        type="text"
+                        value={props.announcementData.badge}
+                        onChange={(e) => {
+                          props.setAnnouncementData({ ...props.announcementData, badge: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Badge (ex: AGENDA VIP ABERTA)"
+                        className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
+                      />
+                      <input
+                        type="text"
+                        value={props.announcementData.text}
+                        onChange={(e) => {
+                          props.setAnnouncementData({ ...props.announcementData, text: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Texto da barra de aviso..."
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Gatilho de Urgência & Cronômetro */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      🔥 Gatilho de Urgência &amp; Cronômetro
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.setUrgencyData({
+                          ...props.urgencyData,
+                          enabled: !props.urgencyData?.enabled
+                        })
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                        props.urgencyData?.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {props.urgencyData?.enabled ? 'LIGADO' : 'DESLIGADO'}
+                    </button>
+                  </div>
+                  {props.urgencyData?.enabled && (
+                    <div className="space-y-2 pt-1">
+                      <input
+                        type="text"
+                        value={props.urgencyData.headline}
+                        onChange={(e) => {
+                          props.setUrgencyData({ ...props.urgencyData, headline: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Título de Urgência (ex: 🔥 CONDIÇÃO ESPECIAL DE HOJE)"
+                        className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
+                      />
+                      <input
+                        type="text"
+                        value={props.urgencyData.subtitle}
+                        onChange={(e) => {
+                          props.setUrgencyData({ ...props.urgencyData, subtitle: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Subtítulo..."
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Triagem Anti-Curiosos (Quiz VIP) */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      🎯 Triagem Anti-Curiosos (Quiz VIP)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.setQuizData({
+                          ...props.quizData,
+                          enabled: !props.quizData?.enabled
+                        })
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                        props.quizData?.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {props.quizData?.enabled ? 'LIGADO' : 'DESLIGADO'}
+                    </button>
+                  </div>
+                  {props.quizData?.enabled && (
+                    <div className="space-y-2 pt-1">
+                      <input
+                        type="text"
+                        value={props.quizData.buttonLabel}
+                        onChange={(e) => {
+                          props.setQuizData({ ...props.quizData, buttonLabel: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Texto do botão do Quiz"
+                        className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-bold"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Localização com GPS & Aberto Agora */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      📍 Localização com GPS &amp; Aberto Agora
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.setLocationData({
+                          ...props.locationData,
+                          enabled: !props.locationData?.enabled
+                        })
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                        props.locationData?.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {props.locationData?.enabled ? 'LIGADO' : 'DESLIGADO'}
+                    </button>
+                  </div>
+                  {props.locationData?.enabled && (
+                    <div className="space-y-2 pt-1">
+                      <input
+                        type="text"
+                        value={props.locationData.address}
+                        onChange={(e) => {
+                          props.setLocationData({ ...props.locationData, address: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Endereço físico..."
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={props.locationData.hours}
+                        onChange={(e) => {
+                          props.setLocationData({ ...props.locationData, hours: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Horários (ex: Seg a Sex · 09h às 19h)"
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-xs font-mono"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Sobre o Especialista */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      👩‍⚕️ Sobre o Especialista
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.setAboutMeData({
+                          ...props.aboutMeData,
+                          enabled: !props.aboutMeData?.enabled
+                        })
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                        props.aboutMeData?.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {props.aboutMeData?.enabled ? 'LIGADO' : 'DESLIGADO'}
+                    </button>
+                  </div>
+                  {props.aboutMeData?.enabled && (
+                    <div className="space-y-2 pt-1">
+                      <input
+                        type="text"
+                        value={props.aboutMeData.headline}
+                        onChange={(e) => {
+                          props.setAboutMeData({ ...props.aboutMeData, headline: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Título (ex: Sobre Nosso Atendimento)"
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-bold"
+                      />
+                      <textarea
+                        rows={3}
+                        value={props.aboutMeData.paragraph}
+                        onChange={(e) => {
+                          props.setAboutMeData({ ...props.aboutMeData, paragraph: e.target.value })
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        placeholder="Texto institucional de autoridade..."
+                        className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs leading-relaxed"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 6. Dúvidas Frequentes (FAQ) */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      ❓ Dúvidas Frequentes ({props.faqData?.length || 0})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newFaq = {
+                          question: 'Como agendar um horário?',
+                          answer: 'Basta tocar no botão de WhatsApp e escolher o procedimento.'
+                        }
+                        props.setFaqData([...(props.faqData || []), newFaq])
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="px-2 py-0.5 rounded bg-[#E2B857] text-stone-950 text-[10px] font-mono font-bold uppercase"
+                    >
+                      + Pergunta
+                    </button>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    {(props.faqData || []).map((faq: any, i: number) => (
+                      <div key={i} className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 space-y-1.5">
+                        <div className="flex items-center justify-between gap-1">
+                          <input
+                            type="text"
+                            value={faq.question}
+                            onChange={(e) => {
+                              const updated = [...props.faqData]
+                              updated[i].question = e.target.value
+                              props.setFaqData(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="flex-1 p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-xs font-semibold"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              props.setFaqData(props.faqData.filter((_: any, idx: number) => idx !== i))
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="text-stone-500 hover:text-red-400 p-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={faq.answer}
+                          onChange={(e) => {
+                            const updated = [...props.faqData]
+                            updated[i].answer = e.target.value
+                            props.setFaqData(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-400 border border-stone-800 text-[11px]"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* 7. SEÇÃO: PÍXEL, ANÚNCIOS & SEO */}
+            {/* ======================================================= */}
+            {/* 8. SEÇÃO: PÍXEL, ANÚNCIOS & SEO */}
+            {/* ======================================================= */}
             {activeSection === 'pixel' && (
               <div className="space-y-4 animate-fade-in">
                 <div>
@@ -972,6 +2012,23 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-1">
+                    Google Analytics ID (GA4)
+                  </label>
+                  <input
+                    type="text"
+                    value={props.googleAnalyticsId}
+                    onChange={(e) => {
+                      props.setGoogleAnalyticsId(e.target.value)
+                      props.setHasUnsavedChanges(true)
+                    }}
+                    placeholder="Ex: G-XXXXXXXXXX"
+                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-1">
                     TikTok Pixel ID
@@ -983,108 +2040,155 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       props.setTiktokPixelId(e.target.value)
                       props.setHasUnsavedChanges(true)
                     }}
-                    placeholder="Ex: C12345678901234"
+                    placeholder="Ex: CXXXXXXXXXXXXXX"
                     className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
                   />
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
+                  <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
+                    Rastreamento Automático de Conversões
+                  </span>
+                  <label className="flex items-center gap-2.5 text-xs text-stone-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={props.trackWhatsappLead}
+                      onChange={(e) => {
+                        props.setTrackWhatsappLead(e.target.checked)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="accent-amber-400 rounded"
+                    />
+                    <span>Disparar evento &quot;Lead&quot; ao clicar em qualquer botão do WhatsApp</span>
+                  </label>
+                  <label className="flex items-center gap-2.5 text-xs text-stone-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={props.trackPageView}
+                      onChange={(e) => {
+                        props.setTrackPageView(e.target.checked)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="accent-amber-400 rounded"
+                    />
+                    <span>Disparar evento &quot;PageView&quot; ao carregar o BioSite</span>
+                  </label>
                 </div>
               </div>
             )}
 
-            {/* 8. SEÇÃO: ASSINATURA & DOMÍNIO */}
+            {/* ======================================================= */}
+            {/* 9. SEÇÃO: ASSINATURA & DOMÍNIO */}
+            {/* ======================================================= */}
             {activeSection === 'assinatura' && (
               <div className="space-y-4 animate-fade-in">
-                <div className={`p-4 rounded-2xl border ${
-                  props.paymentStatus === 'ativa'
-                    ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
-                    : 'bg-amber-950/30 border-amber-500/40 text-amber-200'
-                }`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                      Status: {props.paymentStatus === 'ativa' ? 'BioSite Ativo' : 'Pagamento Pendente'}
+                {/* Status 48h */}
+                <div
+                  className={`p-3.5 rounded-2xl border ${
+                    props.paymentStatus === 'pendente'
+                      ? 'bg-amber-500/10 border-amber-500/40'
+                      : 'bg-emerald-500/10 border-emerald-500/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono uppercase font-black tracking-wider text-amber-300">
+                      STATUS DA ASSINATURA
                     </span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/40">
-                      {props.remainingHours}h restantes
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
+                        props.paymentStatus === 'pendente'
+                          ? 'bg-amber-500 text-stone-950'
+                          : 'bg-emerald-500 text-white'
+                      }`}
+                    >
+                      {props.paymentStatus === 'pendente' ? 'PAGAMENTO PENDENTE (48H)' : 'ATIVA & 100% NO AR'}
                     </span>
                   </div>
-                  <p className="text-[11px] opacity-80 leading-relaxed mb-3">
-                    {props.paymentStatus === 'ativa'
-                      ? 'Sua assinatura mensal está em dia e o BioSite permanece publicado com certificado SSL.'
-                      : 'Seu BioSite foi criado e possui 48 horas de tolerância para confirmação do pagamento.'}
-                  </p>
 
-                  {props.paymentStatus === 'pendente' && (
-                    <button
-                      type="button"
-                      disabled={props.isProcessingPayment}
-                      onClick={props.handleConfirmPayment}
-                      className="w-full py-2.5 rounded-xl bg-[#E2B857] hover:bg-[#d4a946] text-stone-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
-                    >
-                      {props.isProcessingPayment ? 'Confirmando...' : 'Confirmar Pagamento e Ativar'}
-                    </button>
+                  {props.paymentStatus === 'pendente' ? (
+                    <div className="space-y-2 mt-2">
+                      <p className="text-xs text-stone-200 leading-relaxed">
+                        Seu BioSite foi gerado e se encontra no ar em período de cortesia. Se após{' '}
+                        <strong className="text-amber-400 font-mono">
+                          {props.remainingHours}h restantes
+                        </strong>{' '}
+                        o pagamento não for confirmado, a página será suspensa.
+                      </p>
+
+                      <div className="p-3 rounded-xl bg-black/60 border border-amber-500/30 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-stone-400">Plano Anual BioVip:</span>
+                          <span className="font-bold text-amber-300 font-mono">R$ 49,90 /mês</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyPix}
+                          className="w-full py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono uppercase flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>{copiedPix ? 'Chave PIX Copiada!' : 'Copiar Chave PIX'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={props.handleConfirmPayment}
+                          className="w-full py-2 rounded-lg border border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs font-mono uppercase transition cursor-pointer"
+                        >
+                          {props.isProcessingPayment ? 'Validando...' : '✓ Já Efetuei o Pagamento'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-stone-300 leading-relaxed">
+                      Sua assinatura anual está confirmada e seu BioSite está com alta prioridade nos servidores CDN.
+                    </p>
                   )}
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800">
-                  <span className="text-xs font-bold text-white block mb-1">
-                    Endereço na Bio do Instagram
+                {/* Domínio & Endereço */}
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
+                  <span className="text-[10px] font-mono uppercase text-stone-400 font-bold block">
+                    Endereço Oficial na Web
                   </span>
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-stone-950 border border-stone-800 text-xs font-mono text-amber-300">
-                    <span className="truncate flex-1">biovip.com.br/{props.slug}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (typeof window !== 'undefined' && navigator.clipboard) {
-                          navigator.clipboard.writeText(`https://biovip.com.br/${props.slug}`)
-                        }
-                      }}
-                      className="p-1 text-stone-400 hover:text-white"
-                      title="Copiar Link"
+                  <div className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
+                    <code className="text-xs text-amber-300 font-mono">
+                      biovip.com.br/{props.slug}
+                    </code>
+                    <a
+                      href={`/${props.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-stone-400 hover:text-white transition"
                     >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Rodapé Fixo da Coluna 3: Botão de Salvar Alterações */}
-          <div className="p-4 border-t border-stone-800 bg-[#101014] shrink-0">
+          {/* Rodapé Fixo da Coluna 3: Salvar Alterações */}
+          <div className="p-4 border-t border-stone-800 bg-[#0E0E12] shrink-0">
             <button
               type="button"
-              onClick={() => {
-                props.handleSavePage()
-                props.setSavedSuccess(true)
-                setTimeout(() => props.setSavedSuccess(false), 3000)
-              }}
-              className="w-full py-3 px-4 rounded-xl bg-[#E2B857] hover:bg-[#d6aa47] text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+              onClick={props.handleSavePage}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-[#E2B857] to-amber-400 hover:from-amber-300 hover:to-amber-300 text-stone-950 font-black text-xs uppercase tracking-wider font-mono shadow-lg shadow-amber-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
             >
-              {props.savedSuccess ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-stone-950" />
-                  <span>ALTERAÇÕES SALVAS COM SUCESSO!</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 text-stone-950" />
-                  <span>SALVAR ALTERAÇÕES</span>
-                </>
-              )}
+              <Save className="w-4 h-4" />
+              <span>Salvar Alterações</span>
             </button>
           </div>
         </section>
       </div>
 
       {/* ========================================================= */}
-      {/* MOBILE BOTTOM NAVIGATION BAR (telas < 1024px / lg:hidden) */}
+      {/* BARRA DE NAVEGAÇÃO INFERIOR FIXA (SMARTPHONES < 1024px) */}
       {/* ========================================================= */}
-      <nav className="lg:hidden h-16 bg-[#0D0D11] border-t border-stone-800 px-3 flex items-center justify-around shrink-0 z-30">
+      <footer className="lg:hidden h-14 border-t border-stone-800 bg-[#0D0D11] grid grid-cols-4 items-center px-2 z-30 shrink-0">
         <button
           type="button"
           onClick={() => setIsMobileDrawerOpen(true)}
-          className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
-            isMobileDrawerOpen ? 'text-[#E2B857]' : 'text-stone-400 hover:text-stone-200'
-          }`}
+          className="flex flex-col items-center gap-1 text-[10px] font-semibold transition text-stone-400 hover:text-stone-200"
         >
           <Layers className="w-4 h-4" />
           <span>Seções</span>
@@ -1097,9 +2201,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             setMobileMode('editor')
           }}
           className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
-            activeSection === 'paleta' && mobileMode === 'editor'
-              ? 'text-[#E2B857]'
-              : 'text-stone-400 hover:text-stone-200'
+            activeSection === 'paleta' && mobileMode === 'editor' ? 'text-amber-400 font-bold' : 'text-stone-400'
           }`}
         >
           <Palette className="w-4 h-4" />
@@ -1108,50 +2210,51 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
 
         <button
           type="button"
-          onClick={() => setMobileMode(mobileMode === 'preview' ? 'editor' : 'preview')}
+          onClick={() => setMobileMode(mobileMode === 'editor' ? 'preview' : 'editor')}
           className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition ${
-            mobileMode === 'preview' ? 'text-[#E2B857]' : 'text-stone-400 hover:text-stone-200'
+            mobileMode === 'preview' ? 'text-amber-400 font-bold' : 'text-stone-400'
           }`}
         >
           <Smartphone className="w-4 h-4" />
-          <span>{mobileMode === 'preview' ? 'Editar' : 'Ver Prévia'}</span>
+          <span>{mobileMode === 'editor' ? 'Ver Prévia' : 'Editar'}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            props.handleSavePage()
-            props.setSavedSuccess(true)
-            setTimeout(() => props.setSavedSuccess(false), 3000)
-          }}
-          className="flex flex-col items-center gap-1 text-[10px] font-bold text-[#E2B857]"
+          onClick={props.handleSavePage}
+          className="flex flex-col items-center gap-1 text-[10px] font-semibold transition text-amber-400"
         >
           <Save className="w-4 h-4" />
-          <span>{props.savedSuccess ? 'Salvo!' : 'Salvar'}</span>
+          <span>Salvar</span>
         </button>
-      </nav>
+      </footer>
 
       {/* ========================================================= */}
-      {/* GAVETA INFERIOR (BOTTOM SHEET) PARA TROCA DE SEÇÕES NO MOBILE */}
+      {/* BOTTOM SHEET DRAWER (SMARTPHONES < 1024px) */}
       {/* ========================================================= */}
       {isMobileDrawerOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end">
-          <div className="bg-[#141418] border-t border-stone-800 rounded-t-3xl max-h-[80vh] flex flex-col animate-slide-up">
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
+            onClick={() => setIsMobileDrawerOpen(false)}
+          />
+
+          <div className="relative bg-[#141418] border-t border-stone-800 rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up shadow-2xl">
             <div className="p-4 border-b border-stone-800 flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-wider text-stone-300 font-bold">
-                SELECIONE A SEÇÃO PARA EDITAR
+              <span className="text-xs font-mono uppercase tracking-widest text-stone-300 font-bold">
+                Selecione a Seção para Editar
               </span>
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="p-1 rounded-full text-stone-400 hover:text-white"
+                className="text-stone-400 hover:text-white p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-3 space-y-1 overflow-y-auto flex-1">
-              {SECTIONS.map((sec) => {
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {SECTION_ITEMS.map((sec) => {
                 const Icon = sec.icon
                 const isSelected = activeSection === sec.id
                 return (
@@ -1163,24 +2266,33 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       setMobileMode('editor')
                       setIsMobileDrawerOpen(false)
                     }}
-                    className={`w-full p-3 rounded-2xl text-left flex items-center justify-between gap-3 ${
+                    className={`w-full p-3.5 rounded-2xl text-left transition flex items-center justify-between ${
                       isSelected
-                        ? 'bg-[#E2B857]/15 text-[#E2B857] border border-[#E2B857]/40 font-bold'
-                        : 'text-stone-300 hover:bg-stone-900 border border-transparent'
+                        ? 'bg-amber-500/15 border border-amber-400/50 text-amber-300'
+                        : 'bg-stone-900/60 border border-stone-800/80 text-stone-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isSelected ? 'bg-[#E2B857] text-stone-950' : 'bg-stone-900 text-stone-400'
-                      }`}>
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                          isSelected ? 'bg-amber-400 text-stone-950 font-bold' : 'bg-stone-800 text-stone-400'
+                        }`}
+                      >
                         <Icon className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold">{sec.title}</p>
-                        <p className="text-[10px] text-stone-500">{sec.subtitle}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold block">{sec.title}</span>
+                          {sec.isVip && (
+                            <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500 text-stone-950">
+                              VIP
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-stone-500 block">{sec.subtitle}</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-stone-600" />
+                    <ChevronRight className="w-4 h-4 text-stone-500" />
                   </button>
                 )
               })}
@@ -1191,4 +2303,3 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
     </div>
   )
 }
-

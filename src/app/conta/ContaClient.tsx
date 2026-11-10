@@ -147,6 +147,12 @@ export default function ContaClient() {
   const [photoTreatment, setPhotoTreatment] = useState<'organico' | 'silhueta' | 'original'>('organico')
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false)
   const [aiFillSuccess, setAiFillSuccess] = useState(false)
+  const [galleryPhotos, setGalleryPhotos] = useState<string[]>([
+    'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
+  ])
 
   // Pixel & Tráfego Pago (Diferencial Competitivo Exclusivo)
   const [metaPixelId, setMetaPixelId] = useState('')
@@ -342,6 +348,9 @@ export default function ContaClient() {
         if (parsed.testimonialsList) setTestimonialsData(parsed.testimonialsList)
         if (parsed.aboutMeSection) setAboutMeData(parsed.aboutMeSection)
         if (parsed.faqList) setFaqData(parsed.faqList)
+        if (parsed.galleryPhotosList && Array.isArray(parsed.galleryPhotosList)) {
+          setGalleryPhotos(parsed.galleryPhotosList)
+        }
         if (parsed.subpages && parsed.subpages.length > 0) {
           setAdditionalPages(parsed.subpages.map((sp: any, idx: number) => ({
             id: `page-${idx + 1}`,
@@ -403,6 +412,9 @@ export default function ContaClient() {
       if (foundProj.testimonialsList) setTestimonialsData(foundProj.testimonialsList as any)
       if (foundProj.aboutMeSection) setAboutMeData(foundProj.aboutMeSection as any)
       if (foundProj.faqList) setFaqData(foundProj.faqList as any)
+      if ((foundProj as any).galleryPhotosList && Array.isArray((foundProj as any).galleryPhotosList)) {
+        setGalleryPhotos((foundProj as any).galleryPhotosList)
+      }
       if (foundProj.subpages && foundProj.subpages.length > 0) {
         setAdditionalPages(foundProj.subpages.map((sp, idx) => ({
           id: `page-${idx + 1}`,
@@ -712,6 +724,7 @@ export default function ContaClient() {
       testimonialsList: testimonialsData,
       aboutMeSection: aboutMeData,
       faqList: faqData,
+      galleryPhotosList: galleryPhotos,
       subpages: additionalPages.map(ap => ({
         slug: ap.slug,
         title: ap.title,
@@ -2401,6 +2414,8 @@ export default function ContaClient() {
         setAboutMeData={setAboutMeData}
         faqData={faqData}
         setFaqData={setFaqData}
+        galleryPhotos={galleryPhotos}
+        setGalleryPhotos={setGalleryPhotos}
         metaPixelId={metaPixelId}
         setMetaPixelId={setMetaPixelId}
         tiktokPixelId={tiktokPixelId}
