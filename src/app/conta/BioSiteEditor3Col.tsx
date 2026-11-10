@@ -48,7 +48,9 @@ import {
   Info,
   Car,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Download,
+  Share2
 } from 'lucide-react'
 
 import {
@@ -189,6 +191,9 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const [copiedPix, setCopiedPix] = useState(false)
   const [openVipAccordion, setOpenVipAccordion] = useState<string | null>('announcement')
   const [newGalleryUrl, setNewGalleryUrl] = useState('')
+  const [previewFaqOpenIndex, setPreviewFaqOpenIndex] = useState<number | null>(null)
+  const [previewCatalogCategory, setPreviewCatalogCategory] = useState<string>('TODOS')
+  const [previewCopiedAddress, setPreviewCopiedAddress] = useState(false)
 
   const handleCopyPix = () => {
     if (typeof window !== 'undefined' && navigator.clipboard) {
@@ -679,35 +684,402 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* Catálogo VIP Resumo */}
-                  {props.servicesCatalogData?.enabled && (
-                    <div
-                      className="w-full p-2 rounded-xl border mt-2 text-left space-y-1"
-                      style={{
-                        backgroundColor: `${props.selectedPalette.card}80`,
-                        borderColor: `${props.selectedPalette.accent}25`
-                      }}
-                    >
-                      <div className="flex items-center justify-between text-[8px] font-mono uppercase font-bold" style={{ color: props.selectedPalette.accent }}>
-                        <span>CATÁLOGO VIP</span>
-                        <span>{props.servicesCatalogData.items?.length || 0} itens</span>
+                  {/* 10. Como Funciona Atendimento */}
+                  {props.howItWorksData && props.howItWorksData.length > 0 && (
+                    <div className="w-full mt-3 space-y-1.5 text-left">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: props.selectedPalette.accent }} />
+                        <span className="text-[8px] font-mono uppercase tracking-widest font-bold opacity-80">
+                          Como Funciona o Atendimento
+                        </span>
                       </div>
-                      <p className="text-[9px] font-bold truncate">
-                        {props.servicesCatalogData.headline}
-                      </p>
+                      <div className="space-y-1">
+                        {props.howItWorksData.map((step: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="p-2 rounded-xl border flex items-start gap-2"
+                            style={{
+                              backgroundColor: `${props.selectedPalette.card}80`,
+                              borderColor: `${props.selectedPalette.accent}20`
+                            }}
+                          >
+                            <span
+                              className="font-serif text-[11px] font-bold opacity-60 shrink-0"
+                              style={{ color: props.selectedPalette.accent }}
+                            >
+                              {step.number}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-[8.5px] font-bold text-white leading-tight">
+                                {step.title}
+                              </div>
+                              <div className="text-[7.5px] text-stone-400 leading-snug font-sans line-clamp-2">
+                                {step.description}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
-                  {/* Tagline / Bio no Rodapé do Celular */}
-                  {props.tagline && (
-                    <p className="text-[8px] mt-3 opacity-75 font-serif italic max-w-xs leading-relaxed">
-                      &quot;{props.tagline}&quot;
-                    </p>
+                  {/* 11. Catálogo Completo de Procedimentos & Preços */}
+                  {props.servicesCatalogData?.enabled && props.servicesCatalogData.items && props.servicesCatalogData.items.length > 0 && (
+                    <div className="w-full mt-3 space-y-2 text-left">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-[7.5px] font-mono uppercase tracking-widest font-bold"
+                          style={{ color: props.selectedPalette.accent }}
+                        >
+                          CATÁLOGO VIP
+                        </span>
+                        <span className="text-[7px] font-mono opacity-70">
+                          {props.servicesCatalogData.items.length} procedimentos
+                        </span>
+                      </div>
+                      <h4 className="text-[11px] font-serif font-bold text-white leading-tight">
+                        {props.servicesCatalogData.headline}
+                      </h4>
+
+                      {/* Abas de Categorias */}
+                      {props.servicesCatalogData.categories && props.servicesCatalogData.categories.length > 1 && (
+                        <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+                          {props.servicesCatalogData.categories.map((cat: string) => {
+                            const isActive = previewCatalogCategory === cat
+                            return (
+                              <button
+                                key={cat}
+                                type="button"
+                                onClick={() => setPreviewCatalogCategory(cat)}
+                                className={`px-2 py-0.5 rounded-lg text-[7px] font-mono uppercase tracking-wider font-semibold transition whitespace-nowrap border ${
+                                  isActive
+                                    ? 'border-transparent text-stone-950 font-bold'
+                                    : 'border-white/10 text-stone-400 hover:text-white bg-white/5'
+                                }`}
+                                style={{
+                                  backgroundColor: isActive ? props.selectedPalette.accent : undefined
+                                }}
+                              >
+                                {cat}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Lista de Itens do Catálogo */}
+                      <div className="space-y-1.5">
+                        {props.servicesCatalogData.items
+                          .filter((item: any) => previewCatalogCategory === 'TODOS' || item.category === previewCatalogCategory)
+                          .slice(0, 4)
+                          .map((srv: any) => (
+                            <div
+                              key={srv.id}
+                              className="p-2 rounded-xl border space-y-1 text-left transition"
+                              style={{
+                                backgroundColor: `${props.selectedPalette.card}cc`,
+                                borderColor: `${props.selectedPalette.accent}25`
+                              }}
+                            >
+                              <div className="flex items-start justify-between gap-1">
+                                <div>
+                                  {srv.badge && (
+                                    <span
+                                      className="inline-block px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold uppercase mb-0.5 border"
+                                      style={{
+                                        backgroundColor: `${props.selectedPalette.accent}20`,
+                                        borderColor: `${props.selectedPalette.accent}40`,
+                                        color: props.selectedPalette.accent
+                                      }}
+                                    >
+                                      {srv.badge}
+                                    </span>
+                                  )}
+                                  <h5 className="text-[9px] font-bold text-white leading-tight">
+                                    {srv.name}
+                                  </h5>
+                                </div>
+                                {srv.duration && (
+                                  <span className="text-[7px] font-mono text-stone-400 shrink-0">
+                                    {srv.duration}
+                                  </span>
+                                )}
+                              </div>
+
+                              <p className="text-[7.5px] text-stone-400 font-sans leading-snug line-clamp-2">
+                                {srv.description}
+                              </p>
+
+                              <div className="pt-1 flex items-center justify-between border-t border-white/5">
+                                <span className="text-[9px] font-serif font-bold" style={{ color: props.selectedPalette.accent }}>
+                                  {srv.price}
+                                </span>
+                                <span
+                                  className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-sm"
+                                  style={{
+                                    backgroundColor: props.selectedPalette.accent,
+                                    color: props.selectedPalette.buttonText || '#000'
+                                  }}
+                                >
+                                  <span>Reservar</span>
+                                  <span>→</span>
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+
+                      {/* Tarja de 4 Diferenciais */}
+                      <div
+                        className="p-1.5 rounded-lg border grid grid-cols-2 gap-1 text-[7.5px]"
+                        style={{
+                          backgroundColor: `${props.selectedPalette.card}66`,
+                          borderColor: `${props.selectedPalette.accent}20`
+                        }}
+                      >
+                        <div className="flex items-center gap-1 text-stone-300">
+                          <CreditCard className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                          <span className="truncate">Cartão até 12x</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-stone-300">
+                          <Zap className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                          <span className="truncate">Pix Instantâneo</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-stone-300">
+                          <Car className="w-2.5 h-2.5 text-sky-400 shrink-0" />
+                          <span className="truncate">Fácil Acesso</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-stone-300">
+                          <ShieldCheck className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+                          <span className="truncate">Espaço VIP</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
-                  {/* Selo BioVip Discreto */}
-                  <div className="mt-auto pt-4 text-[7px] font-mono opacity-50 tracking-widest uppercase">
-                    biovip.com.br/{props.slug}
+                  {/* 12. Galeria de Fotos / Portfólio (Smart Masonry) */}
+                  {((props.galleryPhotos && props.galleryPhotos.length > 0) || props.additionalPages?.some((p: any) => p.templateId === 'before_after')) && (
+                    <div className="w-full mt-3 space-y-1.5 text-left">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80">
+                          PORTFÓLIO & ESTRUTURA VIP
+                        </span>
+                        <span className="text-[7px] font-mono text-stone-400">
+                          {(props.galleryPhotos || []).length} fotos
+                        </span>
+                      </div>
+
+                      {/* Grade de Fotos Reais do Portfólio */}
+                      <div className="grid grid-cols-3 gap-1">
+                        {(props.galleryPhotos && props.galleryPhotos.length > 0 ? props.galleryPhotos : [
+                          'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                          'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=400&q=80',
+                          'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=400&q=80'
+                        ]).slice(0, 6).map((imgUrl: string, i: number) => (
+                          <div
+                            key={i}
+                            className="aspect-square rounded-lg overflow-hidden border border-white/10 relative group bg-stone-900"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`Portfólio ${i + 1}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Sparkles className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 13. Localização & Rotas GPS */}
+                  {props.locationData?.enabled && (
+                    <div className="w-full mt-3 space-y-1.5 text-left">
+                      <div
+                        className="p-2.5 rounded-xl border space-y-2"
+                        style={{
+                          backgroundColor: `${props.selectedPalette.card}cc`,
+                          borderColor: `${props.selectedPalette.accent}25`
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[7px] font-mono uppercase tracking-widest font-bold opacity-75">
+                            NOSSA LOCALIZAÇÃO
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[7px] font-mono">
+                            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                            {props.locationData.openStatus || 'Aberto Agora'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-0.5">
+                          <div className="text-[9px] font-bold text-white flex items-start gap-1">
+                            <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2 leading-tight">{props.locationData.address}</span>
+                          </div>
+                          <div className="text-[7.5px] text-stone-400 font-mono pl-3.5">
+                            {props.locationData.hours}
+                          </div>
+                        </div>
+
+                        {/* 4 Botões de Rota */}
+                        <div className="grid grid-cols-4 gap-1 pt-1">
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                            <Navigation className="w-2 h-2 text-sky-400" />
+                            <span>Maps</span>
+                          </div>
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                            <Navigation className="w-2 h-2 text-cyan-400" />
+                            <span>Waze</span>
+                          </div>
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                            <Car className="w-2 h-2 text-white" />
+                            <span>Uber</span>
+                          </div>
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                            <Copy className="w-2 h-2 text-amber-400" />
+                            <span>Copiar</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 14. Depoimentos de Clientes (Google Reviews) */}
+                  {props.testimonialsData && props.testimonialsData.length > 0 && (
+                    <div className="w-full mt-3 space-y-1.5 text-left">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80">
+                          AVALIAÇÕES NO GOOGLE
+                        </span>
+                        <span className="text-[7.5px] font-mono text-amber-400 font-bold flex items-center gap-0.5">
+                          <span>5.0</span>
+                          <span>★★★★★</span>
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {props.testimonialsData.slice(0, 3).map((t: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="p-2 rounded-xl border space-y-1"
+                            style={{
+                              backgroundColor: `${props.selectedPalette.card}80`,
+                              borderColor: `${props.selectedPalette.accent}20`
+                            }}
+                          >
+                            <div className="flex items-center justify-between text-amber-400 text-[8px]">
+                              <span>★★★★★</span>
+                              <span className="text-[6.5px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
+                                ✓ Verificado
+                              </span>
+                            </div>
+                            <p className="text-[8px] text-stone-300 font-sans italic leading-snug line-clamp-2">
+                              "{t.text}"
+                            </p>
+                            <div className="text-[7px] font-mono text-stone-400">
+                              {t.clientName || t.name} · {t.city || t.role}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 15. Sobre a Especialista */}
+                  {props.aboutMeData?.enabled && (
+                    <div className="w-full mt-3 space-y-1 text-left">
+                      <div
+                        className="p-2.5 rounded-xl border space-y-1"
+                        style={{
+                          backgroundColor: `${props.selectedPalette.card}80`,
+                          borderColor: `${props.selectedPalette.accent}20`
+                        }}
+                      >
+                        <h5 className="text-[9px] font-serif font-bold text-white">
+                          {props.aboutMeData.headline}
+                        </h5>
+                        <p className="text-[7.5px] text-stone-300 font-sans leading-snug line-clamp-3">
+                          {props.aboutMeData.paragraph || props.aboutMeData.bio}
+                        </p>
+                        {(props.aboutMeData.closingPhrase || props.aboutMeData.quote) && (
+                          <div className="text-[7px] italic font-serif pt-0.5" style={{ color: props.selectedPalette.accent }}>
+                            "{props.aboutMeData.closingPhrase || props.aboutMeData.quote}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
+                  {props.faqData && props.faqData.length > 0 && (
+                    <div className="w-full mt-3 space-y-1 text-left">
+                      <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-0.5">
+                        DÚVIDAS FREQUENTES
+                      </span>
+                      <div className="space-y-1">
+                        {props.faqData.slice(0, 4).map((item: any, i: number) => {
+                          const isOpen = previewFaqOpenIndex === i
+                          return (
+                            <div
+                              key={i}
+                              className="rounded-lg border overflow-hidden transition"
+                              style={{
+                                backgroundColor: `${props.selectedPalette.card}80`,
+                                borderColor: `${props.selectedPalette.accent}20`
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setPreviewFaqOpenIndex(isOpen ? null : i)}
+                                className="w-full p-2 text-left flex items-center justify-between text-[8px] font-semibold text-stone-200 hover:text-white transition cursor-pointer"
+                              >
+                                <span className="pr-1 leading-snug">{item.question}</span>
+                                {isOpen ? <ChevronUp className="w-2.5 h-2.5 shrink-0" /> : <ChevronDown className="w-2.5 h-2.5 shrink-0" />}
+                              </button>
+                              {isOpen && (
+                                <div className="px-2 pb-2 pt-0 text-[7.5px] text-stone-400 font-sans leading-snug border-t border-white/5 animate-fade-in">
+                                  {item.answer}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 17. Salvar Contato (.vcf) & Compartilhar */}
+                  <div className="w-full grid grid-cols-2 gap-1.5 mt-3">
+                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-mono font-bold flex items-center justify-center gap-1 shadow-sm">
+                      <Download className="w-2.5 h-2.5 text-amber-400" />
+                      <span>Salvar Contato</span>
+                    </div>
+                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-mono font-bold flex items-center justify-center gap-1 shadow-sm">
+                      <Share2 className="w-2.5 h-2.5 text-sky-400" />
+                      <span>Compartilhar</span>
+                    </div>
+                  </div>
+
+                  {/* 18. Monograma e Assinatura Editorial de Rodapé */}
+                  <div className="mt-4 pb-4 w-full flex flex-col items-center text-center">
+                    <div
+                      className="w-10 h-px mb-1.5 opacity-40"
+                      style={{ backgroundColor: props.selectedPalette.accent }}
+                    />
+                    <span
+                      className="font-serif italic text-sm tracking-wider select-none"
+                      style={{ color: props.selectedPalette.accent }}
+                    >
+                      {props.monogram || 'AF'}
+                    </span>
+                    <div className="text-[6.5px] font-mono text-stone-500 mt-1">
+                      © {new Date().getFullYear()} {props.businessTitle || props.brandName}. Todos os direitos reservados.
+                    </div>
+                    <div className="text-[6px] font-mono text-stone-500 hover:text-amber-400 transition mt-0.5">
+                      ✨ Desenvolvido com padrão BioVip
+                    </div>
                   </div>
                 </div>
               </div>
