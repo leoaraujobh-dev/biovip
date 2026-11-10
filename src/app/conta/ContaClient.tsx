@@ -3485,7 +3485,7 @@ export default function ContaClient() {
                 <p className="text-xs text-stone-400">
                   Precisa trocar o endereço do seu link ou tem qualquer dúvida?{' '}
                   <a
-                    href="https://wa.me/5581985087520"
+                    href="https://wa.me/5531991390202"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-stone-900 underline underline-offset-2 hover:text-amber-800 transition-colors"

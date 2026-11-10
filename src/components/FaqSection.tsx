@@ -72,7 +72,7 @@ export default function FaqSection() {
             Nossa equipe de consultores de posicionamento está disponível no WhatsApp para te orientar.
           </p>
           <a
-            href="https://wa.me/5581985087520?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida%20sobre%20o%20BioVip."
+            href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida%20sobre%20o%20BioVip."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-50 text-primary-700 font-semibold text-sm hover:bg-primary-100 transition"

@@ -19,7 +19,7 @@ export default function Footer() {
       { href: '/admin', label: 'Painel de Gestão (ADM)' },
     ],
     contato: [
-      { href: 'https://wa.me/5581985087520?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20BioVip%20e%20gostaria%20de%20um%20Bio%20Site%20exclusivo.', label: 'WhatsApp: (81) 98508-7520', external: true },
+      { href: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20BioVip%20e%20gostaria%20de%20um%20Bio%20Site%20exclusivo.', label: 'WhatsApp: (31) 99139-0202', external: true },
       { href: 'mailto:contato@biovip.com.br', label: 'contato@biovip.com.br', external: true },
       { href: 'https://instagram.com/biovip.oficial', label: '@biovip.oficial', external: true },
     ],

@@ -140,7 +140,7 @@ export default function PrivacyPage() {
                   Dúvidas sobre esta política ou seus dados:<br />
                   <strong>BioVip Brasil</strong><br />
                   E-mail: <a href="mailto:privacidade@biovip.com.br" className="text-primary-600 hover:underline">privacidade@biovip.com.br</a><br />
-                  WhatsApp: <a href="https://wa.me/5581985087520" className="text-primary-600 hover:underline">(81) 98508-7520</a><br />
+                  WhatsApp: <a href="https://wa.me/5531991390202" className="text-primary-600 hover:underline">(31) 99139-0202</a><br />
                   Encarregado de Dados (DPO): <a href="mailto:dpo@biovip.com.br" className="text-primary-600 hover:underline">dpo@biovip.com.br</a>
                 </p>
               </section>

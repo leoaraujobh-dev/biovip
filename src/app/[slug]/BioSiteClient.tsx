@@ -412,7 +412,7 @@ export default function BioSiteClient({
   // Download do arquivo vCard (.vcf) direto para a agenda do celular
   const handleSaveContactVcf = () => {
     const effName = modelData?.name || name
-    const effPhone = cleanWhatsapp || '5581985087520'
+    const effPhone = cleanWhatsapp || '5531991390202'
     const effAddress = modelData?.locationInfo?.address || address
 
     const vcfData = [

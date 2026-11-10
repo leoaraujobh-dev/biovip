@@ -68,7 +68,7 @@ export default function HomePage() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+55-81-98508-7520',
+      telephone: '+55-31-99139-0202',
       contactType: 'customer service',
       areaServed: 'BR',
       availableLanguage: 'Portuguese',
