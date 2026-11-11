@@ -4,7 +4,7 @@ export const HeroLuxuryResponsive = () => {
   return (
     <section className="relative min-h-[92vh] bg-[#09090B] bg-radial-luxury overflow-hidden flex items-center pt-20 pb-16 px-5 sm:px-8 lg:px-12">
       {/* Luz ambiente de fundo (Glow Dourado) */}
-      <div className="absolute top-1/4 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-[#E2B857]/15 rounded-full blur-[100px] sm:blur-[130px] pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-[#E2B857]/15 rounded-full blur-[100px] sm:blur-[130px] pointer-events-none pulse-glow" />
 
       <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
         
