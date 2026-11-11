@@ -29,8 +29,13 @@ export default function BioSiteScrollReveal({
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Verificação de ambiente e preferência do usuário (acessibilidade)
-    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+    // Verificação de ambiente e preferência do usuário (acessibilidade / preview do editor)
+    const inIframe =
+      window.self !== window.top ||
+      window.location.search.includes('preview=true') ||
+      window.location.search.includes('readonly=true')
+
+    if (inIframe || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
       setIsVisible(true)
       return
     }
@@ -44,13 +49,18 @@ export default function BioSiteScrollReveal({
     const element = ref.current
     if (!element) return
 
-    // Se o elemento já estiver na viewport inicial (topo da página), revela imediatamente
+    // Se o elemento já estiver visível na viewport inicial, revela imediatamente
     const rect = element.getBoundingClientRect()
     const windowHeight = window.innerHeight || document.documentElement.clientHeight
-    if (rect.top <= windowHeight && rect.bottom >= 0) {
+    if (rect.top <= windowHeight + 100 && rect.bottom >= -100) {
       setIsVisible(true)
       return
     }
+
+    // Safety fallback: nunca deixa um bloco eternamente invisível caso o scroll ocorra em container com overflow
+    const fallbackTimer = setTimeout(() => {
+      setIsVisible(true)
+    }, 600 + delay)
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -63,13 +73,14 @@ export default function BioSiteScrollReveal({
       },
       {
         threshold,
-        rootMargin
+        rootMargin: '100px 0px 100px 0px'
       }
     )
 
     observer.observe(element)
 
     return () => {
+      clearTimeout(fallbackTimer)
       observer.disconnect()
     }
   }, [threshold, rootMargin])

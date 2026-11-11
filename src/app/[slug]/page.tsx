@@ -20,19 +20,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const name = sub?.businessName || proj?.name || slug.replace(/-/g, ' ').toUpperCase()
   const role = sub?.niche || proj?.role || 'Profissional'
 
+  const photo = proj?.photo || proj?.image || 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80'
+
   return {
-    title: `${name} — ${role}`,
+    title: `${name} — ${role} | BioVip`,
     description: `Acesse o Bio Site oficial de ${name}. Catálogo de serviços, agendamentos e contato direto pelo WhatsApp.`,
     openGraph: {
       title: `${name} — ${role}`,
       description: `Agende seu horário e conheça os procedimentos de ${name}.`,
       type: 'website',
       url: `https://biovip.com.br/${slug}`,
+      images: [
+        {
+          url: photo,
+          width: 800,
+          height: 800,
+          alt: name
+        }
+      ]
     },
     twitter: {
       card: 'summary_large_image',
       title: `${name} — ${role}`,
       description: `Bio Site oficial de ${name}.`,
+      images: [photo]
     }
   }
 }

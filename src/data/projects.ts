@@ -190,26 +190,43 @@ export const projects: Project[] = [
     buttons: [
       {
         id: 'btn-1',
-        label: 'AGENDAMENTO',
-        subtitle: 'Escolha o melhor horário para sua consulta de avaliação.',
+        label: 'AGENDAMENTO VIP',
+        subtitle: 'Consulta de avaliação estética & planejamento digital do sorriso.',
         icon: 'calendar',
-        url: 'https://wa.me/5581987654321?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20com%20a%20Dra.%20Ana%20Freire.',
+        url: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20VIP%20com%20a%20Dra.%20Ana%20Freire.',
         isHighlighted: true,
-        highlightBadge: '⭐ MAIS ESCOLHIDO'
+        highlightBadge: '⭐ MAIS ESCOLHIDO',
+        badgeText: 'MAIS PROCURADO',
+        ctaActionText: 'RESERVAR HORÁRIO',
+        cardImage: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=400&q=80',
+        imagePosition: 'right',
+        imageFitStyle: 'popout',
+        animation: 'pulse-glow',
+        variant: 'gold'
       },
       {
         id: 'btn-2',
-        label: 'LOCALIZAÇÃO',
-        subtitle: 'Edifício Trade Center - Sala 918, Boa Viagem - Recife, PE',
-        icon: 'map',
-        url: 'https://maps.google.com/?q=Trade+Center+Recife'
+        label: 'CATÁLOGO DE PROCEDIMENTOS',
+        subtitle: 'Lentes em resina e porcelana, clareamento a laser e facetas.',
+        icon: 'sparkles',
+        url: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostaria%20de%20conhecer%20os%20procedimentos%20e%20valores%20da%20Dra.%20Ana%20Freire.',
+        badgeText: 'TABELA VIP',
+        ctaActionText: 'VER PROCEDIMENTOS',
+        cardImage: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+        imagePosition: 'left',
+        imageFitStyle: 'framed',
+        variant: 'default'
       },
       {
         id: 'btn-3',
-        label: 'CASOS CLÍNICOS & RESULTADOS',
-        subtitle: 'Sorrisos transformados: veja as lentes e restaurações estéticas.',
-        icon: 'sparkles',
-        url: 'https://wa.me/5581987654321?text=Gostaria%20de%20ver%20os%20casos%20cl%C3%ADnicos'
+        label: 'LOCALIZAÇÃO DO CONSULTÓRIO',
+        subtitle: 'Edifício Trade Center - Sala 918, Boa Viagem - Recife, PE',
+        icon: 'map',
+        url: 'https://maps.google.com/?q=Trade+Center+Recife',
+        badgeText: 'MAPS & WAZE',
+        ctaActionText: 'ABRIR ROTA',
+        imagePosition: 'none',
+        variant: 'glass'
       }
     ],
     announcement: {
@@ -256,6 +273,31 @@ export const projects: Project[] = [
       { number: '02', title: 'Avaliação Clínica Digital', description: 'Mapeamento do seu sorriso com fotografias e planejamento estético individual.' },
       { number: '03', title: 'Execução de Excelência', description: 'Tratamento com tecnologia de ponta, conforto absoluto e acompanhamento pós-procedimento.' }
     ],
+    galleryConfig: {
+      enabled: true,
+      badge: 'PORTFÓLIO & ESTRUTURA VIP',
+      headline: 'Resultados Reais & Portfólio em Destaque',
+      subtitle: 'Registros reais do nosso padrão de entrega e procedimentos odontológicos',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Transformação de Sorriso com Lentes de Porcelana',
+        'Avaliação Estética Digital e Mapeamento 3D',
+        'Consultório VIP Dra. Ana Freire',
+        'Acabamento e Polimento de Alta Performance',
+        'Clareamento Dental Laser Premium',
+        'Equipamentos de Última Geração'
+      ]
+    },
     galleryPhotosList: [
       'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&w=800&q=80',
@@ -2014,23 +2056,40 @@ export const projects: Project[] = [
         label: 'CORTE & BARBA COM VISAGISMO',
         subtitle: 'Harmonização de corte e barba com toalha quente e massagem.',
         icon: 'calendar',
-        url: 'https://wa.me/5511995667788?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20hor%C3%A1rio%20na%20Dom%20Pedro.',
+        url: 'https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20hor%C3%A1rio%20na%20Dom%20Pedro.',
         isHighlighted: true,
-        highlightBadge: '🔥 MAIS POPULAR'
+        highlightBadge: '🔥 MAIS POPULAR',
+        badgeText: 'MAIS PEDIDO',
+        ctaActionText: 'AGENDAR CADEIRA',
+        cardImage: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=400&q=80',
+        imagePosition: 'right',
+        imageFitStyle: 'popout',
+        animation: 'pulse-glow',
+        variant: 'gold'
       },
       {
         id: 'btn-2',
         label: 'CLUBE DE ASSINATURA VIP',
         subtitle: 'Cortes ilimitados no mês com benefícios na charutaria.',
         icon: 'sparkles',
-        url: 'https://wa.me/5511995667788?text=Tenho%20interesse%20no%20clube%20de%20assinatura'
+        url: 'https://wa.me/5531991390202?text=Tenho%20interesse%20no%20clube%20de%20assinatura%20da%20Dom%20Pedro.',
+        badgeText: 'CLUBE EXCLUSIVO',
+        ctaActionText: 'CONHECER PLANOS',
+        cardImage: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=400&q=80',
+        imagePosition: 'left',
+        imageFitStyle: 'framed',
+        variant: 'default'
       },
       {
         id: 'btn-3',
         label: 'UNIDADE JARDINS / CONSOLAÇÃO',
         subtitle: 'Rua da Consolação, 2400 - Cerqueira César, São Paulo - SP',
         icon: 'map',
-        url: 'https://maps.google.com/?q=Consolacao+2400'
+        url: 'https://maps.google.com/?q=Consolacao+2400',
+        badgeText: 'MAPS & WAZE',
+        ctaActionText: 'ABRIR ROTA',
+        imagePosition: 'none',
+        variant: 'glass'
       }
     ],
     announcement: {
@@ -2136,6 +2195,39 @@ export const projects: Project[] = [
       openStatus: 'Aberto Agora · Atendimento VIP',
       mapsUrl: 'https://maps.google.com/?q=Consolacao+2400+Sao+Paulo'
     },
+    galleryConfig: {
+      enabled: true,
+      badge: 'AMBIENTE & VISAGISMO VIP',
+      headline: 'Galeria & Instalações Dom Pedro',
+      subtitle: 'Estrutura britânica clássica, toalha quente, navalha e ambiente exclusivo',
+      layout: 'carousel-snap',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1534778356534-d3d45b6df1da?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Cadeira Clássica e Ritual de Toalha Quente',
+        'Visagismo e Finalização com Pomada Nobre',
+        'Bancada Tradicional de Navalhados',
+        'Bar e Espaço de Convivência Exclusivo',
+        'Detalhes e Acabamentos em Madeira e Couro',
+        'Linha Profissional de Tratamento e Pomadas'
+      ]
+    },
+    galleryPhotosList: [
+      'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1534778356534-d3d45b6df1da?auto=format&fit=crop&w=800&q=80'
+    ],
     testimonialsList: [
       {
         id: 't-1',

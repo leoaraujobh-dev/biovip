@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg-grad)" stroke="#F59E0B" stroke-width="2" stroke-opacity="0.3" />
+  <!-- Coroa VIP Sutil -->
+  <path d="M22 22 L27 26 L32 20 L37 26 L42 22 L40 28 L24 28 Z" fill="url(#gold-grad)" opacity="0.9" />
+  <!-- Letra B Dourada -->
+  <path d="M25 31 L33.5 31 C36 31 38 32.5 38 34.5 C38 36 37 37 35.5 37.5 C37.5 38 39 39.5 39 42 C39 44.5 36.8 46.5 33.5 46.5 L25 46.5 Z M29 34 L29 37 L33 37 C34.2 37 35 36.3 35 35.5 C35 34.7 34.2 34 33 34 Z M29 40 L29 43.5 L33.5 43.5 C34.8 43.5 35.8 42.7 35.8 41.7 C35.8 40.7 34.8 40 33.5 40 Z" fill="url(#gold-grad)" />
+</svg>
