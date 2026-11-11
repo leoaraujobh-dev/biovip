@@ -1,5 +1,5 @@
 import Header from '@/components/Header'
-import Hero from '@/components/Hero'
+import HeroLuxuryResponsive from '@/components/HeroLuxuryResponsive'
 import Partners from '@/components/Partners'
 import Features from '@/components/Features'
 import ComparisonTable from '@/components/ComparisonTable'
@@ -131,7 +131,7 @@ export default function HomePage() {
 
       <Header />
       <main id="main-content">
-        <Hero />
+        <HeroLuxuryResponsive />
         <Partners />
         <Features />
         <ComparisonTable />

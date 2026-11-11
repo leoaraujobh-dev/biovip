@@ -1549,7 +1549,7 @@ export default function AdminDashboardClient() {
     <div className="min-h-screen bg-[#0d0f12] text-stone-200">
       {/* Topo do Painel */}
       <header className="sticky top-0 z-30 bg-[#12151a]/95 backdrop-blur-md border-b border-stone-800 shadow-md">
-        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <Link href="/" className="flex items-center gap-2.5 shrink-0">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 flex items-center justify-center text-stone-950 font-bold text-base shadow-md">
@@ -1624,61 +1624,64 @@ export default function AdminDashboardClient() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => {
                 setGeminiError(null)
                 setIsGeminiModalOpen(true)
               }}
-              className="px-3 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition border border-purple-500/30 cursor-pointer shadow-2xs"
+              className="px-2.5 sm:px-3 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition border border-purple-500/30 cursor-pointer shadow-2xs shrink-0"
               title="Importar JSON gerado pela IA Gemini (Script BioVip Oficial)"
             >
-              <Bot className="w-3.5 h-3.5 text-purple-400" />
-              <span className="hidden sm:inline">Importar IA Gemini</span>
+              <Bot className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span className="hidden xl:inline">Importar IA Gemini</span>
+              <span className="hidden sm:inline xl:hidden">Importar IA</span>
             </button>
             <button
               onClick={() => setIsCloneModalOpen(true)}
-              className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition border border-amber-500/30 cursor-pointer shadow-2xs"
+              className="px-2.5 sm:px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition border border-amber-500/30 cursor-pointer shadow-2xs shrink-0"
               title="Clonar template de modelo para novo cliente com 1 clique"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Clonar Modelo</span>
+              <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="hidden xl:inline">Clonar Modelo</span>
+              <span className="hidden sm:inline xl:hidden">Clonar</span>
             </button>
             <button
               onClick={() => {
                 setEditingSub(null)
                 setIsModalOpen(true)
               }}
-              className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+              className="px-3 sm:px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer shrink-0"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">Nova Assinatura</span>
             </button>
             <button
               onClick={() => setIsBackupModalOpen(true)}
               title="Backup & Restauração Completa"
-              className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-800"
+              className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-800 shrink-0"
             >
               <Database className="w-4 h-4" />
             </button>
             <button
               onClick={openSecurityModal}
               title="Central de Segurança & Auditoria de Acesso"
-              className="px-3 py-1.5 text-xs text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+              className="px-2.5 sm:px-3 py-1.5 text-xs text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden md:inline font-mono">Segurança & Logs</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="hidden xl:inline font-mono">Segurança & Logs</span>
+              <span className="hidden sm:inline xl:hidden font-mono">Segurança</span>
             </button>
             <button
               onClick={exportCSV}
               title="Exportar CSV"
-              className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-800 hidden sm:block"
+              className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-800 hidden sm:block shrink-0"
             >
               <Download className="w-4 h-4" />
             </button>
             <button
               onClick={handleLogout}
-              className="text-xs text-stone-400 hover:text-rose-400 px-3 py-1.5 rounded-lg border border-stone-800 hover:border-rose-900/50 transition cursor-pointer"
+              className="text-xs text-stone-400 hover:text-rose-400 px-3 py-1.5 rounded-lg border border-stone-800 hover:border-rose-900/50 transition cursor-pointer shrink-0 ml-1"
             >
               Sair
             </button>
@@ -1687,7 +1690,7 @@ export default function AdminDashboardClient() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* KPI CARDS */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: MRR */}
@@ -1761,7 +1764,7 @@ export default function AdminDashboardClient() {
         {activeTab === 'assinaturas' && (
           <section className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-6">
             {/* Barra de Filtros e Busca */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -1879,17 +1882,17 @@ export default function AdminDashboardClient() {
             </div>
 
             {/* TABELA DE ASSINATURAS & BIO SITES */}
-            <div className="w-full overflow-x-auto rounded-2xl border border-stone-800 bg-[#0d0f12] shadow-inner">
-              <table className="w-full text-left border-collapse min-w-[1100px]">
+            <div className="w-full overflow-x-auto rounded-2xl border border-stone-800 bg-[#0d0f12] shadow-inner scrollbar-thin scrollbar-thumb-stone-700">
+              <table className="w-full text-left border-collapse min-w-[1400px]">
                 <thead>
                   <tr className="bg-[#0f1217] text-[11px] font-mono uppercase tracking-wider text-stone-400 border-b border-stone-800">
-                    <th className="py-3 px-4">Bio Site / Profissional</th>
-                    <th className="py-3 px-4">Nicho & Registro</th>
-                    <th className="py-3 px-4">Tipo / Plano</th>
-                    <th className="py-3 px-4">Valor</th>
-                    <th className="py-3 px-4">Próx. Cobrança</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#0f1217] z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80 min-w-[320px]">
+                    <th className="py-3.5 px-4 min-w-[260px]">Bio Site / Profissional</th>
+                    <th className="py-3.5 px-4 min-w-[180px]">Nicho & Registro</th>
+                    <th className="py-3.5 px-4 min-w-[130px]">Tipo / Plano</th>
+                    <th className="py-3.5 px-4 min-w-[110px]">Valor</th>
+                    <th className="py-3.5 px-4 min-w-[120px]">Próx. Cobrança</th>
+                    <th className="py-3.5 px-4 min-w-[140px]">Status</th>
+                    <th className="py-3.5 pr-8 pl-4 text-right sticky right-0 bg-[#0f1217] z-20 shadow-[-16px_0_24px_-4px_rgba(0,0,0,0.7)] border-l border-stone-800/80 min-w-[460px] w-[460px]">
                       Ações Rápidas
                     </th>
                   </tr>
@@ -1999,8 +2002,8 @@ export default function AdminDashboardClient() {
                           </td>
 
                           {/* Ações Rápidas */}
-                          <td className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80">
-                            <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                          <td className="py-3.5 pr-8 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_24px_-4px_rgba(0,0,0,0.7)] border-l border-stone-800/80 min-w-[460px] w-[460px]">
+                            <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0 pr-1">
                               <Link
                                 href={`/conta?edit=${proj.slug}`}
                                 title="Editar no Construtor Visual (Cores, Fontes, Botões, Foto, Páginas)"
@@ -2211,8 +2214,8 @@ export default function AdminDashboardClient() {
                           </td>
 
                           {/* Ações */}
-                          <td className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80 min-w-[340px]">
-                            <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                          <td className="py-3.5 pr-8 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_24px_-4px_rgba(0,0,0,0.7)] border-l border-stone-800/80 min-w-[460px] w-[460px]">
+                            <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0 pr-1">
                               {/* Editar Visual do Bio Site */}
                               <Link
                                 href={`/conta?edit=${sub.slug}`}
@@ -2844,7 +2847,7 @@ export default function AdminDashboardClient() {
                     <th className="py-3 px-4">Tipo</th>
                     <th className="py-3 px-4">Métricas do Case</th>
                     <th className="py-3 px-4 text-center">Status no Portfólio</th>
-                    <th className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#14181f] z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80 min-w-[280px]">
+                    <th className="py-3.5 pr-8 pl-4 text-right sticky right-0 bg-[#14181f] z-20 shadow-[-16px_0_24px_-4px_rgba(0,0,0,0.7)] border-l border-stone-800/80 min-w-[340px] w-[340px]">
                       Ações
                     </th>
                   </tr>
@@ -2928,8 +2931,8 @@ export default function AdminDashboardClient() {
                         </td>
 
                         {/* Ações */}
-                        <td className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80">
-                          <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                        <td className="py-3.5 pr-8 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_24px_-4px_rgba(0,0,0,0.7)] border-l border-stone-800/80 min-w-[340px] w-[340px]">
+                          <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0 pr-1">
                             <Link
                               href={`/conta?edit=${proj.slug}`}
                               title="Editar no Construtor Visual (Cores, Fontes, Botões, Foto, Páginas)"
