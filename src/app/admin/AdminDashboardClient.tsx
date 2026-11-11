@@ -37,6 +37,11 @@ import {
   ChevronRight,
   Sparkles,
   ShieldAlert,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  History,
+  Timer,
   Download,
   Settings,
   CreditCard,
@@ -59,14 +64,37 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { getLeads, LeadSubmission, saveBioSite } from '@/services/biositeService'
-
-const MASTER_PIN = '2026'
+import {
+  authenticateAdmin,
+  validateCurrentSession,
+  destroySession,
+  checkLockoutStatus,
+  updateAdminSecret,
+  getAccessLogs,
+  getSecurityConfig,
+  saveSecurityConfig,
+  AccessLogEntry,
+  SecurityConfig
+} from '@/services/adminAuthService'
 
 export default function AdminDashboardClient() {
-  // Autenticação simples por PIN
+  // Autenticação Criptográfica de Alta Segurança (SHA-256 + Salt & Anti-Brute-Force)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [pinInput, setPinInput] = useState<string>('')
   const [pinError, setPinError] = useState<string | null>(null)
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false)
+  const [showSecret, setShowSecret] = useState<boolean>(false)
+  const [lockoutRemaining, setLockoutRemaining] = useState<number>(0)
+  const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null)
+
+  // Central de Segurança & Auditoria
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState<boolean>(false)
+  const [securityTab, setSecurityTab] = useState<'senha' | 'auditoria' | 'politicas'>('senha')
+  const [securityLogs, setSecurityLogs] = useState<AccessLogEntry[]>([])
+  const [securityConfig, setSecurityConfig] = useState<SecurityConfig>(getSecurityConfig())
+  const [oldSecretInput, setOldSecretInput] = useState<string>('')
+  const [confirmNewSecretInput, setConfirmNewSecretInput] = useState<string>('')
+  const [securityFeedback, setSecurityFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
 
   // Dados das assinaturas
   const [subscriptions, setSubscriptions] = useState<Subscription[]>(initialSubscriptions)
@@ -137,12 +165,64 @@ export default function AdminDashboardClient() {
   const [apiKey, setApiKey] = useState<string>('live_sk_849204820194820194820')
   const [webhookStatus, setWebhookStatus] = useState<boolean>(true)
 
-  // Carregar do localStorage se existir (com merge para garantir clientes reais no estúdio)
+  // Cronômetro para o bloqueio de segurança (Lockout)
   useEffect(() => {
-    const savedPinAuth = sessionStorage.getItem('biovip_admin_auth')
-    if (savedPinAuth === 'true') {
-      setIsAuthenticated(true)
+    const lock = checkLockoutStatus()
+    if (lock.isLocked) {
+      setLockoutRemaining(lock.remainingSeconds)
     }
+
+    const interval = setInterval(() => {
+      const currentLock = checkLockoutStatus()
+      if (currentLock.isLocked) {
+        setLockoutRemaining(currentLock.remainingSeconds)
+      } else {
+        setLockoutRemaining(0)
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Monitoramento de Sessão Ativa & Auto-Lock por Inatividade
+  useEffect(() => {
+    const sessionCheck = validateCurrentSession()
+    if (sessionCheck.isValid) {
+      setIsAuthenticated(true)
+    } else {
+      setIsAuthenticated(false)
+    }
+
+    // Monitora atividade do usuário para evitar bloqueio indevido enquanto trabalha
+    const handleUserActivity = () => {
+      if (isAuthenticated) {
+        validateCurrentSession()
+      }
+    }
+
+    window.addEventListener('mousemove', handleUserActivity, { passive: true })
+    window.addEventListener('keydown', handleUserActivity, { passive: true })
+    window.addEventListener('touchstart', handleUserActivity, { passive: true })
+
+    // Verificação periódica a cada 30 segundos
+    const sessionInterval = setInterval(() => {
+      const activeCheck = validateCurrentSession()
+      if (!activeCheck.isValid && isAuthenticated) {
+        setIsAuthenticated(false)
+        setPinError('Sessão encerrada por inatividade de 30 minutos.')
+      }
+    }, 30000)
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity)
+      window.removeEventListener('keydown', handleUserActivity)
+      window.removeEventListener('touchstart', handleUserActivity)
+      clearInterval(sessionInterval)
+    }
+  }, [isAuthenticated])
+
+  // Carregar dados de assinaturas e projetos
+  useEffect(() => {
 
     const savedSubs = localStorage.getItem('biovip_subscriptions')
     if (savedSubs) {
@@ -193,23 +273,82 @@ export default function AdminDashboardClient() {
     localStorage.setItem('biovip_portfolio_projects', JSON.stringify(newList))
   }
 
-  // Handler de login com PIN
-  const handlePinSubmit = (e: React.FormEvent) => {
+  // Handler de Login Blindado com Web Crypto SHA-256 e Anti-Brute-Force
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const storedPin = typeof window !== 'undefined' ? (localStorage.getItem('biovip_admin_pin') || MASTER_PIN) : MASTER_PIN
-    if (pinInput === storedPin || pinInput === MASTER_PIN) {
-      setIsAuthenticated(true)
-      sessionStorage.setItem('biovip_admin_auth', 'true')
-      setPinError(null)
-    } else {
-      setPinError('PIN incorreto. Digite o código de 4 a 6 dígitos cadastrado.')
+    if (!pinInput.trim()) return
+
+    setIsAuthenticating(true)
+    setPinError(null)
+
+    try {
+      const result = await authenticateAdmin(pinInput.trim())
+      if (result.success) {
+        setIsAuthenticated(true)
+        setPinInput('')
+        setPinError(null)
+        setAttemptsLeft(null)
+      } else {
+        setPinError(result.error || 'Falha na autenticação.')
+        if (result.remainingSeconds) {
+          setLockoutRemaining(result.remainingSeconds)
+        }
+        if (result.attemptsLeft !== undefined) {
+          setAttemptsLeft(result.attemptsLeft)
+        }
+      }
+    } catch (err: any) {
+      setPinError('Erro de segurança no processamento da credencial.')
+    } finally {
+      setIsAuthenticating(false)
     }
   }
 
   const handleLogout = () => {
+    destroySession()
     setIsAuthenticated(false)
-    sessionStorage.removeItem('biovip_admin_auth')
     setPinInput('')
+    setPinError(null)
+  }
+
+  // Abertura da Central de Segurança & Auditoria
+  const openSecurityModal = () => {
+    setSecurityConfig(getSecurityConfig())
+    setSecurityLogs(getAccessLogs())
+    setOldSecretInput('')
+    setNewPinInput('')
+    setConfirmNewSecretInput('')
+    setSecurityFeedback(null)
+    setIsSecurityModalOpen(true)
+  }
+
+  // Atualização de Senha/PIN Master Criptografado
+  const handleUpdateSecret = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSecurityFeedback(null)
+
+    if (newPinInput !== confirmNewSecretInput) {
+      setSecurityFeedback({ type: 'error', msg: 'A nova senha e a confirmação não coincidem.' })
+      return
+    }
+
+    if (newPinInput.length < 4) {
+      setSecurityFeedback({ type: 'error', msg: 'A nova senha deve ter no mínimo 4 caracteres.' })
+      return
+    }
+
+    const res = await updateAdminSecret(oldSecretInput, newPinInput)
+    if (res.success) {
+      setSecurityFeedback({ type: 'success', msg: 'Credencial master atualizada com sucesso!' })
+      setOldSecretInput('')
+      setNewPinInput('')
+      setConfirmNewSecretInput('')
+      setSecurityLogs(getAccessLogs())
+      setPinSuccessToast('Senha master atualizada e protegida com SHA-256.')
+      setTimeout(() => setPinSuccessToast(null), 4000)
+    } else {
+      setSecurityFeedback({ type: 'error', msg: res.error || 'Erro ao alterar credencial.' })
+    }
   }
 
   // Cálculos de Métricas Financeiras (Modelos de portfólio e demos NÃO geram receita/MRR)
@@ -1207,58 +1346,140 @@ export default function AdminDashboardClient() {
     document.body.removeChild(link)
   }
 
-  // TELA DE LOGIN COM PIN
+  // TELA DE LOGIN BLINDADA (PADRÃO BANCÁRIO / CRIPTOGRAFIA SHA-256)
   if (!isAuthenticated) {
+    const isLocked = lockoutRemaining > 0
+    const lockMins = Math.floor(lockoutRemaining / 60)
+    const lockSecs = lockoutRemaining % 60
+
     return (
-      <div className="min-h-screen bg-stone-900 text-stone-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-stone-800/80 border border-stone-700/60 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-stone-950 shadow-lg shadow-amber-500/20 mb-4">
-              <Lock className="w-8 h-8" />
+      <div className="min-h-screen bg-[#07090E] text-stone-100 flex items-center justify-center p-4 selection:bg-amber-400 selection:text-black">
+        <div className="max-w-md w-full bg-[#0F141F]/90 border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-2xl relative overflow-hidden">
+          {/* Luz de Fundo Decorativa */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Header de Segurança */}
+          <div className="flex flex-col items-center text-center mb-8 relative">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-stone-950 shadow-xl transition-all duration-500 mb-4 ${
+              isLocked
+                ? 'bg-gradient-to-tr from-rose-500 to-red-400 shadow-rose-500/20 text-white animate-pulse'
+                : 'bg-gradient-to-tr from-amber-400 via-amber-300 to-amber-500 shadow-amber-500/20'
+            }`}>
+              {isLocked ? <ShieldAlert className="w-8 h-8" /> : <Lock className="w-8 h-8" />}
             </div>
-            <span className="text-[11px] font-mono tracking-widest text-amber-400 uppercase font-semibold">
-              Painel de Gestão Master
-            </span>
-            <h1 className="text-2xl font-serif font-bold text-white mt-1">BioVip · Assinaturas</h1>
-            <p className="text-sm text-stone-400 mt-2">
-              Acesso exclusivo para administradores e gestores do estúdio.
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-[10px] font-mono uppercase tracking-widest font-bold mb-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ambiente Protegido · BioVip Master</span>
+            </div>
+
+            <h1 className="text-2xl font-serif font-bold text-white tracking-tight">
+              Gestão de Assinaturas
+            </h1>
+            <p className="text-xs text-stone-400 mt-1.5 max-w-xs leading-relaxed">
+              Autenticação restrita com assinatura criptográfica SHA-256 e proteção ativa contra ataques de força bruta.
             </p>
           </div>
 
-          <form onSubmit={handlePinSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-stone-300 uppercase tracking-wider mb-2">
-                PIN de Segurança
-              </label>
-              <input
-                type="password"
-                maxLength={6}
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="Digite o PIN (ex: 2026)"
-                className="w-full px-4 py-3 bg-stone-900/90 border border-stone-700 rounded-xl text-center text-2xl tracking-widest font-mono text-white placeholder-stone-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
-                autoFocus
-              />
-              {pinError && (
-                <p className="text-xs text-rose-400 mt-2 text-center flex items-center justify-center gap-1">
-                  <AlertTriangle className="w-3.5 h-3.5" /> {pinError}
-                </p>
-              )}
+          {/* Banner de Bloqueio se houver excesso de tentativas */}
+          {isLocked ? (
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs space-y-2 mb-6 text-center animate-shake">
+              <div className="flex items-center justify-center gap-2 font-bold text-rose-300 text-sm">
+                <Timer className="w-4 h-4" />
+                <span>Painel Temporariamente Bloqueado</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-stone-300">
+                Limite de 5 tentativas consecutivas atingido. Por segurança, o sistema bloqueou novas tentativas.
+              </p>
+              <div className="text-lg font-mono font-bold text-rose-400 pt-1">
+                Tempo restante: {lockMins.toString().padStart(2, '0')}:{lockSecs.toString().padStart(2, '0')}
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handlePinSubmit} className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-stone-300 uppercase tracking-wider font-mono">
+                    Senha / PIN Master
+                  </label>
+                  {attemptsLeft !== null && attemptsLeft > 0 && (
+                    <span className="text-[10px] font-mono text-amber-400">
+                      {attemptsLeft} tentativa(s) restante(s)
+                    </span>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showSecret ? 'text' : 'password'}
+                    value={pinInput}
+                    disabled={isAuthenticating || isLocked}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    placeholder="Digite a Senha ou PIN Master"
+                    className="w-full px-4 py-3.5 bg-stone-900/90 border border-stone-700/80 rounded-2xl text-center text-lg sm:text-xl font-mono tracking-widest text-white placeholder-stone-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition disabled:opacity-50 pr-12"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSecret(!showSecret)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300 transition p-1"
+                    title={showSecret ? 'Ocultar código' : 'Exibir código'}
+                  >
+                    {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {pinError && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center justify-center gap-1.5 text-center">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
+                    <span>{pinError}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isAuthenticating || !pinInput.trim() || isLocked}
+                className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-[0.99] text-stone-950 font-bold rounded-2xl text-sm transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isAuthenticating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Validando Criptografia...</span>
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="w-4 h-4" />
+                    <span>Acessar Painel ADM</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* Dicas e Rodapé de Segurança */}
+          <div className="mt-6 pt-5 border-t border-white/5 space-y-3">
+            <div className="flex items-center justify-between text-[11px] text-stone-400">
+              <span className="flex items-center gap-1 text-emerald-400 font-mono">
+                <CheckCircle2 className="w-3 h-3" /> Rate Limit Ativo
+              </span>
+              <span className="font-mono text-stone-500">Auto-lock: 30min</span>
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold rounded-xl text-sm transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Unlock className="w-4 h-4" /> Acessar Painel ADM
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-stone-700/50 flex items-center justify-between text-xs text-stone-400">
-            <Link href="/" className="hover:text-amber-400 transition flex items-center gap-1">
-              ← Voltar ao site público
-            </Link>
-            <span className="font-mono text-stone-500">v2.4 Pro</span>
+            <div className="flex items-center justify-between text-xs text-stone-400 pt-2">
+              <Link href="/" className="hover:text-amber-400 transition flex items-center gap-1 text-[11px]">
+                ← Voltar ao site público
+              </Link>
+              <a
+                href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Sou%20gestor%20do%20BioVip%20e%20preciso%20de%20ajuda%20com%20o%20acesso%20ADM."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-stone-500 hover:text-amber-400 transition"
+              >
+                Suporte do Gestor
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -1383,11 +1604,12 @@ export default function AdminDashboardClient() {
               <Database className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setIsPinModalOpen(true)}
-              title="Alterar PIN de Segurança"
-              className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-800"
+              onClick={openSecurityModal}
+              title="Central de Segurança & Auditoria de Acesso"
+              className="px-3 py-1.5 text-xs text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <Key className="w-4 h-4" />
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline font-mono">Segurança & Logs</span>
             </button>
             <button
               onClick={exportCSV}
@@ -3872,49 +4094,255 @@ Após coletar e validar todas as informações reais do cliente, retorne ESTRITA
         </div>
       )}
 
-      {/* MODAL: ALTERAR PIN DE SEGURANÇA */}
-      {isPinModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#14181f] border border-stone-800 rounded-3xl max-w-sm w-full p-6 sm:p-8 space-y-5 shadow-2xl relative">
+      {/* MODAL: CENTRAL DE SEGURANÇA & AUDITORIA DE ACESSOS */}
+      {isSecurityModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0F141F] border border-stone-700/80 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
-              onClick={() => setIsPinModalOpen(false)}
-              className="absolute top-5 right-5 text-stone-400 hover:text-white p-1"
+              onClick={() => setIsSecurityModalOpen(false)}
+              className="absolute top-5 right-5 text-stone-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+              title="Fechar"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto mb-3">
-                <Key className="w-6 h-6" />
+            {/* Cabeçalho do Modal */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-amber-400 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Alterar PIN Master</h3>
-              <p className="text-xs text-stone-400 mt-1">
-                Defina um novo código numérico de 4 a 6 dígitos para acessar o painel ADM.
-              </p>
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  Central de Segurança Master
+                </h3>
+                <p className="text-xs text-stone-400">
+                  Proteção de credenciais, logs de auditoria e políticas de acesso ao painel ADM.
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleChangePin} className="space-y-4">
-              <div>
-                <label className="block text-xs text-stone-400 mb-1 font-semibold text-center">Novo PIN Numérico</label>
-                <input
-                  type="password"
-                  maxLength={6}
-                  value={newPinInput}
-                  onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Ex: 8492"
-                  required
-                  className="w-full px-4 py-3 bg-[#0d0f12] border border-stone-700 rounded-xl text-center text-xl font-mono tracking-widest text-white focus:border-amber-400 focus:outline-none"
-                  autoFocus
-                />
-              </div>
+            {/* Navegação entre Abas do Modal */}
+            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+              <button
+                type="button"
+                onClick={() => setSecurityTab('senha')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
+                  securityTab === 'senha'
+                    ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
+                    : 'text-stone-400 hover:text-white hover:bg-stone-800'
+                }`}
+              >
+                <Key className="w-3.5 h-3.5" />
+                <span>Alterar Senha / PIN</span>
+              </button>
 
               <button
-                type="submit"
-                className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold rounded-xl text-xs transition cursor-pointer shadow-lg shadow-amber-500/20"
+                type="button"
+                onClick={() => setSecurityTab('auditoria')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
+                  securityTab === 'auditoria'
+                    ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
+                    : 'text-stone-400 hover:text-white hover:bg-stone-800'
+                }`}
               >
-                Salvar Novo PIN
+                <History className="w-3.5 h-3.5" />
+                <span>Logs de Acesso ({securityLogs.length})</span>
               </button>
-            </form>
+
+              <button
+                type="button"
+                onClick={() => setSecurityTab('politicas')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
+                  securityTab === 'politicas'
+                    ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
+                    : 'text-stone-400 hover:text-white hover:bg-stone-800'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Políticas de Sessão</span>
+              </button>
+            </div>
+
+            {/* ABA 1: ALTERAR SENHA / PIN MASTER */}
+            {securityTab === 'senha' && (
+              <form onSubmit={handleUpdateSecret} className="space-y-4">
+                <div className="p-3 rounded-xl bg-amber-400/5 border border-amber-400/20 text-[11px] text-stone-300 leading-relaxed">
+                  A nova credencial será criptografada imediatamente com <strong>SHA-256 + Salt dinâmico</strong>. Você pode cadastrar um PIN numérico (ex: 6 dígitos) ou uma Senha Mestra alfanumérica.
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-stone-300 mb-1">
+                      Senha ou PIN Atual
+                    </label>
+                    <input
+                      type="password"
+                      value={oldSecretInput}
+                      onChange={(e) => setOldSecretInput(e.target.value)}
+                      placeholder="Digite a credencial atual (padrão: 2026)"
+                      required
+                      className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-stone-300 mb-1">
+                      Nova Senha ou Novo PIN
+                    </label>
+                    <input
+                      type="password"
+                      value={newPinInput}
+                      onChange={(e) => setNewPinInput(e.target.value)}
+                      placeholder="Mínimo 4 caracteres ou dígitos"
+                      required
+                      className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-stone-300 mb-1">
+                      Confirmar Nova Senha ou PIN
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmNewSecretInput}
+                      onChange={(e) => setConfirmNewSecretInput(e.target.value)}
+                      placeholder="Repita exatamente a nova credencial"
+                      required
+                      className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {securityFeedback && (
+                  <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                    securityFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
+                      : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+                  }`}>
+                    {securityFeedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+                    <span>{securityFeedback.msg}</span>
+                  </div>
+                )}
+
+                <div className="pt-2 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsSecurityModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs text-stone-400 hover:text-white transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-bold text-xs hover:brightness-110 transition shadow-md flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Salvar e Criptografar</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* ABA 2: LOGS DE AUDITORIA DE ACESSO */}
+            {securityTab === 'auditoria' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-stone-400">
+                  <span>Últimos registros de autenticação (armazenados localmente):</span>
+                  <span className="font-mono text-[10px] text-amber-400">{securityLogs.length} eventos</span>
+                </div>
+
+                {securityLogs.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-stone-500 bg-stone-900/50 rounded-2xl border border-stone-800">
+                    Nenhum registro de acesso gravado até o momento.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {securityLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-3 ${
+                          log.success
+                            ? 'bg-emerald-500/5 border-emerald-500/20 text-stone-200'
+                            : 'bg-rose-500/5 border-rose-500/20 text-stone-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                            log.success ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                          }`}>
+                            {log.success ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                          </div>
+                          <div>
+                            <div className="font-semibold flex items-center gap-2">
+                              <span>{log.success ? 'Acesso Permitido' : 'Tentativa Bloqueada'}</span>
+                              {log.reason && (
+                                <span className="text-[10px] font-mono text-stone-400">· {log.reason}</span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-stone-500 truncate max-w-sm font-mono mt-0.5">
+                              {log.userAgent}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-[10px] font-mono text-stone-400 shrink-0">
+                          {new Date(log.timestamp).toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ABA 3: POLÍTICAS DE SESSÃO & SEGURANÇA */}
+            {securityTab === 'politicas' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-3">
+                  <h4 className="font-bold text-white flex items-center gap-2">
+                    <Timer className="w-4 h-4 text-amber-400" />
+                    Auto-Lock por Inatividade
+                  </h4>
+                  <p className="text-stone-400 leading-relaxed text-[11.5px]">
+                    Caso o painel fique aberto sem movimentação do mouse ou teclas, a sessão é automaticamente bloqueada para evitar acesso indevido em máquinas compartilhadas.
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    {[15, 30, 60].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => {
+                          const updated = { ...securityConfig, inactivityTimeoutMinutes: mins }
+                          setSecurityConfig(updated)
+                          saveSecurityConfig(updated)
+                        }}
+                        className={`px-3 py-1.5 rounded-lg font-mono text-xs border transition ${
+                          securityConfig.inactivityTimeoutMinutes === mins
+                            ? 'bg-amber-400 text-black border-amber-400 font-bold'
+                            : 'bg-stone-800 border-stone-700 text-stone-300 hover:border-amber-400/50'
+                        }`}
+                      >
+                        {mins} minutos {mins === 30 && '(Padrão)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
+                  <h4 className="font-bold text-white flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-amber-400" />
+                    Regra Anti-Brute-Force
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-1 text-stone-400 text-[11px] leading-relaxed">
+                    <li>Máximo de <strong>5 tentativas incorretas</strong> consecutivas.</li>
+                    <li>Bloqueio obrigatório de <strong>15 minutos</strong> ao atingir o limite.</li>
+                    <li>Delay anti-timing attack de <strong>500ms</strong> aplicado a cada verificação.</li>
+                    <li>Sessão com assinatura criptográfica vinculada à credencial do administrador.</li>
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
