@@ -228,24 +228,29 @@
   /* ======================================================== */
   /* FLUTAÇÃO 3D E ILUMINAÇÃO SUAVE EM SMARTPHONES DA HERO    */
   /* ======================================================== */
-  @keyframes floatPhone3D {
+  @keyframes floatPhone {
     0%, 100% {
       transform: translateY(0px) rotateX(14deg) rotateY(-18deg) rotateZ(6deg);
     }
     50% {
-      transform: translateY(-14px) rotateX(16deg) rotateY(-16deg) rotateZ(7deg);
+      transform: translateY(-12px) rotateX(16deg) rotateY(-16deg) rotateZ(7deg);
     }
   }
 
-  @keyframes pulseRadialGlow {
+  @keyframes pulseGlow {
     0%, 100% {
-      opacity: 0.14;
+      opacity: 0.15;
       transform: scale(1);
     }
     50% {
-      opacity: 0.25;
-      transform: scale(1.08);
+      opacity: 0.3;
+      transform: scale(1.1);
     }
+  }
+
+  .perspective-1000 {
+    perspective: 1200px;
+    transform-style: preserve-3d;
   }
 
   .perspective-container {
@@ -253,22 +258,37 @@
     transform-style: preserve-3d;
   }
 
+  .phone-float-left {
+    animation: floatPhone 6s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .phone-float-center {
+    animation: floatPhone 6.5s ease-in-out infinite 0.8s;
+    will-change: transform;
+  }
+
+  .phone-float-right {
+    animation: floatPhone 7s ease-in-out infinite 1.6s;
+    will-change: transform;
+  }
+
   .animate-float-left {
-    animation: floatPhone3D 6s ease-in-out infinite;
+    animation: floatPhone 6s ease-in-out infinite;
     will-change: transform;
   }
 
   .animate-float-center {
-    animation: floatPhone3D 6.5s ease-in-out infinite 0.8s;
+    animation: floatPhone 6.5s ease-in-out infinite 0.8s;
     will-change: transform;
   }
 
   .animate-float-right {
-    animation: floatPhone3D 7s ease-in-out infinite 1.6s;
+    animation: floatPhone 7s ease-in-out infinite 1.6s;
     will-change: transform;
   }
 
   .bg-radial-luxury {
-    background: radial-gradient(circle at 60% 40%, rgba(226, 184, 87, 0.16) 0%, rgba(9, 9, 11, 0.95) 60%, #09090B 100%);
+    background: radial-gradient(circle at 60% 40%, rgba(226, 184, 87, 0.14) 0%, rgba(9, 9, 11, 0.95) 60%, #09090B 100%);
   }
 }

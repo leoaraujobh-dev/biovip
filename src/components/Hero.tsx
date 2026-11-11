@@ -225,13 +225,13 @@ export default function Hero() {
             </div>
 
             {/* Container 3D com Perspectiva e Iluminação Suave de Fundo */}
-            <div className="perspective-container relative w-full flex items-center justify-center py-6">
+            <div className="perspective-1000 perspective-container relative w-full flex items-center justify-center py-6">
               {/* Iluminação suave e respiração na iluminação de fundo */}
-              <div className="absolute w-[340px] sm:w-[440px] h-[580px] rounded-full blur-3xl pointer-events-none bg-radial-luxury animate-[pulseRadialGlow_6s_ease-in-out_infinite]" />
+              <div className="absolute w-[340px] sm:w-[440px] h-[580px] rounded-full blur-3xl pointer-events-none bg-radial-luxury animate-[pulseGlow_6s_ease-in-out_infinite]" />
 
               {/* iPhone 16 Pro Frame com Animação 3D de Flutuação Suave */}
               <div
-                className="relative w-[300px] sm:w-[325px] aspect-[9/19] rounded-[48px] p-2.5 bg-stone-900 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.8),0_0_50px_rgba(226,184,87,0.18)] ring-1 ring-white/20 border-4 border-stone-800 transition-all duration-500 group animate-float-center hover:[animation-play-state:paused] z-20"
+                className="relative w-[300px] sm:w-[325px] aspect-[9/19] rounded-[48px] p-2.5 bg-stone-900 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.8),0_0_50px_rgba(226,184,87,0.18)] ring-1 ring-white/20 border-4 border-stone-800 transition-all duration-500 group phone-float-center animate-float-center hover:[animation-play-state:paused] z-20"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
