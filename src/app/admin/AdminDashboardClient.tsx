@@ -1538,14 +1538,14 @@ export default function AdminDashboardClient() {
   return (
     <div className="min-h-screen bg-[#0d0f12] text-stone-200">
       {/* Topo do Painel */}
-      <header className="sticky top-0 z-30 bg-[#12151a]/90 backdrop-blur-md border-b border-stone-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2.5">
+      <header className="sticky top-0 z-30 bg-[#12151a]/95 backdrop-blur-md border-b border-stone-800 shadow-md">
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link href="/" className="flex items-center gap-2.5 shrink-0">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 flex items-center justify-center text-stone-950 font-bold text-base shadow-md">
                 B
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <div className="text-sm font-bold text-white tracking-wide flex items-center gap-2">
                   BIOVIP ADMIN <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">ASSINATURAS</span>
                 </div>
@@ -1553,7 +1553,7 @@ export default function AdminDashboardClient() {
               </div>
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-1 ml-6 pl-6 border-l border-stone-800 text-xs">
+            <nav className="hidden lg:flex items-center gap-1 ml-4 pl-4 border-l border-stone-800 text-xs overflow-x-auto scrollbar-none py-1">
               <button
                 onClick={() => setActiveTab('assinaturas')}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer font-medium ${
@@ -1677,7 +1677,7 @@ export default function AdminDashboardClient() {
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* KPI CARDS */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: MRR */}
@@ -1869,8 +1869,8 @@ export default function AdminDashboardClient() {
             </div>
 
             {/* TABELA DE ASSINATURAS & BIO SITES */}
-            <div className="overflow-x-auto rounded-2xl border border-stone-800">
-              <table className="w-full text-left border-collapse">
+            <div className="w-full overflow-x-auto rounded-2xl border border-stone-800 bg-[#0d0f12] shadow-inner">
+              <table className="w-full text-left border-collapse min-w-[1100px]">
                 <thead>
                   <tr className="bg-[#0f1217] text-[11px] font-mono uppercase tracking-wider text-stone-400 border-b border-stone-800">
                     <th className="py-3 px-4">Bio Site / Profissional</th>
@@ -1879,7 +1879,9 @@ export default function AdminDashboardClient() {
                     <th className="py-3 px-4">Valor</th>
                     <th className="py-3 px-4">Próx. Cobrança</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Ações Rápidas</th>
+                    <th className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#0f1217] z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80 min-w-[320px]">
+                      Ações Rápidas
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-800/60 text-xs">
@@ -1987,12 +1989,12 @@ export default function AdminDashboardClient() {
                           </td>
 
                           {/* Ações Rápidas */}
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80">
+                            <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
                               <Link
                                 href={`/conta?edit=${proj.slug}`}
                                 title="Editar no Construtor Visual (Cores, Fontes, Botões, Foto, Páginas)"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-stone-950 font-semibold text-[11px] transition border border-amber-500/30"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-stone-950 font-semibold text-[11px] transition border border-amber-500/30 shrink-0"
                               >
                                 <Wand2 className="w-3.5 h-3.5" />
                                 <span>Editar Visual</span>
@@ -2004,7 +2006,7 @@ export default function AdminDashboardClient() {
                                   setIsCloneModalOpen(true)
                                 }}
                                 title="Clonar este Modelo para um Novo Cliente"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer shrink-0"
                               >
                                 <Zap className="w-3.5 h-3.5" />
                               </button>
@@ -2012,7 +2014,7 @@ export default function AdminDashboardClient() {
                                 type="button"
                                 onClick={() => setQrModalSite({ name: proj.name, slug: proj.slug, url: `https://biovip.com.br/${proj.slug}`, category: proj.category })}
                                 title="Visualizar QR Code de Divulgação"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer shrink-0"
                               >
                                 <QrCode className="w-3.5 h-3.5" />
                               </button>
@@ -2020,7 +2022,7 @@ export default function AdminDashboardClient() {
                                 href={`/${proj.slug}`}
                                 target="_blank"
                                 title="Abrir Bio Site ao Vivo"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition shrink-0"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </Link>
@@ -2031,7 +2033,7 @@ export default function AdminDashboardClient() {
                                   setIsProjectModalOpen(true)
                                 }}
                                 title="Editar Modelo & Case"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer shrink-0"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
@@ -2039,7 +2041,7 @@ export default function AdminDashboardClient() {
                                 type="button"
                                 onClick={() => handleDeleteProject(proj.slug)}
                                 title="Remover Modelo"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-rose-900/30 hover:text-rose-400 text-stone-400 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-rose-900/30 hover:text-rose-400 text-stone-400 transition cursor-pointer shrink-0"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -2199,24 +2201,35 @@ export default function AdminDashboardClient() {
                           </td>
 
                           {/* Ações */}
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80 min-w-[340px]">
+                            <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
                               {/* Editar Visual do Bio Site */}
                               <Link
                                 href={`/conta?edit=${sub.slug}`}
                                 title="Editar Bio Site no Construtor Visual (Cores, Fontes, Botões, Foto, Páginas)"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-stone-950 font-semibold text-[11px] transition border border-amber-500/30"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-stone-950 font-semibold text-[11px] transition border border-amber-500/30 shrink-0"
                               >
                                 <Wand2 className="w-3.5 h-3.5" />
                                 <span>Editar Visual</span>
                               </Link>
+
+                              {/* Abrir Link do Bio Site */}
+                              <a
+                                href={sub.bioSiteUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Abrir Bio Site do Cliente"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition shrink-0"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
 
                               {/* Botão Pix Cobrança */}
                               <button
                                 type="button"
                                 onClick={() => setPixModalSub(sub)}
                                 title="Gerar Cobrança Pix / QR Code"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer shrink-0"
                               >
                                 <QrCode className="w-3.5 h-3.5" />
                               </button>
@@ -2228,7 +2241,7 @@ export default function AdminDashboardClient() {
                                     type="button"
                                     onClick={() => handleConfirmPayment(sub.id)}
                                     title="Confirmar Pagamento Pix Recebido (Dar Baixa)"
-                                    className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 transition cursor-pointer"
+                                    className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 transition cursor-pointer shrink-0"
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                   </button>
@@ -2236,7 +2249,7 @@ export default function AdminDashboardClient() {
                                     type="button"
                                     onClick={() => handleCopyBillingWA(sub)}
                                     title="Copiar Mensagem Amigável de Cobrança Pix para WhatsApp"
-                                    className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition cursor-pointer"
+                                    className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition cursor-pointer shrink-0"
                                   >
                                     <DollarSign className="w-3.5 h-3.5" />
                                   </button>
@@ -2248,7 +2261,7 @@ export default function AdminDashboardClient() {
                                 type="button"
                                 onClick={() => setQrModalSite({ name: sub.businessName, slug: sub.slug, url: sub.bioSiteUrl, category: sub.niche })}
                                 title="Visualizar QR Code de Divulgação (Display de Balcão / Cartão)"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer shrink-0"
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
@@ -2258,7 +2271,7 @@ export default function AdminDashboardClient() {
                                 type="button"
                                 onClick={() => handleCopyProposalWA(sub)}
                                 title="Copiar Proposta Comercial Persuasiva para WhatsApp"
-                                className="p-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 transition cursor-pointer shrink-0"
                               >
                                 <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
                               </button>
@@ -2268,7 +2281,7 @@ export default function AdminDashboardClient() {
                                 type="button"
                                 onClick={() => handleToggleMaintenance(sub.id)}
                                 title="Alternar Modo Manutenção (Tela neutra elegante sem quebrar reputação)"
-                                className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 transition cursor-pointer shrink-0"
                               >
                                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
                               </button>
@@ -2281,7 +2294,7 @@ export default function AdminDashboardClient() {
                                   setIsModalOpen(true)
                                 }}
                                 title="Editar Assinatura"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition cursor-pointer shrink-0"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
@@ -2291,7 +2304,7 @@ export default function AdminDashboardClient() {
                                 type="button"
                                 onClick={() => handleDeleteSubscription(sub.id)}
                                 title="Excluir"
-                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-rose-900/30 hover:text-rose-400 text-stone-400 transition cursor-pointer"
+                                className="p-1.5 rounded-lg bg-stone-800 hover:bg-rose-900/30 hover:text-rose-400 text-stone-400 transition cursor-pointer shrink-0"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -2812,8 +2825,8 @@ export default function AdminDashboardClient() {
             </div>
 
             {/* Tabela de Modelos de Portfólio */}
-            <div className="overflow-x-auto rounded-2xl border border-stone-800 bg-[#0d0f12]">
-              <table className="w-full text-left text-xs">
+            <div className="w-full overflow-x-auto rounded-2xl border border-stone-800 bg-[#0d0f12] shadow-inner">
+              <table className="w-full text-left text-xs min-w-[1000px]">
                 <thead className="bg-[#14181f] text-stone-400 font-mono text-[11px] uppercase border-b border-stone-800">
                   <tr>
                     <th className="py-3 px-4">Modelo / Profissional</th>
@@ -2821,14 +2834,16 @@ export default function AdminDashboardClient() {
                     <th className="py-3 px-4">Tipo</th>
                     <th className="py-3 px-4">Métricas do Case</th>
                     <th className="py-3 px-4 text-center">Status no Portfólio</th>
-                    <th className="py-3 px-4 text-right">Ações</th>
+                    <th className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#14181f] z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80 min-w-[280px]">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-800/60">
                   {portfolioList.map((proj) => {
                     const isVisible = proj.inPortfolio !== false
                     return (
-                      <tr key={proj.slug} className="hover:bg-stone-800/30 transition">
+                      <tr key={proj.slug} className="hover:bg-stone-800/30 transition group">
                         {/* Imagem + Nome + Link */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
@@ -2903,12 +2918,12 @@ export default function AdminDashboardClient() {
                         </td>
 
                         {/* Ações */}
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="py-3.5 pr-6 pl-4 text-right sticky right-0 bg-[#12151c] group-hover:bg-[#1a202c] transition-colors z-20 shadow-[-16px_0_20px_-8px_rgba(0,0,0,0.6)] border-l border-stone-800/80">
+                          <div className="flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
                             <Link
                               href={`/conta?edit=${proj.slug}`}
                               title="Editar no Construtor Visual (Cores, Fontes, Botões, Foto, Páginas)"
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-stone-950 font-semibold text-[11px] transition border border-amber-500/30"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500 hover:text-stone-950 font-semibold text-[11px] transition border border-amber-500/30 shrink-0"
                             >
                               <Wand2 className="w-3.5 h-3.5" />
                               <span>Editar Visual</span>
@@ -2918,7 +2933,7 @@ export default function AdminDashboardClient() {
                               href={`/${proj.slug}`}
                               target="_blank"
                               title="Abrir Bio Site ao Vivo"
-                              className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition"
+                              className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition shrink-0"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </Link>
@@ -2929,7 +2944,7 @@ export default function AdminDashboardClient() {
                                 setIsProjectModalOpen(true)
                               }}
                               title="Editar Case de Estudo"
-                              className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer"
+                              className="p-1.5 rounded-lg bg-stone-800 hover:bg-amber-500/20 hover:text-amber-300 text-stone-300 transition cursor-pointer shrink-0"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
@@ -2937,7 +2952,7 @@ export default function AdminDashboardClient() {
                             <button
                               onClick={() => handleDeleteProject(proj.slug)}
                               title="Remover Modelo"
-                              className="p-1.5 rounded-lg bg-stone-800 hover:bg-rose-900/30 hover:text-rose-400 text-stone-400 transition cursor-pointer"
+                              className="p-1.5 rounded-lg bg-stone-800 hover:bg-rose-900/30 hover:text-rose-400 text-stone-400 transition cursor-pointer shrink-0"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
