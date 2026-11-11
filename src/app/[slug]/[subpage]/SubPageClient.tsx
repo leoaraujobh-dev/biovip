@@ -62,6 +62,14 @@ export default function SubPageClient({
   const effWhatsapp = modelData?.whatsapp || whatsapp
   const cleanWhatsapp = effWhatsapp.replace(/\D/g, '')
 
+  const triggerHaptic = (ms: number = 14) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(ms)
+      } catch {}
+    }
+  }
+
   // Recupera paleta e tipografia do projeto com suporte a edições
   const resolvedPaletteId = modelData?.paletteId || 'luxo_nude'
   const resolvedTypographyId = modelData?.typographyId || 'instrument'
@@ -119,9 +127,10 @@ export default function SubPageClient({
         >
           <Link
             href={`/${slug}`}
-            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-stone-400 hover:text-white transition"
+            onClick={() => triggerHaptic(12)}
+            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-stone-300 hover:text-amber-400 transition font-bold"
           >
-            <ArrowLeft className="w-4 h-4" /> Voltar
+            <ArrowLeft className="w-4 h-4 text-amber-400" /> BioSite
           </Link>
 
           <span className="text-[11px] font-serif font-bold text-stone-300 truncate max-w-[180px]">
@@ -447,12 +456,15 @@ export default function SubPageClient({
           )}
 
           {/* BOTÃO PRINCIPAL DE CONVERSÃO NO WHATSAPP */}
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
             <a
               href={`https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(`Olá! Estou na página "${template.title}" do seu Bio Site (${name}) e gostaria de agendar meu atendimento.`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => handleTrackLead('Confirmar no WhatsApp')}
+              onClick={() => {
+                triggerHaptic(14)
+                handleTrackLead('Confirmar no WhatsApp')
+              }}
               className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition active:scale-[0.98] cursor-pointer"
               style={{
                 backgroundColor: palette.accent,
@@ -462,6 +474,17 @@ export default function SubPageClient({
               <MessageCircle className="w-4 h-4 fill-current" />
               <span>Confirmar Atendimento no WhatsApp</span>
             </a>
+
+            <div className="text-center pt-1">
+              <Link
+                href={`/${slug}`}
+                onClick={() => triggerHaptic(12)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/40 text-stone-300 hover:text-white text-[11px] font-mono font-bold transition shadow-sm"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+                <span>Voltar ao Perfil Principal</span>
+              </Link>
+            </div>
           </div>
         </main>
 

@@ -144,6 +144,7 @@ export default function ContaClient() {
 
   // Estratégia Híbrida de Foto & IA
   const [storyModalOpen, setStoryModalOpen] = useState(false)
+  const [isGeneratingStoryPng, setIsGeneratingStoryPng] = useState(false)
   const [customPhotoSrc, setCustomPhotoSrc] = useState<string | null>(null)
   const [photoTreatment, setPhotoTreatment] = useState<'organico' | 'silhueta' | 'original'>('organico')
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false)
@@ -2581,6 +2582,140 @@ export default function ContaClient() {
     )
   }
 
+  // Geração e Download Direto da Arte do Story em PNG HD (1080x1920)
+  const handleDownloadStoryPng = async () => {
+    setIsGeneratingStoryPng(true)
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1080
+      canvas.height = 1920
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      // 1. Fundo com Degradê Cinematográfico
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920)
+      bgGrad.addColorStop(0, '#0f1118')
+      bgGrad.addColorStop(0.5, '#090a0f')
+      bgGrad.addColorStop(1, '#050608')
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, 1080, 1920)
+
+      // 2. Aura e Glow Dourado Central
+      const auraGrad = ctx.createRadialGradient(540, 780, 50, 540, 780, 480)
+      auraGrad.addColorStop(0, 'rgba(251, 191, 36, 0.16)')
+      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)')
+      ctx.fillStyle = auraGrad
+      ctx.fillRect(0, 300, 1080, 960)
+
+      // 3. Topo do Story: Monograma & Badge
+      ctx.fillStyle = '#f59e0b'
+      ctx.font = 'italic bold 56px "Playfair Display", Georgia, serif'
+      ctx.textAlign = 'left'
+      ctx.fillText(monogram || 'VIP', 90, 140)
+
+      // Badge "NO AR NO INSTAGRAM"
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.15)'
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)'
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.roundRect(690, 95, 300, 56, 28)
+      ctx.fill()
+      ctx.stroke()
+
+      ctx.fillStyle = '#34d399'
+      ctx.font = 'bold 24px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText('● NO AR NO INSTAGRAM', 840, 133)
+
+      // 4. Foto de Estúdio Circular do Profissional
+      const photoSrc = customPhotoSrc || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = photoSrc
+
+      await new Promise((resolve) => {
+        img.onload = resolve
+        img.onerror = resolve
+      })
+
+      const cx = 540
+      const cy = 680
+      const r = 240
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(cx, cy, r, 0, Math.PI * 2)
+      ctx.closePath()
+      ctx.clip()
+      try {
+        ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2)
+      } catch {
+        ctx.fillStyle = '#1e293b'
+        ctx.fill()
+      }
+      ctx.restore()
+
+      // Borda Dourada Externa
+      ctx.beginPath()
+      ctx.arc(cx, cy, r, 0, Math.PI * 2)
+      ctx.lineWidth = 14
+      ctx.strokeStyle = '#f59e0b'
+      ctx.stroke()
+
+      // 5. Nome do Profissional e Nicho
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 64px "Playfair Display", Georgia, serif'
+      ctx.textAlign = 'center'
+      ctx.fillText(brandName || 'Dra. Ana Freire', 540, 1020)
+
+      ctx.fillStyle = '#fbbf24'
+      ctx.font = 'bold 28px monospace'
+      ctx.fillText((businessTitle || niche || 'ODONTOLOGIA ESTÉTICA').toUpperCase(), 540, 1080)
+
+      // 6. Selo de Avaliações 5.0
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.roundRect(310, 1140, 460, 64, 32)
+      ctx.fill()
+      ctx.stroke()
+
+      ctx.fillStyle = '#fde68a'
+      ctx.font = '26px sans-serif'
+      ctx.fillText('★ 5.0 · Avaliações 5 Estrelas no Google', 540, 1182)
+
+      // 7. Figurinha de Link do Instagram (Sticker 3D)
+      ctx.fillStyle = '#ffffff'
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'
+      ctx.shadowBlur = 30
+      ctx.beginPath()
+      ctx.roundRect(140, 1480, 800, 140, 36)
+      ctx.fill()
+
+      ctx.shadowColor = 'transparent'
+      ctx.fillStyle = '#0f172a'
+      ctx.font = 'bold 36px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText(`biovip.com.br/${slug}`.toUpperCase(), 540, 1565)
+
+      ctx.fillStyle = '#94a3b8'
+      ctx.font = 'bold 24px monospace'
+      ctx.fillText('TOQUE NA FIGURINHA PARA AGENDAR', 540, 1680)
+
+      // 8. Disparar Download
+      const dataUrl = canvas.toDataURL('image/png')
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = `story-biovip-${slug}.png`
+      a.click()
+    } catch (e) {
+      console.error('Erro ao gerar PNG do story:', e)
+    } finally {
+      setIsGeneratingStoryPng(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white text-stone-900 font-sans selection:bg-stone-200">
       {/* ========================================================= */}
@@ -4089,8 +4224,26 @@ export default function ContaClient() {
               </div>
             </div>
 
-            {/* Ações: Copiar Link e Fechar */}
+            {/* Ações: Baixar Imagem HD, Copiar Link e Fechar */}
             <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                disabled={isGeneratingStoryPng}
+                onClick={handleDownloadStoryPng}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-500 text-stone-950 font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer disabled:opacity-60"
+              >
+                {isGeneratingStoryPng ? (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                    <span>Gerando Imagem HD (1080x1920)...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Baixar Imagem PNG para o Story</span>
+                  </>
+                )}
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -4098,9 +4251,9 @@ export default function ContaClient() {
                   setCopiedLink(true)
                   setTimeout(() => setCopiedLink(false), 2000)
                 }}
-                className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-stone-900 border border-stone-800 hover:border-amber-400/40 text-stone-200 font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
-                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
                 <span>{copiedLink ? 'Link Copiado!' : 'Copiar Link para a Figurinha'}</span>
               </button>
               <button
