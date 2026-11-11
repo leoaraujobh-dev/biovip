@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   ArrowRight,
   Sparkles,
@@ -14,56 +13,76 @@ import {
   MessageCircle,
   ExternalLink,
   ChevronRight,
-  Eye
+  Eye,
+  Pause,
+  Play
 } from 'lucide-react'
 
-const heroPreviews = [
+export interface HeroRealBioSite {
+  id: string
+  slug: string
+  name: string
+  label: string
+  niche: string
+  badge: string
+}
+
+const heroPreviews: HeroRealBioSite[] = [
   {
     id: 'ana',
-    name: 'Dra. Ana Freire',
-    role: 'Odontologia Estética & Reabilitação',
-    badge: 'CRO 45.291-SP',
-    photo: 'https://images.unsplash.com/photo-1594824813589-a9a7d32e92c2?q=80&w=900&auto=format&fit=crop',
-    bgColor: '#1c1917',
-    textColor: '#f5f5f4',
-    accentColor: '#d97706',
     slug: 'dra-ana-freire',
-    primaryButton: 'Agendar Consulta VIP',
-    secondaryButton: 'Ver Transformações Antes & Depois',
-    thirdButton: 'Tabela de Procedimentos',
+    name: 'Dra. Ana Freire',
+    label: 'Odonto VIP',
+    niche: 'Odontologia Estética & Reabilitação Oral',
+    badge: 'CRO-PE 22.675'
   },
   {
-    id: 'iris',
-    name: 'Studio Íris',
-    role: 'Lash Designer & Master em Olhar',
-    badge: 'Master Certificada',
-    photo: 'https://images.unsplash.com/photo-1588516903720-8ceb67f9ef84?q=80&w=900&auto=format&fit=crop',
-    bgColor: '#181216',
-    textColor: '#fdf2f8',
-    accentColor: '#db2777',
-    slug: 'studio-iris',
-    primaryButton: 'Garantir meu Horário na Agenda',
-    secondaryButton: 'Menu de Técnicas de Cílios',
-    thirdButton: 'Galeria de Olhares Reais',
+    id: 'dompedro',
+    slug: 'dom-pedro-barbearia',
+    name: 'Dom Pedro',
+    label: 'Barbearia Nobre',
+    niche: 'Barbearia Tradicional & Visagismo',
+    badge: 'MEMBRO VIP ABRAM'
   },
   {
-    id: 'renato',
-    name: 'Dr. Renato Andrade',
-    role: 'Cirurgia Plástica & Reconstrução',
-    badge: 'CRM 128.490-SP · RQE',
-    photo: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=900&auto=format&fit=crop',
-    bgColor: '#0f172a',
-    textColor: '#f8fafc',
-    accentColor: '#0ea5e9',
-    slug: 'dr-renato-andrade',
-    primaryButton: 'Falar com Secretária Executiva',
-    secondaryButton: 'Procedimentos & Hospital',
-    thirdButton: 'Corpo Clínico & Currículo',
+    id: 'helena',
+    slug: 'studio-helena-beaute',
+    name: 'Helena Beauté',
+    label: 'Lash & Estética',
+    niche: 'Lash Designer & Alta Estética Facial',
+    badge: 'MASTER INTERNACIONAL'
   },
+  {
+    id: 'camila',
+    slug: 'dra-camila-vasconcelos',
+    name: 'Dra. Camila',
+    label: 'Dermatologia',
+    niche: 'Dermatologia & Alta Estética Facial',
+    badge: 'CRM 142.890-SP'
+  }
 ]
 
 export default function Hero() {
-  const [selectedPreview, setSelectedPreview] = useState(heroPreviews[0])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false)
+
+  const selectedPreview = heroPreviews[currentIndex]
+
+  // Rotação Automática a cada 3 segundos
+  useEffect(() => {
+    if (isHovered || isManuallyPaused) return
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % heroPreviews.length)
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [isHovered, isManuallyPaused])
+
+  const handleSelectPreview = (idx: number) => {
+    setCurrentIndex(idx)
+  }
 
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-24 lg:pt-32 pb-20 overflow-hidden bg-white">
@@ -126,14 +145,14 @@ export default function Hero() {
                 href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Quero%20meu%20BioSite%20pronto%20em%2024h."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-4 shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40 w-full sm:w-auto font-bold"
+                className="btn-primary inline-flex items-center justify-center gap-2 text-base px-8 py-4 shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40 w-full sm:w-auto font-bold cursor-pointer"
               >
                 Quero Meu Microsite Pronto em 24h
                 <ArrowRight className="w-5 h-5" />
               </a>
               <Link
                 href="#planos"
-                className="btn-secondary text-base px-7 py-4 w-full sm:w-auto border-stone-300 hover:border-dark-900 font-semibold text-center"
+                className="btn-secondary text-base px-7 py-4 w-full sm:w-auto border-stone-300 hover:border-dark-900 font-semibold text-center cursor-pointer"
               >
                 Ver Planos &amp; Valores
               </Link>
@@ -149,18 +168,18 @@ export default function Hero() {
                 />
                 <img
                   className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover"
-                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop"
-                  alt="Dr Renato"
+                  src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=200&auto=format&fit=crop"
+                  alt="Dom Pedro"
                 />
                 <img
                   className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover"
                   src="https://images.unsplash.com/photo-1588516903720-8ceb67f9ef84?q=80&w=200&auto=format&fit=crop"
-                  alt="Studio Iris"
+                  alt="Studio Helena"
                 />
                 <img
                   className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover"
                   src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop"
-                  alt="Dra Carolina"
+                  alt="Dra Camila"
                 />
               </div>
               <div className="text-left text-xs sm:text-sm text-dark-600">
@@ -172,39 +191,56 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right Column: Live Interactive Mockup */}
+          {/* Right Column: Demonstrador de BioSite Real com Troca a cada 3 Segundos */}
           <div className="lg:col-span-5 flex flex-col items-center">
-            {/* Interactive Theme Switcher Pills */}
-            <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-2xl border border-stone-200 mb-4 max-w-full overflow-x-auto">
-              {heroPreviews.map((preview) => (
-                <button
-                  key={preview.id}
-                  onClick={() => setSelectedPreview(preview)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-                    selectedPreview.id === preview.id
-                      ? 'bg-white text-dark-900 shadow-sm border border-stone-200/80'
-                      : 'text-stone-500 hover:text-stone-900'
-                  }`}
-                >
-                  {preview.name.split(' ')[0]} ({preview.id === 'ana' ? 'Odonto' : preview.id === 'iris' ? 'Lash' : 'Médico'})
-                </button>
-              ))}
+            {/* Interactive Theme Switcher Pills com Barra de Progresso de 3s */}
+            <div className="flex items-center gap-1.5 p-1.5 bg-stone-100/90 backdrop-blur-md rounded-2xl border border-stone-200/80 mb-4 max-w-full overflow-x-auto shadow-xs">
+              {heroPreviews.map((preview, idx) => {
+                const isActive = idx === currentIndex
+                return (
+                  <button
+                    key={preview.id}
+                    onClick={() => handleSelectPreview(idx)}
+                    className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap overflow-hidden ${
+                      isActive
+                        ? 'bg-white text-dark-900 shadow-md border border-stone-200/90 font-bold scale-[1.02]'
+                        : 'text-stone-500 hover:text-stone-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <span>{preview.label}</span>
+                    {/* Barra de progresso animada de 3 segundos no botão ativo */}
+                    {isActive && (
+                      <div
+                        key={`bar-${currentIndex}-${isHovered || isManuallyPaused ? 'paused' : 'running'}`}
+                        className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all"
+                        style={{
+                          width: isHovered || isManuallyPaused ? '100%' : '100%',
+                          animation: isHovered || isManuallyPaused ? 'none' : 'heroProgress 3000ms linear forwards'
+                        }}
+                      />
+                    )}
+                  </button>
+                )
+              })}
             </div>
 
-            {/* iPhone 16 Pro Frame */}
-            <div className="relative w-[300px] sm:w-[320px] aspect-[9/19] rounded-[48px] p-3 bg-stone-900 shadow-2xl ring-1 ring-white/20 border-4 border-stone-800">
-              
-              {/* Dynamic Island */}
-              <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-30 flex items-center justify-between px-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-[9px] font-mono font-bold text-stone-300 tracking-wider">
+            {/* iPhone 16 Pro Frame com BioSites Reais em Iframe */}
+            <div
+              className="relative w-[300px] sm:w-[325px] aspect-[9/19] rounded-[48px] p-2.5 bg-stone-900 shadow-2xl ring-1 ring-white/20 border-4 border-stone-800 transition-transform duration-300 group"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
+              {/* Dynamic Island com indicador LIVE */}
+              <div className="absolute top-5 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-full z-40 flex items-center justify-between px-3 shadow-md pointer-events-none">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span className="text-[8.5px] font-mono font-bold text-amber-300 tracking-wider">
                   BIOVIP LIVE
                 </span>
-                <div className="w-2 h-2 rounded-full bg-white/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
               </div>
 
               {/* Floating Badge Left */}
-              <div className="absolute -left-6 top-24 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 shadow-xl border border-emerald-100 flex items-center gap-2 z-30 animate-bounce duration-1000 hidden sm:flex">
+              <div className="absolute -left-6 top-24 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 shadow-xl border border-emerald-100 flex items-center gap-2 z-30 animate-bounce duration-1000 hidden sm:flex pointer-events-none">
                 <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
                   ⚡
                 </div>
@@ -215,7 +251,7 @@ export default function Hero() {
               </div>
 
               {/* Floating Badge Right */}
-              <div className="absolute -right-6 bottom-28 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 shadow-xl border border-amber-100 flex items-center gap-2 z-30 hidden sm:flex">
+              <div className="absolute -right-6 bottom-28 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 shadow-xl border border-amber-100 flex items-center gap-2 z-30 hidden sm:flex pointer-events-none">
                 <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs">
                   📈
                 </div>
@@ -225,93 +261,105 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Inside Screen Content */}
-              <div
-                className="w-full h-full rounded-[38px] overflow-hidden relative flex flex-col justify-between pt-10 pb-6 px-4 text-center transition-colors duration-500"
-                style={{ backgroundColor: selectedPreview.bgColor, color: selectedPreview.textColor }}
-              >
-                {/* Organic Studio Fade Image */}
-                <div className="relative w-full aspect-[4/4] rounded-2xl overflow-hidden mb-2 group">
-                  <Image
-                    src={selectedPreview.photo}
-                    alt={selectedPreview.name}
-                    fill
-                    className="object-cover"
-                    sizes="300px"
-                  />
-                  <div
-                    className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent"
-                    style={{
-                      backgroundImage: `linear-gradient(to top, ${selectedPreview.bgColor} 0%, transparent 60%)`,
-                    }}
-                  />
-                </div>
+              {/* Home Indicator Bar no rodapé */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-28 h-1 bg-white/30 rounded-full z-40 pointer-events-none" />
 
-                {/* Professional Name & Title */}
-                <div className="relative -mt-6 z-10 space-y-1">
-                  <div className="inline-block px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[10px] font-mono border border-white/10">
-                    {selectedPreview.badge}
-                  </div>
-                  <div className="font-serif text-lg font-bold tracking-tight">
-                    {selectedPreview.name}
-                  </div>
-                  <div className="text-[11px] opacity-80 line-clamp-1">
-                    {selectedPreview.role}
-                  </div>
-                </div>
-
-                {/* Simulated High-Converting Buttons */}
-                <div className="space-y-2 mt-3">
-                  <div className="p-2.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 text-xs font-semibold flex items-center justify-between shadow-sm relative overflow-hidden group">
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{selectedPreview.primaryButton}</span>
+              {/* Tela Interna do iPhone com os BioSites Reais Pré-carregados */}
+              <div className="w-full h-full rounded-[38px] overflow-hidden relative bg-[#07090E] shadow-inner">
+                {heroPreviews.map((preview, idx) => {
+                  const isActive = idx === currentIndex
+                  return (
+                    <div
+                      key={preview.id}
+                      className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
+                        isActive
+                          ? 'opacity-100 pointer-events-auto z-10'
+                          : 'opacity-0 pointer-events-none z-0'
+                      }`}
+                    >
+                      <iframe
+                        src={`/${preview.slug}?preview=true`}
+                        title={`BioSite Real de ${preview.name}`}
+                        className="w-full h-full border-0 bg-[#07090E]"
+                        loading={idx === 0 ? 'eager' : 'lazy'}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          border: 'none',
+                          overflowY: 'auto',
+                          WebkitOverflowScrolling: 'touch'
+                        }}
+                      />
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-                    {/* Shimmer sweep effect */}
-                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                  </div>
+                  )
+                })}
 
-                  <div className="p-2 rounded-xl bg-white/10 border border-white/10 text-[11px] flex items-center justify-between opacity-90">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3 h-3 text-amber-300" />
-                      <span>{selectedPreview.secondaryButton}</span>
-                    </div>
-                    <ChevronRight className="w-3 h-3 opacity-60" />
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-white/10 border border-white/10 text-[11px] flex items-center justify-between opacity-90">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3 h-3 text-sky-300" />
-                      <span>{selectedPreview.thirdButton}</span>
-                    </div>
-                    <ChevronRight className="w-3 h-3 opacity-60" />
-                  </div>
-                </div>
-
-                {/* Bottom link to view live */}
-                <div className="pt-2">
+                {/* Botão flutuante para abrir o BioSite em tela cheia */}
+                <div className="absolute bottom-5 left-0 right-0 z-30 flex justify-center px-4 pointer-events-auto">
                   <Link
                     href={`/${selectedPreview.slug}`}
                     target="_blank"
-                    className="inline-flex items-center gap-1 text-[10px] underline opacity-70 hover:opacity-100"
+                    className="px-3.5 py-1.5 rounded-full bg-stone-900/85 backdrop-blur-md border border-white/20 text-white text-[10.5px] font-mono font-bold flex items-center gap-1.5 shadow-xl hover:bg-stone-800 hover:scale-105 active:scale-95 transition"
                   >
-                    <span>Ver biosite em tela cheia</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
+                    <span>Ver {selectedPreview.name} em tela cheia</span>
+                    <ExternalLink className="w-3 h-3 text-amber-400" />
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* Caption under phone */}
-            <p className="text-xs text-stone-400 mt-4 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Exibindo prévia real de cliente BioVip
-            </p>
+            {/* Legenda e Controles sob o iPhone */}
+            <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 text-xs text-stone-500">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="font-medium text-stone-700">
+                  Exibindo biosite real no ar
+                </span>
+                <span className="text-stone-400">·</span>
+                <span className="font-mono text-[11px] text-amber-600 font-semibold">
+                  Trocando a cada 3s
+                </span>
+              </div>
+
+              {/* Botão de Pausar / Continuar rotação */}
+              <button
+                type="button"
+                onClick={() => setIsManuallyPaused(!isManuallyPaused)}
+                className="px-2.5 py-1 rounded-lg border border-stone-200 hover:border-stone-300 text-[10.5px] font-mono text-stone-600 hover:text-dark-900 flex items-center gap-1 bg-stone-50 hover:bg-stone-100 transition cursor-pointer"
+                title={isManuallyPaused ? 'Retomar rotação automática' : 'Pausar rotação para visualizar'}
+              >
+                {isManuallyPaused ? (
+                  <>
+                    <Play className="w-3 h-3 text-emerald-600" />
+                    <span>Continuar</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-3 h-3 text-stone-400" />
+                    <span>Pausar</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
         </div>
       </div>
+
+      {/* Keyframe Animation para a barra de progresso de 3 segundos */}
+      <style jsx global>{`
+        @keyframes heroProgress {
+          0% {
+            width: 0%;
+          }
+          100% {
+            width: 100%;
+          }
+        }
+      `}</style>
     </section>
   )
 }
