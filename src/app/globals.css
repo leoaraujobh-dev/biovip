@@ -224,4 +224,51 @@
     );
     box-shadow: 0 0 10px rgba(226, 184, 87, 0.5);
   }
+
+  /* ======================================================== */
+  /* FLUTAÇÃO 3D E ILUMINAÇÃO SUAVE EM SMARTPHONES DA HERO    */
+  /* ======================================================== */
+  @keyframes floatPhone3D {
+    0%, 100% {
+      transform: translateY(0px) rotateX(14deg) rotateY(-18deg) rotateZ(6deg);
+    }
+    50% {
+      transform: translateY(-14px) rotateX(16deg) rotateY(-16deg) rotateZ(7deg);
+    }
+  }
+
+  @keyframes pulseRadialGlow {
+    0%, 100% {
+      opacity: 0.14;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.25;
+      transform: scale(1.08);
+    }
+  }
+
+  .perspective-container {
+    perspective: 1200px;
+    transform-style: preserve-3d;
+  }
+
+  .animate-float-left {
+    animation: floatPhone3D 6s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .animate-float-center {
+    animation: floatPhone3D 6.5s ease-in-out infinite 0.8s;
+    will-change: transform;
+  }
+
+  .animate-float-right {
+    animation: floatPhone3D 7s ease-in-out infinite 1.6s;
+    will-change: transform;
+  }
+
+  .bg-radial-luxury {
+    background: radial-gradient(circle at 60% 40%, rgba(226, 184, 87, 0.16) 0%, rgba(9, 9, 11, 0.95) 60%, #09090B 100%);
+  }
 }
