@@ -187,6 +187,7 @@ export default function VitrineModelosInterativos() {
 
   return (
     <section id="modelos" className="relative py-20 lg:py-28 bg-[#09090B] overflow-hidden border-t border-zinc-800/80">
+      <div id="exemplos" className="absolute -top-20" />
       {/* Luz ambiente dourada de fundo */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#E2B857]/10 rounded-full blur-[140px] pointer-events-none" />
 

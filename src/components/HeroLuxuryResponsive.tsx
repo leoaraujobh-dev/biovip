@@ -25,9 +25,9 @@ export const HeroLuxuryResponsive = () => {
             <span className="italic font-light text-[#E2B857]">Não Precisa</span> Ser Comum.
           </h1>
 
-          {/* Subtítulo Curto e Direto (máximo 2 linhas) */}
+          {/* Subtítulo Curto e Direto */}
           <p className="text-sm sm:text-base md:text-lg text-zinc-400 font-sans leading-relaxed mb-7 max-w-lg">
-            Microsite de alto padrão com catálogo e agendamento no WhatsApp. Entregamos 100% pronto em até 24 horas.
+            Crie um microsite de alto padrão para o seu negócio de beleza em minutos, com catálogo visual e agendamento direto no WhatsApp. Nós entregamos pronto para você.
           </p>
 
           {/* Botões de Ação */}
@@ -38,14 +38,14 @@ export const HeroLuxuryResponsive = () => {
               rel="noopener noreferrer"
               className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold text-sm bg-[#22C55E] hover:bg-[#1eb054] text-white transition-all shadow-[0_0_25px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 cursor-pointer"
             >
-              Quero Meu BioVip Pronto em 24h
+              Criar Meu BioVip Pronto
             </a>
 
             <a
               href="#modelos"
               className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-medium text-sm text-zinc-300 hover:text-white border border-zinc-800 hover:border-[#E2B857]/40 bg-white/5 backdrop-blur-sm transition-all text-center cursor-pointer"
             >
-              Ver Modelos ao Vivo ➔
+              Ver Exemplos ➔
             </a>
           </div>
 
