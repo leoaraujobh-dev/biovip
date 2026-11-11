@@ -163,7 +163,7 @@ export default function Hero() {
               <div className="flex -space-x-2 overflow-hidden">
                 <img
                   className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover"
-                  src="https://images.unsplash.com/photo-1594824813589-a9a7d32e92c2?q=80&w=200&auto=format&fit=crop"
+                  src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=200&auto=format&fit=crop"
                   alt="Dra Ana"
                 />
                 <img

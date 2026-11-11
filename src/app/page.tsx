@@ -12,6 +12,7 @@ import FaqSection from '@/components/FaqSection'
 import { faqs } from '@/data/faqs'
 import CTA from '@/components/CTA'
 import Footer from '@/components/Footer'
+import FloatingWhatsAppSupport from '@/components/FloatingWhatsAppSupport'
 
 export const metadata = {
   title: 'BioVip | Microsites de Alta Conversão para Estúdios de Beleza, Barbearias e Clínicas',
@@ -143,6 +144,7 @@ export default function HomePage() {
         <CTA />
       </main>
       <Footer />
+      <FloatingWhatsAppSupport />
     </>
   )
 }

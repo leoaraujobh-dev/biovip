@@ -60,7 +60,9 @@ import {
   FileText,
   Printer,
   UploadCloud,
-  Bot
+  Bot,
+  Camera,
+  Upload
 } from 'lucide-react'
 import Link from 'next/link'
 import { getLeads, LeadSubmission, saveBioSite } from '@/services/biositeService'
@@ -136,6 +138,7 @@ export default function AdminDashboardClient() {
   const [isGeminiModalOpen, setIsGeminiModalOpen] = useState<boolean>(false)
   const [geminiJsonInput, setGeminiJsonInput] = useState<string>('')
   const [geminiError, setGeminiError] = useState<string | null>(null)
+  const [customAvatarPreview, setCustomAvatarPreview] = useState<string | null>(null)
 
   // Alteração de PIN
   const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false)
@@ -685,6 +688,26 @@ export default function AdminDashboardClient() {
         ]
       }
 
+      // Validação rigorosa e sanitização de URLs de imagem contra placeholders e bloqueios
+      const isValidImageUrl = (url?: any): boolean => {
+        if (!url || typeof url !== 'string') return false
+        const trimmed = url.trim()
+        if (trimmed.startsWith('[') || trimmed.includes('[URL') || trimmed.includes('exemplo.com')) return false
+        if (trimmed.startsWith('https://instagram.com') || trimmed.startsWith('https://www.instagram.com') || trimmed.includes('/p/')) return false
+        return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/') || trimmed.startsWith('/')
+      }
+
+      const resolveAvatarUrl = (rawUrl?: any, nicheCategory: string = '') => {
+        if (customAvatarPreview && isValidImageUrl(customAvatarPreview)) return customAvatarPreview
+        if (isValidImageUrl(rawUrl)) return rawUrl.trim()
+        const n = nicheCategory.toLowerCase()
+        if (n.includes('barb') || n.includes('homem') || n.includes('masculin')) return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=85'
+        if (n.includes('odonto') || n.includes('dent')) return 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85'
+        if (n.includes('lash') || n.includes('unha') || n.includes('sobrancelha') || n.includes('make') || n.includes('cabelo')) return 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=85'
+        if (n.includes('advoc') || n.includes('direito') || n.includes('jurid') || n.includes('executiv')) return 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=800&q=85'
+        return DEMO_PHOTOS.mulher
+      }
+
       const nicheLower = (admin.nicheCategory || profile.title || '').toLowerCase()
       const fallbackGallery = nicheLower.includes('barb')
         ? FALLBACK_GALLERY_BY_NICHE.barbearia
@@ -692,7 +715,18 @@ export default function AdminDashboardClient() {
         ? FALLBACK_GALLERY_BY_NICHE.saude
         : FALLBACK_GALLERY_BY_NICHE.beleza
 
-      const galleryPhotosList = micro.galleryPhotos || micro.portfolioGallery?.items || micro.galleryPhotosList || fallbackGallery
+      let galleryPhotosList: string[] = []
+      const candidateList = micro.galleryPhotos || micro.portfolioGallery?.items || micro.galleryPhotosList
+      if (Array.isArray(candidateList)) {
+        galleryPhotosList = candidateList
+          .map((it: any) => typeof it === 'string' ? it : it?.url)
+          .filter(isValidImageUrl)
+      }
+      if (galleryPhotosList.length < 3) {
+        galleryPhotosList = fallbackGallery
+      }
+
+      const cleanPhoto = resolveAvatarUrl(profile.avatarUrl || profile.photo, admin.nicheCategory || profile.title || '')
 
       const newSub: Subscription = {
         id: `sub-${Date.now().toString().slice(-4)}`,
@@ -884,7 +918,7 @@ export default function AdminDashboardClient() {
         category: admin.nicheCategory || 'Serviços de Alto Padrão',
         registrationCode: profile.registrationCode || 'REGISTRO OFICIAL',
         monogram: profile.monogram || businessName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase(),
-        photo: profile.avatarUrl || profile.photo || DEMO_PHOTOS.mulher,
+        photo: cleanPhoto,
         paletteId: resolvedPaletteId,
         typographyId: micro.typographyId || 'instrument',
         buttonStyle: micro.buttonStyle || 'cartao_nobre',
@@ -958,6 +992,7 @@ export default function AdminDashboardClient() {
       setIsGeminiModalOpen(false)
       setGeminiJsonInput('')
       setGeminiError(null)
+      setCustomAvatarPreview(null)
     } catch (err: any) {
       setGeminiError('Erro ao processar JSON: ' + (err.message || 'Formato inválido'))
     }
@@ -3829,10 +3864,15 @@ Se esta for a sua PRIMEIRA resposta (logo após o usuário colar este prompt ini
 Em vez disso, cumprimente cordialmente o usuário e peça as seguintes informações essenciais sobre o cliente:
 
 1. 📱 Instagram Oficial: (@usuario ou link do perfil)
-2. 📍 Perfil no Google Maps / Google Meu Negócio: (Nome comercial exato, link do Maps ou endereço físico)
-3. 🎯 Nicho e Especialidade Principal: (Ex: Harmonização Facial, Barbearia Clássica, Implantes Dentários, Lash Design, Nutrologia, etc.)
+2. 📍 Perfil no Google Maps / Google Meu Negócio: (Nome comercial exato, link do Maps ou endereço físico — essencial para fotos públicas da clínica e avaliações 5 estrelas)
+3. 🎯 Nicho e Especialidade Principal: (Ex: Harmonização Facial, Odontologia Estética, Barbearia Clássica, Lash Design, Nutrologia, etc.)
 4. 💬 WhatsApp Comercial de Atendimento: (com DDD para redirecionamento dos botões)
-5. 💎 Serviços ou Diferenciais Específicos (Opcional): (Algum valor, técnica ou detalhe adicional que o cliente informou)
+5. 📸 Fotos Reais do Cliente (COMO ENVIAR SEM BLOQUEIO DO INSTAGRAM):
+   Como a Meta/Instagram bloqueia robôs de busca externos com tela de login, o usuário tem 3 formas simples e infalíveis de fornecer as fotos:
+   • 🌟 FORMA RECOMENDADA (VISÃO COMPUTACIONAL): Tire 1 a 3 prints da tela do Instagram (perfil, feed ou foto de perfil/logo) e envie direto aqui no chat do Gemini (arraste o arquivo ou dê Ctrl+V)! Eu tenho visão computacional integrada e vou analisar a estética, os tratamentos e fotos de antes/depois instantaneamente!
+   • 🌟 FORMA GOOGLE MAPS: Se o usuário enviar o link do Google Maps, buscarei as fotos públicas de alta resolução do estabelecimento salvas no Google Negócio (lh3.googleusercontent.com).
+   • 🌟 FORMA CURADA: Caso não envie fotos agora, selecionarei fotos profissionais em alta definição perfeitamente correspondentes ao nicho da Tabela de Fotos Verificadas do BioVip abaixo, permitindo que você troque por fotos do cliente no Painel BioVip com 1 clique.
+6. 💎 Serviços ou Diferenciais Específicos (Opcional): (Algum valor, técnica ou detalhe adicional que o cliente informou)
 
 Avise ao usuário que assim que ele enviar esses dados, você irá pesquisar ativamente na internet para validar as informações, capturar os depoimentos reais do Google Maps, identificar os procedimentos oferecidos e montar o código completo do BioSite.
 
@@ -3840,9 +3880,9 @@ Avise ao usuário que assim que ele enviar esses dados, você irá pesquisar ati
 ⚠️ REGRA OBRIGATÓRIA #2 (APÓS O USUÁRIO ENVIAR OS DADOS DO CLIENTE):
 Assim que o usuário fornecer o Instagram, o Google Maps e o nicho do cliente, você DEVE REALIZAR UMA PESQUISA ATIVA NA WEB (usando a ferramenta de busca do Google):
 
-1. INVESTIGAÇÃO NO INSTAGRAM:
-- Acesse o perfil do cliente para ler a bio real, títulos profissionais (ex: CRM, CRO, Especialista), slogan e proposta de valor.
-- Analise os destaques e postagens para identificar os serviços e tratamentos reais oferecidos.
+1. INVESTIGAÇÃO NO INSTAGRAM E ANÁLISE DE FOTOS:
+- Se o usuário anexou prints ou fotos do Instagram/cliente: examine detalhadamente com visão computacional a bio, títulos (CRM, CRO), estética, paleta de cores, postagens e fotos reais de tratamentos.
+- Acesse as informações disponíveis do perfil para ler a bio real, títulos profissionais, slogan e proposta de valor.
 - Identifique o estilo e a identidade visual predominante para escolher a melhor paleta do BioVip:
   * "luxo_nude": Nude Champagne e tons areia (para clínicas de estética, biomédicas, dermatologia e spas elegantes).
   * "dourado_vip": Ouro Imperial sobre preto nobre (para barbearias de alto padrão, cirurgiões e holding).
@@ -3850,8 +3890,51 @@ Assim que o usuário fornecer o Instagram, o Google Maps e o nicho do cliente, v
   * "rose_quartz": Rosé Quartz Glamour (para extensão de cílios, nails designers, maquiadoras e estética facial).
   * "black_ultra": Preto Titânio e Grafite (para arquitetura, estética masculina e barbearias industriais).
   * "safira_ouro": Azul Safira Noturno e Dourado (para advocacia, perícia médica e consultorias executivas).
-- Extraia a foto de perfil oficial ou selecione uma imagem de alta resolução compatível que reflita com máxima fidelidade a excelência do profissional.
-- Extraia ou selecione 4 a 6 fotos de alta resolução do portfólio (trabalhos, ambiente da clínica/estúdio) no formato Unsplash compatível.
+
+- REGRA CRÍTICA PARA AS FOTOS NO JSON (PROIBIDO LINKS QUEBRADOS):
+  * NUNCA use textos como "[URL da foto]" ou "[Foto do perfil]".
+  * NUNCA use links diretos de post do Instagram (ex: https://instagram.com/p/... ou instagram.com/usuario), pois são páginas HTML protegidas por login que quebram o navegador.
+  * Use fotos públicas do Google Maps (lh3.googleusercontent.com) OU selecione as fotos correspondentes da TABELA OFICIAL DE FOTOS VERIFICADAS POR NICHO abaixo:
+    - Odontologia / Dentista:
+      avatarUrl: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85"
+      galleryPhotos: [
+        "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
+      ]
+    - Estética Avançada / Harmonização Facial / Dermatologia:
+      avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85"
+      galleryPhotos: [
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80"
+      ]
+    - Barbearia Nobre / Estética Masculina:
+      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=85"
+      galleryPhotos: [
+        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=800&q=80"
+      ]
+    - Beleza / Lash Designer / Nails / Maquiagem:
+      avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=85"
+      galleryPhotos: [
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
+      ]
+    - Advocacia / Consultoria / Negócios:
+      avatarUrl: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=800&q=85"
+      galleryPhotos: [
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
+      ]
 
 2. INVESTIGAÇÃO NO GOOGLE MAPS / GOOGLE MEU NEGÓCIO:
 - Valide o endereço físico oficial, bairro e cidade.
@@ -3888,7 +3971,7 @@ Após coletar e validar todas as informações reais do cliente, retorne ESTRITA
       "tagline": "[Slogan de posicionamento extraído do Instagram]",
       "cursivePhrase": "[Assinatura elegante para a biografia]",
       "bio": "[Biografia real e persuasiva extraída e refinada do perfil]",
-      "avatarUrl": "[URL da foto de perfil real ou imagem profissional correspondente]"
+      "avatarUrl": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85"
     },
     "actionCards": [
       {
@@ -3979,7 +4062,6 @@ Após coletar e validar todas as informações reais do cliente, retorne ESTRITA
       ]
     },
     "galleryPhotos": [
-      // 4 a 6 URLs de fotos de alta resolução do portfólio real ou fotos contextuais do nicho
       "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
@@ -4043,6 +4125,77 @@ Após coletar e validar todas as informações reais do cliente, retorne ESTRITA
                 <Copy className="w-4 h-4" />
                 Copiar Prompt Mestre Interativo
               </button>
+            </div>
+
+            {/* Assistente de Fotos Reais do Instagram & Upload Direto */}
+            <div className="p-4 rounded-2xl bg-[#0f131c] border border-stone-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-purple-400" />
+                  Foto Oficial do Cliente (Avatar)
+                </span>
+                <label className="text-[11px] font-semibold text-purple-300 hover:text-white cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/40 transition shrink-0">
+                  <Upload className="w-3.5 h-3.5" />
+                  Carregar Foto do Cliente (PC / WhatsApp)
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (ev) => {
+                          const base64 = ev.target?.result as string
+                          if (base64) {
+                            setCustomAvatarPreview(base64)
+                          }
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
+              {customAvatarPreview ? (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/30 border border-emerald-600/50">
+                  <img
+                    src={customAvatarPreview}
+                    alt="Foto Carregada"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-500 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Foto Real Carregada com Sucesso
+                    </p>
+                    <p className="text-[10px] text-stone-400 truncate">
+                      Esta foto substituirá qualquer link e será usada no perfil oficial do BioSite.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCustomAvatarPreview(null)}
+                    className="text-stone-400 hover:text-rose-400 text-xs px-2 py-1 transition cursor-pointer"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/40 text-[11px] text-stone-300 leading-relaxed space-y-1">
+                  <p className="font-semibold text-amber-300 flex items-center gap-1">
+                    <span>💡</span> Por que o Instagram não entrega fotos automáticas e como resolver:
+                  </p>
+                  <p className="text-stone-400">
+                    A Meta/Instagram bloqueia robôs de busca com tela de login obrigatória. Para ter a foto real do cliente no BioSite:
+                  </p>
+                  <ul className="list-disc list-inside text-stone-300 space-y-0.5 ml-1">
+                    <li><strong>No Gemini:</strong> Tire 1 print do Instagram do cliente e cole com <kbd className="px-1 py-0.5 bg-stone-800 rounded text-purple-300 font-mono text-[10px]">Ctrl+V</kbd> no chat do Gemini (ele lê a imagem com IA).</li>
+                    <li><strong>Upload Direto:</strong> Ou clique em <em>&quot;Carregar Foto do Cliente&quot;</em> acima e anexe a foto ou logo que você recebeu no WhatsApp.</li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Textarea do JSON */}
