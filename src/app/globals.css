@@ -15,11 +15,11 @@
   }
 
   body {
-    @apply bg-white text-dark-900 font-sans antialiased;
+    @apply bg-[#09090B] text-zinc-100 font-sans antialiased;
   }
 
   * {
-    @apply border-dark-200;
+    @apply border-zinc-800;
   }
 }
 
@@ -29,19 +29,19 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 shadow-lg shadow-primary-500/25;
+    @apply inline-flex items-center justify-center px-7 py-3.5 text-sm sm:text-base font-semibold text-white bg-[#22C55E] hover:bg-[#1eb054] rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 transition-all duration-200 shadow-lg shadow-emerald-500/25;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-primary-600 bg-primary-50 border-2 border-primary-200 rounded-xl hover:bg-primary-100 hover:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200;
+    @apply inline-flex items-center justify-center px-7 py-3.5 text-sm sm:text-base font-semibold text-zinc-200 hover:text-white bg-white/5 border border-zinc-800 hover:border-[#E2B857]/50 rounded-xl backdrop-blur-sm transition-all duration-200;
   }
 
   .section-title {
-    @apply font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-dark-900 leading-[1.2] mb-4;
+    @apply font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-zinc-100 leading-[1.2] mb-4;
   }
 
   .section-subtitle {
-    @apply text-lg sm:text-xl text-dark-500 max-w-2xl leading-relaxed;
+    @apply text-base sm:text-lg text-zinc-400 max-w-2xl leading-relaxed;
   }
 
   .card-hover {
