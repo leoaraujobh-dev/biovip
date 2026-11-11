@@ -802,7 +802,11 @@ export default function AdminDashboardClient() {
               ? (c.url || `https://wa.me/${phone}?text=${encodeURIComponent(c.whatsappMessage || 'Olá!')}`)
               : c.url || '#',
             isHighlighted: c.isHighlighted ?? (c.variant === 'accent' || i === 0),
-            highlightBadge: c.highlightBadge || c.badgeText || (i === 0 ? '⭐ MAIS PROCURADO' : undefined)
+            highlightBadge: c.highlightBadge || c.badgeText || (i === 0 ? '⭐ MAIS PROCURADO' : undefined),
+            cardImage: isValidImageUrl(c.cardImage || c.imageUrl || c.image) ? (c.cardImage || c.imageUrl || c.image).trim() : undefined,
+            imagePosition: c.imagePosition || 'right',
+            imageFitStyle: c.imageFitStyle || 'popout',
+            ctaActionText: c.ctaActionText || c.ctaLabel || undefined
           }))
         : defaultButtons
 
@@ -835,6 +839,8 @@ export default function AdminDashboardClient() {
         enabled: rawServices.enabled !== false,
         headline: rawServices.headline || 'Procedimentos & Soluções Exclusivas',
         subtitle: rawServices.subtitle || 'Soluções de alto padrão sob medida',
+        layout: rawServices.layout || 'list',
+        aspectRatio: rawServices.aspectRatio || 'square',
         categories: rawServices.categories || ['TODOS', 'MAIS PROCURADO', 'EXCLUSIVO'],
         items: (rawServices.items || []).map((s: any, idx: number) => ({
           id: s.id || `srv-${idx + 1}`,
@@ -845,6 +851,10 @@ export default function AdminDashboardClient() {
           duration: s.duration || s.time || '1h00',
           badge: s.badge || (idx === 0 ? 'MAIS PROCURADO' : undefined),
           featured: s.featured ?? (idx === 0),
+          ctaLabel: s.ctaLabel || 'Agendar',
+          actionType: s.actionType || 'booking',
+          image: isValidImageUrl(s.image || s.imageUrl || s.cardImage || s.photo) ? (s.image || s.imageUrl || s.cardImage || s.photo).trim() : undefined,
+          imageLayout: s.imageLayout || (s.image || s.imageUrl || s.cardImage ? (s.featured ? 'cover' : 'thumb') : undefined),
           whatsappMessage: s.whatsappMessage || `Olá! Gostaria de saber mais sobre o procedimento de ${s.name}.`
         }))
       } : {
@@ -3984,7 +3994,10 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
         "variant": "accent",
         "animation": "pulse-glow",
         "badgeText": "MAIS PROCURADO",
-        "ctaActionText": "AGENDAR AGORA"
+        "ctaActionText": "AGENDAR AGORA",
+        "cardImage": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=400",
+        "imagePosition": "right",
+        "imageFitStyle": "popout"
       },
       {
         "id": "cta-2",
@@ -4051,7 +4064,9 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
           "badge": "DESTAQUE VIP",
           "ctaLabel": "Agendar",
           "actionType": "booking",
-          "featured": true
+          "featured": true,
+          "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=600",
+          "imageLayout": "cover"
         },
         {
           "id": "srv-2",
@@ -4062,7 +4077,9 @@ Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguind
           "badge": "MUITO PROCURADO",
           "ctaLabel": "Agendar",
           "actionType": "booking",
-          "featured": true
+          "featured": true,
+          "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400",
+          "imageLayout": "thumb"
         },
         {
           "id": "srv-3",
