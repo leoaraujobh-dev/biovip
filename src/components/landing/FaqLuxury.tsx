@@ -41,7 +41,7 @@ export default function FaqLuxury() {
       <div className="container-main relative z-10">
         
         {/* Cabeçalho da Seção */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-14 reveal-on-scroll">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] text-xs font-semibold tracking-wider uppercase mb-4">
             <HelpCircle className="w-3.5 h-3.5" />
             Tire Suas Dúvidas
@@ -57,7 +57,7 @@ export default function FaqLuxury() {
         </div>
 
         {/* Acordeão Escuro com 4 Perguntas */}
-        <div className="max-w-3xl mx-auto space-y-3.5 mb-20">
+        <div className="max-w-3xl mx-auto space-y-3.5 mb-20 reveal-on-scroll delay-100">
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx
             return (
@@ -100,7 +100,7 @@ export default function FaqLuxury() {
         {/* ========================================================= */}
         {/* BANNER DE FECHAMENTO (CTA FINAL DARK LUXURY) */}
         {/* ========================================================= */}
-        <div className="relative rounded-3xl p-8 sm:p-12 lg:p-16 bg-gradient-to-b from-[#14141a] via-[#101015] to-[#0d0d11] border border-[#E2B857]/40 shadow-[0_0_60px_rgba(226,184,87,0.15)] text-center overflow-hidden max-w-5xl mx-auto">
+        <div className="relative rounded-3xl p-8 sm:p-12 lg:p-16 bg-gradient-to-b from-[#14141a] via-[#101015] to-[#0d0d11] border border-[#E2B857]/40 shadow-[0_0_60px_rgba(226,184,87,0.15)] text-center overflow-hidden max-w-5xl mx-auto reveal-scale delay-200">
           
           {/* Luz interna no banner */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-36 bg-[#E2B857]/15 rounded-full blur-[80px] pointer-events-none" />

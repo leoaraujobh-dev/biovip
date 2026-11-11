@@ -7,6 +7,7 @@ import PlanosLuxury from '@/components/landing/PlanosLuxury'
 import FaqLuxury from '@/components/landing/FaqLuxury'
 import Footer from '@/components/Footer'
 import FloatingWhatsAppSupport from '@/components/FloatingWhatsAppSupport'
+import ScrollRevealInit from '@/components/ScrollRevealInit'
 
 export const metadata = {
   title: 'BioVip | Microsites de Alto Padrão em 24h para Estúdios de Beleza, Barbearias e Clínicas',
@@ -173,6 +174,9 @@ export default function HomePage() {
 
       {/* Rodapé Dark Luxury */}
       <Footer />
+
+      {/* Observador Global de Animações na Rolagem (reveal-on-scroll / reveal-scale) */}
+      <ScrollRevealInit />
 
       {/* Suporte WhatsApp Flutuante Oficial */}
       <FloatingWhatsAppSupport />

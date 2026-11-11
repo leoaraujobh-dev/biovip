@@ -70,7 +70,7 @@ export default function PlanosLuxury() {
       <div className="container-main relative z-10">
         
         {/* Cabeçalho da Seção */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-16 reveal-on-scroll">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] text-xs font-semibold tracking-wider uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             Investimento Transparente
@@ -89,12 +89,13 @@ export default function PlanosLuxury() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
           {plans.map((plan, idx) => {
             const isPro = plan.popular
+            const delayClass = idx === 0 ? 'delay-100' : idx === 1 ? 'delay-200' : 'delay-300'
             const whatsappUrl = `https://wa.me/5531991390202?text=${encodeURIComponent(plan.whatsappMessage)}`
 
             return (
               <div
                 key={idx}
-                className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 ${
+                className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 reveal-scale ${delayClass} ${
                   isPro
                     ? 'bg-[#141418] border-2 border-[#E2B857] shadow-[0_0_45px_rgba(226,184,87,0.22)] lg:-translate-y-3 z-10'
                     : 'bg-[#101015] border border-zinc-800/90 hover:border-zinc-700 shadow-xl'

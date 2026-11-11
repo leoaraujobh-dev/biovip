@@ -40,7 +40,7 @@ export default function ComoFuncionaLuxury() {
       <div className="container-main relative z-10">
         
         {/* Cabeçalho da Seção */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-16 reveal-on-scroll">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] text-xs font-semibold tracking-wider uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             Zero Esforço Técnico
@@ -60,10 +60,11 @@ export default function ComoFuncionaLuxury() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-12">
           {steps.map((st, idx) => {
             const Icon = st.icon
+            const delayClass = idx === 0 ? 'delay-100' : idx === 1 ? 'delay-200' : 'delay-300'
             return (
               <div
                 key={idx}
-                className="relative rounded-3xl p-7 lg:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/50 transition-all duration-300 shadow-xl group flex flex-col justify-between"
+                className={`relative rounded-3xl p-7 lg:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/50 transition-all duration-300 shadow-xl group flex flex-col justify-between reveal-on-scroll ${delayClass}`}
               >
                 {/* Linha decorativa no topo do card */}
                 <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-[#E2B857]/30 to-transparent group-hover:via-[#E2B857] transition-all" />
@@ -101,7 +102,7 @@ export default function ComoFuncionaLuxury() {
         </div>
 
         {/* Banner de Autonomia: Acesso Total ao Editor */}
-        <div className="rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-[#14141c] via-[#161622] to-[#14141c] border border-[#E2B857]/30 shadow-[0_0_35px_rgba(226,184,87,0.1)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-[#14141c] via-[#161622] to-[#14141c] border border-[#E2B857]/30 shadow-[0_0_35px_rgba(226,184,87,0.1)] flex flex-col sm:flex-row items-center justify-between gap-4 reveal-scale delay-400">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
             <div className="w-11 h-11 rounded-xl bg-[#E2B857]/15 border border-[#E2B857]/40 flex items-center justify-center text-[#E2B857] shrink-0">
               <KeyRound className="w-5 h-5" />

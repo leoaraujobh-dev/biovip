@@ -192,7 +192,7 @@ export default function VitrineModelosInterativos() {
 
       <div className="container-main relative z-10">
         {/* Cabeçalho da Seção */}
-        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16 reveal-on-scroll">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] text-xs font-semibold tracking-wider uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             Demonstração ao Vivo
@@ -233,7 +233,7 @@ export default function VitrineModelosInterativos() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
           {/* LADO ESQUERDO / INFO (5 colunas) */}
-          <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col justify-center">
+          <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col justify-center reveal-on-scroll delay-100">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#E2B857] uppercase tracking-wider mb-2">
               <span className="w-2 h-2 rounded-full bg-[#E2B857]" />
               {currentNiche.badge}
@@ -293,7 +293,7 @@ export default function VitrineModelosInterativos() {
           </div>
 
           {/* LADO DIREITO / SMARTPHONE INTERATIVO (7 colunas) */}
-          <div className="lg:col-span-7 order-1 lg:order-2 flex justify-center">
+          <div className="lg:col-span-7 order-1 lg:order-2 flex justify-center reveal-scale delay-200">
             {/* Mockup iPhone Dark Titanium com Borda Dourada */}
             <div className="relative w-[300px] sm:w-[340px] md:w-[360px] aspect-[9/19] rounded-[48px] p-3 bg-[#18181D] border-2 border-[#E2B857]/40 shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_40px_rgba(226,184,87,0.18)] overflow-hidden">
               

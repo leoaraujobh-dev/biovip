@@ -15,7 +15,7 @@ export default function BentoGridVisual() {
       <div className="container-main relative z-10">
         
         {/* Cabeçalho da Seção */}
-        <div className="text-center max-w-3xl mx-auto mb-14 lg:mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-14 lg:mb-16 reveal-on-scroll">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] text-xs font-semibold tracking-wider uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             Engenharia de Conversão
@@ -36,7 +36,7 @@ export default function BentoGridVisual() {
           {/* ========================================================= */}
           {/* CARD 1 (DESTAQUE GRANDE - 2 COLUNAS LG) */}
           {/* ========================================================= */}
-          <div className="lg:col-span-2 rounded-3xl p-6 sm:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between group">
+          <div className="lg:col-span-2 rounded-3xl p-6 sm:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between group reveal-scale delay-100">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#E2B857] px-3 py-1 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/20 font-bold">
@@ -117,7 +117,7 @@ export default function BentoGridVisual() {
           {/* ========================================================= */}
           {/* CARD 2: ANTES E DEPOIS INTERATIVO */}
           {/* ========================================================= */}
-          <div className="rounded-3xl p-6 sm:p-7 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between">
+          <div className="rounded-3xl p-6 sm:p-7 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between reveal-scale delay-200">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#E2B857] px-3 py-1 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/20 font-bold">
@@ -189,7 +189,7 @@ export default function BentoGridVisual() {
           {/* ========================================================= */}
           {/* CARD 3: LOCALIZAÇÃO COM 1 TOQUE (WAZE, MAPS, UBER) */}
           {/* ========================================================= */}
-          <div className="rounded-3xl p-6 sm:p-7 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between">
+          <div className="rounded-3xl p-6 sm:p-7 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between reveal-scale delay-300">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#E2B857] px-3 py-1 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/20 font-bold">
@@ -238,7 +238,7 @@ export default function BentoGridVisual() {
           {/* ========================================================= */}
           {/* CARD 4: AUTORIDADE INSTANTÂNEA */}
           {/* ========================================================= */}
-          <div className="lg:col-span-2 rounded-3xl p-6 sm:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between">
+          <div className="lg:col-span-2 rounded-3xl p-6 sm:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between reveal-scale delay-400">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#E2B857] px-3 py-1 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/20 font-bold inline-block mb-2">
