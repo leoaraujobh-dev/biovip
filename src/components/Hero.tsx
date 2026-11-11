@@ -271,11 +271,15 @@ export default function Hero() {
                   return (
                     <div
                       key={preview.id}
-                      className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
+                      className={`absolute inset-0 w-full h-full bg-[#07090E] transition-opacity duration-400 ease-out ${
                         isActive
-                          ? 'opacity-100 pointer-events-auto z-10'
-                          : 'opacity-0 pointer-events-none z-0'
+                          ? 'opacity-100 pointer-events-auto z-20 visible'
+                          : 'opacity-0 pointer-events-none z-0 invisible'
                       }`}
+                      style={{
+                        transitionProperty: 'opacity, visibility',
+                        transitionDuration: '400ms'
+                      }}
                     >
                       <iframe
                         src={`/${preview.slug}?preview=true`}
@@ -286,6 +290,7 @@ export default function Hero() {
                           width: '100%',
                           height: '100%',
                           border: 'none',
+                          backgroundColor: '#07090E',
                           overflowY: 'auto',
                           WebkitOverflowScrolling: 'touch'
                         }}
