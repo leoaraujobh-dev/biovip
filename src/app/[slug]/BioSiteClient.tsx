@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import {
   Calendar,
@@ -34,7 +34,9 @@ import {
   ChevronRight,
   Scissors,
   GraduationCap,
-  Phone
+  Phone,
+  Plus,
+  Sliders
 } from 'lucide-react'
 import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
@@ -100,6 +102,114 @@ export default function BioSiteClient({
 
   // Modo Preview / Vitrine / Iframe (Cliques Inativos e Rolagem Suave)
   const [isPreview, setIsPreview] = useState(false)
+
+  // 1. Resposta Tátil Háptica de Alta Fidelidade (Haptic Touch)
+  const triggerHaptic = (ms: number = 14) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(ms)
+      } catch {}
+    }
+  }
+
+  // 2. Status Dinâmico de Atendimento em Tempo Real (Live Concierge Clock - Horário de Brasília)
+  const [liveStatus, setLiveStatus] = useState<{ isOpen: boolean; label: string; sub: string; nextOpen: string }>({
+    isOpen: true,
+    label: 'ONLINE · ABERTO AGORA',
+    sub: 'Atendimento com Hora Marcada',
+    nextOpen: 'Amanhã às 08:30'
+  })
+
+  useEffect(() => {
+    const updateStatus = () => {
+      const now = new Date()
+      // Conversão para o Horário de Brasília (UTC-3)
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000
+      const brDate = new Date(utc - 3 * 3600000)
+      const day = brDate.getDay() // 0 = Domingo, 6 = Sábado
+      const hours = brDate.getHours()
+      const minutes = brDate.getMinutes()
+      const currentTime = hours * 60 + minutes
+
+      // Horário comercial nobre: Seg a Sáb das 08:30 (510 min) às 19:30 (1170 min)
+      const isOpen = day !== 0 && currentTime >= 510 && currentTime <= 1170
+      const nextDayLabel = day === 6 || day === 0 ? 'Segunda-feira às 08:30' : 'Amanhã às 08:30'
+
+      if (isOpen) {
+        setLiveStatus({
+          isOpen: true,
+          label: 'ONLINE · ABERTO AGORA',
+          sub: 'Equipe executiva disponível · Resposta rápida',
+          nextOpen: nextDayLabel
+        })
+      } else {
+        setLiveStatus({
+          isOpen: false,
+          label: 'AGENDA ABERTA · PLANTÃO',
+          sub: `Atendimento presencial retoma ${nextDayLabel}`,
+          nextOpen: nextDayLabel
+        })
+      }
+    }
+    updateStatus()
+    const timer = setInterval(updateStatus, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // 3. Comparador Interativo de Antes & Depois (Split-Slider Arrastável)
+  const [beforeAfterPosition, setBeforeAfterPosition] = useState(50)
+  const [isDraggingBeforeAfter, setIsDraggingBeforeAfter] = useState(false)
+  const beforeAfterContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleBeforeAfterMove = (clientX: number) => {
+    if (!beforeAfterContainerRef.current) return
+    const rect = beforeAfterContainerRef.current.getBoundingClientRect()
+    const x = clientX - rect.left
+    const percent = Math.min(100, Math.max(0, (x / rect.width) * 100))
+    setBeforeAfterPosition(percent)
+  }
+
+  // 4. Simulador de Procedimentos com Pré-Orçamento (Multi-Select)
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
+
+  // 5. Dados Inteligentes de Antes & Depois por Nicho
+  const beforeAfterData = useMemo(() => {
+    const cat = (category || '').toLowerCase()
+    if (cat.includes('odonto') || cat.includes('dente') || cat.includes('sorriso')) {
+      return {
+        title: 'Transformação do Sorriso',
+        subtitle: 'Lentes de Resina & Reabilitação Oral',
+        before: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=800',
+        tag: 'Odontologia Estética'
+      }
+    }
+    if (cat.includes('cilio') || cat.includes('lash') || cat.includes('sobrancelha')) {
+      return {
+        title: 'Extensão & Realce do Olhar',
+        subtitle: 'Volume Brasileiro com Acabamento Natural',
+        before: 'https://images.unsplash.com/photo-1583001809873-a128495da465?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=800',
+        tag: 'Lash Designer VIP'
+      }
+    }
+    if (cat.includes('barber') || cat.includes('cabelo') || cat.includes('barba')) {
+      return {
+        title: 'Visagismo & Alinhamento',
+        subtitle: 'Corte Clássico & Barboterapia de Precisão',
+        before: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=800',
+        tag: 'Grooming & Barba'
+      }
+    }
+    return {
+      title: 'Transformação & Resultado Real',
+      subtitle: 'Protocolo Exclusivo com Foco em Naturalidade',
+      before: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800',
+      after: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=800',
+      tag: 'Procedimento Exclusivo'
+    }
+  }, [category])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -230,6 +340,8 @@ export default function BioSiteClient({
   }, [timerSeconds])
 
   const cleanWhatsapp = (modelData?.whatsapp || whatsapp).replace(/\D/g, '')
+  const cleanInstagram = (modelData?.instagram || modelData?.profile?.instagram || '').replace(/^@/, '')
+  const instagramProfileUrl = cleanInstagram ? `https://instagram.com/${cleanInstagram}` : 'https://instagram.com'
 
   // Inicialização Automática de Pixel (Meta Ads, TikTok Ads, GA4)
   useEffect(() => {
@@ -768,11 +880,17 @@ export default function BioSiteClient({
           </div>
         )}
 
-        {/* 2. Topo / Ilha Dinâmica com Status de Presença & Registro Oficial */}
+        {/* 2. Topo / Ilha Dinâmica com Status de Presença em Tempo Real & Registro Oficial */}
         <div className="relative z-20 pt-3 px-6 flex items-center justify-between text-[10px] font-mono tracking-widest uppercase">
-          <div className="w-20 h-4 bg-black rounded-full flex items-center justify-between px-2 shadow-inner border border-white/5 select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[7.5px] font-mono text-stone-300 font-semibold tracking-tight">ONLINE</span>
+          <div
+            onClick={() => triggerHaptic(12)}
+            className="h-5 bg-black/80 backdrop-blur-md rounded-full flex items-center gap-1.5 px-2.5 shadow-inner border border-white/10 select-none cursor-pointer hover:border-emerald-500/40 transition-colors"
+            title={liveStatus.sub}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${liveStatus.isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <span className="text-[7.5px] font-mono text-stone-300 font-semibold tracking-tight">
+              {liveStatus.label}
+            </span>
           </div>
           <span className="font-semibold text-stone-400">{registrationCode}</span>
         </div>
@@ -830,7 +948,10 @@ export default function BioSiteClient({
             href={`https://wa.me/${cleanWhatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => handleTrackLead('Barra Rápida WhatsApp')}
+            onClick={() => {
+              triggerHaptic(14)
+              handleTrackLead('Barra Rápida WhatsApp')
+            }}
             className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
             style={{
               backgroundColor: `${palette.card}cc`,
@@ -842,9 +963,10 @@ export default function BioSiteClient({
             <span>WhatsApp</span>
           </a>
           <a
-            href="https://instagram.com"
+            href={instagramProfileUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => triggerHaptic(10)}
             className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
             style={{
               backgroundColor: `${palette.card}cc`,
@@ -857,7 +979,10 @@ export default function BioSiteClient({
           </a>
           <button
             type="button"
-            onClick={() => setIsQuizOpen(true)}
+            onClick={() => {
+              triggerHaptic(14)
+              setIsQuizOpen(true)
+            }}
             className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
             style={{
               backgroundColor: palette.accent,
@@ -960,6 +1085,7 @@ export default function BioSiteClient({
             }
 
             const handleClick = (e: React.MouseEvent) => {
+              triggerHaptic(14)
               handleTrackLead(titleText)
               if (btn.linkType === 'quiz' || href === '#quiz') {
                 e.preventDefault()
@@ -1333,8 +1459,8 @@ export default function BioSiteClient({
                           )}
                         </div>
 
-                        {/* Rodapé de Ação: Valor e Botão de Agendamento */}
-                        <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                        {/* Rodapé de Ação: Valor, Simulador e Botão de Agendamento */}
+                        <div className="pt-2 flex items-center justify-between border-t border-white/10 gap-2">
                           <div>
                             <span className="text-[8.5px] font-mono uppercase tracking-wider text-stone-400 block">
                               Investimento
@@ -1343,20 +1469,51 @@ export default function BioSiteClient({
                               {srv.price}
                             </span>
                           </div>
-                          <a
-                            href={whatsappBookingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => handleTrackLead(`Agendar Catálogo (${srv.name})`)}
-                            className="py-2 px-3.5 rounded-xl text-[10.5px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
-                            style={{
-                              backgroundColor: palette.accent,
-                              color: palette.buttonText || '#000'
-                            }}
-                          >
-                            <span>Agendar Horário</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </a>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic(10)
+                                setSelectedServiceIds(prev =>
+                                  prev.includes(srv.id) ? prev.filter(id => id !== srv.id) : [...prev, srv.id]
+                                )
+                              }}
+                              className={`py-1.5 px-2.5 rounded-xl text-[9px] font-mono font-bold uppercase transition flex items-center gap-1 border cursor-pointer active:scale-95 ${
+                                selectedServiceIds.includes(srv.id)
+                                  ? 'bg-amber-400 text-stone-950 border-amber-300 shadow-sm'
+                                  : 'bg-white/5 text-stone-300 border-white/10 hover:border-amber-400/40'
+                              }`}
+                            >
+                              {selectedServiceIds.includes(srv.id) ? (
+                                <>
+                                  <Check className="w-3 h-3 text-stone-950" />
+                                  <span>Adicionado</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="w-3 h-3 text-amber-400" />
+                                  <span>Simular</span>
+                                </>
+                              )}
+                            </button>
+                            <a
+                              href={whatsappBookingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => {
+                                triggerHaptic(14)
+                                handleTrackLead(`Agendar Catálogo (${srv.name})`)
+                              }}
+                              className="py-1.5 px-3 rounded-xl text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
+                              style={{
+                                backgroundColor: palette.accent,
+                                color: palette.buttonText || '#000'
+                              }}
+                            >
+                              <span>Agendar</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
                         </div>
                       </div>
                     )
@@ -1420,24 +1577,55 @@ export default function BioSiteClient({
                         </div>
                       </div>
 
-                      <div className="pt-2 flex items-center justify-between border-t border-white/5">
+                      <div className="pt-2 flex items-center justify-between border-t border-white/5 gap-2">
                         <span className="text-xs font-serif font-bold" style={{ color: palette.accent }}>
                           {srv.price}
                         </span>
-                        <a
-                          href={whatsappBookingUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => handleTrackLead(`Agendar Catálogo (${srv.name})`)}
-                          className="py-1 px-3 rounded-lg text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1 shadow-sm active:scale-95"
-                          style={{
-                            backgroundColor: palette.accent,
-                            color: palette.buttonText || '#000'
-                          }}
-                        >
-                          <span>Reservar</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(10)
+                              setSelectedServiceIds(prev =>
+                                prev.includes(srv.id) ? prev.filter(id => id !== srv.id) : [...prev, srv.id]
+                              )
+                            }}
+                            className={`py-1 px-2.5 rounded-lg text-[9px] font-mono font-bold uppercase transition flex items-center gap-1 border cursor-pointer active:scale-95 ${
+                              selectedServiceIds.includes(srv.id)
+                                ? 'bg-amber-400 text-stone-950 border-amber-300 shadow-sm'
+                                : 'bg-white/5 text-stone-300 border-white/10 hover:border-amber-400/40'
+                            }`}
+                          >
+                            {selectedServiceIds.includes(srv.id) ? (
+                              <>
+                                <Check className="w-3 h-3 text-stone-950" />
+                                <span>Adicionado</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3 h-3 text-amber-400" />
+                                <span>Simular</span>
+                              </>
+                            )}
+                          </button>
+                          <a
+                            href={whatsappBookingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => {
+                              triggerHaptic(14)
+                              handleTrackLead(`Agendar Catálogo (${srv.name})`)
+                            }}
+                            className="py-1 px-3 rounded-lg text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer"
+                            style={{
+                              backgroundColor: palette.accent,
+                              color: palette.buttonText || '#000'
+                            }}
+                          >
+                            <span>Reservar</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </a>
+                        </div>
                       </div>
                     </div>
                   )
@@ -1469,6 +1657,58 @@ export default function BioSiteClient({
                 <span>Espaço VIP & Café</span>
               </div>
             </div>
+
+            {/* Barra Flutuante Executiva de Pré-Orçamento (Simulador de Procedimentos) */}
+            {selectedServiceIds.length > 0 && (
+              <div className="p-3.5 rounded-2xl border border-amber-400/40 bg-stone-900/95 backdrop-blur-md shadow-2xl space-y-2 mt-3 animate-slide-up">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-mono font-bold text-amber-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    Pré-Orçamento ({selectedServiceIds.length} {selectedServiceIds.length === 1 ? 'procedimento' : 'procedimentos'})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(8)
+                      setSelectedServiceIds([])
+                    }}
+                    className="text-[9px] font-mono text-stone-400 hover:text-white underline cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                </div>
+                <div className="text-[10px] text-stone-300 flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                  {servicesCatalog.items
+                    .filter((s: any) => selectedServiceIds.includes(s.id))
+                    .map((s: any) => (
+                      <span key={s.id} className="bg-black/60 border border-white/10 px-2 py-0.5 rounded-md text-stone-200 flex items-center gap-1">
+                        <span>{s.name}</span>
+                        <span className="text-amber-400 font-serif font-bold">({s.price})</span>
+                      </span>
+                    ))}
+                </div>
+                <a
+                  href={`https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(
+                    `Olá! Montei um pré-orçamento no BioSite de ${effectiveName} com os seguintes procedimentos:\n\n` +
+                    servicesCatalog.items
+                      .filter((s: any) => selectedServiceIds.includes(s.id))
+                      .map((s: any) => `• ${s.name} — ${s.price}`)
+                      .join('\n') +
+                    `\n\nGostaria de verificar a disponibilidade de agenda e confirmar os detalhes!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    triggerHaptic(16)
+                    handleTrackLead('WhatsApp Pré-Orçamento Simulador')
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-stone-950 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-98 transition cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Enviar Pré-Orçamento no WhatsApp</span>
+                </a>
+              </div>
+            )}
             </div>
           </BioSiteScrollReveal>
         )}
@@ -1725,6 +1965,84 @@ export default function BioSiteClient({
           </BioSiteScrollReveal>
         )}
 
+        {/* 12.5. Comparador Interativo de Antes & Depois (Split-Slider Arrastável por Toque/Mouse) */}
+        <BioSiteScrollReveal direction="up" delay={80} className="px-5 py-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              TRANSFORMAÇÃO REAL · ANTES & DEPOIS
+            </span>
+            <span className="text-[9px] font-mono text-stone-400">
+              Arraste para comparar
+            </span>
+          </div>
+
+          <div
+            ref={beforeAfterContainerRef}
+            onMouseDown={() => setIsDraggingBeforeAfter(true)}
+            onMouseUp={() => setIsDraggingBeforeAfter(false)}
+            onMouseLeave={() => setIsDraggingBeforeAfter(false)}
+            onMouseMove={(e) => {
+              if (isDraggingBeforeAfter) handleBeforeAfterMove(e.clientX)
+            }}
+            onTouchMove={(e) => {
+              if (e.touches[0]) handleBeforeAfterMove(e.touches[0].clientX)
+            }}
+            className="relative w-full h-[270px] sm:h-[310px] rounded-2xl overflow-hidden border border-white/15 select-none shadow-2xl cursor-ew-resize group"
+            style={{ backgroundColor: palette.card }}
+          >
+            {/* Imagem "Depois" (Fundo completo) */}
+            <img
+              src={beforeAfterData.after}
+              alt="Depois"
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            />
+            <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-mono text-emerald-400 border border-emerald-400/40 font-bold uppercase tracking-wider shadow-md">
+              DEPOIS
+            </div>
+
+            {/* Imagem "Antes" (Cortada pela largura do slider) */}
+            <div
+              className="absolute inset-0 overflow-hidden pointer-events-none"
+              style={{ width: `${beforeAfterPosition}%` }}
+            >
+              <img
+                src={beforeAfterData.before}
+                alt="Antes"
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                style={{ width: beforeAfterContainerRef.current?.offsetWidth || '100%', maxWidth: 'none' }}
+              />
+              <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-mono text-stone-300 border border-white/20 font-bold uppercase tracking-wider shadow-md">
+                ANTES
+              </div>
+            </div>
+
+            {/* Linha Divisória e Alça Central Arrastável com Ícone de Sliders */}
+            <div
+              className="absolute top-0 bottom-0 w-0.5 bg-white/95 shadow-[0_0_14px_rgba(255,255,255,0.9)] pointer-events-none"
+              style={{ left: `${beforeAfterPosition}%` }}
+            >
+              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-stone-900 border-2 border-white flex items-center justify-center text-white shadow-2xl">
+                <Sliders className="w-3.5 h-3.5 text-amber-400 rotate-90" />
+              </div>
+            </div>
+
+            {/* Legenda Inferior Flutuante */}
+            <div className="absolute bottom-3 left-3 right-3 pointer-events-none flex items-center justify-between">
+              <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[8.5px] font-mono text-stone-200 border border-white/10">
+                {beforeAfterData.subtitle}
+              </span>
+              <span className="bg-black/75 backdrop-blur-md px-2 py-1 rounded-lg text-[8px] font-mono text-amber-400 border border-amber-400/20 font-bold uppercase">
+                {beforeAfterData.tag}
+              </span>
+            </div>
+          </div>
+        </BioSiteScrollReveal>
+
         {/* 13. Localização & GPS com "Aberto Agora" */}
         {locationInfo?.enabled && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
@@ -1739,9 +2057,13 @@ export default function BioSiteClient({
                 <span className="text-[9px] font-mono uppercase tracking-widest font-bold opacity-75">
                   NOSSA LOCALIZAÇÃO
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {locationInfo.openStatus || 'Aberto Agora'}
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-mono ${
+                  liveStatus.isOpen
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${liveStatus.isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  {liveStatus.label}
                 </span>
               </div>
 
@@ -1924,6 +2246,56 @@ export default function BioSiteClient({
               <span>Compartilhar</span>
             </button>
           </div>
+        </BioSiteScrollReveal>
+
+        {/* 17.5. Selo Circular de Certificação & Excelência em SVG (Padrão Alta Joalheria) */}
+        <BioSiteScrollReveal direction="fade" delay={100} className="py-6 flex flex-col items-center justify-center select-none">
+          <div className="relative w-28 h-28 flex items-center justify-center group">
+            {/* Anel SVG com tipografia em curva girando suavemente */}
+            <svg
+              className="w-full h-full animate-[spin_25s_linear_infinite]"
+              viewBox="0 0 100 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                id="circleTextPath"
+                d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"
+                fill="none"
+              />
+              <text
+                className="text-[8px] font-mono uppercase tracking-[0.25em] font-bold"
+                fill={palette.accent}
+                opacity="0.85"
+              >
+                <textPath href="#circleTextPath" startOffset="0%">
+                  ★ PADRÃO BIOVIP ★ EXCELÊNCIA & QUALIDADE VIP ★
+                </textPath>
+              </text>
+            </svg>
+
+            {/* Monograma Central em Relevo Dourado */}
+            <div
+              className="absolute inset-4 rounded-full border flex flex-col items-center justify-center shadow-inner backdrop-blur-sm"
+              style={{
+                backgroundColor: `${palette.card}e6`,
+                borderColor: `${palette.accent}66`
+              }}
+            >
+              <span
+                className="font-serif italic text-lg font-bold tracking-wider leading-none"
+                style={{ color: palette.accent }}
+              >
+                {monogram}
+              </span>
+              <span className="text-[6.5px] font-mono text-stone-400 tracking-widest uppercase mt-0.5">
+                VIP
+              </span>
+            </div>
+          </div>
+          <span className="text-[9px] font-mono uppercase tracking-widest text-stone-500 mt-2">
+            Certificação de Padrão & Biossegurança
+          </span>
         </BioSiteScrollReveal>
 
         {/* 18. Assinatura e Monograma de Rodapé */}

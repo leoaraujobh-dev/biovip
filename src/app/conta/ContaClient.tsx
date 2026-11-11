@@ -143,6 +143,7 @@ export default function ContaClient() {
   const [userPhone, setUserPhone] = useState('')
 
   // Estratégia Híbrida de Foto & IA
+  const [storyModalOpen, setStoryModalOpen] = useState(false)
   const [customPhotoSrc, setCustomPhotoSrc] = useState<string | null>(null)
   const [photoTreatment, setPhotoTreatment] = useState<'organico' | 'silhueta' | 'original'>('organico')
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false)
@@ -3099,8 +3100,8 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* SEÇÃO 3: TUTORIAL INSTAGRAM & DISPLAY DE BALCÃO */}
-                  <div className="pt-8 border-t border-stone-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* SEÇÃO 3: TUTORIAL INSTAGRAM, DISPLAY DE BALCÃO & CARD PARA STORY */}
+                  <div className="pt-8 border-t border-stone-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* CARD 1: TUTORIAL PASSO A PASSO INSTAGRAM */}
                     <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border border-amber-200/80 space-y-4">
                       <div className="flex items-center gap-2.5">
@@ -3198,6 +3199,42 @@ export default function ContaClient() {
                             Pronto para gráfica ou impressão
                           </span>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* CARD 3: GERADOR DE CARD PARA STORY DO INSTAGRAM (9:16) */}
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-stone-900 via-stone-900 to-black text-white space-y-4 flex flex-col justify-between shadow-xl border border-stone-800">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 text-stone-950 flex items-center justify-center shrink-0 shadow-md">
+                            <Smartphone className="w-4 h-4 font-bold" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block">
+                              STORIES & ENGAJAMENTO (9:16)
+                            </span>
+                            <h4 className="text-sm font-bold text-white">
+                              Card Oficial para Story
+                            </h4>
+                          </div>
+                        </div>
+                        <p className="text-xs text-stone-300 leading-relaxed">
+                          Divulgue seu novo BioSite nos Stories do Instagram com design cinematográfico de alta conversão.
+                        </p>
+                      </div>
+
+                      <div className="pt-2 space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setStoryModalOpen(true)}
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-500 text-stone-950 text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Visualizar & Baixar Story HD</span>
+                        </button>
+                        <span className="text-[10px] text-stone-400 block text-center font-mono">
+                          Formato 1080x1920 · Pronto para postar
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3979,6 +4016,99 @@ export default function ContaClient() {
                 className="w-full py-2.5 rounded-xl text-stone-500 hover:text-stone-800 text-xs font-semibold transition cursor-pointer"
               >
                 Continuar Editando por Enquanto ({remainingHours}h ativas)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PREVIEW DO CARD OFICIAL PARA STORY (9:16) */}
+      {storyModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-[#12151c] border border-amber-400/30 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative text-white my-auto">
+            <button
+              onClick={() => setStoryModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-stone-400 hover:text-white transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
+                PRÉVIA OFICIAL · STORY 9:16
+              </span>
+              <h3 className="text-lg font-serif font-bold text-white">
+                Card para Instagram Story
+              </h3>
+            </div>
+
+            {/* O CARD 9:16 SIMULADO EM ALTA RESOLUÇÃO */}
+            <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-gradient-to-b from-stone-900 via-stone-950 to-black p-5 flex flex-col justify-between select-none">
+              {/* Topo do Story: Logo/Monograma & Status */}
+              <div className="flex items-center justify-between">
+                <span className="font-serif italic text-lg font-bold text-amber-400">{monogram}</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[8px] font-mono font-bold uppercase tracking-wider">
+                  ● NO AR NO INSTAGRAM
+                </span>
+              </div>
+
+              {/* Centro: Foto de Estúdio com Moldura Dourada & Nome */}
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-amber-400/60 shadow-[0_0_25px_rgba(251,191,36,0.25)] relative p-1 bg-gradient-to-tr from-amber-400 to-amber-200">
+                  <img
+                    src={customPhotoSrc || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
+                    alt={brandName}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-lg font-serif font-bold text-white leading-tight">
+                    {brandName}
+                  </h4>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-amber-300/90 mt-0.5">
+                    {businessTitle || niche}
+                  </p>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[9px] font-mono text-stone-200">
+                  ★ {rating} · Avaliações 5 Estrelas no Google
+                </div>
+              </div>
+
+              {/* Rodapé do Story: Sticker Simulador do Link do Instagram */}
+              <div className="space-y-2">
+                <div className="p-3 rounded-2xl bg-white text-stone-950 font-bold flex items-center justify-between shadow-2xl border border-white/50">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-mono tracking-tight uppercase">biovip.com.br/{slug}</span>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-stone-900" />
+                </div>
+                <p className="text-[9px] font-mono text-center text-stone-400 uppercase tracking-wider">
+                  Toque na figurinha para agendar
+                </p>
+              </div>
+            </div>
+
+            {/* Ações: Copiar Link e Fechar */}
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(fullUrl)
+                  setCopiedLink(true)
+                  setTimeout(() => setCopiedLink(false), 2000)
+                }}
+                className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? 'Link Copiado!' : 'Copiar Link para a Figurinha'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStoryModalOpen(false)}
+                className="w-full py-2 rounded-xl text-stone-400 hover:text-white text-xs transition cursor-pointer"
+              >
+                Fechar Prévia
               </button>
             </div>
           </div>
