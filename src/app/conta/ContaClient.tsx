@@ -2247,10 +2247,42 @@ export default function ContaClient() {
                 <div className="flex-1 space-y-3 w-full">
                   <div>
                     <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
+                      CHAVE PIX OFICIAL (CELULAR)
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="px-3 py-1.5 rounded-xl border border-stone-300 bg-white font-mono text-xs font-bold text-stone-800">
+                        31991390202
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('31991390202')
+                          setPixCopied(true)
+                          setTimeout(() => setPixCopied(false), 2000)
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-[11px] font-bold uppercase transition flex items-center gap-1 cursor-pointer"
+                      >
+                        {pixCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{pixCopied ? 'Copiada!' : 'Copiar Chave Celular'}</span>
+                      </button>
+                      <a
+                        href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Realizei o pagamento via Pix da anuidade do BioSite ${slug} e gostaria de enviar o comprovante para liberação imediata.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition flex items-center gap-1 cursor-pointer ml-auto"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        <span>Enviar Comprovante</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
                       CÓDIGO PIX COPIA E COLA
                     </span>
                     <p className="text-xs text-stone-600 mt-0.5">
-                      Abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o código abaixo:
+                      Ou abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o código abaixo:
                     </p>
                   </div>
 
@@ -2285,9 +2317,9 @@ export default function ContaClient() {
                   </div>
 
                   <div className="flex items-center gap-4 text-[11px] text-stone-500 font-medium">
-                    <span>Beneficiário: <strong>BioVip Tecnologia Ltda</strong></span>
+                    <span>Beneficiário: <strong>BioVip Tecnologia / Suporte Oficial</strong></span>
                     <span>•</span>
-                    <span>CNPJ: <strong>58.914.821/0001-90</strong></span>
+                    <span>WhatsApp: <strong>(31) 99139-0202</strong></span>
                   </div>
                 </div>
               </div>
@@ -3066,6 +3098,109 @@ export default function ContaClient() {
                       </button>
                     </div>
                   </div>
+
+                  {/* SEÇÃO 3: TUTORIAL INSTAGRAM & DISPLAY DE BALCÃO */}
+                  <div className="pt-8 border-t border-stone-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* CARD 1: TUTORIAL PASSO A PASSO INSTAGRAM */}
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border border-amber-200/80 space-y-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                          <Instagram className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-800 font-bold block">
+                            DIVULGAÇÃO & CONVERSÃO
+                          </span>
+                          <h4 className="text-sm font-bold text-stone-900">
+                            Como colocar na Bio do Instagram
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2.5 text-xs text-stone-700 leading-relaxed font-sans">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-amber-200/80 text-amber-950 font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                          <p>Abra o <strong>Instagram</strong> no celular e clique em <strong>Editar Perfil</strong>.</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-amber-200/80 text-amber-950 font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                          <p>Toque em <strong>Links</strong> &gt; <strong>Adicionar link externo</strong>.</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-amber-200/80 text-amber-950 font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                          <p>Cole a URL do seu BioSite e salve:</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <input
+                          type="text"
+                          readOnly
+                          value={fullUrl}
+                          className="w-full px-3 py-2 rounded-xl border border-amber-200 bg-white font-mono text-[11px] text-stone-800 select-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(fullUrl)
+                            setCopiedLink(true)
+                            setTimeout(() => setCopiedLink(false), 2000)
+                          }}
+                          className="shrink-0 px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedLink ? 'Copiado!' : 'Copiar'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* CARD 2: DISPLAY DE BALCÃO COM QR CODE */}
+                    <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-stone-900 text-amber-400 flex items-center justify-center shrink-0">
+                            <QrCode className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
+                              EXPERIÊNCIA FÍSICA VIP
+                            </span>
+                            <h4 className="text-sm font-bold text-stone-900">
+                              Display de Balcão & Cartão de Visitas
+                            </h4>
+                          </div>
+                        </div>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          Imprima este QR Code em acrílico para o balcão da sua recepção ou no verso do seu cartão. O cliente aponta a câmera e acessa seu catálogo completo!
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4 pt-2">
+                        <div className="p-2 bg-white rounded-xl border border-stone-200 shadow-2xs shrink-0">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(fullUrl)}`}
+                            alt="QR Code do BioSite"
+                            className="w-16 h-16 rounded-lg"
+                          />
+                        </div>
+                        <div className="space-y-1.5 flex-1">
+                          <a
+                            href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(fullUrl)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={`qrcode-${slug}.png`}
+                            className="w-full py-2 px-3 rounded-xl bg-stone-900 hover:bg-black text-white text-[11px] font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Download className="w-3 h-3 text-amber-400" />
+                            <span>Baixar QR Code HD (500px)</span>
+                          </a>
+                          <span className="text-[10px] text-stone-400 block text-center font-mono">
+                            Pronto para gráfica ou impressão
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -3736,25 +3871,46 @@ export default function ContaClient() {
             <div className="flex justify-center">
               <div className="p-3 bg-white rounded-2xl border-2 border-stone-900 shadow-md">
                 <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020126580014br.gov.bcb.pix0136pix%40biovip.com.br5204000053039865406290.005802BR5916BIOVIP%20BRASIL6009SAO%20PAULO62070503***6304E1D2"
+                  src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=31991390202"
                   alt="QR Code Pix"
                   className="w-44 h-44 rounded-xl"
                 />
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText('00020126580014br.gov.bcb.pix0136pix@biovip.com.br5204000053039865406290.005802BR5916BIOVIP BRASIL6009SAO PAULO62070503***6304E1D2')
-                setPixCopied(true)
-                setTimeout(() => setPixCopied(false), 2000)
-              }}
-              className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              {pixCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {pixCopied ? 'Chave Copiada com Sucesso!' : 'Copiar Chave Pix'}
-            </button>
+            <div className="space-y-2">
+              <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200 text-center">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block mb-1">
+                  CHAVE PIX (TELEFONE CELULAR)
+                </span>
+                <span className="font-mono text-base font-bold text-stone-900">
+                  (31) 99139-0202
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText('31991390202')
+                  setPixCopied(true)
+                  setTimeout(() => setPixCopied(false), 2000)
+                }}
+                className="w-full py-3 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                {pixCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {pixCopied ? 'Chave Celular Copiada com Sucesso!' : 'Copiar Chave Pix (31991390202)'}
+              </button>
+
+              <a
+                href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Realizei o pagamento via Pix de renovação do BioSite e gostaria de enviar o comprovante.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs block text-center"
+              >
+                <MessageCircle className="w-3.5 h-3.5 inline mr-1" />
+                Enviar Comprovante pelo WhatsApp
+              </a>
+            </div>
           </div>
         </div>
       )}

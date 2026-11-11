@@ -645,9 +645,14 @@ export default function AdminDashboardClient() {
       const businessName = profile.name || admin.clientName || 'Empresa VIP'
       const phone = (admin.clientPhone || profile.whatsapp || '').replace(/\D/g, '')
 
-      // Resolução inteligente de paleta
+      // Resolução inteligente de paleta (compatibilidade total com antigo e novo BioVip)
       const THEME_MAP: Record<string, string> = {
         roseGoldQuartz: 'rose_quartz',
+        obsidianGold: 'dourado_vip',
+        barberVintage: 'dourado_vip',
+        clinicalClean: 'esmeralda_ouro',
+        velvetGlamour: 'rose_quartz',
+        navyLaw: 'safira_ouro',
         rose_gold: 'rose_quartz',
         rosegold: 'rose_quartz',
         goldVip: 'dourado_vip',
@@ -716,7 +721,7 @@ export default function AdminDashboardClient() {
         : FALLBACK_GALLERY_BY_NICHE.beleza
 
       let galleryPhotosList: string[] = []
-      const candidateList = micro.galleryPhotos || micro.portfolioGallery?.items || micro.galleryPhotosList
+      const candidateList = micro.galleryPhotos || micro.portfolioGallery?.items || micro.galleryPhotosList || micro.studentGrid?.photos || micro.studentGrid?.items
       if (Array.isArray(candidateList)) {
         galleryPhotosList = candidateList
           .map((it: any) => typeof it === 'string' ? it : it?.url)
@@ -951,9 +956,17 @@ export default function AdminDashboardClient() {
           mapsUrl: 'https://maps.google.com'
         },
         testimonialsList: formattedTestimonials,
-        aboutMeSection: micro.aboutMe || {
+        galleryCaptions: Array.isArray(micro.studentGrid?.captions) ? micro.studentGrid.captions : undefined,
+        aboutMeSection: micro.aboutMe ? {
+          enabled: micro.aboutMe.enabled !== false,
+          headline: micro.aboutMe.headline || `Sobre ${businessName}`,
+          photoUrl: micro.aboutMe.photoUrl || profile.aboutPhotoUrl,
+          paragraph: micro.aboutMe.paragraph || profile.tagline || 'Dedicamo-nos a proporcionar experiências exclusivas e transformadoras, combinando técnicas avançadas com um padrão rigoroso de excelência.',
+          closingPhrase: micro.aboutMe.closingPhrase || profile.cursivePhrase || 'Sua melhor versão com sofisticação e segurança.'
+        } : {
           enabled: true,
           headline: `Sobre ${businessName}`,
+          photoUrl: profile.aboutPhotoUrl,
           paragraph: profile.tagline || 'Dedicamo-nos a proporcionar experiências exclusivas e transformadoras, combinando técnicas avançadas com um padrão rigoroso de excelência.',
           closingPhrase: profile.cursivePhrase || 'Sua melhor versão com sofisticação e segurança.'
         },
@@ -3855,267 +3868,294 @@ export default function AdminDashboardClient() {
               <button
                 type="button"
                 onClick={() => {
-                  const prompt = `Você é o Agente Especialista em Inteligência Digital e Arquiteto de BioSites de Alto Padrão da plataforma BioVip.
-Sua missão é criar BioSites 100% autênticos, reais e de altíssima conversão para profissionais liberais, clínicas médicas, odontologia estética, barbearias nobres e estúdios de beleza.
+                  const prompt = `Você agora é o **Arquiteto Oficial de Microsites do BioVip Studio Pro**.
+Sua missão é coletar os dados de um cliente, pesquisar profundamente na internet (Instagram, Google Maps / Google Meu Negócio e buscas do Google) todas as informações reais desse negócio e entregar um **ÚNICO BLOCO DE CÓDIGO JSON** pronto para ser colado na aba de criação do BioVip Studio Pro (que montará automaticamente a página completa + a Área de Administração do cliente).
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ REGRA OBRIGATÓRIA #1 (NÃO GERE PÁGINA GENÉRICA):
-Se esta for a sua PRIMEIRA resposta (logo após o usuário colar este prompt inicial), VOCÊ NÃO DEVE EM HIPÓTESE ALGUMA GERAR NENHUM CÓDIGO JSON OU DADOS FICTÍCIOS.
-Em vez disso, cumprimente cordialmente o usuário e peça as seguintes informações essenciais sobre o cliente:
+### PASSO 1: ENTREVISTA SEQUENCIAL (FAÇA UMA PERGUNTA POR VEZ)
+Cumprimente-me de forma rápida e faça as seguintes solicitações **SEQUENCIALMENTE (uma pergunta por vez, aguardando minha resposta antes de fazer a próxima)**. *Observação: se eu já enviar vários dados de uma só vez, avance diretamente para o que faltar ou para a geração do código.*
 
-1. 📱 Instagram Oficial: (@usuario ou link do perfil)
-2. 📍 Perfil no Google Maps / Google Meu Negócio: (Nome comercial exato, link do Maps ou endereço físico — essencial para fotos públicas da clínica e avaliações 5 estrelas)
-3. 🎯 Nicho e Especialidade Principal: (Ex: Harmonização Facial, Odontologia Estética, Barbearia Clássica, Lash Design, Nutrologia, etc.)
-4. 💬 WhatsApp Comercial de Atendimento: (com DDD para redirecionamento dos botões)
-5. 📸 Fotos Reais do Cliente (COMO ENVIAR SEM BLOQUEIO DO INSTAGRAM):
-   Como a Meta/Instagram bloqueia robôs de busca externos com tela de login, o usuário tem 3 formas simples e infalíveis de fornecer as fotos:
-   • 🌟 FORMA RECOMENDADA (VISÃO COMPUTACIONAL): Tire 1 a 3 prints da tela do Instagram (perfil, feed ou foto de perfil/logo) e envie direto aqui no chat do Gemini (arraste o arquivo ou dê Ctrl+V)! Eu tenho visão computacional integrada e vou analisar a estética, os tratamentos e fotos de antes/depois instantaneamente!
-   • 🌟 FORMA GOOGLE MAPS: Se o usuário enviar o link do Google Maps, buscarei as fotos públicas de alta resolução do estabelecimento salvas no Google Negócio (lh3.googleusercontent.com).
-   • 🌟 FORMA CURADA: Caso não envie fotos agora, selecionarei fotos profissionais em alta definição perfeitamente correspondentes ao nicho da Tabela de Fotos Verificadas do BioVip abaixo, permitindo que você troque por fotos do cliente no Painel BioVip com 1 clique.
-6. 💎 Serviços ou Diferenciais Específicos (Opcional): (Algum valor, técnica ou detalhe adicional que o cliente informou)
+1️⃣ **Solicitação 1 (Nome, Nicho e WhatsApp):**
+"Para começarmos, qual é o **Nome do Cliente / Empresa**, o **Nicho de Atuação** (ex: Extensão de Cílios, Nail Designer, Barbearia, Clínica de Estética, Advocacia, Odontologia, etc.) e o **WhatsApp** de atendimento?"
 
-Avise ao usuário que assim que ele enviar esses dados, você irá pesquisar ativamente na internet para validar as informações, capturar os depoimentos reais do Google Maps, identificar os procedimentos oferecidos e montar o código completo do BioSite.
+2️⃣ **Solicitação 2 (Instagram do Cliente):**
+"Qual é o **@usuario ou link do Instagram** desse cliente? (Se desejar, você também pode colar aqui o texto da Bio ou os principais serviços que ele posta)."
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ REGRA OBRIGATÓRIA #2 (APÓS O USUÁRIO ENVIAR OS DADOS DO CLIENTE):
-Assim que o usuário fornecer o Instagram, o Google Maps e o nicho do cliente, você DEVE REALIZAR UMA PESQUISA ATIVA NA WEB (usando a ferramenta de busca do Google):
+3️⃣ **Solicitação 3 (Endereço e Google Maps):**
+"Qual é o **Link do Google Maps / Google Meu Negócio** ou o **Endereço completo (Rua, Bairro, Cidade/UF)** do cliente?"
 
-1. INVESTIGAÇÃO NO INSTAGRAM E ANÁLISE DE FOTOS:
-- Se o usuário anexou prints ou fotos do Instagram/cliente: examine detalhadamente com visão computacional a bio, títulos (CRM, CRO), estética, paleta de cores, postagens e fotos reais de tratamentos.
-- Acesse as informações disponíveis do perfil para ler a bio real, títulos profissionais, slogan e proposta de valor.
-- Identifique o estilo e a identidade visual predominante para escolher a melhor paleta do BioVip:
-  * "luxo_nude": Nude Champagne e tons areia (para clínicas de estética, biomédicas, dermatologia e spas elegantes).
-  * "dourado_vip": Ouro Imperial sobre preto nobre (para barbearias de alto padrão, cirurgiões e holding).
-  * "esmeralda_ouro": Verde Esmeralda Nobre e Ouro (para odontologia, medicina integrativa e bem-estar).
-  * "rose_quartz": Rosé Quartz Glamour (para extensão de cílios, nails designers, maquiadoras e estética facial).
-  * "black_ultra": Preto Titânio e Grafite (para arquitetura, estética masculina e barbearias industriais).
-  * "safira_ouro": Azul Safira Noturno e Dourado (para advocacia, perícia médica e consultorias executivas).
+4️⃣ **Solicitação 4 (Estilo Visual e Plano de Manutenção):**
+"Qual **Tema Visual** combina mais com esse cliente?
+- \`roseGoldQuartz\` (Rosé Gold, Nude & Quartzo — Beleza, Cílios, Unhas, Estética)
+- \`obsidianGold\` (Dark Luxury & Ouro Imperial — Studios VIP, Clínicas, Advocacia, Mentorias)
+- \`barberVintage\` (Dark Barbearia & Âmbar — Barbearias e Grooming)
+- \`clinicalClean\` (Clean Minimalista & Pérola — Saúde, Odonto, Psicologia, Medicina)
+- \`velvetGlamour\` (Glamour Vibrante & Orquídea — Moda, Salões, Maquiagem)
+- \`navyLaw\` (Azul Marinho & Dourado — Jurídico, Contabilidade, Consultoria)
+E há algum serviço, pacote ou preço específico que deseja destacar?"
 
-- REGRA CRÍTICA PARA AS FOTOS NO JSON (PROIBIDO LINKS QUEBRADOS):
-  * NUNCA use textos como "[URL da foto]" ou "[Foto do perfil]".
-  * NUNCA use links diretos de post do Instagram (ex: https://instagram.com/p/... ou instagram.com/usuario), pois são páginas HTML protegidas por login que quebram o navegador.
-  * Use fotos públicas do Google Maps (lh3.googleusercontent.com) OU selecione as fotos correspondentes da TABELA OFICIAL DE FOTOS VERIFICADAS POR NICHO abaixo:
-    - Odontologia / Dentista:
-      avatarUrl: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85"
-      galleryPhotos: [
-        "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
-      ]
-    - Estética Avançada / Harmonização Facial / Dermatologia:
-      avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85"
-      galleryPhotos: [
-        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80"
-      ]
-    - Barbearia Nobre / Estética Masculina:
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=85"
-      galleryPhotos: [
-        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=800&q=80"
-      ]
-    - Beleza / Lash Designer / Nails / Maquiagem:
-      avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=85"
-      galleryPhotos: [
-        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
-      ]
-    - Advocacia / Consultoria / Negócios:
-      avatarUrl: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=800&q=85"
-      galleryPhotos: [
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
-      ]
+---
 
-2. INVESTIGAÇÃO NO GOOGLE MAPS / GOOGLE MEU NEGÓCIO:
-- Valide o endereço físico oficial, bairro e cidade.
-- Extraia a nota média real de avaliações (ex: 4.9★ ou 5.0★).
-- Extraia 2 a 3 DEPOIMENTOS REAIS de clientes verdadeiros postados no perfil do Google Meu Negócio do cliente, com nome da pessoa, nota e relato autêntico.
-- Valide o horário de atendimento comercial (dias da semana e horários de pico).
+### PASSO 2: PESQUISA PROFUNDA NA INTERNET (QUANDO EU RESPONDER)
+Assim que tiver os dados do cliente, pesquise na internet e no Google Maps tudo sobre esse negócio:
+- Nome comercial exato, especialidade principal e posicionamento de autoridade.
+- Biografia real do Instagram, número de seguidores, telefone/WhatsApp e links da bio.
+- Os **4 a 6 serviços/procedimentos reais** trabalhados pelo cliente (baseados nas informações coletadas do perfil, legendas e nicho), criando descrições persuasivas e elegantes.
+- Seção **Sobre a Especialista & Nosso Espaço (aboutMe)**: Redija uma apresentação profunda, acolhedora e comovente sobre a trajetória, anos de experiência, especialização técnica, padrão de atendimento e amor pelo ofício para preencher \`paragraph\` e a frase marcante \`closingPhrase\`.
+- Endereço completo, bairro, cidade/UF, horário de atendimento, nota no Google Meu Negócio (ex: 5.0★) e 3 depoimentos baseados nos elogios reais do negócio no Google Maps.
+- 6 legendas curtas e impactantes baseadas nos posts de procedimentos, resultados de antes/depois e serviços reais do Instagram para a galeria (priorizando afinidade técnica com o catálogo de serviços ao invés de meras curtidas).
+- **ATENÇÃO CRÍTICA PARA IMAGENS:** Todas as chaves de imagem (avatarUrl, aboutPhotoUrl, photoUrl, cardImage, imageUrl, photos) DEVEM ser SEMPRE STRINGS com URLs VÁLIDAS e diretas da web (ex: https://images.unsplash.com/photo-...). NUNCA envie objetos nem chaves aninhadas para as imagens.
 
-3. VALIDAÇÃO DOS DADOS:
-- Certifique-se de que os números de WhatsApp e links de rota para o Google Maps estão corretos e prontos para navegação.
+---
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ REGRA OBRIGATÓRIA #3 (FORMATO DA RESPOSTA FINAL):
-Após coletar e validar todas as informações reais do cliente, retorne ESTRITAMENTE o bloco de código JSON puro, sem textos introdutórios ou finais, seguindo rigidamente o schema oficial abaixo:
+### PASSO 3: ENTREGA DO CÓDIGO FINAL (FORMATO JSON OBRIGATÓRIO)
+Entregue **EXATAMENTE UM BLOCO DE CÓDIGO JSON** (\`\`\`json ... \`\`\`) seguindo rigorosamente esta estrutura abaixo, sem omitir nenhuma chave, para que eu copie e cole direto no espaço de importação do BioVip Studio Pro:
 
+\`\`\`json
 {
   "adminClient": {
-    "clientName": "[Nome Completo do Profissional ou Estabelecimento]",
-    "clientPhone": "[Telefone WhatsApp com DDD apenas dígitos, ex: 5531999999999]",
-    "clientEmail": "[E-mail ou contato@nomedocliente.com.br]",
-    "subdomain": "[slug-do-cliente-em-kebab-case]",
-    "nicheCategory": "[Nicho Real]",
+    "clientName": "Nome do Cliente ou Empresa",
+    "clientPhone": "5531999999999",
+    "clientEmail": "contato@cliente.com.br",
+    "subdomain": "slug-do-cliente-sem-espacos",
+    "nicheCategory": "Beleza & Estética",
+    "maintenancePlan": "pro_4",
+    "monthlyFee": 49.90,
     "creationFee": 79.90,
-    "monthlyFee": 49.90
+    "isLandingModel": false
   },
   "microsite": {
-    "theme": "[luxo_nude | dourado_vip | esmeralda_ouro | rose_quartz | black_ultra | safira_ouro]",
-    "typographyId": "instrument",
-    "buttonStyle": "cartao_nobre",
-    "buttonAnimation": "shimmer",
+    "theme": "roseGoldQuartz",
+    "styling": {
+      "fontFamily": "Playfair Display",
+      "borderRadius": 20,
+      "glassmorphism": true,
+      "metallicBorders": true,
+      "spotlightGlow": true
+    },
+    "announcement": {
+      "enabled": true,
+      "badge": "AGENDA VIP ABERTA",
+      "text": "Últimos horários disponíveis nesta semana. Reserve seu atendimento exclusivo!",
+      "link": "#booking"
+    },
     "profile": {
-      "name": "[Nome do Profissional ou Clínica]",
-      "title": "[Especialidade e Título Oficial]",
-      "registrationCode": "[Registro Profissional se houver: ex CRM/CRO/OAB ou em branco]",
-      "tagline": "[Slogan de posicionamento extraído do Instagram]",
-      "cursivePhrase": "[Assinatura elegante para a biografia]",
-      "bio": "[Biografia real e persuasiva extraída e refinada do perfil]",
-      "avatarUrl": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=85"
+      "name": "NOME DO NEGÓCIO EM MAIÚSCULO",
+      "title": "ESPECIALIDADE PRINCIPAL DE ALTO PADRÃO",
+      "tagline": "Bio persuasiva baseada nas informações reais do Instagram e diferenciais do cliente.",
+      "cursivePhrase": "Excelência, sofisticação e cuidado em cada detalhe.",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=900",
+      "aboutPhotoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=700",
+      "instagram": "usuario_sem_arroba",
+      "whatsapp": "5531999999999",
+      "mapsUrl": "https://maps.google.com/?q=Endereco+do+Cliente"
+    },
+    "metrics": {
+      "enabled": true,
+      "items": [
+        { "value": "5.0★", "label": "Avaliação no Google" },
+        { "value": "+1.000", "label": "Clientes Atendidas" },
+        { "value": "100%", "label": "Atendimento VIP" }
+      ]
     },
     "actionCards": [
       {
-        "id": "btn-1",
-        "title": "AGENDAMENTO VIP VIA WHATSAPP",
-        "subtitle": "Atendimento prioritário com hora marcada.",
-        "variant": "accent",
-        "badgeText": "⭐ PRIORITÁRIO",
+        "id": "cta-1",
+        "title": "AGENDAR MEU HORÁRIO NO WHATSAPP",
+        "subtitle": "Atendimento rápido e personalizado com hora marcada",
+        "icon": "Calendar",
         "linkType": "whatsapp",
-        "whatsappMessage": "Olá! Gostaria de agendar um horário com [Nome]."
+        "url": "#whatsapp",
+        "whatsappMessage": "Olá! Vi seu microsite e gostaria de agendar um horário.",
+        "variant": "accent",
+        "animation": "pulse-glow",
+        "badgeText": "MAIS PROCURADO",
+        "ctaActionText": "AGENDAR AGORA"
       },
       {
-        "id": "btn-2",
-        "title": "CATÁLOGO DE SERVIÇOS & VALORES",
-        "subtitle": "Conheça nossos procedimentos e protocolos.",
+        "id": "cta-2",
+        "title": "CONHECER CATÁLOGO DE SERVIÇOS",
+        "subtitle": "Confira todos os procedimentos e protocolos exclusivos",
+        "icon": "Sparkles",
+        "linkType": "catalogo",
+        "url": "#catalogo",
         "variant": "default",
-        "url": "#catalogo"
+        "animation": "none",
+        "badgeText": "PROCEDIMENTOS",
+        "ctaActionText": "VER SERVIÇOS"
       },
       {
-        "id": "btn-3",
-        "title": "COMO CHEGAR (GOOGLE MAPS & WAZE)",
-        "subtitle": "Rotas e localização privilegiada.",
+        "id": "cta-3",
+        "title": "COMO CHEGAR · LOCALIZAÇÃO NO MAPS",
+        "subtitle": "Endereço completo do cliente extraído do Google Maps",
+        "icon": "MapPin",
+        "linkType": "maps",
+        "url": "https://maps.google.com",
         "variant": "default",
-        "url": "#localizacao"
+        "animation": "none",
+        "badgeText": "ROTAS GPS",
+        "ctaActionText": "ABRIR MAPA"
       }
     ],
-    "announcement": {
+    "studentGrid": {
       "enabled": true,
-      "badge": "AGENDA EXCLUSIVA",
-      "text": "Atendimentos com agendamento antecipado · Poucas vagas disponíveis."
-    },
-    "urgency": {
-      "enabled": true,
-      "headline": "🔥 VAGAS LIMITADAS PARA ESTA SEMANA",
-      "subtitle": "Reserve seu atendimento exclusivo antes que a agenda feche:",
-      "minutes": 30
-    },
-    "metrics": {
-      "items": [
-        { "value": "[Ex: +2.000]", "label": "[Ex: CLIENTES ATENDIDOS]" },
-        { "value": "[Ex: 8 Anos]", "label": "[Ex: DE TRADIÇÃO & EXCELÊNCIA]" },
-        { "value": "5.0★", "label": "AVALIAÇÃO NO GOOGLE MAPS" }
+      "headline": "Resultados Reais & Portfólio em Destaque",
+      "subtitle": "Registros mais curtidos no nosso Instagram oficial",
+      "badgeText": "PORTFÓLIO OFICIAL",
+      "layout": "smart_masonry",
+      "captions": [
+        "Legenda curta do destaque 1 baseada no serviço principal",
+        "Legenda curta do destaque 2 baseada na técnica exclusiva",
+        "Legenda curta do destaque 3 com foco em acabamento natural",
+        "Legenda curta do destaque 4 de resultado real",
+        "Legenda curta do destaque 5 de atendimento personalizado",
+        "Legenda curta do destaque 6 do espaço e biossegurança"
       ]
     },
-    "howItWorks": {
-      "items": [
-        { "number": "01", "title": "Triagem & Contato", "description": "Você entra em contato pelo WhatsApp e alinhamos o melhor horário para seu atendimento reservado." },
-        { "number": "02", "title": "Avaliação Personalizada", "description": "Diagnóstico preciso e escolha dos melhores protocolos para seus objetivos." },
-        { "number": "03", "title": "Experiência & Resultados", "description": "Atendimento de excelência em ambiente privativo com suporte contínuo." }
-      ]
+    "locationCard": {
+      "enabled": true,
+      "title": "Localização & Espaço Exclusivo",
+      "address": "Rua Exemplo, 123 - Bairro, Cidade - UF",
+      "hours": "Seg a Sáb · 08:30 às 19:30",
+      "openStatus": "Atendimento com Hora Marcada",
+      "mapsUrl": "https://maps.google.com",
+      "buttonLabel": "Traçar Rota no Google Maps",
+      "showHours": true
     },
     "services": {
       "enabled": true,
-      "headline": "Procedimentos & Soluções Exclusivas",
-      "subtitle": "Serviços executados com excelência técnica e materiais premium",
-      "categories": ["TODOS", "MAIS PROCURADO", "EXCLUSIVO"],
+      "headline": "Procedimentos & Serviços Exclusivos",
+      "subtitle": "Protocolos personalizados baseados nas técnicas do nosso espaço",
+      "layout": "list",
       "items": [
         {
           "id": "srv-1",
-          "name": "[Nome do Serviço Principal 1]",
-          "category": "MAIS PROCURADO",
-          "duration": "1h00",
-          "priceFormatted": "Sob Consulta",
-          "description": "[Descrição precisa do serviço e benefícios reais]",
-          "badge": "MAIS PROCURADO",
+          "name": "Nome Real do Serviço 1",
+          "description": "Descrição detalhada e persuasiva do serviço oferecido pelo cliente.",
+          "price": "Sob Consulta",
+          "duration": "1h30",
+          "badge": "DESTAQUE VIP",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
           "featured": true
         },
         {
           "id": "srv-2",
-          "name": "[Nome do Serviço Principal 2]",
-          "category": "MAIS PROCURADO",
-          "duration": "45 min",
-          "priceFormatted": "Sob Consulta",
-          "description": "[Descrição do serviço 2]",
-          "badge": "DESTAQUE",
-          "featured": false
+          "name": "Nome Real do Serviço 2",
+          "description": "Descrição detalhada do segundo procedimento mais procurado.",
+          "price": "Sob Consulta",
+          "duration": "1h30",
+          "badge": "MUITO PROCURADO",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
+          "featured": true
         },
         {
           "id": "srv-3",
-          "name": "[Nome do Serviço Principal 3]",
-          "category": "EXCLUSIVO",
-          "duration": "1h30",
-          "priceFormatted": "Sob Consulta",
-          "description": "[Descrição do serviço 3]",
-          "badge": "EXCLUSIVO",
+          "name": "Nome Real do Serviço 3",
+          "description": "Descrição detalhada do terceiro procedimento do cliente.",
+          "price": "Sob Consulta",
+          "duration": "1h00",
+          "badge": "",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
+          "featured": false
+        },
+        {
+          "id": "srv-4",
+          "name": "Manutenção / Atendimento Personalizado",
+          "description": "Acompanhamento completo para manter seu resultado impecável por mais tempo.",
+          "price": "Sob Consulta",
+          "duration": "1h00",
+          "badge": "",
+          "ctaLabel": "Agendar",
+          "actionType": "booking",
           "featured": false
         }
       ]
     },
-    "galleryPhotos": [
-      "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
-    ],
-    "locationCard": {
-      "enabled": true,
-      "address": "[Endereço Real Completo com Bairro e Cidade do Google Maps]",
-      "hours": "[Horário de Funcionamento Real]",
-      "openStatus": "Aberto · Atendimento com Hora Marcada",
-      "mapsUrl": "[Link do Google Maps]"
-    },
     "testimonials": {
+      "enabled": true,
+      "headline": "O Que Dizem No Google Meu Negócio",
       "items": [
-        { "clientName": "[Nome de Cliente Real do Maps 1]", "city": "[Cidade]", "text": "[Depoimento real extraído do Google Maps]", "rating": 5 },
-        { "clientName": "[Nome de Cliente Real do Maps 2]", "city": "[Cidade]", "text": "[Depoimento real extraído do Google Maps]", "rating": 5 }
-      ]
-    },
-    "aboutMe": {
-      "headline": "[Título da Seção Sobre Mim]",
-      "paragraph": "[História profissional, formação e diferenciais reais do especialista]",
-      "closingPhrase": "[Frase de autoridade final]"
-    },
-    "faq": {
-      "items": [
-        { "question": "Como funciona o agendamento de consultas ou horários?", "answer": "O agendamento é feito de forma personalizada diretamente via WhatsApp, onde nossa equipe verifica os melhores horários disponíveis." },
-        { "question": "Quais são as formas de pagamento disponíveis?", "answer": "Aceitamos PIX, cartões de crédito com opções de parcelamento e transferência bancária." },
-        { "question": "Onde fica localizado o espaço?", "answer": "[Endereço com pontos de referência e facilidade de estacionamento]." }
+        {
+          "id": "t-1",
+          "clientName": "Nome da Cliente 1",
+          "city": "Cidade - UF",
+          "text": "Avaliação 5 estrelas baseada nos elogios reais do negócio.",
+          "rating": 5
+        },
+        {
+          "id": "t-2",
+          "clientName": "Nome da Cliente 2",
+          "city": "Cidade - UF",
+          "text": "Segunda avaliação destacando o atendimento impecável e o ambiente.",
+          "rating": 5
+        },
+        {
+          "id": "t-3",
+          "clientName": "Nome da Cliente 3",
+          "city": "Cidade - UF",
+          "text": "Terceira avaliação elogiando a durabilidade e o profissionalismo.",
+          "rating": 5
+        }
       ]
     },
     "qualifierFunnel": {
       "enabled": true,
-      "buttonLabel": "✨ Descobrir o Tratamento Ideal (Triagem Rápida)",
+      "buttonLabel": "✨ Descobrir Procedimento Ideal (Triagem VIP)",
       "headline": "Atendimento Personalizado",
-      "subtitle": "Responda 2 perguntas rápidas para direcionarmos seu horário no WhatsApp:",
+      "subtitle": "Responda 3 perguntas rápidas para agilizar seu atendimento no WhatsApp:",
       "questions": [
         {
-          "id": "q1",
-          "title": "Qual serviço ou transformação você busca?",
-          "options": ["[Opção 1 baseada no nicho]", "[Opção 2 baseada no nicho]", "Outro Procedimento"]
+          "id": "q-1",
+          "question": "Qual procedimento você tem mais interesse hoje?",
+          "options": ["Serviço 1", "Serviço 2", "Serviço 3", "Avaliação Personalizada"]
         },
         {
-          "id": "q2",
-          "title": "Qual período você prefere para o seu atendimento?",
-          "options": ["Manhã", "Tarde", "Sábado"]
+          "id": "q-2",
+          "question": "Qual o melhor período para o seu horário?",
+          "options": ["Manhã", "Tarde", "Final do dia / Sábado", "Qualquer horário disponível"]
+        },
+        {
+          "id": "q-3",
+          "question": "Qual o seu objetivo principal?",
+          "options": ["Primeiro atendimento", "Manutenção", "Ocasião especial", "Quero tirar dúvidas"]
         }
       ]
     },
-    "subpages": [
-      { "slug": "procedimentos", "title": "Procedimentos & Valores", "description": "Tabela de procedimentos com detalhes e durações.", "previewType": "services" },
-      { "slug": "transformacoes", "title": "Galeria de Resultados", "description": "Transformações e portfólio visual exclusivo.", "previewType": "before_after" }
-    ]
+    "aboutMe": {
+      "enabled": true,
+      "headline": "SOBRE A ESPECIALISTA & NOSSO ESPAÇO",
+      "photoUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=700",
+      "paragraph": "Texto persuasivo e acolhedor (2 a 3 parágrafos) apresentando a trajetória da especialista ou fundadora, anos de experiência, propósito de atendimento humanizado, excelência técnica e diferenciais que tornam o espaço e os procedimentos únicos.",
+      "closingPhrase": "Sua beleza e bem-estar, nosso maior compromisso."
+    },
+    "faq": {
+      "enabled": true,
+      "headline": "Dúvidas Frequentes",
+      "items": [
+        {
+          "id": "faq-1",
+          "question": "Como faço para agendar meu horário?",
+          "answer": "Basta clicar no botão de WhatsApp ou no catálogo de serviços para escolher seu melhor dia e horário."
+        },
+        {
+          "id": "faq-2",
+          "question": "Onde o espaço está localizado?",
+          "answer": "Estamos localizados no endereço indicado no mapa acima, com fácil acesso e ambiente climatizado."
+        },
+        {
+          "id": "faq-3",
+          "question": "Quais são as formas de pagamento aceitas?",
+          "answer": "Aceitamos Pix, cartões de crédito e débito."
+        }
+      ]
+    }
   }
-}`
+}
+\`\`\`
+
+Inicie agora fazendo a **Solicitação 1**!\``
                   navigator.clipboard.writeText(prompt)
                   setPortfolioSuccessToast('Prompt Mestre Interativo copiado! Cole no Gemini: ele pedirá o Instagram e Maps do cliente antes de gerar.')
                   setTimeout(() => setPortfolioSuccessToast(null), 5000)

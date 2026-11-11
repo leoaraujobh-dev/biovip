@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import PricingPlans from '@/components/PricingPlans'
+import FloatingWhatsAppSupport from '@/components/FloatingWhatsAppSupport'
 import { FAQ_LIST } from '@/data/plans'
 
 export default function PlansPageClient() {
@@ -81,6 +82,7 @@ export default function PlansPageClient() {
       </main>
 
       <Footer />
+      <FloatingWhatsAppSupport />
     </div>
   )
 }

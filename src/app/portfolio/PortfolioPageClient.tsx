@@ -6,6 +6,7 @@ import { ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import PhoneMockup from '@/components/PhoneMockup'
+import FloatingWhatsAppSupport from '@/components/FloatingWhatsAppSupport'
 import { Project } from '@/data/projects'
 
 interface PortfolioPageClientProps {
@@ -187,6 +188,7 @@ export default function PortfolioPageClient({ projects: initialProjects, categor
       </main>
 
       <Footer />
+      <FloatingWhatsAppSupport />
     </div>
   )
 }
