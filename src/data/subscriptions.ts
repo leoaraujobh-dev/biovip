@@ -270,6 +270,33 @@ export const initialSubscriptions: Subscription[] = [
     payments: [
       { id: 'pay-009', date: '2026-08-01', amount: 29, method: 'cartao', status: 'pago' }
     ]
+  },
+  {
+    id: 'sub-010',
+    clientName: 'Larrayne Ramos',
+    businessName: 'Studio Larrayne Ramos',
+    email: 'contato@studiolarrayne.com.br',
+    whatsapp: '5531991390202',
+    niche: 'Extensão de Cílios & Nail Design',
+    slug: 'studio-larrayne-ramos',
+    planId: 'pro',
+    planName: 'Profissional',
+    cycle: 'mensal',
+    amount: 79,
+    status: 'ativa',
+    paymentMethod: 'pix',
+    startDate: '2026-05-10',
+    nextBillingDate: '2026-12-10',
+    lastPaymentDate: '2026-11-10',
+    bioSiteUrl: 'https://biovip.com.br/studio-larrayne-ramos',
+    viewsCount: 14200,
+    clicksCount: 5120,
+    isPortfolioModel: true,
+    inPortfolio: true,
+    notes: 'Studio de Cílios e Unhas de Alto Padrão.',
+    payments: [
+      { id: 'pay-010', date: '2026-11-10', amount: 79, method: 'pix', status: 'pago' }
+    ]
   }
 ]
 

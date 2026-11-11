@@ -34,38 +34,38 @@ const NICHES: ModelNiche[] = [
     id: 'lash',
     tabLabel: 'Lash & Nail Studio',
     icon: Sparkles,
-    name: 'Studio Larrayne Ramos',
-    role: 'Especialista em Extensão de Cílios & Nail Design',
-    badge: 'BELEZA & ESTÉTICA VIP',
+    name: 'Isabela Fontes',
+    role: 'Lash Designer & Micropigmentação Labial',
+    badge: 'ACADEMIA LASH BRASIL',
     rating: '5.0',
-    reviews: '428 avaliações',
-    slug: 'studio-larrayne-ramos',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+    reviews: '428 clientes',
+    slug: 'isabela-lash-studio',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
     coverImage: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&auto=format&fit=crop&q=80',
     accentColor: '#E2B857',
     services: [
       {
-        title: 'Extensão de Cílios Fio a Fio',
-        time: '1h 45m',
-        price: 'R$ 160',
-        popular: true,
-        image: 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=200&auto=format&fit=crop&q=80',
-      },
-      {
-        title: 'Volume Russo Imperial',
+        title: 'Volume Russo & Fox Eyes',
         time: '2h 00m',
         price: 'R$ 190',
         popular: true,
         image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Alongamento em Gel Moldado',
+        title: 'Extensão Fio a Fio Clássica',
+        time: '1h 45m',
+        price: 'R$ 160',
+        popular: true,
+        image: 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=200&auto=format&fit=crop&q=80',
+      },
+      {
+        title: 'Alongamento em Gel Diamante',
         time: '2h 15m',
         price: 'R$ 180',
         image: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=200&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Lash Lifting & Nutrição VIP',
+        title: 'Lash Lifting com Queratina',
         time: '1h 10m',
         price: 'R$ 130',
         image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=200&auto=format&fit=crop&q=80',
@@ -85,12 +85,12 @@ const NICHES: ModelNiche[] = [
     tabLabel: 'Barbearia VIP',
     icon: Scissors,
     name: 'Dom Pedro Barbearia',
-    role: 'Cortes Clássicos, Barboterapia & Visagismo Masculino',
-    badge: 'BARBER CLUB DE LUXO',
+    role: 'Barbearia Nobre & Visagismo Masculino',
+    badge: 'MEMBRO VIP ABRAM',
     rating: '4.9',
     reviews: '562 avaliações',
     slug: 'dom-pedro-barbearia',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=300&q=80',
     coverImage: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&auto=format&fit=crop&q=80',
     accentColor: '#E2B857',
     services: [
@@ -131,43 +131,43 @@ const NICHES: ModelNiche[] = [
   },
   {
     id: 'clinica',
-    tabLabel: 'Clínica & Estética',
+    tabLabel: 'Clínica & Odonto',
     icon: Stethoscope,
     name: 'Dra. Ana Freire',
-    role: 'Odontologia Estética & Harmonização Facial Avançada',
-    badge: 'CLÍNICA DE ALTO PADRÃO',
+    role: 'Odontologia Estética & Reabilitação Oral',
+    badge: 'CRO-PE 22.675',
     rating: '5.0',
     reviews: '310 pacientes',
     slug: 'dra-ana-freire',
-    avatar: 'https://images.unsplash.com/photo-1594824813583-39d73cb292a8?w=300&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=300&q=80',
     coverImage: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&auto=format&fit=crop&q=80',
     accentColor: '#E2B857',
     services: [
       {
-        title: 'Preenchimento Labial Russo & Contorno',
-        time: '1h 00m',
-        price: 'R$ 1.200',
+        title: 'Lentes de Resina Composta e Facetas',
+        time: '2h 30m',
+        price: 'Sob Consulta',
         popular: true,
-        image: 'https://images.unsplash.com/photo-1512290900672-1f4967347a46?w=200&auto=format&fit=crop&q=80',
+        image: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=200&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Toxina Botulínica (Botox Full Face)',
-        time: '45m',
-        price: 'R$ 950',
+        title: 'Harmonização Orofacial & Toxina Botulínica',
+        time: '1h 00m',
+        price: 'R$ 1.200',
         popular: true,
         image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=200&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Bioestimulador de Colágeno Sculptra',
+        title: 'Clareamento Dental a Laser em Consultório',
         time: '1h 15m',
-        price: 'R$ 1.650',
-        image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=200&auto=format&fit=crop&q=80',
+        price: 'R$ 650',
+        image: 'https://images.unsplash.com/photo-1512290900672-1f4967347a46?w=200&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Lentes de Contato em Resina Composta',
-        time: '2h 30m',
-        price: 'R$ 2.400',
-        image: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=200&auto=format&fit=crop&q=80',
+        title: 'Profilaxia & Check-up Digital',
+        time: '45m',
+        price: 'R$ 350',
+        image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=200&auto=format&fit=crop&q=80',
       },
     ],
     features: [
@@ -196,7 +196,7 @@ export default function VitrineModelosInterativos() {
         <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16 reveal-on-scroll">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[#E2B857] text-xs font-semibold tracking-wider uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5" />
-            Demonstração ao Vivo
+            BioSites Reais de Demonstração
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-zinc-100 font-normal tracking-tight leading-tight mb-4">
@@ -204,7 +204,7 @@ export default function VitrineModelosInterativos() {
           </h2>
 
           <p className="text-sm sm:text-base md:text-lg text-zinc-400 font-sans max-w-xl mx-auto leading-relaxed">
-            Toque para navegar no modelo real exatamente como sua cliente verá no celular.
+            Toque nas abas para navegar no modelo real exatamente como sua cliente verá no celular.
           </p>
 
           {/* Abas comutáveis com 1 toque */}
@@ -287,7 +287,7 @@ export default function VitrineModelosInterativos() {
                 target="_blank"
                 className="w-full sm:w-auto px-5 py-3.5 rounded-xl font-medium text-xs sm:text-sm text-zinc-300 hover:text-white border border-zinc-800 hover:border-[#E2B857]/50 bg-white/5 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
               >
-                <span>Testar ao Vivo</span>
+                <span>Abrir BioSite Completo</span>
                 <ExternalLink className="w-3.5 h-3.5 text-[#E2B857]" />
               </Link>
             </div>
@@ -296,19 +296,34 @@ export default function VitrineModelosInterativos() {
           {/* LADO DIREITO / SMARTPHONE INTERATIVO (7 colunas) */}
           <div className="lg:col-span-7 order-1 lg:order-2 flex justify-center reveal-scale delay-200">
             {/* Mockup iPhone Dark Titanium com Borda Dourada */}
-            <div className="relative w-[300px] sm:w-[340px] md:w-[360px] aspect-[9/19] rounded-[48px] p-3 bg-[#18181D] border-2 border-[#E2B857]/40 shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_40px_rgba(226,184,87,0.18)] overflow-hidden">
+            <div className="relative w-[300px] sm:w-[340px] md:w-[360px] aspect-[9/19] rounded-[48px] p-3 bg-[#18181D] border-2 border-[#E2B857]/50 shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_40px_rgba(226,184,87,0.18)] overflow-hidden">
               
-              {/* Tela do Celular */}
+              {/* Tela do Celular com Conteúdo Real do BioSite */}
               <div className="w-full h-full rounded-[38px] bg-[#09090B] overflow-y-auto scrollbar-none flex flex-col text-zinc-100 p-4 relative">
                 
-                {/* Dynamic Island */}
-                <div className="w-24 h-4 bg-zinc-900 rounded-full mx-auto mb-3 shrink-0 flex items-center justify-end px-2">
-                  <div className="w-2 h-2 rounded-full bg-zinc-800" />
+                {/* Barra Superior com Horário, Dynamic Island e Link Real */}
+                <div className="flex items-center justify-between px-1 text-[9px] text-zinc-400 font-mono mb-2 shrink-0">
+                  <span>9:41</span>
+                  <div className="w-22 h-3.5 bg-zinc-900 rounded-full mx-auto flex items-center justify-end px-1.5">
+                    <div className="w-2 h-2 rounded-full bg-zinc-800" />
+                  </div>
+                  <span className="text-emerald-400">● 100%</span>
                 </div>
 
+                {/* Banner Indicador de BioSite Real com Link */}
+                <Link
+                  href={`/${currentNiche.slug}`}
+                  target="_blank"
+                  className="mb-3 px-2 py-1 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/30 text-[8.5px] text-[#E2B857] flex items-center justify-center gap-1.5 hover:bg-[#E2B857]/20 transition shrink-0"
+                  title="Abrir página completa do BioSite em nova aba"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E2B857] animate-pulse" />
+                  <span>BioSite Real Oficial • Toque p/ Abrir ↗</span>
+                </Link>
+
                 {/* Topo do BioSite: Foto + Nome + Tag */}
-                <div className="text-center mb-4 shrink-0">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full p-0.5 bg-gradient-to-tr from-[#E2B857] to-[#f3d489] mb-2.5 shadow-md">
+                <div className="text-center mb-3.5 shrink-0">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full p-0.5 bg-gradient-to-tr from-[#E2B857] via-[#f5deb3] to-[#E2B857] mb-2 shadow-md">
                     <img
                       src={currentNiche.avatar}
                       alt={currentNiche.name}
@@ -336,7 +351,7 @@ export default function VitrineModelosInterativos() {
                 {/* Catálogo de Procedimentos com Preço Visível */}
                 <div className="space-y-2 mb-4">
                   <div className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 flex items-center justify-between px-1">
-                    <span>Catálogo de Procedimentos</span>
+                    <span>Procedimentos Reais</span>
                     <span className="text-[#E2B857] font-bold">Tabela VIP</span>
                   </div>
 
@@ -373,12 +388,12 @@ export default function VitrineModelosInterativos() {
                 {/* Botão de Agendamento Verde no Fundo do Celular */}
                 <div className="mt-auto pt-2 shrink-0">
                   <a
-                    href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Quero agendar um horário no modelo ${currentNiche.name}.`)}`}
+                    href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Quero agendar um horário no BioSite real de ${currentNiche.name}.`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-2.5 px-3 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition"
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition cursor-pointer"
                   >
-                    <span>Agendar Horário no WhatsApp</span>
+                    <span>Agendar no WhatsApp do Profissional</span>
                   </a>
                   <p className="text-[8px] text-center text-zinc-500 mt-1.5">
                     ✦ Resposta rápida em minutos pelo WhatsApp
@@ -395,4 +410,3 @@ export default function VitrineModelosInterativos() {
     </section>
   )
 }
-

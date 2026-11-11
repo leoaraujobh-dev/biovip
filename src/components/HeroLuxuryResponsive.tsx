@@ -1,4 +1,6 @@
 import React from 'react';
+import Link from 'next/link';
+import { Star, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
 
 export const HeroLuxuryResponsive = () => {
   return (
@@ -52,9 +54,9 @@ export const HeroLuxuryResponsive = () => {
           {/* Prova Social Integrada */}
           <div className="flex items-center gap-3 mt-8 pt-6 border-t border-zinc-800/80">
             <div className="flex -space-x-2">
-              <img className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#09090B] object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Profissional" />
-              <img className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#09090B] object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Profissional" />
-              <img className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#09090B] object-cover" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80" alt="Profissional" />
+              <img className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#09090B] object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Isabela Fontes" />
+              <img className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#09090B] object-cover" src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=100&auto=format&fit=crop&q=80" alt="Dom Pedro" />
+              <img className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#09090B] object-cover" src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=100&auto=format&fit=crop&q=80" alt="Dra. Ana Freire" />
             </div>
             <p className="text-xs text-zinc-400">
               <span className="text-[#E2B857] font-bold">★ 4.9</span> • Usado por mais de 500 profissionais
@@ -64,63 +66,277 @@ export const HeroLuxuryResponsive = () => {
         </div>
 
         {/* ========================================================= */}
-        {/* LADO VISUAL 3D (1 Celular no Mobile, 3 Celulares no Desktop) */}
+        {/* LADO VISUAL 3D COM BIOSITES REAIS DE DEMONSTRAÇÃO */}
         {/* ========================================================= */}
-        <div className="lg:col-span-7 relative h-[420px] sm:h-[500px] lg:h-[580px] w-full flex items-center justify-center perspective-1000 mt-2 lg:mt-0">
+        <div className="lg:col-span-7 relative h-[450px] sm:h-[520px] lg:h-[600px] w-full flex items-center justify-center perspective-1000 mt-2 lg:mt-0">
           
-          {/* MOCKUP 1: Lash Studio (Oculto em mobile, visível em lg) */}
-          <div className="hidden lg:block absolute left-[5%] xl:left-[8%] top-[10%] w-[230px] xl:w-[250px] aspect-[9/19] rounded-[38px] p-2 bg-[#141418] border border-zinc-700/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] phone-float-left z-10 overflow-hidden pointer-events-none">
-            <div className="w-full h-full rounded-[30px] overflow-hidden bg-black flex flex-col p-3">
-              <div className="w-16 h-3 bg-zinc-800 rounded-full mx-auto mb-2.5" />
-              <div className="w-12 h-12 rounded-full border border-[#E2B857] mx-auto mb-2 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&auto=format&fit=crop&q=80" className="w-full h-full object-cover" alt="Estúdio de Cílios" />
+          {/* MOCKUP 1: BioSite Real Isabela Fontes (Lash & Olhar VIP) */}
+          <Link
+            href="/isabela-lash-studio"
+            target="_blank"
+            title="Abrir BioSite Real: Isabela Fontes"
+            className="group/phone1 hidden lg:block absolute left-[3%] xl:left-[6%] top-[10%] w-[235px] xl:w-[252px] aspect-[9/19] rounded-[40px] p-2 bg-[#141418] border border-zinc-700/70 hover:border-[#E2B857]/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] phone-float-left z-10 overflow-hidden transition-all duration-300 cursor-pointer"
+          >
+            <div className="w-full h-full rounded-[32px] overflow-hidden bg-[#09090B] flex flex-col p-3 border border-white/5 relative">
+              
+              {/* Barra de Status iPhone Real */}
+              <div className="flex items-center justify-between px-1 text-[8px] text-zinc-400 font-mono mb-2 shrink-0">
+                <span>9:41</span>
+                <div className="w-14 h-3 bg-zinc-900 rounded-full mx-auto" />
+                <span>5G 100%</span>
               </div>
-              <p className="text-[11px] font-serif text-center text-zinc-100">Beauty Studio VIP</p>
-              <span className="text-[8px] text-[#E2B857] text-center mb-3">Lash & Sobrancelhas</span>
-              <div className="space-y-1.5 mt-auto">
-                <div className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-[8px] text-zinc-300">✦ Volume Russo • R$ 190</div>
-                <div className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-[8px] text-zinc-300">✦ Lash Lifting • R$ 120</div>
-                <div className="py-1.5 rounded-lg bg-[#22C55E] text-[9px] font-bold text-center text-black">Agendar Horário</div>
-              </div>
-            </div>
-          </div>
 
-          {/* MOCKUP 2 (CENTRAL): Barbearia VIP (Visível em Mobile e Desktop) */}
-          <div className="relative lg:absolute lg:left-[32%] xl:left-[35%] lg:top-[0%] w-[220px] sm:w-[260px] xl:w-[275px] aspect-[9/19] rounded-[38px] sm:rounded-[42px] p-2.5 bg-[#18181D] border-2 border-[#E2B857]/60 shadow-[0_25px_65px_rgba(226,184,87,0.18)] phone-float-center z-20 overflow-hidden">
-            <div className="w-full h-full rounded-[30px] sm:rounded-[32px] overflow-hidden bg-[#09090B] flex flex-col p-3.5">
-              <div className="w-20 h-3.5 bg-zinc-800 rounded-full mx-auto mb-3" />
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-[#E2B857] mx-auto mb-2 overflow-hidden shadow-md">
-                <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200&auto=format&fit=crop&q=80" className="w-full h-full object-cover" alt="Barbearia" />
+              {/* Tag Superior Discreta */}
+              <div className="text-[7.5px] uppercase tracking-wider text-[#E2B857] text-center font-mono font-semibold mb-1">
+                ✦ BioSite Real • Toque p/ Abrir ↗
               </div>
-              <p className="text-xs sm:text-sm font-serif font-bold text-center text-zinc-100">Barber Club VIP</p>
-              <span className="text-[9px] text-[#E2B857] text-center mb-3">Corte & Barboterapia</span>
-              <div className="space-y-2 mt-auto">
-                <div className="p-2 rounded-xl bg-zinc-900/90 border border-[#E2B857]/30 text-[9px] flex justify-between text-zinc-200">
-                  <span>Combo Corte + Barba</span>
-                  <span className="font-bold text-[#E2B857]">R$ 95</span>
-                </div>
-                <div className="py-2 rounded-xl bg-[#22C55E] text-[10px] sm:text-[11px] font-bold text-center text-black shadow-lg">
-                  Agendar no WhatsApp
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* MOCKUP 3: Estética / Clínica (Oculto em mobile, visível em lg) */}
-          <div className="hidden lg:block absolute right-[4%] xl:right-[6%] top-[14%] w-[215px] xl:w-[235px] aspect-[9/19] rounded-[38px] p-2 bg-[#141418] border border-zinc-700/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] phone-float-right z-10 overflow-hidden pointer-events-none">
-            <div className="w-full h-full rounded-[30px] overflow-hidden bg-black flex flex-col p-3">
-              <div className="w-16 h-3 bg-zinc-800 rounded-full mx-auto mb-2.5" />
-              <div className="w-12 h-12 rounded-full border border-zinc-700 mx-auto mb-2 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1594824813583-39d73cb292a8?w=200&auto=format&fit=crop&q=80" className="w-full h-full object-cover" alt="Clínica" />
+              {/* Perfil Real: Isabela Fontes */}
+              <div className="text-center mb-2.5 shrink-0">
+                <div className="relative w-12 h-12 mx-auto rounded-full p-0.5 bg-gradient-to-tr from-[#E2B857] to-[#f3d489] mb-1.5 shadow">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
+                    className="w-full h-full object-cover rounded-full"
+                    alt="Isabela Fontes"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-[#09090B] flex items-center justify-center text-[7px] text-white font-bold">
+                    ✓
+                  </div>
+                </div>
+                <h4 className="text-[11px] font-serif font-bold text-zinc-100 leading-tight">
+                  Isabela Fontes
+                </h4>
+                <p className="text-[8px] text-[#E2B857] font-sans">
+                  Lash Designer & Olhar VIP
+                </p>
+                <div className="flex items-center justify-center gap-1 text-[7.5px] text-zinc-400 mt-0.5">
+                  <span className="text-[#E2B857] font-bold">★ 5.0</span>
+                  <span>• 428 clientes</span>
+                </div>
               </div>
-              <p className="text-[11px] font-serif text-center text-zinc-100">Dra. Estética Facial</p>
-              <span className="text-[8px] text-zinc-400 text-center mb-3">Harmonização & Skin</span>
-              <div className="space-y-1.5 mt-auto">
-                <div className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-[8px] text-zinc-300">✦ Antes & Depois (Ver)</div>
-                <div className="py-1.5 rounded-lg bg-[#E2B857] text-[9px] font-bold text-center text-black">Consultar Vagas</div>
+
+              {/* Catálogo Real de Cílios */}
+              <div className="space-y-1.5 my-auto">
+                <div className="p-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[8px] flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=100&auto=format&fit=crop&q=80"
+                      className="w-5 h-5 rounded object-cover shrink-0"
+                      alt="Volume Russo"
+                    />
+                    <div className="truncate">
+                      <span className="text-zinc-200 font-medium block truncate">Volume Russo</span>
+                      <span className="text-[7px] text-zinc-500">2h • Retenção 30d</span>
+                    </div>
+                  </div>
+                  <span className="font-bold text-[#E2B857] shrink-0 font-mono">R$ 190</span>
+                </div>
+
+                <div className="p-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[8px] flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=100&auto=format&fit=crop&q=80"
+                      className="w-5 h-5 rounded object-cover shrink-0"
+                      alt="Fio a Fio"
+                    />
+                    <div className="truncate">
+                      <span className="text-zinc-200 font-medium block truncate">Fio a Fio Clássico</span>
+                      <span className="text-[7px] text-zinc-500">1h45 • Efeito Soft</span>
+                    </div>
+                  </div>
+                  <span className="font-bold text-[#E2B857] shrink-0 font-mono">R$ 160</span>
+                </div>
               </div>
+
+              {/* Botão de Agendamento Real */}
+              <div className="mt-auto pt-1">
+                <div className="py-1.5 rounded-lg bg-[#22C55E] text-[8.5px] font-bold text-center text-white flex items-center justify-center gap-1 shadow-md group-hover/phone1:bg-[#1eb054] transition">
+                  <span>Agendar no WhatsApp</span>
+                </div>
+              </div>
+
             </div>
-          </div>
+          </Link>
+
+          {/* MOCKUP 2 (CENTRAL): BioSite Real Dom Pedro Barbearia */}
+          <Link
+            href="/dom-pedro-barbearia"
+            target="_blank"
+            title="Abrir BioSite Real: Dom Pedro Barbearia"
+            className="group/phone2 relative lg:absolute lg:left-[31%] xl:left-[34%] lg:top-[0%] w-[235px] sm:w-[270px] xl:w-[285px] aspect-[9/19] rounded-[42px] sm:rounded-[46px] p-2.5 bg-[#18181D] border-2 border-[#E2B857]/70 shadow-[0_25px_65px_rgba(226,184,87,0.22)] phone-float-center z-20 overflow-hidden transition-all duration-300 hover:border-[#E2B857] cursor-pointer"
+          >
+            <div className="w-full h-full rounded-[34px] sm:rounded-[38px] overflow-hidden bg-[#09090B] flex flex-col p-3.5 border border-white/5 relative">
+              
+              {/* Barra de Status iPhone Real */}
+              <div className="flex items-center justify-between px-1.5 text-[8.5px] sm:text-[9px] text-zinc-400 font-mono mb-2 shrink-0">
+                <span>9:41</span>
+                <div className="w-16 h-3 bg-zinc-900 rounded-full mx-auto" />
+                <span className="text-emerald-400">● 100%</span>
+              </div>
+
+              {/* Badge Modelo Real */}
+              <div className="text-[8px] sm:text-[8.5px] uppercase tracking-wider text-[#E2B857] text-center font-mono font-bold mb-1 flex items-center justify-center gap-1">
+                <span>✦ BioSite Real ao Vivo</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </div>
+
+              {/* Perfil Real: Dom Pedro Barbearia */}
+              <div className="text-center mb-3 shrink-0">
+                <div className="relative w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full p-0.5 bg-gradient-to-tr from-[#E2B857] via-[#f5deb3] to-[#E2B857] mb-1.5 shadow-lg">
+                  <img
+                    src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=400&q=80"
+                    className="w-full h-full object-cover rounded-full"
+                    alt="Dom Pedro Barbearia"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#E2B857] border-2 border-[#09090B] flex items-center justify-center text-[8px] text-black font-extrabold">
+                    ★
+                  </div>
+                </div>
+                <h4 className="text-xs sm:text-sm font-serif font-bold text-zinc-100 leading-tight">
+                  Dom Pedro Barbearia
+                </h4>
+                <p className="text-[8.5px] sm:text-[9.5px] text-[#E2B857] font-sans font-medium">
+                  Barbearia Nobre & Visagismo
+                </p>
+                <div className="flex items-center justify-center gap-1.5 text-[8px] text-zinc-400 mt-1">
+                  <span className="text-[#E2B857] font-bold">★ 4.9</span>
+                  <span>• 562 avaliações no Maps</span>
+                </div>
+              </div>
+
+              {/* Serviços Reais da Barbearia */}
+              <div className="space-y-2 my-auto">
+                <div className="p-2 rounded-xl bg-zinc-900/95 border border-[#E2B857]/40 text-[9px] sm:text-[9.5px] flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=100&auto=format&fit=crop&q=80"
+                      className="w-7 h-7 rounded-lg object-cover shrink-0 border border-zinc-800"
+                      alt="Combo Corte + Barba"
+                    />
+                    <div className="truncate">
+                      <span className="text-zinc-100 font-semibold block truncate">Corte + Barba Terapia</span>
+                      <span className="text-[7.5px] text-zinc-400">1h15 • Toalha quente & ozônio</span>
+                    </div>
+                  </div>
+                  <span className="font-bold font-mono text-[#E2B857] shrink-0 text-[10px] sm:text-[11px]">R$ 95</span>
+                </div>
+
+                <div className="p-2 rounded-xl bg-zinc-900/95 border border-zinc-800 text-[9px] sm:text-[9.5px] flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=100&auto=format&fit=crop&q=80"
+                      className="w-7 h-7 rounded-lg object-cover shrink-0 border border-zinc-800"
+                      alt="Corte Visagista"
+                    />
+                    <div className="truncate">
+                      <span className="text-zinc-200 font-medium block truncate">Corte Visagista VIP</span>
+                      <span className="text-[7.5px] text-zinc-400">45m • Finalização pomada</span>
+                    </div>
+                  </div>
+                  <span className="font-bold font-mono text-[#E2B857] shrink-0 text-[10px] sm:text-[11px]">R$ 65</span>
+                </div>
+              </div>
+
+              {/* Botão Verde de Agendamento */}
+              <div className="mt-auto pt-2">
+                <div className="py-2 sm:py-2.5 rounded-xl bg-[#22C55E] text-[10px] sm:text-[11px] font-bold text-center text-white flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(34,197,94,0.4)] group-hover/phone2:bg-[#1eb054] transition">
+                  <span>Agendar Cadeira no WhatsApp</span>
+                </div>
+                <p className="text-[7px] text-center text-zinc-500 mt-1">
+                  Toque para navegar no biosite real
+                </p>
+              </div>
+
+            </div>
+          </Link>
+
+          {/* MOCKUP 3: BioSite Real Dra. Ana Freire (Odontologia & Harmonização) */}
+          <Link
+            href="/dra-ana-freire"
+            target="_blank"
+            title="Abrir BioSite Real: Dra. Ana Freire"
+            className="group/phone3 hidden lg:block absolute right-[3%] xl:right-[5%] top-[13%] w-[225px] xl:w-[242px] aspect-[9/19] rounded-[40px] p-2 bg-[#141418] border border-zinc-700/70 hover:border-[#E2B857]/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] phone-float-right z-10 overflow-hidden transition-all duration-300 cursor-pointer"
+          >
+            <div className="w-full h-full rounded-[32px] overflow-hidden bg-[#09090B] flex flex-col p-3 border border-white/5 relative">
+              
+              {/* Barra de Status iPhone Real */}
+              <div className="flex items-center justify-between px-1 text-[8px] text-zinc-400 font-mono mb-2 shrink-0">
+                <span>9:41</span>
+                <div className="w-14 h-3 bg-zinc-900 rounded-full mx-auto" />
+                <span>5G 100%</span>
+              </div>
+
+              {/* Tag Superior Discreta */}
+              <div className="text-[7.5px] uppercase tracking-wider text-[#E2B857] text-center font-mono font-semibold mb-1">
+                ✦ BioSite Real • Toque p/ Abrir ↗
+              </div>
+
+              {/* Perfil Real: Dra. Ana Freire */}
+              <div className="text-center mb-2.5 shrink-0">
+                <div className="relative w-12 h-12 mx-auto rounded-full p-0.5 bg-gradient-to-tr from-[#E2B857] to-[#f3d489] mb-1.5 shadow">
+                  <img
+                    src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=300&q=80"
+                    className="w-full h-full object-cover rounded-full"
+                    alt="Dra. Ana Freire"
+                  />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-[#09090B] flex items-center justify-center text-[7px] text-white font-bold">
+                    ✓
+                  </div>
+                </div>
+                <h4 className="text-[11px] font-serif font-bold text-zinc-100 leading-tight">
+                  Dra. Ana Freire
+                </h4>
+                <p className="text-[8px] text-[#E2B857] font-sans">
+                  Odonto Estética • CRO 22.675
+                </p>
+                <div className="flex items-center justify-center gap-1 text-[7.5px] text-zinc-400 mt-0.5">
+                  <span className="text-[#E2B857] font-bold">★ 5.0</span>
+                  <span>• 310 pacientes</span>
+                </div>
+              </div>
+
+              {/* Catálogo Real de Tratamentos */}
+              <div className="space-y-1.5 my-auto">
+                <div className="p-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[8px] flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=100&auto=format&fit=crop&q=80"
+                      className="w-5 h-5 rounded object-cover shrink-0"
+                      alt="Lentes de Contato"
+                    />
+                    <div className="truncate">
+                      <span className="text-zinc-200 font-medium block truncate">Lentes em Resina</span>
+                      <span className="text-[7px] text-zinc-500">Planejamento 3D</span>
+                    </div>
+                  </div>
+                  <span className="font-bold text-[#E2B857] shrink-0 font-mono text-[7.5px]">Sob Consulta</span>
+                </div>
+
+                <div className="p-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[8px] flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=100&auto=format&fit=crop&q=80"
+                      className="w-5 h-5 rounded object-cover shrink-0"
+                      alt="Harmonização & Botox"
+                    />
+                    <div className="truncate">
+                      <span className="text-zinc-200 font-medium block truncate">Botox & Harmonização</span>
+                      <span className="text-[7px] text-zinc-500">Full Face Rejuvenesc.</span>
+                    </div>
+                  </div>
+                  <span className="font-bold text-[#E2B857] shrink-0 font-mono text-[7.5px]">R$ 1.200</span>
+                </div>
+              </div>
+
+              {/* Botão de Agendamento Real */}
+              <div className="mt-auto pt-1">
+                <div className="py-1.5 rounded-lg bg-[#22C55E] text-[8.5px] font-bold text-center text-white flex items-center justify-center gap-1 shadow-md group-hover/phone3:bg-[#1eb054] transition">
+                  <span>Consulta no WhatsApp</span>
+                </div>
+              </div>
+
+            </div>
+          </Link>
 
         </div>
 
@@ -130,4 +346,3 @@ export const HeroLuxuryResponsive = () => {
 };
 
 export default HeroLuxuryResponsive;
-
