@@ -276,6 +276,72 @@ export default function AdminDashboardClient() {
     setTimeout(() => setPasswordCopiedToast(false), 2500)
   }
 
+  // Modal para Visualizar / Resetar Credenciais do Cliente
+  const [credentialsModalClient, setCredentialsModalClient] = useState<{
+    slug: string
+    name: string
+    email: string
+    password?: string
+    phone: string
+  } | null>(null)
+  const [showCredentialsModalPassword, setShowCredentialsModalPassword] = useState<boolean>(false)
+
+  const handleOpenClientCredentials = (sub: Subscription) => {
+    let email = sub.email || `${sub.slug}@biovip.com.br`
+    let password = 'BioVip2026!'
+    let phone = sub.whatsapp || '5531991390202'
+
+    try {
+      const raw = localStorage.getItem('biovip_users')
+      if (raw) {
+        const users = JSON.parse(raw)
+        const found = users.find((u: any) => u.slug === sub.slug || (u.email && u.email.toLowerCase() === sub.email?.toLowerCase()))
+        if (found) {
+          if (found.email) email = found.email
+          if (found.password) password = found.password
+          if (found.phone) phone = found.phone
+        }
+      }
+    } catch (e) {
+      console.warn(e)
+    }
+
+    setCredentialsModalClient({
+      slug: sub.slug,
+      name: sub.clientName || sub.businessName,
+      email,
+      password,
+      phone
+    })
+    setShowCredentialsModalPassword(false)
+  }
+
+  const handleUpdateModalClientPassword = (newPass: string) => {
+    if (!credentialsModalClient) return
+    try {
+      const raw = localStorage.getItem('biovip_users')
+      let users = raw ? JSON.parse(raw) : []
+      users = users.filter((u: any) => u.slug !== credentialsModalClient.slug && u.email !== credentialsModalClient.email)
+      users.unshift({
+        email: credentialsModalClient.email,
+        password: newPass,
+        slug: credentialsModalClient.slug,
+        brandName: credentialsModalClient.name,
+        phone: credentialsModalClient.phone,
+        updatedAt: new Date().toISOString()
+      })
+      localStorage.setItem('biovip_users', JSON.stringify(users))
+      setCredentialsModalClient({
+        ...credentialsModalClient,
+        password: newPass
+      })
+      setPermissionsSuccessToast(`Nova senha salva para ${credentialsModalClient.name}!`)
+      setTimeout(() => setPermissionsSuccessToast(null), 3000)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const slugifyText = (text: string) => {
     return text
       .toString()
@@ -2074,6 +2140,75 @@ export default function AdminDashboardClient() {
             </button>
           </div>
         </div>
+
+        {/* Barra de Navegação de Abas no Mobile/Tablet (lg:hidden) */}
+        <div className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-[#0e1116] border-t border-stone-800/80 overflow-x-auto scrollbar-none text-xs">
+          <button
+            onClick={() => setActiveTab('assinaturas')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-medium ${
+              activeTab === 'assinaturas'
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            Bio Sites ({subscriptions.length + portfolioList.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('vencimentos')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-medium flex items-center gap-1.5 ${
+              activeTab === 'vencimentos'
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            Vencimentos
+            {metrics.atrasadasCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold">
+                {metrics.atrasadasCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('metricas')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-medium flex items-center gap-1 ${
+              activeTab === 'metricas'
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+            Métricas
+          </button>
+          <button
+            onClick={() => setActiveTab('portfolio')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-medium flex items-center gap-1 ${
+              activeTab === 'portfolio'
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            Vitrine ({portfolioList.filter(p => p.inPortfolio !== false).length})
+          </button>
+          <button
+            onClick={() => setActiveTab('gateways')}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-medium ${
+              activeTab === 'gateways'
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+                : 'text-stone-400 hover:text-white'
+            }`}
+          >
+            Gateways
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenCreateBioSiteModal}
+            className="px-3 py-1.5 rounded-lg whitespace-nowrap transition cursor-pointer font-bold text-stone-950 bg-gradient-to-r from-amber-400 to-[#E2B857] flex items-center gap-1"
+          >
+            <Sparkles className="w-3 h-3 text-stone-950" />
+            Criar
+          </button>
+        </div>
       </header>
 
       {/* Conteúdo Principal */}
@@ -2428,6 +2563,14 @@ export default function AdminDashboardClient() {
                               </Link>
                               <button
                                 type="button"
+                                onClick={() => handleOpenPermissionsModal(proj.slug, proj.name)}
+                                title="Configurar o que pode ser alterado (/conta) e Ativar/Desativar Módulos"
+                                className="p-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition cursor-pointer shrink-0"
+                              >
+                                <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => {
                                   setEditingProject(proj)
                                   setIsProjectModalOpen(true)
@@ -2694,6 +2837,16 @@ export default function AdminDashboardClient() {
                                 className="p-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition cursor-pointer shrink-0"
                               >
                                 <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+                              </button>
+
+                              {/* Ver / Resetar Credenciais de Acesso do Cliente (/entrar) */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenClientCredentials(sub)}
+                                title="Ver / Resetar Credenciais de Acesso do Cliente (/entrar)"
+                                className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition cursor-pointer shrink-0"
+                              >
+                                <Key className="w-3.5 h-3.5 text-amber-400" />
                               </button>
 
                               {/* Editar */}
@@ -6151,6 +6304,177 @@ Inicie agora fazendo a **Solicitação 1**!\``
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CREDENCIAIS DE ACESSO DO CLIENTE (/entrar) */}
+      {credentialsModalClient && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-[#12151c] border border-stone-800 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-7 shadow-2xl relative my-auto animate-fade-in text-stone-200">
+            <button
+              type="button"
+              onClick={() => setCredentialsModalClient(null)}
+              className="absolute top-5 right-5 p-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[10px] uppercase font-bold flex items-center gap-1.5">
+                <Key className="w-3 h-3" /> Credenciais do Cliente
+              </span>
+            </div>
+
+            <h3 className="text-xl font-serif font-bold text-white mb-1">
+              Acesso de {credentialsModalClient.name}
+            </h3>
+            <p className="text-xs text-stone-400 mb-6">
+              Dados para o cliente fazer login em <span className="text-amber-400 font-mono">biovip.com.br/entrar</span> e gerenciar seu BioSite.
+            </p>
+
+            {/* Card de Informações */}
+            <div className="space-y-4 p-4 rounded-2xl bg-[#090b0e] border border-stone-800/80 mb-6">
+              <div>
+                <label className="block text-[11px] font-mono text-stone-400 uppercase mb-1">
+                  E-mail de Login
+                </label>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-xs font-mono text-white">
+                  <span>{credentialsModalClient.email}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(credentialsModalClient.email)
+                      setCredentialsCopiedToast(true)
+                      setTimeout(() => setCredentialsCopiedToast(false), 2000)
+                    }}
+                    className="text-stone-400 hover:text-amber-400 transition"
+                    title="Copiar e-mail"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-mono text-stone-400 uppercase">
+                    Senha de Acesso
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newPass = generateRandomPasswordValue()
+                      handleUpdateModalClientPassword(newPass)
+                    }}
+                    className="text-[11px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3" /> Gerar Nova Senha
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showCredentialsModalPassword ? 'text' : 'password'}
+                    value={credentialsModalClient.password || 'BioVip2026!'}
+                    onChange={(e) => {
+                      setCredentialsModalClient({
+                        ...credentialsModalClient,
+                        password: e.target.value
+                      })
+                    }}
+                    className="w-full px-3 py-2.5 pr-20 rounded-xl bg-stone-900/90 border border-stone-800 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowCredentialsModalPassword(!showCredentialsModalPassword)}
+                      className="text-stone-500 hover:text-stone-300 transition"
+                      title={showCredentialsModalPassword ? 'Ocultar' : 'Exibir'}
+                    >
+                      {showCredentialsModalPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(credentialsModalClient.password || 'BioVip2026!')
+                        setCredentialsCopiedToast(true)
+                        setTimeout(() => setCredentialsCopiedToast(false), 2000)
+                      }}
+                      className="text-stone-500 hover:text-amber-400 transition"
+                      title="Copiar senha"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-stone-400 uppercase mb-1">
+                  Link Público do BioSite
+                </label>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-xs font-mono text-emerald-400">
+                  <span>biovip.com.br/{credentialsModalClient.slug}</span>
+                  <Link
+                    href={`/${credentialsModalClient.slug}`}
+                    target="_blank"
+                    className="text-stone-400 hover:text-white transition"
+                    title="Abrir BioSite"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Ações de Envio e Cópia */}
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const msg = `🎉 Olá, ${credentialsModalClient.name}! Seguem os seus dados de acesso ao BioSite:\n\n🌐 Seu Link na Bio:\nhttps://biovip.com.br/${credentialsModalClient.slug}\n\n🔑 Painel de Edição:\nhttps://biovip.com.br/entrar\n• Login: ${credentialsModalClient.email}\n• Senha: ${credentialsModalClient.password || 'BioVip2026!'}\n\nQualquer dúvida, conte com a nossa equipe!`
+                  navigator.clipboard.writeText(msg)
+                  setCredentialsCopiedToast(true)
+                  setTimeout(() => setCredentialsCopiedToast(false), 2500)
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition border border-stone-700"
+              >
+                <Copy className="w-4 h-4 text-amber-400" />
+                <span>{credentialsCopiedToast ? 'Mensagem Copiada com Sucesso!' : 'Copiar Mensagem Pronta de Acesso'}</span>
+              </button>
+
+              <a
+                href={`https://wa.me/${credentialsModalClient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  `🎉 Olá, ${credentialsModalClient.name}! Seguem os seus dados de acesso ao BioSite:\n\n🌐 Seu Link na Bio:\nhttps://biovip.com.br/${credentialsModalClient.slug}\n\n🔑 Painel de Edição:\nhttps://biovip.com.br/entrar\n• Login: ${credentialsModalClient.email}\n• Senha: ${credentialsModalClient.password || 'BioVip2026!'}\n\nQualquer dúvida, conte com a nossa equipe!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Enviar Credenciais no WhatsApp do Cliente</span>
+              </a>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateModalClientPassword(credentialsModalClient.password || 'BioVip2026!')
+                    setCredentialsModalClient(null)
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition cursor-pointer"
+                >
+                  Salvar Alterações
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCredentialsModalClient(null)}
+                  className="text-xs text-stone-400 hover:text-white transition cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
