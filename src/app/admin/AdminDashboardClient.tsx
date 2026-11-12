@@ -1,5 +1,12 @@
 'use client'
 
+import AdminAuthGate from './components/AdminAuthGate'
+import AdminGatewaysTab from './components/AdminGatewaysTab'
+import AdminMetricsTab from './components/AdminMetricsTab'
+import AdminDueDatesTab from './components/AdminDueDatesTab'
+import AdminSecurityModal from './components/AdminSecurityModal'
+import AdminClientCredentialsModal from './components/AdminClientCredentialsModal'
+import AdminPermissionsModal from './components/AdminPermissionsModal'
 import { useState, useEffect, useMemo } from 'react'
 import {
   Subscription,
@@ -1841,141 +1848,19 @@ export default function AdminDashboardClient() {
 
   // TELA DE LOGIN BLINDADA (PADRÃO BANCÁRIO / CRIPTOGRAFIA SHA-256)
   if (!isAuthenticated) {
-    const isLocked = lockoutRemaining > 0
-    const lockMins = Math.floor(lockoutRemaining / 60)
-    const lockSecs = lockoutRemaining % 60
-
     return (
-      <div className="min-h-screen bg-[#07090E] text-stone-100 flex items-center justify-center p-4 selection:bg-amber-400 selection:text-black">
-        <div className="max-w-md w-full bg-[#0F141F]/90 border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-2xl relative overflow-hidden">
-          {/* Luz de Fundo Decorativa */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          {/* Header de Segurança */}
-          <div className="flex flex-col items-center text-center mb-8 relative">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-stone-950 shadow-xl transition-all duration-500 mb-4 ${
-              isLocked
-                ? 'bg-gradient-to-tr from-rose-500 to-red-400 shadow-rose-500/20 text-white animate-pulse'
-                : 'bg-gradient-to-tr from-amber-400 via-amber-300 to-amber-500 shadow-amber-500/20'
-            }`}>
-              {isLocked ? <ShieldAlert className="w-8 h-8" /> : <Lock className="w-8 h-8" />}
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-[10px] font-mono uppercase tracking-widest font-bold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ambiente Protegido · BioVip Master</span>
-            </div>
-
-            <h1 className="text-2xl font-serif font-bold text-white tracking-tight">
-              Gestão de Assinaturas
-            </h1>
-            <p className="text-xs text-stone-400 mt-1.5 max-w-xs leading-relaxed">
-              Autenticação restrita com assinatura criptográfica SHA-256 e proteção ativa contra ataques de força bruta.
-            </p>
-          </div>
-
-          {/* Banner de Bloqueio se houver excesso de tentativas */}
-          {isLocked ? (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs space-y-2 mb-6 text-center animate-shake">
-              <div className="flex items-center justify-center gap-2 font-bold text-rose-300 text-sm">
-                <Timer className="w-4 h-4" />
-                <span>Painel Temporariamente Bloqueado</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-stone-300">
-                Limite de 5 tentativas consecutivas atingido. Por segurança, o sistema bloqueou novas tentativas.
-              </p>
-              <div className="text-lg font-mono font-bold text-rose-400 pt-1">
-                Tempo restante: {lockMins.toString().padStart(2, '0')}:{lockSecs.toString().padStart(2, '0')}
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handlePinSubmit} className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-medium text-stone-300 uppercase tracking-wider font-mono">
-                    Senha / PIN Master
-                  </label>
-                  {attemptsLeft !== null && attemptsLeft > 0 && (
-                    <span className="text-[10px] font-mono text-amber-400">
-                      {attemptsLeft} tentativa(s) restante(s)
-                    </span>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <input
-                    type={showSecret ? 'text' : 'password'}
-                    value={pinInput}
-                    disabled={isAuthenticating || isLocked}
-                    onChange={(e) => setPinInput(e.target.value)}
-                    placeholder="Digite a Senha ou PIN Master"
-                    className="w-full px-4 py-3.5 bg-stone-900/90 border border-stone-700/80 rounded-2xl text-center text-lg sm:text-xl font-mono tracking-widest text-white placeholder-stone-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition disabled:opacity-50 pr-12"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowSecret(!showSecret)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300 transition p-1"
-                    title={showSecret ? 'Ocultar código' : 'Exibir código'}
-                  >
-                    {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-
-                {pinError && (
-                  <div className="mt-2.5 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center justify-center gap-1.5 text-center">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
-                    <span>{pinError}</span>
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isAuthenticating || !pinInput.trim() || isLocked}
-                className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-[0.99] text-stone-950 font-bold rounded-2xl text-sm transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAuthenticating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Validando Criptografia...</span>
-                  </>
-                ) : (
-                  <>
-                    <Unlock className="w-4 h-4" />
-                    <span>Acessar Painel ADM</span>
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {/* Dicas e Rodapé de Segurança */}
-          <div className="mt-6 pt-5 border-t border-white/5 space-y-3">
-            <div className="flex items-center justify-between text-[11px] text-stone-400">
-              <span className="flex items-center gap-1 text-emerald-400 font-mono">
-                <CheckCircle2 className="w-3 h-3" /> Rate Limit Ativo
-              </span>
-              <span className="font-mono text-stone-500">Auto-lock: 30min</span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-stone-400 pt-2">
-              <Link href="/" className="hover:text-amber-400 transition flex items-center gap-1 text-[11px]">
-                ← Voltar ao site público
-              </Link>
-              <a
-                href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Sou%20gestor%20do%20BioVip%20e%20preciso%20de%20ajuda%20com%20o%20acesso%20ADM."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-stone-500 hover:text-amber-400 transition"
-              >
-                Suporte do Gestor
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AdminAuthGate
+        isLocked={lockoutRemaining > 0}
+        lockoutRemaining={lockoutRemaining}
+        attemptsLeft={attemptsLeft}
+        pinInput={pinInput}
+        setPinInput={setPinInput}
+        showSecret={showSecret}
+        setShowSecret={setShowSecret}
+        pinError={pinError}
+        isAuthenticating={isAuthenticating}
+        handlePinSubmit={handlePinSubmit}
+      />
     )
   }
 
@@ -2892,469 +2777,44 @@ export default function AdminDashboardClient() {
 
         {/* ABA: VENCIMENTOS & INADIMPLÊNCIA */}
         {activeTab === 'vencimentos' && (
-          <section className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Clientes a Vencer nos Próximos Dias */}
-              <div className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-amber-400" />
-                    <h2 className="font-bold text-white text-base">Próximos Vencimentos (15 dias)</h2>
-                  </div>
-                  <span className="text-xs font-mono text-stone-400">{proximosVencimentos.length} pendentes</span>
-                </div>
-
-                <div className="space-y-3">
-                  {proximosVencimentos.length === 0 ? (
-                    <p className="text-stone-500 text-xs py-8 text-center">Nenhum vencimento nos próximos 15 dias.</p>
-                  ) : (
-                    proximosVencimentos.map((sub) => (
-                      <div key={sub.id} className="p-3.5 rounded-xl bg-[#0f1217] border border-stone-800/80 flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-white text-xs">{sub.businessName}</div>
-                          <div className="text-[11px] text-stone-400">
-                            Vencimento: <span className="font-mono text-amber-300">{sub.nextBillingDate}</span>
-                            {sub.diffDays === 0 ? ' (Hoje!)' : sub.diffDays < 0 ? ` (${Math.abs(sub.diffDays)} dias atrasado)` : ` (em ${sub.diffDays} dias)`}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-xs text-white">R$ {sub.amount}</span>
-                          <button
-                            onClick={() => handleConfirmPayment(sub.id)}
-                            className="px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-xs font-semibold transition cursor-pointer"
-                            title="Confirmar Pagamento Pix Recebido"
-                          >
-                            ✓ Pago
-                          </button>
-                          <a
-                            href={`https://wa.me/${sub.whatsapp}?text=${encodeURIComponent(getWhatsAppMessage(sub))}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
-                          >
-                            <MessageCircle className="w-3 h-3" /> Lembrar
-                          </a>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Inadimplentes e Cobrança Rápida */}
-              <div className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-                  <div className="flex items-center gap-2">
-                    <ShieldAlert className="w-5 h-5 text-rose-400" />
-                    <h2 className="font-bold text-white text-base">Inadimplentes para Cobrar</h2>
-                  </div>
-                  <span className="text-xs font-mono text-rose-400 font-bold">
-                    R$ {metrics.valorAtrasado},00 acumulado
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {subscriptions.filter(s => s.status === 'atrasada').length === 0 ? (
-                    <div className="py-12 text-center text-stone-500 text-xs">
-                      🎉 Parabéns! Nenhuma assinatura com atraso no momento.
-                    </div>
-                  ) : (
-                    subscriptions.filter(s => s.status === 'atrasada').map((sub) => (
-                      <div key={sub.id} className="p-3.5 rounded-xl bg-rose-950/10 border border-rose-900/30 flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-rose-200 text-xs">{sub.businessName}</div>
-                          <div className="text-[11px] text-stone-400">
-                            Venceu em <span className="font-mono text-rose-300">{sub.nextBillingDate}</span> · {sub.whatsapp}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleConfirmPayment(sub.id)}
-                            className="px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-xs font-semibold transition cursor-pointer"
-                            title="Confirmar Pagamento Pix Recebido (Dar Baixa)"
-                          >
-                            ✓ Pago (Pix)
-                          </button>
-                          <a
-                            href={`https://wa.me/${sub.whatsapp}?text=${encodeURIComponent(getWhatsAppMessage(sub))}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
-                          >
-                            <MessageCircle className="w-3 h-3" /> Cobrar Pix
-                          </a>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Templates de Mensagens WhatsApp Automatizadas */}
-            <div className="p-5 bg-[#0d0f12] rounded-2xl border border-stone-800 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-stone-800 gap-2">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageCircle className="w-4 h-4 text-emerald-400" /> Templates de Notificação WhatsApp
-                </span>
-                <span className="text-[10px] text-stone-500 font-mono">Variáveis dinâmicas para preenchimento automático</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-stone-400 mb-1">Mensagem de Cobrança / Inadimplência</label>
-                  <textarea
-                    rows={3}
-                    value={msgCobrancaTemplate}
-                    onChange={(e) => setMsgCobrancaTemplate(e.target.value)}
-                    className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-stone-400 mb-1">Mensagem de Boas-Vindas / Entrega do Bio Site</label>
-                  <textarea
-                    rows={3}
-                    value={msgBoasVindasTemplate}
-                    onChange={(e) => setMsgBoasVindasTemplate(e.target.value)}
-                    className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
+          <AdminDueDatesTab
+            proximosVencimentos={proximosVencimentos}
+            subscriptions={subscriptions}
+            metrics={metrics}
+            handleConfirmPayment={handleConfirmPayment}
+            getWhatsAppMessage={getWhatsAppMessage}
+            msgCobrancaTemplate={msgCobrancaTemplate}
+            setMsgCobrancaTemplate={setMsgCobrancaTemplate}
+            msgBoasVindasTemplate={msgBoasVindasTemplate}
+            setMsgBoasVindasTemplate={setMsgBoasVindasTemplate}
+          />
         )}
 
         {/* ABA: MÉTRICAS & RELATÓRIOS ESTRATÉGICOS */}
         {activeTab === 'metricas' && (
-          <section className="space-y-6">
-            {/* Header da Aba */}
-            <div className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block mb-1">
-                  BUSINESS INTELLIGENCE & ANALYTICS
-                </span>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-amber-400" />
-                  Métricas Executivas & Desempenho
-                </h2>
-                <p className="text-xs text-stone-400 mt-1">
-                  Visão consolidada de receita recorrente, distribuição por nichos, planos ativos e taxa de conversão dos Bio Sites.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <button
-                  onClick={exportCSV}
-                  className="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-stone-700/80"
-                >
-                  <Download className="w-3.5 h-3.5 text-amber-400" /> Exportar CSV
-                </button>
-                <button
-                  onClick={handleExportFullBackup}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-amber-500/30"
-                >
-                  <Database className="w-3.5 h-3.5" /> Backup JSON
-                </button>
-              </div>
-            </div>
-
-            {/* Grid 1: Nichos e Planos */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Distribuição por Nicho (Col 7) */}
-              <div className="lg:col-span-7 bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-                  <div className="flex items-center gap-2">
-                    <PieChart className="w-4 h-4 text-amber-400" />
-                    <h3 className="font-bold text-white text-sm">Distribuição por Nicho de Mercado</h3>
-                  </div>
-                  <span className="text-xs text-stone-400 font-mono">
-                    {nicheMetrics.length} nichos cadastrados
-                  </span>
-                </div>
-
-                <div className="space-y-3.5 pt-1">
-                  {nicheMetrics.map((item) => (
-                    <div key={item.niche} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-stone-200">{item.niche}</span>
-                        <div className="flex items-center gap-2 font-mono text-[11px]">
-                          <span className="text-stone-400">{item.count} site{item.count > 1 ? 's' : ''}</span>
-                          <span className="text-amber-400 font-bold">({item.percentage}%)</span>
-                        </div>
-                      </div>
-                      <div className="w-full h-2 bg-stone-900 rounded-full overflow-hidden border border-stone-800">
-                        <div
-                          className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.max(item.percentage, 8)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Mix de Planos & Funil de Conversão (Col 5) */}
-              <div className="lg:col-span-5 space-y-6">
-                {/* Mix de Planos */}
-                <div className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-4">
-                  <div className="flex items-center gap-2 pb-3 border-b border-stone-800">
-                    <Layers className="w-4 h-4 text-amber-400" />
-                    <h3 className="font-bold text-white text-sm">Mix de Assinaturas por Plano</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="p-3.5 rounded-2xl bg-[#0d0f12] border border-stone-800 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-xs text-white flex items-center gap-2">
-                          Plano Profissional
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-mono">
-                            MAIS VENDIDO
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-stone-400 mt-0.5">
-                          R$ 79/mês ou R$ 790/ano
-                        </div>
-                      </div>
-                      <div className="text-right font-mono">
-                        <div className="text-amber-400 font-bold text-sm">{planDistribution.pro.count} clientes</div>
-                        <div className="text-[10px] text-stone-500">R$ {planDistribution.pro.mrr.toLocaleString('pt-BR')}/mês</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-[#0d0f12] border border-stone-800 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-xs text-white">Plano Iniciante (Starter)</div>
-                        <div className="text-[11px] text-stone-400 mt-0.5">R$ 29/mês</div>
-                      </div>
-                      <div className="text-right font-mono">
-                        <div className="text-white font-bold text-sm">{planDistribution.starter.count} clientes</div>
-                        <div className="text-[10px] text-stone-500">R$ {planDistribution.starter.mrr.toLocaleString('pt-BR')}/mês</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-[#0d0f12] border border-stone-800 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-xs text-purple-300">Plano Agência VIP</div>
-                        <div className="text-[11px] text-stone-400 mt-0.5">R$ 149/mês</div>
-                      </div>
-                      <div className="text-right font-mono">
-                        <div className="text-purple-400 font-bold text-sm">{planDistribution.agency.count} clientes</div>
-                        <div className="text-[10px] text-stone-500">R$ {planDistribution.agency.mrr.toLocaleString('pt-BR')}/mês</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Funil de Conversão */}
-                <div className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-stone-800">
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
-                    <h3 className="font-bold text-white text-sm">Taxa de Conversão dos Bio Sites</h3>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-stone-300">
-                      <span>1. Visualizações Gerais</span>
-                      <span className="font-mono font-bold text-white">100%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-stone-900 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 w-full" />
-                    </div>
-
-                    <div className="flex items-center justify-between text-stone-300 pt-1">
-                      <span>2. Cliques em Botões & Links</span>
-                      <span className="font-mono font-bold text-amber-400">42.8%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-stone-900 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 w-[42.8%]" />
-                    </div>
-
-                    <div className="flex items-center justify-between text-stone-300 pt-1">
-                      <span>3. Conversão para WhatsApp / Agendamento</span>
-                      <span className="font-mono font-bold text-emerald-400">31.4%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-stone-900 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-400 w-[31.4%]" />
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-stone-400 pt-2 leading-relaxed">
-                    ✨ Taxa média <strong>3.4x superior</strong> a links tradicionais devido à tecnologia de dissolução orgânica de retratos e botões nobres de alto contraste.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Grid 2: Top Bio Sites Mais Visitados */}
-            <div className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
-                  <h3 className="font-bold text-white text-base">Top Bio Sites com Maior Tráfego & Conversão</h3>
-                </div>
-                <span className="text-xs text-stone-400 font-mono">Base ativa auditada</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {topSites.map((site, idx) => (
-                  <div
-                    key={site.slug}
-                    className="p-4 rounded-2xl bg-[#0d0f12] border border-stone-800/80 hover:border-amber-500/40 transition flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-base">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                          {site.conversion} conv.
-                        </span>
-                      </div>
-                      <div className="font-bold text-white text-xs truncate" title={site.name}>
-                        {site.name}
-                      </div>
-                      <div className="text-[10px] text-stone-400 truncate mt-0.5 font-mono">
-                        /{site.slug}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-stone-800/80">
-                      <div className="flex items-center justify-between text-[11px] font-mono text-stone-300">
-                        <span>Acessos:</span>
-                        <span className="font-bold text-white">{site.views.toLocaleString('pt-BR')}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] font-mono text-stone-400 mt-1">
-                        <span>Cliques:</span>
-                        <span className="text-amber-400 font-bold">{site.clicks.toLocaleString('pt-BR')}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-stone-800">
-                        <Link
-                          href={`/${site.slug}`}
-                          target="_blank"
-                          className="flex-1 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-semibold text-center transition flex items-center justify-center gap-1"
-                        >
-                          <ExternalLink className="w-2.5 h-2.5" /> Ver
-                        </Link>
-                        <Link
-                          href={`/conta?edit=${site.slug}`}
-                          className="flex-1 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-stone-950 text-[10px] font-bold text-center transition flex items-center justify-center gap-1 border border-amber-500/30"
-                        >
-                          <Wand2 className="w-2.5 h-2.5" /> Editar
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+          <AdminMetricsTab
+            exportCSV={exportCSV}
+            handleExportFullBackup={handleExportFullBackup}
+            nicheMetrics={nicheMetrics}
+            planDistribution={planDistribution}
+            topSites={topSites}
+          />
         )}
 
         {/* ABA: GATEWAYS & PIX */}
         {activeTab === 'gateways' && (
-          <section className="bg-[#14181f] border border-stone-800 rounded-3xl p-6 shadow-xl space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Settings className="w-5 h-5 text-amber-400" /> Configuração de Pagamentos & Automação
-              </h2>
-              <p className="text-xs text-stone-400 mt-1">
-                Configure sua chave Pix e conecte o gateway de cobrança automática recorrente.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-stone-800">
-              {/* Chave Pix Principal */}
-              <div className="space-y-4 p-5 bg-[#0d0f12] rounded-2xl border border-stone-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <QrCode className="w-4 h-4" /> Chave Pix do Estúdio
-                  </span>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">
-                    ATIVO
-                  </span>
-                </div>
-                <div>
-                  <label className="block text-xs text-stone-400 mb-1">Chave Pix (CNPJ, E-mail ou Telefone)</label>
-                  <input
-                    type="text"
-                    value={pixKey}
-                    onChange={(e) => setPixKey(e.target.value)}
-                    className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white font-mono focus:border-amber-400 focus:outline-none"
-                  />
-                  <p className="text-[11px] text-stone-500 mt-1">
-                    Esta chave é incluída automaticamente nos links de cobrança gerados para o WhatsApp.
-                  </p>
-                </div>
-              </div>
-
-              {/* Gateway de Recorrência Automática (Asaas / Stripe) */}
-              <div className="space-y-4 p-5 bg-[#0d0f12] rounded-2xl border border-stone-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <CreditCard className="w-4 h-4 text-amber-400" /> Gateway de Assinatura
-                  </span>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">
-                    WEBHOOK ATIVO
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-stone-400 mb-1">Provedor Integrado</label>
-                    <select
-                      value={gatewayProvider}
-                      onChange={(e) => setGatewayProvider(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:border-amber-400 focus:outline-none cursor-pointer"
-                    >
-                      <option value="asaas">Asaas (Recomendado para Pix Recorrente & Boletos no Brasil)</option>
-                      <option value="stripe">Stripe (Cartão de Crédito Internacional)</option>
-                      <option value="mercadopago">Mercado Pago</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-stone-400 mb-1">API Key / Token de Acesso</label>
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white font-mono focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Templates de Mensagens WhatsApp Automatizadas */}
-            <div className="p-5 bg-[#0d0f12] rounded-2xl border border-stone-800 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-stone-800 gap-2">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageCircle className="w-4 h-4 text-emerald-400" /> Templates de Notificação WhatsApp
-                </span>
-                <span className="text-[10px] text-stone-500 font-mono">Variáveis dinâmicas para preenchimento automático</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-stone-400 mb-1">Mensagem de Cobrança / Inadimplência</label>
-                  <textarea
-                    rows={3}
-                    value={msgCobrancaTemplate}
-                    onChange={(e) => setMsgCobrancaTemplate(e.target.value)}
-                    className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-stone-400 mb-1">Mensagem de Boas-Vindas / Entrega do Bio Site</label>
-                  <textarea
-                    rows={3}
-                    value={msgBoasVindasTemplate}
-                    onChange={(e) => setMsgBoasVindasTemplate(e.target.value)}
-                    className="w-full px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
+          <AdminGatewaysTab
+            pixKey={pixKey}
+            setPixKey={setPixKey}
+            gatewayProvider={gatewayProvider}
+            setGatewayProvider={setGatewayProvider}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+            msgCobrancaTemplate={msgCobrancaTemplate}
+            setMsgCobrancaTemplate={setMsgCobrancaTemplate}
+            msgBoasVindasTemplate={msgBoasVindasTemplate}
+            setMsgBoasVindasTemplate={setMsgBoasVindasTemplate}
+          />
         )}
 
         {/* ABA: VITRINE & MODELOS DE PORTFÓLIO */}
@@ -4882,257 +4342,24 @@ Inicie agora fazendo a **Solicitação 1**!\``
       )}
 
       {/* MODAL: CENTRAL DE SEGURANÇA & AUDITORIA DE ACESSOS */}
-      {isSecurityModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0F141F] border border-stone-700/80 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setIsSecurityModalOpen(false)}
-              className="absolute top-5 right-5 text-stone-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
-              title="Fechar"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Cabeçalho do Modal */}
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-amber-400 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  Central de Segurança Master
-                </h3>
-                <p className="text-xs text-stone-400">
-                  Proteção de credenciais, logs de auditoria e políticas de acesso ao painel ADM.
-                </p>
-              </div>
-            </div>
-
-            {/* Navegação entre Abas do Modal */}
-            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-              <button
-                type="button"
-                onClick={() => setSecurityTab('senha')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
-                  securityTab === 'senha'
-                    ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
-                    : 'text-stone-400 hover:text-white hover:bg-stone-800'
-                }`}
-              >
-                <Key className="w-3.5 h-3.5" />
-                <span>Alterar Senha / PIN</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSecurityTab('auditoria')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
-                  securityTab === 'auditoria'
-                    ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
-                    : 'text-stone-400 hover:text-white hover:bg-stone-800'
-                }`}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span>Logs de Acesso ({securityLogs.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSecurityTab('politicas')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center gap-1.5 ${
-                  securityTab === 'politicas'
-                    ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
-                    : 'text-stone-400 hover:text-white hover:bg-stone-800'
-                }`}
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Políticas de Sessão</span>
-              </button>
-            </div>
-
-            {/* ABA 1: ALTERAR SENHA / PIN MASTER */}
-            {securityTab === 'senha' && (
-              <form onSubmit={handleUpdateSecret} className="space-y-4">
-                <div className="p-3 rounded-xl bg-amber-400/5 border border-amber-400/20 text-[11px] text-stone-300 leading-relaxed">
-                  A nova credencial será criptografada imediatamente com <strong>SHA-256 + Salt dinâmico</strong>. Você pode cadastrar um PIN numérico (ex: 6 dígitos) ou uma Senha Mestra alfanumérica.
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-stone-300 mb-1">
-                      Senha ou PIN Atual
-                    </label>
-                    <input
-                      type="password"
-                      value={oldSecretInput}
-                      onChange={(e) => setOldSecretInput(e.target.value)}
-                      placeholder="Digite a credencial atual (padrão: 2026)"
-                      required
-                      className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-stone-300 mb-1">
-                      Nova Senha ou Novo PIN
-                    </label>
-                    <input
-                      type="password"
-                      value={newPinInput}
-                      onChange={(e) => setNewPinInput(e.target.value)}
-                      placeholder="Mínimo 4 caracteres ou dígitos"
-                      required
-                      className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-stone-300 mb-1">
-                      Confirmar Nova Senha ou PIN
-                    </label>
-                    <input
-                      type="password"
-                      value={confirmNewSecretInput}
-                      onChange={(e) => setConfirmNewSecretInput(e.target.value)}
-                      placeholder="Repita exatamente a nova credencial"
-                      required
-                      className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                {securityFeedback && (
-                  <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
-                    securityFeedback.type === 'success'
-                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
-                  }`}>
-                    {securityFeedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
-                    <span>{securityFeedback.msg}</span>
-                  </div>
-                )}
-
-                <div className="pt-2 flex items-center justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsSecurityModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs text-stone-400 hover:text-white transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-bold text-xs hover:brightness-110 transition shadow-md flex items-center gap-1.5"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Salvar e Criptografar</span>
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* ABA 2: LOGS DE AUDITORIA DE ACESSO */}
-            {securityTab === 'auditoria' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-stone-400">
-                  <span>Últimos registros de autenticação (armazenados localmente):</span>
-                  <span className="font-mono text-[10px] text-amber-400">{securityLogs.length} eventos</span>
-                </div>
-
-                {securityLogs.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-stone-500 bg-stone-900/50 rounded-2xl border border-stone-800">
-                    Nenhum registro de acesso gravado até o momento.
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {securityLogs.map((log) => (
-                      <div
-                        key={log.id}
-                        className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-3 ${
-                          log.success
-                            ? 'bg-emerald-500/5 border-emerald-500/20 text-stone-200'
-                            : 'bg-rose-500/5 border-rose-500/20 text-stone-200'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                            log.success ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                          }`}>
-                            {log.success ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                          </div>
-                          <div>
-                            <div className="font-semibold flex items-center gap-2">
-                              <span>{log.success ? 'Acesso Permitido' : 'Tentativa Bloqueada'}</span>
-                              {log.reason && (
-                                <span className="text-[10px] font-mono text-stone-400">· {log.reason}</span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-stone-500 truncate max-w-sm font-mono mt-0.5">
-                              {log.userAgent}
-                            </p>
-                          </div>
-                        </div>
-
-                        <span className="text-[10px] font-mono text-stone-400 shrink-0">
-                          {new Date(log.timestamp).toLocaleString('pt-BR')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ABA 3: POLÍTICAS DE SESSÃO & SEGURANÇA */}
-            {securityTab === 'politicas' && (
-              <div className="space-y-4 text-xs">
-                <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-3">
-                  <h4 className="font-bold text-white flex items-center gap-2">
-                    <Timer className="w-4 h-4 text-amber-400" />
-                    Auto-Lock por Inatividade
-                  </h4>
-                  <p className="text-stone-400 leading-relaxed text-[11.5px]">
-                    Caso o painel fique aberto sem movimentação do mouse ou teclas, a sessão é automaticamente bloqueada para evitar acesso indevido em máquinas compartilhadas.
-                  </p>
-                  <div className="flex items-center gap-2 pt-1">
-                    {[15, 30, 60].map((mins) => (
-                      <button
-                        key={mins}
-                        type="button"
-                        onClick={() => {
-                          const updated = { ...securityConfig, inactivityTimeoutMinutes: mins }
-                          setSecurityConfig(updated)
-                          saveSecurityConfig(updated)
-                        }}
-                        className={`px-3 py-1.5 rounded-lg font-mono text-xs border transition ${
-                          securityConfig.inactivityTimeoutMinutes === mins
-                            ? 'bg-amber-400 text-black border-amber-400 font-bold'
-                            : 'bg-stone-800 border-stone-700 text-stone-300 hover:border-amber-400/50'
-                        }`}
-                      >
-                        {mins} minutos {mins === 30 && '(Padrão)'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
-                  <h4 className="font-bold text-white flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-amber-400" />
-                    Regra Anti-Brute-Force
-                  </h4>
-                  <ul className="list-disc pl-5 space-y-1 text-stone-400 text-[11px] leading-relaxed">
-                    <li>Máximo de <strong>5 tentativas incorretas</strong> consecutivas.</li>
-                    <li>Bloqueio obrigatório de <strong>15 minutos</strong> ao atingir o limite.</li>
-                    <li>Delay anti-timing attack de <strong>500ms</strong> aplicado a cada verificação.</li>
-                    <li>Sessão com assinatura criptográfica vinculada à credencial do administrador.</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <AdminSecurityModal
+        isOpen={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+        securityTab={securityTab}
+        setSecurityTab={setSecurityTab}
+        handleUpdateSecret={handleUpdateSecret}
+        oldSecretInput={oldSecretInput}
+        setOldSecretInput={setOldSecretInput}
+        newPinInput={newPinInput}
+        setNewPinInput={setNewPinInput}
+        confirmNewSecretInput={confirmNewSecretInput}
+        setConfirmNewSecretInput={setConfirmNewSecretInput}
+        securityFeedback={securityFeedback}
+        securityLogs={securityLogs}
+        securityConfig={securityConfig}
+        setSecurityConfig={setSecurityConfig}
+        saveSecurityConfig={saveSecurityConfig}
+      />
 
       {/* TOAST: CONFIRMAÇÃO DE PAGAMENTO PIX */}
       {paymentSuccessToast && (
@@ -5143,250 +4370,20 @@ Inicie agora fazendo a **Solicitação 1**!\``
       )}
 
       {/* MODAL: CONTROLE DE PERMISSÕES DO CLIENTE & MÓDULOS ATIVOS */}
-      {permissionsModalSlug && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#14181f] border border-stone-800 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto p-6 shadow-2xl flex flex-col justify-between">
-            <div>
-              {/* Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-stone-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
-                    <Sliders className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span>Permissões & Módulos: {permissionsModalTitle}</span>
-                    </h3>
-                    <p className="text-xs text-stone-400 font-mono mt-0.5">
-                      /{permissionsModalSlug} • Controle granular de edição e seções ativas
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setPermissionsModalSlug(null)}
-                  className="text-stone-400 hover:text-white p-1 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Seletor de Abas no Topo do Modal */}
-              <div className="flex items-center gap-2 mt-5 p-1 bg-[#0d0f12] rounded-xl border border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => setPermissionsActiveTab('permissoes')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    permissionsActiveTab === 'permissoes'
-                      ? 'bg-amber-400 text-stone-950 font-bold shadow-sm'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>O que o Cliente Pode Alterar (/conta)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPermissionsActiveTab('modulos')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    permissionsActiveTab === 'modulos'
-                      ? 'bg-amber-400 text-stone-950 font-bold shadow-sm'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Ativação de Módulos & Blocos</span>
-                </button>
-              </div>
-
-              {/* ABA 1: O QUE O CLIENTE PODE OU NÃO ALTERAR */}
-              {permissionsActiveTab === 'permissoes' && (
-                <div className="mt-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-stone-900/60 p-3 rounded-2xl border border-stone-800 gap-2">
-                    <span className="text-xs text-stone-300">
-                      Defina as travas de segurança do painel do cliente:
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const allTrue = Object.keys(currentClientPermissions).reduce((acc, k) => {
-                            acc[k as keyof ClientPermissions] = true
-                            return acc
-                          }, {} as ClientPermissions)
-                          setCurrentClientPermissions(allTrue)
-                        }}
-                        className="px-2.5 py-1 text-[11px] font-mono rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition cursor-pointer"
-                      >
-                        Permitir Tudo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const allFalse = Object.keys(currentClientPermissions).reduce((acc, k) => {
-                            acc[k as keyof ClientPermissions] = false
-                            return acc
-                          }, {} as ClientPermissions)
-                          setCurrentClientPermissions(allFalse)
-                        }}
-                        className="px-2.5 py-1 text-[11px] font-mono rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition cursor-pointer"
-                      >
-                        Bloquear Tudo
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
-                    {(Object.keys(currentClientPermissions) as Array<keyof ClientPermissions>).map((key) => {
-                      const isAllowed = currentClientPermissions[key]
-                      const info = PERMISSION_DESCRIPTIONS[key]
-                      return (
-                        <div
-                          key={key}
-                          onClick={() => {
-                            setCurrentClientPermissions(prev => ({ ...prev, [key]: !prev[key] }))
-                          }}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
-                            isAllowed
-                              ? 'bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-400'
-                              : 'bg-stone-900/40 border-stone-800 hover:border-stone-700 opacity-75'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border ${
-                            isAllowed
-                              ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-bold'
-                              : 'bg-stone-800 text-stone-500 border-stone-700'
-                          }`}>
-                            {isAllowed ? <Check className="w-3.5 h-3.5" /> : <Lock className="w-3 h-3" />}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold text-white flex items-center justify-between">
-                              <span className="truncate">{info?.label || key}</span>
-                              <span className={`text-[10px] font-mono uppercase px-1.5 py-0.2 rounded ${
-                                isAllowed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                              }`}>
-                                {isAllowed ? 'Liberado' : 'Bloqueado'}
-                              </span>
-                            </div>
-                            <p className="text-[10.5px] text-stone-400 mt-1 leading-snug">
-                              {info?.description}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* ABA 2: ATIVAÇÃO DE MÓDULOS E BLOCOS DO BIOSITE */}
-              {permissionsActiveTab === 'modulos' && (
-                <div className="mt-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-stone-900/60 p-3 rounded-2xl border border-stone-800 gap-2">
-                    <span className="text-xs text-stone-300">
-                      Selecione quais módulos serão renderizados no BioSite:
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const allTrue = Object.keys(currentModuleToggles).reduce((acc, k) => {
-                            acc[k as keyof ModuleToggles] = true
-                            return acc
-                          }, {} as ModuleToggles)
-                          setCurrentModuleToggles(allTrue)
-                        }}
-                        className="px-2.5 py-1 text-[11px] font-mono rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition cursor-pointer"
-                      >
-                        Ativar Todos
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const essentials: ModuleToggles = {
-                            ...DEFAULT_MODULE_TOGGLES,
-                            announcement: false,
-                            urgency: false,
-                            quiz: false,
-                            reviews: false,
-                            faq: false,
-                            howItWorks: false,
-                          }
-                          setCurrentModuleToggles(essentials)
-                        }}
-                        className="px-2.5 py-1 text-[11px] font-mono rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition cursor-pointer"
-                      >
-                        Apenas Essenciais
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
-                    {(Object.keys(currentModuleToggles) as Array<keyof ModuleToggles>).map((key) => {
-                      const isEnabled = currentModuleToggles[key]
-                      const info = MODULE_DESCRIPTIONS[key]
-                      return (
-                        <div
-                          key={key}
-                          onClick={() => {
-                            setCurrentModuleToggles(prev => ({ ...prev, [key]: !prev[key] }))
-                          }}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
-                            isEnabled
-                              ? 'bg-amber-950/20 border-amber-500/40 hover:border-amber-400'
-                              : 'bg-stone-900/40 border-stone-800 hover:border-stone-700 opacity-60'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border ${
-                            isEnabled
-                              ? 'bg-amber-400 text-stone-950 border-amber-300 font-bold'
-                              : 'bg-stone-800 text-stone-500 border-stone-700'
-                          }`}>
-                            {isEnabled ? <Check className="w-3.5 h-3.5" /> : <X className="w-3 h-3" />}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold text-white flex items-center justify-between">
-                              <span className="truncate">{info?.label || key}</span>
-                              <span className={`text-[10px] font-mono uppercase px-1.5 py-0.2 rounded ${
-                                isEnabled ? 'bg-amber-500/20 text-amber-300' : 'bg-stone-800 text-stone-400'
-                              }`}>
-                                {isEnabled ? 'Ativo' : 'Desativado'}
-                              </span>
-                            </div>
-                            <p className="text-[10.5px] text-stone-400 mt-1 leading-snug">
-                              {info?.description}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Rodapé do Modal */}
-            <div className="pt-5 mt-5 border-t border-stone-800 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setPermissionsModalSlug(null)}
-                className="px-4 py-2 text-stone-400 hover:text-white transition text-xs cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSavePermissions}
-                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-2 shadow-lg"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Salvar Configurações em Tempo Real</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminPermissionsModal
+        slug={permissionsModalSlug}
+        title={permissionsModalTitle}
+        onClose={() => setPermissionsModalSlug(null)}
+        activeTab={permissionsActiveTab}
+        setActiveTab={setPermissionsActiveTab}
+        currentClientPermissions={currentClientPermissions}
+        setCurrentClientPermissions={setCurrentClientPermissions}
+        currentModuleToggles={currentModuleToggles}
+        setCurrentModuleToggles={setCurrentModuleToggles}
+        handleSavePermissions={handleSavePermissions}
+        permissionDescriptions={PERMISSION_DESCRIPTIONS}
+        moduleDescriptions={MODULE_DESCRIPTIONS}
+      />
 
       {/* ========================================================= */}
       {/* MODAL OFICIAL: CRIAR BIOSITE (IA GEMINI OU 9 PASSOS) */}
@@ -6309,175 +5306,17 @@ Inicie agora fazendo a **Solicitação 1**!\``
       )}
 
       {/* MODAL: CREDENCIAIS DE ACESSO DO CLIENTE (/entrar) */}
-      {credentialsModalClient && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-[#12151c] border border-stone-800 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 sm:p-7 shadow-2xl relative my-auto animate-fade-in text-stone-200">
-            <button
-              type="button"
-              onClick={() => setCredentialsModalClient(null)}
-              className="absolute top-5 right-5 p-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2 mb-3">
-              <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[10px] uppercase font-bold flex items-center gap-1.5">
-                <Key className="w-3 h-3" /> Credenciais do Cliente
-              </span>
-            </div>
-
-            <h3 className="text-xl font-serif font-bold text-white mb-1">
-              Acesso de {credentialsModalClient.name}
-            </h3>
-            <p className="text-xs text-stone-400 mb-6">
-              Dados para o cliente fazer login em <span className="text-amber-400 font-mono">biovip.com.br/entrar</span> e gerenciar seu BioSite.
-            </p>
-
-            {/* Card de Informações */}
-            <div className="space-y-4 p-4 rounded-2xl bg-[#090b0e] border border-stone-800/80 mb-6">
-              <div>
-                <label className="block text-[11px] font-mono text-stone-400 uppercase mb-1">
-                  E-mail de Login
-                </label>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-xs font-mono text-white">
-                  <span>{credentialsModalClient.email}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(credentialsModalClient.email)
-                      setCredentialsCopiedToast(true)
-                      setTimeout(() => setCredentialsCopiedToast(false), 2000)
-                    }}
-                    className="text-stone-400 hover:text-amber-400 transition"
-                    title="Copiar e-mail"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[11px] font-mono text-stone-400 uppercase">
-                    Senha de Acesso
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newPass = generateRandomPasswordValue()
-                      handleUpdateModalClientPassword(newPass)
-                    }}
-                    className="text-[11px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Sparkles className="w-3 h-3" /> Gerar Nova Senha
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showCredentialsModalPassword ? 'text' : 'password'}
-                    value={credentialsModalClient.password || 'BioVip2026!'}
-                    onChange={(e) => {
-                      setCredentialsModalClient({
-                        ...credentialsModalClient,
-                        password: e.target.value
-                      })
-                    }}
-                    className="w-full px-3 py-2.5 pr-20 rounded-xl bg-stone-900/90 border border-stone-800 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
-                  />
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setShowCredentialsModalPassword(!showCredentialsModalPassword)}
-                      className="text-stone-500 hover:text-stone-300 transition"
-                      title={showCredentialsModalPassword ? 'Ocultar' : 'Exibir'}
-                    >
-                      {showCredentialsModalPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(credentialsModalClient.password || 'BioVip2026!')
-                        setCredentialsCopiedToast(true)
-                        setTimeout(() => setCredentialsCopiedToast(false), 2000)
-                      }}
-                      className="text-stone-500 hover:text-amber-400 transition"
-                      title="Copiar senha"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-stone-400 uppercase mb-1">
-                  Link Público do BioSite
-                </label>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-xs font-mono text-emerald-400">
-                  <span>biovip.com.br/{credentialsModalClient.slug}</span>
-                  <Link
-                    href={`/${credentialsModalClient.slug}`}
-                    target="_blank"
-                    className="text-stone-400 hover:text-white transition"
-                    title="Abrir BioSite"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Ações de Envio e Cópia */}
-            <div className="space-y-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  const msg = `🎉 Olá, ${credentialsModalClient.name}! Seguem os seus dados de acesso ao BioSite:\n\n🌐 Seu Link na Bio:\nhttps://biovip.com.br/${credentialsModalClient.slug}\n\n🔑 Painel de Edição:\nhttps://biovip.com.br/entrar\n• Login: ${credentialsModalClient.email}\n• Senha: ${credentialsModalClient.password || 'BioVip2026!'}\n\nQualquer dúvida, conte com a nossa equipe!`
-                  navigator.clipboard.writeText(msg)
-                  setCredentialsCopiedToast(true)
-                  setTimeout(() => setCredentialsCopiedToast(false), 2500)
-                }}
-                className="w-full py-3 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition border border-stone-700"
-              >
-                <Copy className="w-4 h-4 text-amber-400" />
-                <span>{credentialsCopiedToast ? 'Mensagem Copiada com Sucesso!' : 'Copiar Mensagem Pronta de Acesso'}</span>
-              </button>
-
-              <a
-                href={`https://wa.me/${credentialsModalClient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                  `🎉 Olá, ${credentialsModalClient.name}! Seguem os seus dados de acesso ao BioSite:\n\n🌐 Seu Link na Bio:\nhttps://biovip.com.br/${credentialsModalClient.slug}\n\n🔑 Painel de Edição:\nhttps://biovip.com.br/entrar\n• Login: ${credentialsModalClient.email}\n• Senha: ${credentialsModalClient.password || 'BioVip2026!'}\n\nQualquer dúvida, conte com a nossa equipe!`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Enviar Credenciais no WhatsApp do Cliente</span>
-              </a>
-
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleUpdateModalClientPassword(credentialsModalClient.password || 'BioVip2026!')
-                    setCredentialsModalClient(null)
-                  }}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition cursor-pointer"
-                >
-                  Salvar Alterações
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCredentialsModalClient(null)}
-                  className="text-xs text-stone-400 hover:text-white transition cursor-pointer"
-                >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminClientCredentialsModal
+        client={credentialsModalClient}
+        onClose={() => setCredentialsModalClient(null)}
+        setClient={setCredentialsModalClient}
+        credentialsCopiedToast={credentialsCopiedToast}
+        setCredentialsCopiedToast={setCredentialsCopiedToast}
+        generateRandomPasswordValue={generateRandomPasswordValue}
+        handleUpdateModalClientPassword={handleUpdateModalClientPassword}
+        showPassword={showCredentialsModalPassword}
+        setShowPassword={setShowCredentialsModalPassword}
+      />
 
       {/* TOAST DE FEEDBACK DE PERMISSÕES */}
       {permissionsSuccessToast && (
