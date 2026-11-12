@@ -537,24 +537,64 @@ export default function ContaClient() {
           setCurrentView('editar_pagina')
         }
       } else {
-        // MODO CLIENTE: NUNCA exibe atalhos ou painel adm. A edição é estritamente desta conta
+        // =========================================================
+        // MODO CLIENTE: SEGURANÇA ESTRITA E ISOLAMENTO DE DADOS
+        // =========================================================
         setIsAdminMode(false)
 
-        // Trava a edição estritamente no Bio Site desta conta
-        if (loggedClient?.slug) {
-          activeSlug = loggedClient.slug
-        } else if (clientSessionEmail) {
-          const clientSub = parsedSubs.find(s => s.email && s.email.toLowerCase() === clientSessionEmail.toLowerCase())
-          if (clientSub?.slug) {
-            activeSlug = clientSub.slug
-          } else if (editSlug) {
-            activeSlug = editSlug
-          }
-        } else if (editSlug) {
-          activeSlug = editSlug
-        } else if (parsedSubs.length > 0 && parsedSubs[0].slug) {
-          activeSlug = parsedSubs[0].slug
+        // 1. Verificar se existe uma sessão válida de cliente autenticado
+        if (!clientSessionEmail && !loggedClient) {
+          console.warn('[SEGURANÇA] Tentativa de acesso não autenticado ao painel /conta. Redirecionando para login.')
+          window.location.replace('/entrar?error=unauthorized')
+          return
         }
+
+        const cleanSessionEmail = (clientSessionEmail || loggedClient?.email || '').trim().toLowerCase()
+
+        // 2. Localizar a conta do cliente nas fontes de dados cadastradas
+        let storedUsersList: any[] = []
+        const rawUsers = typeof window !== 'undefined' ? localStorage.getItem('biovip_users') : null
+        if (rawUsers) {
+          try {
+            storedUsersList = JSON.parse(rawUsers)
+          } catch (e) {}
+        }
+
+        const matchedUser = storedUsersList.find(
+          (u: any) =>
+            (u.email && u.email.toLowerCase() === cleanSessionEmail) ||
+            (u.phone && u.phone.replace(/\D/g, '') === cleanSessionEmail.replace(/\D/g, '')) ||
+            (u.slug && u.slug.toLowerCase() === cleanSessionEmail)
+        )
+
+        const matchedSub = parsedSubs.find(
+          (s: any) =>
+            (s.email && s.email.toLowerCase() === cleanSessionEmail) ||
+            (s.whatsapp && s.whatsapp.replace(/\D/g, '') === cleanSessionEmail.replace(/\D/g, '')) ||
+            (s.slug && s.slug.toLowerCase() === cleanSessionEmail)
+        )
+
+        const authorizedSlug = loggedClient?.slug || matchedUser?.slug || matchedSub?.slug
+
+        // 3. Se a sessão não corresponder a nenhum Bio Site existente, revogar sessão
+        if (!authorizedSlug) {
+          console.warn(`[SEGURANÇA] Sessão inválida para o e-mail ${cleanSessionEmail}. Redirecionando para /entrar.`)
+          sessionStorage.removeItem('biovip_client_session')
+          localStorage.removeItem('biovip_logged_client')
+          window.location.replace('/entrar?error=invalid_session')
+          return
+        }
+
+        // 4. ANTI-IDOR / ISOLAMENTO MULTI-TENANT: Travar estritamente no Bio Site desta conta
+        // Se o cliente tentar passar ?edit=outro-slug na URL, impedimos e forçamos o seu slug legítimo
+        if (editSlug && editSlug !== authorizedSlug) {
+          console.warn(`[SEGURANÇA] Tentativa de adulteração de slug (${editSlug}) bloqueada para ${cleanSessionEmail}. Forçando ${authorizedSlug}.`)
+          if (typeof window !== 'undefined' && window.history.replaceState) {
+            window.history.replaceState(null, '', `/conta?edit=${authorizedSlug}`)
+          }
+        }
+
+        activeSlug = authorizedSlug
 
         // Se veio de criação ou requisição de edição, abre a tela do editor
         if (editSlug || isNovo) {

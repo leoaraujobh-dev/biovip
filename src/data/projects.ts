@@ -1109,11 +1109,11 @@ export const projects: Project[] = [
       { number: '03', title: 'Retenção Prolongada', description: 'Fórmula de alta retenção que garante cílios preenchidos e leves por até 30 dias.' }
     ],
         galleryPhotosList: [
-      'https://images.unsplash.com/photo-1639629509821-c54cdd984227?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1728432757040-1579d710f607?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1735151225764-eac694642dbf?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1583001809873-a128495da465?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1674049406467-824ea37c7184?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80'
     ],
     galleryConfig: {
@@ -1125,11 +1125,11 @@ export const projects: Project[] = [
       aspectRatio: 'square',
       enableLightbox: true,
       photos: [
-        'https://images.unsplash.com/photo-1639629509821-c54cdd984227?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1728432757040-1579d710f607?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1735151225764-eac694642dbf?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1583001809873-a128495da465?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1674049406467-824ea37c7184?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80'
       ],
       captions: [

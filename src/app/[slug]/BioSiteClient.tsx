@@ -245,7 +245,7 @@ export default function BioSiteClient({
         title: 'Transformação & Realce do Olhar',
         subtitle: 'Volume Russo Imperial com Densidade e Curvatura',
         before: 'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&q=80&w=800',
-        after: 'https://images.unsplash.com/photo-1639629509821-c54cdd984227?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&q=80&w=800',
         tag: 'Lash Designer VIP'
       };
     }
