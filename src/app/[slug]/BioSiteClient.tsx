@@ -42,6 +42,7 @@ import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
 import { getBioSite, trackLead } from '@/services/biositeService'
 import BioSiteScrollReveal from '@/components/BioSiteScrollReveal'
+import { ModuleToggles, DEFAULT_MODULE_TOGGLES, getClientConfig } from '@/data/clientPermissions'
 
 interface BioSiteProps {
   slug: string
@@ -299,6 +300,39 @@ export default function BioSiteClient({
   const [modelData, setModelData] = useState<any>(() => {
     return projects.find(p => p.slug === slug)
   })
+
+  // Sincronização em tempo real de Módulos & Blocos ativados pelo Administrador
+  const [clientModules, setClientModules] = useState<ModuleToggles>(() => {
+    return getClientConfig(slug).modules
+  })
+
+  useEffect(() => {
+    const updateModules = () => {
+      const config = getClientConfig(slug)
+      setClientModules(config.modules)
+    }
+    updateModules()
+
+    const handleCustomEvent = (e: any) => {
+      if (e.detail?.slug === slug && e.detail?.modules) {
+        setClientModules(e.detail.modules)
+      }
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === `biovip_client_config_${slug}`) {
+        updateModules()
+      }
+    }
+
+    window.addEventListener('biovip_permissions_updated', handleCustomEvent)
+    window.addEventListener('storage', handleStorage)
+
+    return () => {
+      window.removeEventListener('biovip_permissions_updated', handleCustomEvent)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [slug])
   const [scrollProgress, setScrollProgress] = useState(0)
   const [isPageMounted, setIsPageMounted] = useState(false)
 
@@ -888,7 +922,7 @@ export default function BioSiteClient({
         />
 
         {/* 1. Barra de Alerta Superior (Announcement) */}
-        {announcement?.enabled && (
+        {clientModules.announcement !== false && announcement?.enabled && (
           <div
             className="py-2 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2 border-b cursor-pointer transition relative z-30"
             style={{
@@ -915,123 +949,129 @@ export default function BioSiteClient({
           </div>
         )}
 
-        {/* 2. Topo / Ilha Dinâmica com Status de Presença em Tempo Real & Registro Oficial */}
-        <div className="relative z-20 pt-3 px-6 flex items-center justify-between text-[10px] font-mono tracking-widest uppercase">
-          <div
-            onClick={() => triggerHaptic(12)}
-            className="h-5 bg-black/80 backdrop-blur-md rounded-full flex items-center gap-1.5 px-2.5 shadow-inner border border-white/10 select-none cursor-pointer hover:border-emerald-500/40 transition-colors"
-            title={liveStatus.sub}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${liveStatus.isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className="text-[7.5px] font-mono text-stone-300 font-semibold tracking-tight">
-              {liveStatus.label}
-            </span>
-          </div>
-          <span className="font-semibold text-stone-400">{registrationCode}</span>
-        </div>
+        {/* 2. Topo / Ilha Dinâmica com Status de Presença em Tempo Real & Registro Oficial + 3. Retrato de Estúdio */}
+        {clientModules.profile !== false && (
+          <>
+            <div className="relative z-20 pt-3 px-6 flex items-center justify-between text-[10px] font-mono tracking-widest uppercase">
+              <div
+                onClick={() => triggerHaptic(12)}
+                className="h-5 bg-black/80 backdrop-blur-md rounded-full flex items-center gap-1.5 px-2.5 shadow-inner border border-white/10 select-none cursor-pointer hover:border-emerald-500/40 transition-colors"
+                title={liveStatus.sub}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${liveStatus.isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                <span className="text-[7.5px] font-mono text-stone-300 font-semibold tracking-tight">
+                  {liveStatus.label}
+                </span>
+              </div>
+              <span className="font-semibold text-stone-400">{registrationCode}</span>
+            </div>
 
-        {/* 3. Retrato de Estúdio com Dissolução Orgânica */}
-        <div className="relative w-full h-[375px] sm:h-[420px] overflow-hidden -mt-7 select-none shrink-0 animate-hero-luxury">
-          <img
-            src={effectivePhoto}
-            alt={effectiveName}
-            fetchPriority="high"
-            decoding="async"
-            className="w-full h-full object-cover object-top transition-transform duration-1000 ease-out"
-          />
-          {/* Fusão Orgânica nos 40% Inferiores */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `linear-gradient(to bottom, transparent 35%, ${palette.bg}cc 75%, ${palette.bg} 98%)`
-            }}
-          />
+            {/* 3. Retrato de Estúdio com Dissolução Orgânica */}
+            <div className="relative w-full h-[375px] sm:h-[420px] overflow-hidden -mt-7 select-none shrink-0 animate-hero-luxury">
+              <img
+                src={effectivePhoto}
+                alt={effectiveName}
+                fetchPriority="high"
+                decoding="async"
+                className="w-full h-full object-cover object-top transition-transform duration-1000 ease-out"
+              />
+              {/* Fusão Orgânica nos 40% Inferiores */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `linear-gradient(to bottom, transparent 35%, ${palette.bg}cc 75%, ${palette.bg} 98%)`
+                }}
+              />
 
-          {/* Nome e Tipografia Editorial sobreposta à dissolução */}
-          <div className="absolute bottom-2 left-0 right-0 px-6 text-center">
-            <span
-              className="inline-block text-[9px] font-mono tracking-[0.25em] uppercase font-bold px-3 py-1 rounded-full mb-1 border"
+              {/* Nome e Tipografia Editorial sobreposta à dissolução */}
+              <div className="absolute bottom-2 left-0 right-0 px-6 text-center">
+                <span
+                  className="inline-block text-[9px] font-mono tracking-[0.25em] uppercase font-bold px-3 py-1 rounded-full mb-1 border"
+                  style={{
+                    backgroundColor: `${palette.card}cc`,
+                    color: palette.accent,
+                    borderColor: `${palette.accent}33`
+                  }}
+                >
+                  {category.toUpperCase()}
+                </span>
+                <h1
+                  className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight"
+                  style={{
+                    fontFamily: typography.cssFont,
+                    color: palette.text
+                  }}
+                >
+                  {effectiveName}
+                </h1>
+                <p
+                  className="text-[10px] font-mono tracking-[0.18em] uppercase mt-1 opacity-80"
+                  style={{ color: palette.accent }}
+                >
+                  {effectiveRole}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* 4. Quick Action Bar (WhatsApp, Instagram, Agenda) */}
+        {clientModules.quickActions !== false && (
+          <BioSiteScrollReveal direction="up" delay={60} className="px-5 pt-3 pb-2 flex items-center justify-center gap-2">
+            <a
+              href={`https://wa.me/${cleanWhatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                triggerHaptic(14)
+                handleTrackLead('Barra Rápida WhatsApp')
+              }}
+              className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
               style={{
                 backgroundColor: `${palette.card}cc`,
-                color: palette.accent,
-                borderColor: `${palette.accent}33`
-              }}
-            >
-              {category.toUpperCase()}
-            </span>
-            <h1
-              className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight"
-              style={{
-                fontFamily: typography.cssFont,
+                borderColor: `${palette.accent}33`,
                 color: palette.text
               }}
             >
-              {effectiveName}
-            </h1>
-            <p
-              className="text-[10px] font-mono tracking-[0.18em] uppercase mt-1 opacity-80"
-              style={{ color: palette.accent }}
+              <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+              <span>WhatsApp</span>
+            </a>
+            <a
+              href={instagramProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => triggerHaptic(10)}
+              className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: `${palette.card}cc`,
+                borderColor: `${palette.accent}33`,
+                color: palette.text
+              }}
             >
-              {effectiveRole}
-            </p>
-          </div>
-        </div>
-
-        {/* 4. Quick Action Bar (WhatsApp, Instagram, Agenda) */}
-        <BioSiteScrollReveal direction="up" delay={60} className="px-5 pt-3 pb-2 flex items-center justify-center gap-2">
-          <a
-            href={`https://wa.me/${cleanWhatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              triggerHaptic(14)
-              handleTrackLead('Barra Rápida WhatsApp')
-            }}
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
-            style={{
-              backgroundColor: `${palette.card}cc`,
-              borderColor: `${palette.accent}33`,
-              color: palette.text
-            }}
-          >
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-            <span>WhatsApp</span>
-          </a>
-          <a
-            href={instagramProfileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => triggerHaptic(10)}
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
-            style={{
-              backgroundColor: `${palette.card}cc`,
-              borderColor: `${palette.accent}33`,
-              color: palette.text
-            }}
-          >
-            <Instagram className="w-3.5 h-3.5 text-pink-400" />
-            <span>Instagram</span>
-          </a>
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic(14)
-              setIsQuizOpen(true)
-            }}
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
-            style={{
-              backgroundColor: palette.accent,
-              borderColor: 'rgba(255,255,255,0.4)',
-              color: palette.buttonText || '#000'
-            }}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Agendar</span>
-          </button>
-        </BioSiteScrollReveal>
+              <Instagram className="w-3.5 h-3.5 text-pink-400" />
+              <span>Instagram</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(14)
+                setIsQuizOpen(true)
+              }}
+              className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: palette.accent,
+                borderColor: 'rgba(255,255,255,0.4)',
+                color: palette.buttonText || '#000'
+              }}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Agendar</span>
+            </button>
+          </BioSiteScrollReveal>
+        )}
 
         {/* 5. Gatilho de Escassez & Urgência com Cronômetro Dinâmico */}
-        {urgency?.enabled && (
+        {clientModules.urgency !== false && urgency?.enabled && (
           <BioSiteScrollReveal direction="scale" delay={80} className="px-5 pt-2 pb-2">
             <div
               className="p-3 rounded-2xl border flex items-center justify-between text-xs"
@@ -1064,8 +1104,9 @@ export default function BioSiteClient({
         </BioSiteScrollReveal>
 
         {/* 7. Botões Nobres de Ação */}
-        <BioSiteScrollReveal direction="up" delay={120}>
-          <div id="botoes" className="px-5 pt-2 pb-4 space-y-2.5 relative z-10 flex flex-col justify-start">
+        {clientModules.buttons !== false && (
+          <BioSiteScrollReveal direction="up" delay={120}>
+            <div id="botoes" className="px-5 pt-2 pb-4 space-y-2.5 relative z-10 flex flex-col justify-start">
             {/* Subpáginas do Plano Pro */}
             {modelData?.subpages && modelData.subpages.length > 0 && (
               <div className="flex items-center justify-center gap-1.5 pb-1 flex-wrap">
@@ -1286,9 +1327,10 @@ export default function BioSiteClient({
           })}
           </div>
         </BioSiteScrollReveal>
+        )}
 
         {/* 8. Botão Chamativo de Triagem Anti-Curiosos (Quiz VIP) */}
-        {quiz?.enabled && (
+        {clientModules.quiz !== false && quiz?.enabled && (
           <BioSiteScrollReveal direction="up" delay={130} className="px-5 py-2">
             <button
               type="button"
@@ -1321,7 +1363,7 @@ export default function BioSiteClient({
         )}
 
         {/* 9. Métricas & Prova Social */}
-        {metrics && metrics.length > 0 && (
+        {clientModules.stats !== false && metrics && metrics.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3">
             <div
               className="p-4 rounded-2xl border grid grid-cols-3 gap-2 text-center"
@@ -1348,7 +1390,7 @@ export default function BioSiteClient({
         )}
 
         {/* 10. Como Funciona (Jornada em 3 Passos) */}
-        {howItWorks && howItWorks.length > 0 && (
+        {clientModules.howItWorks !== false && howItWorks && howItWorks.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={120} className="px-5 py-3 space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: palette.accent }} />
@@ -1387,7 +1429,7 @@ export default function BioSiteClient({
         )}
 
         {/* 11. Catálogo de Serviços Interativo */}
-        {servicesCatalog?.enabled && servicesCatalog.items && servicesCatalog.items.length > 0 && (
+        {clientModules.services !== false && servicesCatalog?.enabled && servicesCatalog.items && servicesCatalog.items.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-4 space-y-3">
             <div id="catalogo" className="space-y-3">
             <div className="flex items-center justify-between">
@@ -1751,7 +1793,7 @@ export default function BioSiteClient({
         )}
 
         {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
-        {galleryConfig.enabled && galleryPhotosList && galleryPhotosList.length > 0 && (
+        {clientModules.gallery !== false && galleryConfig.enabled && galleryPhotosList && galleryPhotosList.length > 0 && (
           <BioSiteScrollReveal direction="scale" delay={100} className="px-5 py-3 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -2003,85 +2045,87 @@ export default function BioSiteClient({
         )}
 
         {/* 12.5. Comparador Interativo de Antes & Depois (Split-Slider Arrastável por Toque/Mouse) */}
-        <BioSiteScrollReveal direction="up" delay={80} className="px-5 py-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              TRANSFORMAÇÃO REAL · ANTES & DEPOIS
-            </span>
-            <span className="text-[9px] font-mono text-stone-400">
-              Arraste para comparar
-            </span>
-          </div>
-
-          <div
-            ref={beforeAfterContainerRef}
-            onMouseDown={() => setIsDraggingBeforeAfter(true)}
-            onMouseUp={() => setIsDraggingBeforeAfter(false)}
-            onMouseLeave={() => setIsDraggingBeforeAfter(false)}
-            onMouseMove={(e) => {
-              if (isDraggingBeforeAfter) handleBeforeAfterMove(e.clientX)
-            }}
-            onTouchMove={(e) => {
-              if (e.touches[0]) handleBeforeAfterMove(e.touches[0].clientX)
-            }}
-            className="relative w-full h-[270px] sm:h-[310px] rounded-2xl overflow-hidden border border-white/15 select-none shadow-2xl cursor-ew-resize group"
-            style={{ backgroundColor: palette.card }}
-          >
-            {/* Imagem "Depois" (Fundo completo) */}
-            <img
-              src={beforeAfterData.after}
-              alt="Depois"
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            />
-            <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-mono text-emerald-400 border border-emerald-400/40 font-bold uppercase tracking-wider shadow-md">
-              DEPOIS
+        {clientModules.beforeAfter !== false && (
+          <BioSiteScrollReveal direction="up" delay={80} className="px-5 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                TRANSFORMAÇÃO REAL · ANTES & DEPOIS
+              </span>
+              <span className="text-[9px] font-mono text-stone-400">
+                Arraste para comparar
+              </span>
             </div>
 
-            {/* Imagem "Antes" (Cortada pela largura do slider) */}
             <div
-              className="absolute inset-0 overflow-hidden pointer-events-none"
-              style={{ width: `${beforeAfterPosition}%` }}
+              ref={beforeAfterContainerRef}
+              onMouseDown={() => setIsDraggingBeforeAfter(true)}
+              onMouseUp={() => setIsDraggingBeforeAfter(false)}
+              onMouseLeave={() => setIsDraggingBeforeAfter(false)}
+              onMouseMove={(e) => {
+                if (isDraggingBeforeAfter) handleBeforeAfterMove(e.clientX)
+              }}
+              onTouchMove={(e) => {
+                if (e.touches[0]) handleBeforeAfterMove(e.touches[0].clientX)
+              }}
+              className="relative w-full h-[270px] sm:h-[310px] rounded-2xl overflow-hidden border border-white/15 select-none shadow-2xl cursor-ew-resize group"
+              style={{ backgroundColor: palette.card }}
             >
+              {/* Imagem "Depois" (Fundo completo) */}
               <img
-                src={beforeAfterData.before}
-                alt="Antes"
+                src={beforeAfterData.after}
+                alt="Depois"
                 loading="lazy"
                 decoding="async"
                 className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                style={{ width: beforeAfterContainerRef.current?.offsetWidth || '100%', maxWidth: 'none' }}
               />
-              <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-mono text-stone-300 border border-white/20 font-bold uppercase tracking-wider shadow-md">
-                ANTES
+              <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-mono text-emerald-400 border border-emerald-400/40 font-bold uppercase tracking-wider shadow-md">
+                DEPOIS
+              </div>
+
+              {/* Imagem "Antes" (Cortada pela largura do slider) */}
+              <div
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{ width: `${beforeAfterPosition}%` }}
+              >
+                <img
+                  src={beforeAfterData.before}
+                  alt="Antes"
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  style={{ width: beforeAfterContainerRef.current?.offsetWidth || '100%', maxWidth: 'none' }}
+                />
+                <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-mono text-stone-300 border border-white/20 font-bold uppercase tracking-wider shadow-md">
+                  ANTES
+                </div>
+              </div>
+
+              {/* Linha Divisória e Alça Central Arrastável com Ícone de Sliders */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-white/95 shadow-[0_0_14px_rgba(255,255,255,0.9)] pointer-events-none"
+                style={{ left: `${beforeAfterPosition}%` }}
+              >
+                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-stone-900 border-2 border-white flex items-center justify-center text-white shadow-2xl">
+                  <Sliders className="w-3.5 h-3.5 text-amber-400 rotate-90" />
+                </div>
+              </div>
+
+              {/* Legenda Inferior Flutuante */}
+              <div className="absolute bottom-3 left-3 right-3 pointer-events-none flex items-center justify-between">
+                <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[8.5px] font-mono text-stone-200 border border-white/10">
+                  {beforeAfterData.subtitle}
+                </span>
+                <span className="bg-black/75 backdrop-blur-md px-2 py-1 rounded-lg text-[8px] font-mono text-amber-400 border border-amber-400/20 font-bold uppercase">
+                  {beforeAfterData.tag}
+                </span>
               </div>
             </div>
-
-            {/* Linha Divisória e Alça Central Arrastável com Ícone de Sliders */}
-            <div
-              className="absolute top-0 bottom-0 w-0.5 bg-white/95 shadow-[0_0_14px_rgba(255,255,255,0.9)] pointer-events-none"
-              style={{ left: `${beforeAfterPosition}%` }}
-            >
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-stone-900 border-2 border-white flex items-center justify-center text-white shadow-2xl">
-                <Sliders className="w-3.5 h-3.5 text-amber-400 rotate-90" />
-              </div>
-            </div>
-
-            {/* Legenda Inferior Flutuante */}
-            <div className="absolute bottom-3 left-3 right-3 pointer-events-none flex items-center justify-between">
-              <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[8.5px] font-mono text-stone-200 border border-white/10">
-                {beforeAfterData.subtitle}
-              </span>
-              <span className="bg-black/75 backdrop-blur-md px-2 py-1 rounded-lg text-[8px] font-mono text-amber-400 border border-amber-400/20 font-bold uppercase">
-                {beforeAfterData.tag}
-              </span>
-            </div>
-          </div>
-        </BioSiteScrollReveal>
+          </BioSiteScrollReveal>
+        )}
 
         {/* 13. Localização & GPS com "Aberto Agora" */}
-        {locationInfo?.enabled && (
+        {clientModules.location !== false && locationInfo?.enabled && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <div
               className="p-4 rounded-2xl border space-y-3"
@@ -2161,7 +2205,7 @@ export default function BioSiteClient({
         )}
 
         {/* 14. Depoimentos de Clientes (Google Meu Negócio) */}
-        {testimonials && testimonials.length > 0 && (
+        {clientModules.reviews !== false && testimonials && testimonials.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80">
@@ -2201,7 +2245,7 @@ export default function BioSiteClient({
         )}
 
         {/* 15. Sobre a Especialista & Nosso Espaço */}
-        {aboutMe?.enabled && (
+        {clientModules.about !== false && aboutMe?.enabled && (
           <BioSiteScrollReveal direction="fade" delay={100} className="px-5 py-3 space-y-2">
             <div
               className="p-4 rounded-2xl border space-y-2"
@@ -2226,7 +2270,7 @@ export default function BioSiteClient({
         )}
 
         {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
-        {faq && faq.length > 0 && (
+        {clientModules.faq !== false && faq && faq.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-1">
               DÚVIDAS FREQUENTES

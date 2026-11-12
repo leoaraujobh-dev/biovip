@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -69,6 +69,16 @@ import {
   NICHES_LIST
 } from '@/data/bioSiteDesign'
 import { StudentGridConfig } from '@/data/projects'
+import {
+  ClientPermissions,
+  ModuleToggles,
+  DEFAULT_CLIENT_PERMISSIONS,
+  DEFAULT_MODULE_TOGGLES,
+  PERMISSION_DESCRIPTIONS,
+  MODULE_DESCRIPTIONS,
+  getClientConfig,
+  saveClientConfig
+} from '@/data/clientPermissions'
 
 export interface BioSiteEditorProps {
   slug: string
@@ -167,6 +177,7 @@ export type SectionTabId =
   | 'botoes'
   | 'catalogo'
   | 'portfolio'
+  | 'modulos'
   | 'social'
   | 'vip'
   | 'pixel'
@@ -187,6 +198,7 @@ export const SECTION_ITEMS: SectionItem[] = [
   { id: 'botoes', title: 'Botões & Links Principais', subtitle: 'WhatsApp, agendamento e destaques', icon: LinkIcon },
   { id: 'catalogo', title: 'Catálogo de Serviços', subtitle: 'Procedimentos, preços e durações', icon: ShoppingBag, badge: 'PRO' },
   { id: 'portfolio', title: 'Portfólio & Galeria', subtitle: 'Fotos de resultados e subpáginas', icon: ImageIcon },
+  { id: 'modulos', title: 'Módulos & Blocos', subtitle: 'Ligar ou desligar blocos do BioSite', icon: Sliders },
   { id: 'social', title: 'Prova Social & Depoimentos', subtitle: 'Google reviews e métricas', icon: Star },
   { id: 'vip', title: 'Módulos VIP de Conversão', subtitle: '8 ferramentas de fechamento', icon: Crown, isVip: true },
   { id: 'pixel', title: 'Píxel, Anúncios & SEO', subtitle: 'Meta, TikTok e Google Analytics', icon: Zap },
@@ -205,6 +217,58 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const [previewCatalogCategory, setPreviewCatalogCategory] = useState<string>('TODOS')
   const [previewCopiedAddress, setPreviewCopiedAddress] = useState(false)
   const [previewLightboxIndex, setPreviewLightboxIndex] = useState<number | null>(null)
+
+  // Permissões e Módulos configurados pelo Administrador
+  const [clientConfig, setClientConfig] = useState(() => getClientConfig(props.slug))
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setClientConfig(getClientConfig(props.slug))
+    }
+    handleUpdate()
+
+    const handleCustom = (e: any) => {
+      if (e.detail?.slug === props.slug) {
+        setClientConfig(getClientConfig(props.slug))
+      }
+    }
+    window.addEventListener('biovip_permissions_updated', handleCustom)
+    window.addEventListener('storage', handleUpdate)
+    return () => {
+      window.removeEventListener('biovip_permissions_updated', handleCustom)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [props.slug])
+
+  const permissions = clientConfig.permissions
+  const modules = clientConfig.modules
+  const canEditTheme = props.isAdminMode || permissions.allowEditTheme
+  const canEditTypography = props.isAdminMode || permissions.allowEditTypography
+  const canEditBio = props.isAdminMode || permissions.allowEditBio
+  const canEditPhotos = props.isAdminMode || permissions.allowEditPhotos
+  const canEditButtons = props.isAdminMode || permissions.allowEditButtons
+  const canEditServices = props.isAdminMode || permissions.allowEditServices
+  const canEditLocation = props.isAdminMode || permissions.allowEditLocation
+  const canEditModules = props.isAdminMode || permissions.allowEditModules
+
+  const handleToggleModuleClient = (key: keyof ModuleToggles) => {
+    if (!canEditModules) return
+    const updatedModules = { ...modules, [key]: !modules[key] }
+    saveClientConfig(props.slug, { modules: updatedModules })
+    setClientConfig(prev => ({ ...prev, modules: updatedModules }))
+    props.setHasUnsavedChanges(true)
+  }
+
+  const handleBatchModulesClient = (allActive: boolean) => {
+    if (!canEditModules) return
+    const updated: any = {}
+    ;(Object.keys(modules) as Array<keyof ModuleToggles>).forEach(k => {
+      updated[k] = allActive
+    })
+    saveClientConfig(props.slug, { modules: updated })
+    setClientConfig(prev => ({ ...prev, modules: updated }))
+    props.setHasUnsavedChanges(true)
+  }
 
   // Configurações Oficiais de Galeria & Portfólio (BioVip Original)
   const defaultGalleryPhotos = [
@@ -587,6 +651,15 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             {SECTION_ITEMS.map((sec) => {
               const Icon = sec.icon
               const isActive = activeSection === sec.id
+              const isSectionLocked = !props.isAdminMode && (
+                (sec.id === 'catalogo' && !canEditServices) ||
+                (sec.id === 'portfolio' && !canEditPhotos) ||
+                (sec.id === 'botoes' && !canEditButtons) ||
+                (sec.id === 'modulos' && !canEditModules) ||
+                (sec.id === 'paleta' && (!canEditTheme || !canEditTypography)) ||
+                (sec.id === 'cabecalho' && (!canEditBio || !canEditPhotos)) ||
+                (sec.id === 'vip' && !canEditModules)
+              )
               return (
                 <button
                   key={sec.id}
@@ -613,6 +686,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         <span className={`text-xs font-bold truncate block ${isActive ? 'text-amber-300' : 'text-stone-200'}`}>
                           {sec.title}
                         </span>
+                        {isSectionLocked && (
+                          <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-0.5" title="Bloqueado pelo Administrador">
+                            <Lock className="w-2.5 h-2.5" />
+                          </span>
+                        )}
                         {sec.badge && (
                           <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                             {sec.badge}
@@ -1653,148 +1731,184 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
               <div className="space-y-5 animate-fade-in">
                 {/* Paletas de Cores */}
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
-                    Paleta de Cores ({PALETTES.length} opções luxo)
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {PALETTES.map((pal) => {
-                      const isSel = props.selectedPalette.id === pal.id
-                      return (
-                        <button
-                          key={pal.id}
-                          type="button"
-                          onClick={() => {
-                            props.setSelectedPalette(pal)
-                            props.setHasUnsavedChanges(true)
-                          }}
-                          className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
-                            isSel
-                              ? 'border-amber-400 bg-amber-500/10 shadow-sm'
-                              : 'border-stone-800 bg-stone-900/60 hover:border-stone-700'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.bg }} />
-                            <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.card }} />
-                            <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.accent }} />
-                          </div>
-                          <span className={`text-[11px] font-bold block truncate ${isSel ? 'text-amber-300' : 'text-stone-300'}`}>
-                            {pal.name}
-                          </span>
-                        </button>
-                      )
-                    })}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
+                      Paleta de Cores ({PALETTES.length} opções luxo)
+                      {!canEditTheme && <Lock className="w-3 h-3 text-amber-400" />}
+                    </label>
                   </div>
+
+                  {!canEditTheme && (
+                    <div className="p-3 mb-2.5 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                      <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                      <div>
+                        <span className="text-[11px] font-bold block uppercase tracking-wider">Cores Bloqueadas pelo Administrador</span>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A paleta de cores deste BioSite foi bloqueada para alterações pelo cliente.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <fieldset disabled={!canEditTheme} className={!canEditTheme ? 'opacity-50 pointer-events-none' : ''}>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PALETTES.map((pal) => {
+                        const isSel = props.selectedPalette.id === pal.id
+                        return (
+                          <button
+                            key={pal.id}
+                            type="button"
+                            onClick={() => {
+                              props.setSelectedPalette(pal)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                              isSel
+                                ? 'border-amber-400 bg-amber-500/10 shadow-sm'
+                                : 'border-stone-800 bg-stone-900/60 hover:border-stone-700'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.bg }} />
+                              <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.card }} />
+                              <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.accent }} />
+                            </div>
+                            <span className={`text-[11px] font-bold block truncate ${isSel ? 'text-amber-300' : 'text-stone-300'}`}>
+                              {pal.name}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </fieldset>
                 </div>
 
                 {/* Tipografia Editorial */}
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
-                    Tipografia Editorial
-                  </label>
-                  <div className="space-y-1.5">
-                    {TYPOGRAPHIES.map((typo) => {
-                      const isSel = props.selectedTypography.id === typo.id
-                      return (
-                        <button
-                          key={typo.id}
-                          type="button"
-                          onClick={() => {
-                            props.setSelectedTypography(typo)
-                            props.setHasUnsavedChanges(true)
-                          }}
-                          className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
-                            isSel
-                              ? 'border-amber-400 bg-amber-500/10 text-amber-300 font-bold'
-                              : 'border-stone-800 bg-stone-900/60 text-stone-300 hover:border-stone-700'
-                          }`}
-                        >
-                          <div>
-                            <span className="text-xs block" style={{ fontFamily: typo.cssFont }}>
-                              {typo.name}
-                            </span>
-                            <span className="text-[9px] font-mono text-stone-500">
-                              {typo.desc || typo.category}
-                            </span>
-                          </div>
-                          {isSel && <Check className="w-4 h-4 text-amber-400" />}
-                        </button>
-                      )
-                    })}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
+                      Tipografia Editorial
+                      {!canEditTypography && <Lock className="w-3 h-3 text-amber-400" />}
+                    </label>
                   </div>
+
+                  {!canEditTypography && (
+                    <div className="p-3 mb-2.5 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                      <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                      <div>
+                        <span className="text-[11px] font-bold block uppercase tracking-wider">Fontes Bloqueadas pelo Administrador</span>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A tipografia deste modelo foi selecionada pelo administrador e está protegida.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <fieldset disabled={!canEditTypography} className={!canEditTypography ? 'opacity-50 pointer-events-none' : ''}>
+                    <div className="space-y-1.5">
+                      {TYPOGRAPHIES.map((typo) => {
+                        const isSel = props.selectedTypography.id === typo.id
+                        return (
+                          <button
+                            key={typo.id}
+                            type="button"
+                            onClick={() => {
+                              props.setSelectedTypography(typo)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                              isSel
+                                ? 'border-amber-400 bg-amber-500/10 text-amber-300 font-bold'
+                                : 'border-stone-800 bg-stone-900/60 text-stone-300 hover:border-stone-700'
+                            }`}
+                          >
+                            <div>
+                              <span className="text-xs block" style={{ fontFamily: typo.cssFont }}>
+                                {typo.name}
+                              </span>
+                              <span className="text-[9px] font-mono text-stone-500">
+                                {typo.desc || typo.category}
+                              </span>
+                            </div>
+                            {isSel && <Check className="w-4 h-4 text-amber-400" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </fieldset>
                 </div>
 
                 {/* Estilos e Efeitos de Botão */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Estilo do Botão
-                    </label>
-                    <select
-                      value={props.buttonStyle}
-                      onChange={(e) => {
-                        props.setButtonStyle(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-mono"
-                    >
-                      {BUTTON_STYLES.map((bs) => (
-                        <option key={bs.id} value={bs.id}>
-                          {bs.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Animação do Botão
-                    </label>
-                    <select
-                      value={props.buttonAnimation}
-                      onChange={(e) => {
-                        props.setButtonAnimation(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-mono"
-                    >
-                      {BUTTON_ANIMATIONS.map((ba) => (
-                        <option key={ba.id} value={ba.id}>
-                          {ba.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Tratamento da Foto */}
-                <div>
-                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
-                    Efeito de Retrato
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'organico', label: 'Fusão Orgânica' },
-                      { id: 'original', label: 'Foto Pura' },
-                      { id: 'silhueta', label: 'Silhueta VIP' }
-                    ].map((treat) => (
-                      <button
-                        key={treat.id}
-                        type="button"
-                        onClick={() => {
-                          props.setPhotoTreatment(treat.id as any)
+                <fieldset disabled={!canEditButtons} className={!canEditButtons ? 'opacity-50 pointer-events-none' : ''}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                        Estilo do Botão
+                      </label>
+                      <select
+                        value={props.buttonStyle}
+                        onChange={(e) => {
+                          props.setButtonStyle(e.target.value)
                           props.setHasUnsavedChanges(true)
                         }}
-                        className={`p-2 rounded-xl border text-center text-xs font-mono transition cursor-pointer ${
-                          props.photoTreatment === treat.id
-                            ? 'border-amber-400 bg-amber-500/10 text-amber-300 font-bold'
-                            : 'border-stone-800 bg-stone-900/60 text-stone-400 hover:text-stone-200'
-                        }`}
+                        className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-mono"
                       >
-                        {treat.label}
-                      </button>
-                    ))}
+                        {BUTTON_STYLES.map((bs) => (
+                          <option key={bs.id} value={bs.id}>
+                            {bs.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                        Animação do Botão
+                      </label>
+                      <select
+                        value={props.buttonAnimation}
+                        onChange={(e) => {
+                          props.setButtonAnimation(e.target.value)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs font-mono"
+                      >
+                        {BUTTON_ANIMATIONS.map((ba) => (
+                          <option key={ba.id} value={ba.id}>
+                            {ba.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
+                </fieldset>
+
+                {/* Tratamento da Foto */}
+                <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-2">
+                      Efeito de Retrato
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'organico', label: 'Fusão Orgânica' },
+                        { id: 'original', label: 'Foto Pura' },
+                        { id: 'silhueta', label: 'Silhueta VIP' }
+                      ].map((treat) => (
+                        <button
+                          key={treat.id}
+                          type="button"
+                          onClick={() => {
+                            props.setPhotoTreatment(treat.id as any)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className={`p-2 rounded-xl border text-center text-xs font-mono transition cursor-pointer ${
+                            props.photoTreatment === treat.id
+                              ? 'border-amber-400 bg-amber-500/10 text-amber-300 font-bold'
+                              : 'border-stone-800 bg-stone-900/60 text-stone-400 hover:text-stone-200'
+                          }`}
+                        >
+                          {treat.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </fieldset>
               </div>
             )}
 
@@ -1804,174 +1918,206 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             {activeSection === 'cabecalho' && (
               <div className="space-y-4 animate-fade-in">
                 {/* Banner de IA para Preenchimento Automático */}
-                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase text-amber-300 font-black block">
-                      ✨ Inteligência Artificial BioVip
-                    </span>
-                    <p className="text-[11px] text-stone-300 leading-tight mt-0.5">
-                      Gere bio, especialidade e textos de alta conversão para o seu nicho.
-                    </p>
+                <fieldset disabled={!canEditBio} className={!canEditBio ? 'opacity-50 pointer-events-none' : ''}>
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex items-center justify-between gap-3 mb-2">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase text-amber-300 font-black block">
+                        ✨ Inteligência Artificial BioVip
+                      </span>
+                      <p className="text-[11px] text-stone-300 leading-tight mt-0.5">
+                        Gere bio, especialidade e textos de alta conversão para o seu nicho.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={props.handleAiAutoFill}
+                      className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono shrink-0 shadow-sm cursor-pointer"
+                    >
+                      Gerar
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={props.handleAiAutoFill}
-                    className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs font-mono shrink-0 shadow-sm cursor-pointer"
-                  >
-                    Gerar
-                  </button>
-                </div>
+                </fieldset>
 
                 {/* Foto de Perfil */}
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-stone-400 font-bold mb-1">
-                    Foto do Perfil / Retrato de Estúdio
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden border border-stone-700 bg-stone-900 shrink-0">
-                      <img
-                        src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
+                      Foto do Perfil / Retrato de Estúdio
+                      {!canEditPhotos && <Lock className="w-3 h-3 text-amber-400" />}
+                    </label>
+                  </div>
+
+                  {!canEditPhotos && (
+                    <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                      <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                      <div>
+                        <span className="text-[11px] font-bold block uppercase tracking-wider">Foto do Perfil Bloqueada</span>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A foto principal de estúdio foi definida pela agência e está travada.</p>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-1.5">
-                      <input
-                        type="text"
-                        value={props.customPhotoSrc || ''}
+                  )}
+
+                  <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl overflow-hidden border border-stone-700 bg-stone-900 shrink-0">
+                        <img
+                          src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <input
+                          type="text"
+                          value={props.customPhotoSrc || ''}
+                          onChange={(e) => {
+                            props.setCustomPhotoSrc(e.target.value || null)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="URL da Foto (https://...)"
+                          className="w-full p-2 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => props.setDemoGender('mulher')}
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                              props.demoGender === 'mulher' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'border-stone-800 text-stone-400'
+                            }`}
+                          >
+                            Feminino
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => props.setDemoGender('homem')}
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                              props.demoGender === 'homem' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'border-stone-800 text-stone-400'
+                            }`}
+                          >
+                            Masculino
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+
+                {!canEditBio && (
+                  <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                    <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Bio & Identidade Bloqueadas</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As informações editoriais e registros oficiais foram configurados pelo administrador.</p>
+                    </div>
+                  </div>
+                )}
+
+                <fieldset disabled={!canEditBio} className={!canEditBio ? 'opacity-50 pointer-events-none' : ''}>
+                  <div className="space-y-4">
+                    {/* Nome e Título */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                          Nome da Marca
+                        </label>
+                        <input
+                          type="text"
+                          value={props.brandName}
+                          onChange={(e) => {
+                            props.setBrandName(e.target.value)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                          Título de Exibição
+                        </label>
+                        <input
+                          type="text"
+                          value={props.businessTitle}
+                          onChange={(e) => {
+                            props.setBusinessTitle(e.target.value)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nicho e Especialidade */}
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                        Nicho / Categoria
+                      </label>
+                      <select
+                        value={props.niche}
                         onChange={(e) => {
-                          props.setCustomPhotoSrc(e.target.value || null)
+                          props.setNiche(e.target.value)
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="URL da Foto (https://...)"
-                        className="w-full p-2 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                        className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs mb-1.5"
+                      >
+                        {NICHES_LIST.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Bio / Frase de Autoridade */}
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                        Bio / Frase de Autoridade
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={props.tagline}
+                        onChange={(e) => {
+                          props.setTagline(e.target.value)
+                          props.setHasUnsavedChanges(true)
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs leading-relaxed"
                       />
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => props.setDemoGender('mulher')}
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                            props.demoGender === 'mulher' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'border-stone-800 text-stone-400'
-                          }`}
-                        >
-                          Feminino
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => props.setDemoGender('homem')}
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                            props.demoGender === 'homem' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'border-stone-800 text-stone-400'
-                          }`}
-                        >
-                          Masculino
-                        </button>
+                    </div>
+
+                    {/* WhatsApp e Registro Oficial */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                          WhatsApp Comercial
+                        </label>
+                        <input
+                          type="text"
+                          value={props.userPhone}
+                          onChange={(e) => {
+                            props.setUserPhone(e.target.value)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="5531991390202"
+                          className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
+                          Registro Oficial
+                        </label>
+                        <input
+                          type="text"
+                          value={props.registrationCode}
+                          onChange={(e) => {
+                            props.setRegistrationCode(e.target.value)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          placeholder="CRO-PE 22.675"
+                          className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Nome e Título */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Nome da Marca
-                    </label>
-                    <input
-                      type="text"
-                      value={props.brandName}
-                      onChange={(e) => {
-                        props.setBrandName(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Título de Exibição
-                    </label>
-                    <input
-                      type="text"
-                      value={props.businessTitle}
-                      onChange={(e) => {
-                        props.setBusinessTitle(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-bold"
-                    />
-                  </div>
-                </div>
-
-                {/* Nicho e Especialidade */}
-                <div>
-                  <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                    Nicho / Categoria
-                  </label>
-                  <select
-                    value={props.niche}
-                    onChange={(e) => {
-                      props.setNiche(e.target.value)
-                      props.setHasUnsavedChanges(true)
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-xs mb-1.5"
-                  >
-                    {NICHES_LIST.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Bio / Frase de Autoridade */}
-                <div>
-                  <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                    Bio / Frase de Autoridade
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={props.tagline}
-                    onChange={(e) => {
-                      props.setTagline(e.target.value)
-                      props.setHasUnsavedChanges(true)
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs leading-relaxed"
-                  />
-                </div>
-
-                {/* WhatsApp e Registro Oficial */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      WhatsApp Comercial
-                    </label>
-                    <input
-                      type="text"
-                      value={props.userPhone}
-                      onChange={(e) => {
-                        props.setUserPhone(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      placeholder="5531991390202"
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                      Registro Oficial
-                    </label>
-                    <input
-                      type="text"
-                      value={props.registrationCode}
-                      onChange={(e) => {
-                        props.setRegistrationCode(e.target.value)
-                        props.setHasUnsavedChanges(true)
-                      }}
-                      placeholder="CRO-PE 22.675"
-                      className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
-                    />
-                  </div>
-                </div>
+                </fieldset>
               </div>
             )}
 
@@ -1986,6 +2132,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <span className="text-xs font-mono uppercase text-stone-200 font-bold">
                         Botões VIP de Alta Conversão
                       </span>
+                      {!canEditButtons && <Lock className="w-3.5 h-3.5 text-amber-400" />}
                       <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
                         {props.buttons.length} BOTÕES
                       </span>
@@ -1994,35 +2141,48 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       Suporte a fotos pop-out, pills de ação, badges e mensagens automáticas de WhatsApp.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newBtn = {
-                        id: `cta-${Date.now()}`,
-                        label: 'AGENDAR HORÁRIO VIP',
-                        subtitle: 'Toque para atendimento prioritário e sem fila',
-                        icon: 'calendar',
-                        url: '#booking',
-                        linkType: 'booking' as const,
-                        whatsappMessage: `Olá! Gostaria de consultar horários disponíveis no ${props.businessTitle || 'studio'}.`,
-                        animation: 'pulse-glow' as const,
-                        variant: 'accent' as const,
-                        badgeText: 'MAIS PROCURADO',
-                        ctaActionText: 'RESERVAR HORÁRIO',
-                        imagePosition: 'none' as const,
-                        imageFitStyle: 'popout' as const,
-                        isHighlighted: true
-                      }
-                      props.setButtons([...props.buttons, newBtn])
-                      props.setHasUnsavedChanges(true)
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-[#E2B857] hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs uppercase flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Adicionar Botão VIP
-                  </button>
+                  {canEditButtons && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newBtn = {
+                          id: `cta-${Date.now()}`,
+                          label: 'AGENDAR HORÁRIO VIP',
+                          subtitle: 'Toque para atendimento prioritário e sem fila',
+                          icon: 'calendar',
+                          url: '#booking',
+                          linkType: 'booking' as const,
+                          whatsappMessage: `Olá! Gostaria de consultar horários disponíveis no ${props.businessTitle || 'studio'}.`,
+                          animation: 'pulse-glow' as const,
+                          variant: 'accent' as const,
+                          badgeText: 'MAIS PROCURADO',
+                          ctaActionText: 'RESERVAR HORÁRIO',
+                          imagePosition: 'none' as const,
+                          imageFitStyle: 'popout' as const,
+                          isHighlighted: true
+                        }
+                        props.setButtons([...props.buttons, newBtn])
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-[#E2B857] hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs uppercase flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar Botão VIP
+                    </button>
+                  )}
                 </div>
 
-                <div className="space-y-3.5">
+                {!canEditButtons && (
+                  <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                    <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Edição de Botões Bloqueada</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os botões e links de conversão deste BioSite estão bloqueados para alteração.</p>
+                    </div>
+                  </div>
+                )}
+
+                <fieldset disabled={!canEditButtons} className={!canEditButtons ? 'opacity-50 pointer-events-none' : ''}>
+                  <div className="space-y-3.5">
                   {props.buttons.map((btn: any, idx: number) => (
                     <div
                       key={btn.id || `btn-${idx}`}
@@ -2420,7 +2580,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                </fieldset>
               </div>
             )}
 
@@ -2429,11 +2590,23 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             {/* ======================================================= */}
             {activeSection === 'catalogo' && (
               <div className="space-y-4 animate-fade-in">
+                {!canEditServices && (
+                  <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                    <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Catálogo Bloqueado pelo Administrador</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os procedimentos, durações e preços foram fixados pelo administrador e estão em modo somente-leitura.</p>
+                    </div>
+                  </div>
+                )}
+
+                <fieldset disabled={!canEditServices} className={!canEditServices ? 'opacity-50 pointer-events-none' : ''}>
                 {/* Switch Liga/Desliga */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-bold text-white uppercase font-mono">
+                    <h3 className="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
                       Catálogo Interativo VIP
+                      {!canEditServices && <Lock className="w-3 h-3 text-amber-400" />}
                     </h3>
                     <p className="text-[10px] text-stone-400">
                       Tabela visual com preços, durações e agendamento instantâneo.
@@ -2682,6 +2855,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   </div>
                 )}
+                </fieldset>
               </div>
             )}
 
@@ -2690,10 +2864,22 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             {/* ======================================================= */}
             {activeSection === 'portfolio' && (
               <div className="space-y-4 animate-fade-in">
+                {!canEditPhotos && (
+                  <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                    <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Galeria de Fotos Bloqueada</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As fotos do portfólio foram curadas pelo administrador e estão em modo somente-leitura.</p>
+                    </div>
+                  </div>
+                )}
+
+                <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
                 {/* Subpáginas Pro Integradas */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800">
-                  <h3 className="font-bold text-xs text-white uppercase tracking-wider mb-1">
+                  <h3 className="font-bold text-xs text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
                     Páginas Pro Integradas ({props.additionalPages.length}/3)
+                    {!canEditPhotos && <Lock className="w-3 h-3 text-amber-400" />}
                   </h3>
                   <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
                     Cada página Pro inclui slider de Antes &amp; Depois, tabela completa de procedimentos e agenda VIP.
@@ -3066,6 +3252,131 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
                 </div>
+                </fieldset>
+              </div>
+            )}
+
+            {/* ======================================================= */}
+            {/* 5.5. SEÇÃO: MÓDULOS & BLOCOS DO BIOSITE (15 BLOCOS) */}
+            {/* ======================================================= */}
+            {activeSection === 'modulos' && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-mono uppercase text-amber-300 font-black">
+                        Ligar & Desligar Blocos do BioSite
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-300 leading-relaxed mt-1">
+                      Ative ou desative qualquer um dos 15 módulos do seu BioSite com apenas 1 clique. As alterações são sincronizadas instantaneamente no seu link.
+                    </p>
+                  </div>
+
+                  {canEditModules && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleBatchModulesClient(true)}
+                        className="px-2.5 py-1 text-[10px] font-mono font-bold rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition cursor-pointer"
+                      >
+                        Ativar Todos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBatchModulesClient(false)}
+                        className="px-2.5 py-1 text-[10px] font-mono font-bold rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition cursor-pointer"
+                      >
+                        Desativar Todos
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {!canEditModules && (
+                  <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                    <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">
+                        Controle de Módulos Bloqueado pelo Administrador
+                      </span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">
+                        Os módulos deste BioSite são administrados diretamente pela agência. Abaixo você pode visualizar quais blocos estão ativos.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista com os 15 Módulos */}
+                <div className="space-y-2.5">
+                  {(Object.keys(modules) as Array<keyof ModuleToggles>).map((key) => {
+                    const isEnabled = modules[key]
+                    const info = MODULE_DESCRIPTIONS[key]
+                    return (
+                      <div
+                        key={key}
+                        onClick={() => {
+                          if (canEditModules) {
+                            handleToggleModuleClient(key)
+                          }
+                        }}
+                        className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                          canEditModules ? 'cursor-pointer hover:border-amber-400/50' : 'cursor-default opacity-85'
+                        } ${
+                          isEnabled
+                            ? 'bg-amber-950/20 border-amber-500/40 shadow-sm'
+                            : 'bg-stone-900/40 border-stone-800 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+                              isEnabled
+                                ? 'bg-amber-400 text-stone-950 border-amber-300 font-bold'
+                                : 'bg-stone-800 text-stone-500 border-stone-700'
+                            }`}
+                          >
+                            {isEnabled ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-white truncate block">
+                                {info?.label || key}
+                              </span>
+                              <span
+                                className={`text-[9px] font-mono uppercase px-1.5 py-0.2 rounded font-bold ${
+                                  isEnabled
+                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-stone-800 text-stone-500 border border-stone-700'
+                                }`}
+                              >
+                                {isEnabled ? 'Visível' : 'Oculto'}
+                              </span>
+                            </div>
+                            <p className="text-[10.5px] text-stone-400 leading-snug mt-0.5">
+                              {info?.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        {canEditModules && (
+                          <div
+                            className={`w-11 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
+                              isEnabled ? 'bg-amber-400' : 'bg-stone-800'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full bg-stone-950 transition-transform ${
+                                isEnabled ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
@@ -3244,6 +3555,17 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             {/* ======================================================= */}
             {activeSection === 'vip' && (
               <div className="space-y-3.5 animate-fade-in">
+                {!canEditModules && (
+                  <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
+                    <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Módulos VIP Bloqueados</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A ativação dos módulos VIP é configurada pelo administrador.</p>
+                    </div>
+                  </div>
+                )}
+
+                <fieldset disabled={!canEditModules} className={!canEditModules ? 'opacity-50 pointer-events-none' : ''}>
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/40">
                   <span className="text-[10px] font-mono text-amber-300 font-black uppercase tracking-wider block mb-1">
                     👑 8 MÓDULOS VIP DE ALTA CONVERSÃO
@@ -3545,6 +3867,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     ))}
                   </div>
                 </div>
+                </fieldset>
               </div>
             )}
 
@@ -3813,6 +4136,15 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
               {SECTION_ITEMS.map((sec) => {
                 const Icon = sec.icon
                 const isSelected = activeSection === sec.id
+                const isSectionLocked = !props.isAdminMode && (
+                  (sec.id === 'catalogo' && !canEditServices) ||
+                  (sec.id === 'portfolio' && !canEditPhotos) ||
+                  (sec.id === 'botoes' && !canEditButtons) ||
+                  (sec.id === 'modulos' && !canEditModules) ||
+                  (sec.id === 'paleta' && (!canEditTheme || !canEditTypography)) ||
+                  (sec.id === 'cabecalho' && (!canEditBio || !canEditPhotos)) ||
+                  (sec.id === 'vip' && !canEditModules)
+                )
                 return (
                   <button
                     key={sec.id}
@@ -3839,6 +4171,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold block">{sec.title}</span>
+                          {isSectionLocked && (
+                            <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                              <Lock className="w-2.5 h-2.5" />
+                            </span>
+                          )}
                           {sec.isVip && (
                             <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500 text-stone-950">
                               VIP
