@@ -105,7 +105,7 @@ export default function BentoGridVisual() {
                 <div className="flex items-center gap-3.5">
                   <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border border-zinc-700">
                     <img
-                      src="https://images.unsplash.com/photo-1788128495948-ab19f71f8549?w=400&auto=format&fit=crop&q=80"
+                      src="https://images.unsplash.com/photo-1639629509821-c54cdd984227?w=400&auto=format&fit=crop&q=80"
                       alt="Volume Russo Imperial"
                       className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
                     />
@@ -192,7 +192,7 @@ export default function BentoGridVisual() {
             <div className="relative w-full h-48 sm:h-52 rounded-2xl overflow-hidden select-none border border-zinc-800">
               {/* Imagem DEPOIS (Fundo Total) */}
               <img
-                src="https://images.unsplash.com/photo-1788128495948-ab19f71f8549?w=600&auto=format&fit=crop&q=80"
+                src="https://images.unsplash.com/photo-1639629509821-c54cdd984227?w=600&auto=format&fit=crop&q=80"
                 alt="Depois da Transformação - Volume Russo"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -206,7 +206,7 @@ export default function BentoGridVisual() {
                 style={{ width: `${sliderPos}%` }}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1629736125740-84d717814998?w=600&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1701285857712-48cacba95a8f?w=600&auto=format&fit=crop&q=80"
                   alt="Antes da Transformação - Natural"
                   className="absolute inset-y-0 left-0 h-full object-cover max-w-none"
                   style={{ width: '100%', minWidth: '320px' }}
