@@ -274,6 +274,10 @@ export default function AdminDashboardClient() {
   const savePortfolioList = (newList: Project[]) => {
     setPortfolioList(newList)
     localStorage.setItem('biovip_portfolio_projects', JSON.stringify(newList))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('biovip_portfolio_updated', { detail: newList }))
+      window.dispatchEvent(new StorageEvent('storage', { key: 'biovip_portfolio_projects' }))
+    }
   }
 
   // Handler de Login Blindado com Web Crypto SHA-256 e Anti-Brute-Force
