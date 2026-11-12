@@ -96,14 +96,18 @@ export default function BentoGridVisual() {
             </div>
 
             {/* Simulação Visual de Procedimento */}
-            <div className="rounded-2xl p-4 sm:p-5 bg-[#09090B]/90 border border-zinc-800/90 shadow-2xl">
+            <div 
+              onClick={() => setIsWhatsAppDemoOpen(true)}
+              className="rounded-2xl p-4 sm:p-5 bg-[#09090B]/90 border border-zinc-800/90 hover:border-[#E2B857]/40 shadow-2xl transition-all cursor-pointer group/card"
+              title="Clique para ver a demonstração da mensagem que chega no WhatsApp"
+            >
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
                   <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border border-zinc-700">
                     <img
-                      src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&auto=format&fit=crop&q=80"
+                      src="https://images.unsplash.com/photo-1788128495948-ab19f71f8549?w=400&auto=format&fit=crop&q=80"
                       alt="Volume Russo Imperial"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
                     />
                     <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[8px] font-mono text-[#E2B857] font-bold">
                       TOP
@@ -112,7 +116,7 @@ export default function BentoGridVisual() {
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-serif font-bold text-sm sm:text-base text-zinc-100">
+                      <h4 className="font-serif font-bold text-sm sm:text-base text-zinc-100 group-hover/card:text-[#E2B857] transition-colors">
                         Volume Russo Imperial
                       </h4>
                       <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20">
@@ -138,8 +142,11 @@ export default function BentoGridVisual() {
                   {/* Botão de Demonstração Interativo */}
                   <button
                     type="button"
-                    onClick={() => setIsWhatsAppDemoOpen(true)}
-                    className="mt-2 px-4 py-2 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white text-xs font-bold transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-1.5 cursor-pointer active:scale-95 group/btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsWhatsAppDemoOpen(true)
+                    }}
+                    className="mt-2 px-4 py-2 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white text-xs font-bold transition shadow-[0_0_18px_rgba(34,197,94,0.4)] flex items-center gap-1.5 cursor-pointer active:scale-95 group/btn"
                     title="Clique para ver a demonstração da mensagem que chega no WhatsApp"
                   >
                     <span>Agendar</span>
@@ -152,7 +159,10 @@ export default function BentoGridVisual() {
                 <span className="flex items-center gap-1 text-emerald-400 font-medium">
                   <CheckCircle2 className="w-3 h-3" /> 85% menos mensagens de curiosos no WhatsApp
                 </span>
-                <span className="text-zinc-500 hidden sm:inline">Toque em &quot;Agendar&quot; para testar a simulação</span>
+                <span className="text-[#E2B857] flex items-center gap-1 font-mono text-[9.5px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-ping" />
+                  Toque para testar o WhatsApp
+                </span>
               </div>
             </div>
           </div>
@@ -182,8 +192,8 @@ export default function BentoGridVisual() {
             <div className="relative w-full h-48 sm:h-52 rounded-2xl overflow-hidden select-none border border-zinc-800">
               {/* Imagem DEPOIS (Fundo Total) */}
               <img
-                src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=80"
-                alt="Depois da Transformação"
+                src="https://images.unsplash.com/photo-1788128495948-ab19f71f8549?w=600&auto=format&fit=crop&q=80"
+                alt="Depois da Transformação - Volume Russo"
                 className="absolute inset-0 w-full h-full object-cover"
               />
               <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#09090B]/80 text-[#E2B857] text-[10px] font-mono font-bold border border-[#E2B857]/30 backdrop-blur-sm z-10">
@@ -196,8 +206,8 @@ export default function BentoGridVisual() {
                 style={{ width: `${sliderPos}%` }}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80"
-                  alt="Antes da Transformação"
+                  src="https://images.unsplash.com/photo-1629736125740-84d717814998?w=600&auto=format&fit=crop&q=80"
+                  alt="Antes da Transformação - Natural"
                   className="absolute inset-y-0 left-0 h-full object-cover max-w-none"
                   style={{ width: '100%', minWidth: '320px' }}
                 />
