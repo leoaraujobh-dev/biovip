@@ -32,7 +32,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     description: 'Ideal para profissionais autônomos que querem sair do link amador.',
     features: [
       { name: 'Microsite entregue pronto pela nossa equipe em até 24h', included: true },
-      { name: 'Layout clássico otimizado para abertura rápida', included: true },
+      { name: '1 Página principal com lista de serviços e valores', included: true },
       { name: 'Botões essenciais de WhatsApp, Instagram e Localização', included: true },
       { name: 'Acesso total ao editor para você atualizar quando quiser', included: true },
       { name: 'Hospedagem segura e certificado SSL inclusos', included: true },
@@ -57,8 +57,8 @@ export const OFFICIAL_PLANS: Plan[] = [
     monthlyText: '1º mês grátis • Depois R$ 49,90/mês',
     description: 'Para estúdios de beleza, barbearias e clínicas que querem filtrar curiosos.',
     features: [
-      { name: 'Tudo do Plano Básico', included: true },
-      { name: 'Montagem completa do seu Catálogo de Serviços com fotos e preços', included: true },
+      { name: 'Microsite completo com abas internas (Início, Galeria Antes/Depois e Agenda VIP)', included: true },
+      { name: 'Catálogo visual com fotos dos procedimentos, tempo de duração e valores', included: true },
       { name: 'Galeria de Portfólio de Alta Resolução (Antes & Depois)', included: true },
       { name: 'Funil anti-curiosos: mensagens personalizadas para cada procedimento no WhatsApp', included: true },
       { name: 'Seção de regras de agendamento (política de atraso e pagamento)', included: true },
@@ -83,7 +83,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     features: [
       { name: 'Tudo do Plano Pro', included: true },
       { name: 'Design 100% exclusivo alinhado à identidade visual da sua marca', included: true },
-      { name: 'Configuração gratuita de domínio próprio (ex: seunome.com.br)', included: true },
+      { name: 'Domínio próprio .com.br incluso (1º ano grátis) e configurado', included: true },
       { name: 'Alterações mensais ILIMITADAS feitas pelo nosso suporte', included: true },
       { name: 'Suporte prioritário VIP direto no WhatsApp pessoal', included: true },
       { name: 'Relatório mensal de cliques e conversões', included: true }

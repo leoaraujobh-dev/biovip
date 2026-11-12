@@ -16,7 +16,7 @@ export default function PlanosLuxury() {
       buttonText: 'Contratar Plano Básico',
       features: [
         'Microsite BioVip de luxo com alta velocidade',
-        '1 Página principal com catálogo de serviços',
+        '1 Página principal com lista de serviços e valores',
         'Valores visíveis para filtrar curiosos',
         'Botão de agendamento direto no WhatsApp',
         'Hospedagem em nuvem de alta performance',
@@ -33,8 +33,8 @@ export default function PlanosLuxury() {
       whatsappMessage: 'Olá! Quero garantir o Plano Pro do BioVip (R$ 129,90 de entrada + R$ 49,90/mês).',
       buttonText: 'Garantir Plano Pro no WhatsApp',
       features: [
-        'Até 3 Páginas exclusivas (Início, Galeria Antes/Depois, Agenda VIP)',
-        'Catálogo de procedimentos com fotos, tempos e valores',
+        'Microsite completo com abas internas (Início, Galeria Antes/Depois e Agenda VIP)',
+        'Catálogo visual com fotos dos procedimentos, tempo de duração e valores',
         'Triagem anti-curiosos avançada (cliente chega pronto para pagar)',
         'Galeria de fotos em alta resolução com carrossel dinâmico',
         'Botões de rota com 1 clique (Waze, Google Maps e Uber)',
@@ -53,7 +53,7 @@ export default function PlanosLuxury() {
       buttonText: 'Contratar Plano VIP',
       features: [
         'Tudo incluso no Plano Pro sem limites',
-        'Domínio próprio personalizado configurado (ex: suamarca.com.br)',
+        'Domínio próprio .com.br incluso (1º ano grátis) e configurado',
         'Pixel do Meta (Instagram/Facebook) & Google Ads integrado',
         'Alterações ilimitadas prioritárias feitas pela nossa equipe',
         'Suporte concierge VIP dedicado diretamente no WhatsApp',

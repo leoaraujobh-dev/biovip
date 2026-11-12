@@ -33,7 +33,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     isFeatured: false,
     features: [
       { text: 'Microsite entregue pronto pela nossa equipe em até 24h', included: true },
-      { text: 'Layout clássico otimizado para abertura rápida', included: true },
+      { text: '1 Página principal com lista de serviços e valores', included: true },
       { text: 'Botões essenciais de WhatsApp, Instagram e Localização', included: true },
       { text: 'Acesso total ao editor para você atualizar quando quiser', included: true },
       { text: 'Hospedagem segura e certificado SSL inclusos', included: true },
@@ -58,8 +58,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     monthlyText: '1º mês grátis • Depois R$ 49,90/mês',
     isFeatured: true,
     features: [
-      { text: 'Tudo do Plano Básico', included: true },
-      { text: 'Montagem completa do seu Catálogo de Serviços com fotos e preços', included: true },
+      { text: 'Microsite completo com abas internas (Início, Galeria Antes/Depois e Agenda VIP)', included: true },
+      { text: 'Catálogo visual com fotos dos procedimentos, tempo de duração e valores', included: true },
       { text: 'Galeria de Portfólio de Alta Resolução (Antes & Depois)', included: true },
       { text: 'Funil anti-curiosos: mensagens personalizadas para cada procedimento no WhatsApp', included: true },
       { text: 'Seção de regras de agendamento (política de atraso e pagamento)', included: true },
@@ -84,7 +84,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       { text: 'Tudo do Plano Pro', included: true },
       { text: 'Design 100% exclusivo alinhado à identidade visual da sua marca', included: true },
-      { text: 'Configuração gratuita de domínio próprio (ex: seunome.com.br)', included: true },
+      { text: 'Domínio próprio .com.br incluso (1º ano grátis) e configurado', included: true },
       { text: 'Alterações mensais ILIMITADAS feitas pelo nosso suporte', included: true },
       { text: 'Suporte prioritário VIP direto no WhatsApp pessoal', included: true },
       { text: 'Relatório mensal de cliques e conversões', included: true },
