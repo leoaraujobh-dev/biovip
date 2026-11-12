@@ -83,7 +83,7 @@ export default function BioSiteScrollReveal({
       clearTimeout(fallbackTimer)
       observer.disconnect()
     }
-  }, [threshold, rootMargin])
+  }, [threshold, rootMargin, delay])
 
   const getTransitionClasses = () => {
     if (isVisible) {

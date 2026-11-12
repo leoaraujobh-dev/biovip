@@ -157,14 +157,14 @@ export default function TemplatePhonePreview({ template, clientName = 'Seu Bio S
                       <span className="font-bold text-[8px] text-stone-900">Mariana Ribeiro</span>
                       <span className="text-amber-500 text-[7px]">★★★★★</span>
                     </div>
-                    <p className="text-[7px] text-stone-600 leading-tight">"Atendimento impecável! O consultório é lindo e o resultado superou todas as expectativas."</p>
+                    <p className="text-[7px] text-stone-600 leading-tight">&ldquo;Atendimento impecável! O consultório é lindo e o resultado superou todas as expectativas.&rdquo;</p>
                   </div>
                   <div className="p-2 rounded-xl bg-white border border-stone-200">
                     <div className="flex justify-between items-center mb-0.5">
                       <span className="font-bold text-[8px] text-stone-900">Carlos Eduardo</span>
                       <span className="text-amber-500 text-[7px]">★★★★★</span>
                     </div>
-                    <p className="text-[7px] text-stone-600 leading-tight">"Pontualidade nota 10 e equipe muito atenciosa. Recomendo de olhos fechados."</p>
+                    <p className="text-[7px] text-stone-600 leading-tight">&ldquo;Pontualidade nota 10 e equipe muito atenciosa. Recomendo de olhos fechados.&rdquo;</p>
                   </div>
                 </div>
                 <button type="button" className="w-full py-1.5 rounded-xl border border-stone-300 text-stone-800 font-bold text-[7.5px]">

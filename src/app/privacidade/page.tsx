@@ -30,7 +30,7 @@ export default function PrivacyPage() {
               <section>
                 <h2 className="text-xl font-semibold text-dark-900 mb-3">1. Introdução</h2>
                 <p className="text-dark-600 leading-relaxed">
-                  A BioVip ("nós", "nosso", "nossa") valoriza sua privacidade. Esta política explica como coletamos, usamos, divulgamos e protegemos suas informações quando você usa nosso site e serviços.
+                  A BioVip (&ldquo;nós&rdquo;, &ldquo;nosso&rdquo;, &ldquo;nossa&rdquo;) valoriza sua privacidade. Esta política explica como coletamos, usamos, divulgamos e protegemos suas informações quando você usa nosso site e serviços.
                 </p>
               </section>
 

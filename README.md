@@ -1,137 +1,118 @@
-# Bio Sites Brasil - Replica
+# BioVip · Plataforma SaaS de Microsites de Alto Padrão
 
-Réplica completa do site **Bio Sites Brasil** (https://www.biositesbrasil.com.br) construída com Next.js 14, TypeScript, Tailwind CSS e Turbopack.
+Plataforma de alta conversão para criação, gestão e publicação de **Bio Sites e Microsites de Luxo em 24h** voltados a estúdios de estética, extensão de cílios, barbearias VIP, clínicas médicas e odontológicas.
 
-## 🚀 Stack Tecnológico
+---
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Bundler**: Turbopack (Next.js)
-- **Fonts**: Inter + Instrument Serif (Google Fonts)
-- **Icons**: Lucide React
-- **Images**: Next.js Image Optimization
+## 🚀 Stack Tecnológica
+
+- **Framework**: [Next.js 14.2](https://nextjs.org/) (App Router + Turbopack)
+- **Linguagem**: [TypeScript 5.5](https://www.typescriptlang.org/) (Strict Mode)
+- **Estilização**: [Tailwind CSS 3.4](https://tailwindcss.com/)
+- **Tipografia**: *Inter* + *Instrument Serif* (Google Fonts)
+- **Ícones**: [Lucide React](https://lucide.dev/)
+- **Banco de Dados & RLS**: [Supabase](https://supabase.com/) com fallback seguro para `localStorage`
+- **Autenticação**: Padrão Bancário (Web Crypto API, SHA-256 com Salt, Rate Limiting e Auto-Lock)
+- **Segurança de Borda**: Next.js Server-Side Middleware (`src/middleware.ts`)
+- **Deploy**: Vercel & Cloudflare Workers/Pages
+
+---
 
 ## 📁 Estrutura do Projeto
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx           # Root layout com fonts e metadata
-│   ├── page.tsx             # Homepage
-│   ├── globals.css          # Estilos globais + Tailwind
-│   ├── portfolio/
-│   │   ├── page.tsx         # Lista de projetos
-│   │   └── [slug]/
-│   │       ├── page.tsx     # Detalhe do projeto (SSG)
-│   │       └── ProjectDetailClient.tsx
-│   ├── planos/
-│   │   ├── page.tsx         # Página de planos
-│   │   └── PlansPageClient.tsx
-│   └── privacidade/
-│       └── page.tsx         # Política de privacidade
+│   ├── layout.tsx                      # Root layout com SEO, OpenGraph e fontes
+│   ├── page.tsx                        # Landing Page oficial com BentoGrid e Vitrine Interativa
+│   ├── [slug]/                         # Bio Site dinâmico do cliente (/ana-freire, etc.)
+│   │   ├── BioSiteClient.tsx           # Renderizador do microsite (paletas, botões, quiz, catálogo)
+│   │   └── [subpage]/                  # Subpáginas Pro do cliente (/procedimentos, /agenda-vip)
+│   ├── admin/                          # Painel Administrativo Master (CRM, Assinaturas, IA)
+│   ├── conta/                          # Painel do Cliente (Editor 3 Colunas com RBAC isolado)
+│   ├── entrar/                         # Portal de Login (Admin e Clientes)
+│   ├── starter/                        # Onboarding e criação rápida
+│   ├── planos/                         # Tabela comparativa e precificação (mensal/anual)
+│   ├── portfolio/ & [slug]/            # Vitrine de cases com geração estática (SSG)
+│   ├── demo-barbearia/ & demo-beleza/  # Demos pré-configuradas para demonstração rápida
+│   ├── privacidade/ & termos/          # Políticas de privacidade e termos de uso
+│   └── middleware.ts                   # Proteção server-side contra acessos não autorizados
 ├── components/
-│   ├── Header.tsx           # Header fixo com menu mobile
-│   ├── Hero.tsx             # Seção hero com stats
-│   ├── Features.tsx         # 9 features do produto
-│   ├── Partners.tsx         # Carrossel de parceiros
-│   ├── ProjectsShowcase.tsx # 6 projects em destaque
-│   ├── Testimonials.tsx     # Carrossel de depoimentos
-│   ├── CTA.tsx              # Call to action final
-│   └── Footer.tsx           # Footer completo
-├── data/
-│   ├── projects.ts          # 13 projects com tipos
-│   ├── testimonials.ts      # 6 depoimentos + 14 partners
-│   └── plans.ts             # 3 planos + 8 FAQs
-└── lib/                     # Utilitários (futuro)
+│   ├── landing/                        # BentoGridVisual, VitrineModelos, ComoFunciona, Planos
+│   ├── PhoneMockup.tsx                 # Mockup de smartphone com preview em tempo real
+│   ├── BioSiteScrollReveal.tsx         # Animações de scroll reveal com Intersection Observer
+│   └── FloatingWhatsAppSupport.tsx     # Botão flutuante de atendimento direto
+├── services/
+│   ├── adminAuthService.ts             # Criptografia SHA-256, controle de tentativas e sessões
+│   └── biositeService.ts               # Sincronização Supabase + cache local
+├── data/                               # Projetos, paletas, tipografias, planos e FAQs
+└── lib/
+    └── supabase.ts                     # Cliente Supabase singleton com checagem de ambiente
 ```
-
-## 🎨 Funcionalidades Implementadas
-
-### Homepage
-- ✅ Hero section com headline, subheadline, CTAs e 4 stats animados
-- ✅ 9 Features cards com ícones Lucide
-- ✅ Partners carousel infinito (14 parceiros)
-- ✅ Projects showcase (6 em destaque + link para todos)
-- ✅ Testimonials carousel (6 depoimentos com resultados)
-- ✅ CTA final com dual button
-- ✅ Footer completo com links, contato, social
-
-### Portfolio
-- ✅ Lista filtrável por categoria (7 categorias)
-- ✅ 13 projects com imagens, features, stats
-- ✅ Páginas de detalhe estáticas (SSG via `generateStaticParams`)
-- ✅ SEO otimizado por projeto (metadata, OG, Twitter)
-
-### Planos
-- ✅ 3 planos: Iniciante (R$ 29), Profissional (R$ 79), Agência (R$ 199)
-- ✅ Toggle mensal/anual com desconto 17%
-- ✅ 12 features por plano com checkmarks
-- ✅ FAQ accordion (8 perguntas)
-- ✅ Plano popular destacado
-
-### Técnico
-- ✅ TypeScript strict mode
-- ✅ ESLint + Prettier ready
-- ✅ Responsive: mobile-first, breakpoints sm/md/lg/xl
-- ✅ Accessibility: semantic HTML, ARIA labels, focus states
-- ✅ Performance: font preloading, image optimization, code splitting
-- ✅ SEO: metadata, sitemap, robots, canonical, OG, Twitter Cards
-
-## 🛠️ Como Rodar
-
-```bash
-# Instalar dependências
-npm install
-
-# Desenvolvimento (Turbopack)
-npm run dev
-
-# Build de produção
-npm run build
-
-# Preview produção
-npm run start
-
-# Lint
-npm run lint
-```
-
-Acesse: http://localhost:3000
-
-## 📦 Deploy na Vercel
-
-```bash
-# Conectar repo no Vercel
-# Build command: npm run build
-# Output directory: .next
-# Install command: npm install
-```
-
-Variáveis de ambiente necessárias (produção):
-```
-NEXT_PUBLIC_SITE_URL=https://www.biositesbrasil.com.br
-```
-
-## 🎯 Próximos Passos (Back-end)
-
-Esta é uma réplica **front-end only**. Para versão completa:
-
-1. **Auth**: NextAuth.js (email/senha, magic link, OAuth)
-2. **Database**: PostgreSQL (Vercel Postgres / Neon / Supabase)
-3. **ORM**: Prisma ou Drizzle
-4. **Payments**: Stripe Checkout + Webhooks + Customer Portal
-5. **CMS**: Painel admin para editar Bio Sites (drag-drop)
-6. **API Routes**: CRUD projects, plans, users, analytics
-7. **Real-time**: Socket.io para edição colaborativa
-8. **Email**: Resend / SendGrid para transacionais
-9. **Analytics**: PostHog ou custom events para GA4/Pixel
-10. **CDN**: Imagens no Vercel Blob / Cloudflare R2 / AWS S3
-
-## 📄 Licença
-
-Este projeto é uma réplica educacional para fins de estudo de engenharia reversa e arquitetura Next.js. O design e conteúdo original pertencem à **Bio Sites Brasil**.
 
 ---
 
-**Feito com Next.js 14 + Turbopack + TypeScript + Tailwind CSS**
+## 💎 Recursos & Funcionalidades
+
+### 1. Landing Page de Alto Padrão
+- Hero section responsivo com mockups de celulares de luxo.
+- Vitrine de modelos interativos e Bento Grid visual de autoridade.
+- Seção "Como Funciona" passo a passo em 3 etapas.
+- Tabela de planos com toggle mensal/anual (-17% de desconto).
+- FAQ interativo em sanfona e suporte via WhatsApp flutuante.
+
+### 2. Bio Site Interativo do Cliente (`/[slug]`)
+- Paletas de luxo customizadas (dourado, nude, obsidian, rosé, etc.).
+- Catálogo de procedimentos com preços e agendamento direto no WhatsApp.
+- Triagem VIP Anti-Curiosos (Quiz interativo com direcionamento de respostas).
+- Prova social: depoimentos verificados e slider Antes/Depois.
+- Cartão de visita digital (download de contato VCF direto na agenda).
+- Rastreamento completo de Pixels (Meta Pixel, TikTok Pixel, Google Analytics).
+- Modo Manutenção automático para assinaturas suspensas.
+
+### 3. Painel Administrativo Master (`/admin`)
+- Autenticação criptográfica com SHA-256 + Salt + Rate Limiting anti-força-bruta.
+- Gestão centralizada de clientes, planos e status de pagamento (Ativo, Pendente, Suspenso).
+- Controle de receitas e vencimentos com alertas visuais.
+- Switcher instantâneo para alternar e inspecionar qualquer Bio Site cadastrado.
+- Gerador de conteúdo com IA para criação rápida de novos nichos.
+
+### 4. Área do Cliente (`/conta`)
+- Editor 3 Colunas interativo com preview em tempo real no mockup de celular.
+- Isolamento de permissões (RBAC): clientes finais editam apenas catálogo de serviços e fotos, preservando o layout mestre desenhado pela agência.
+
+---
+
+## 🛠️ Como Executar Localmente
+
+```bash
+# 1. Instalar dependências
+npm install
+
+# 2. Iniciar servidor de desenvolvimento (com Turbopack)
+npm run dev
+
+# 3. Executar verificação de código (ESLint)
+npm run lint
+
+# 4. Compilar build de produção otimizado
+npm run build
+```
+
+Acesse a aplicação em: `http://localhost:3000`
+
+---
+
+## 🔒 Variáveis de Ambiente (.env.local)
+
+```env
+NEXT_PUBLIC_SITE_URL=https://www.biovip.com.br
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon-supabase
+```
+
+---
+
+## 📄 Licença
+
+Propriedade do projeto **BioVip**. Todos os direitos reservados.

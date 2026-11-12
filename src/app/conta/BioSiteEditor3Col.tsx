@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -193,16 +193,16 @@ export interface SectionItem {
 }
 
 export const SECTION_ITEMS: SectionItem[] = [
-  { id: 'paleta', title: 'Paleta & Tipografia', subtitle: 'Cores, fontes e estilos de botão', icon: Palette },
-  { id: 'cabecalho', title: 'Cabeçalho & Perfil', subtitle: 'Foto, nome, bio e IA', icon: User },
-  { id: 'botoes', title: 'Botões & Links Principais', subtitle: 'WhatsApp, agendamento e destaques', icon: LinkIcon },
-  { id: 'catalogo', title: 'Catálogo de Serviços', subtitle: 'Procedimentos, preços e durações', icon: ShoppingBag, badge: 'PRO' },
-  { id: 'portfolio', title: 'Portfólio & Galeria', subtitle: 'Fotos de resultados e subpáginas', icon: ImageIcon },
-  { id: 'modulos', title: 'Módulos & Blocos', subtitle: 'Ligar ou desligar blocos do BioSite', icon: Sliders },
-  { id: 'social', title: 'Prova Social & Depoimentos', subtitle: 'Google reviews e métricas', icon: Star },
-  { id: 'vip', title: 'Módulos VIP de Conversão', subtitle: '8 ferramentas de fechamento', icon: Crown, isVip: true },
-  { id: 'pixel', title: 'Píxel, Anúncios & SEO', subtitle: 'Meta, TikTok e Google Analytics', icon: Zap },
-  { id: 'assinatura', title: 'Assinatura & Domínio', subtitle: 'Status 48h, PIX e endereço', icon: CreditCard }
+  { id: 'paleta', title: 'Paleta & Tipografia', subtitle: 'Cores, fontes e estilos de botÃ£o', icon: Palette },
+  { id: 'cabecalho', title: 'CabeÃ§alho & Perfil', subtitle: 'Foto, nome, bio e IA', icon: User },
+  { id: 'botoes', title: 'BotÃµes & Links Principais', subtitle: 'WhatsApp, agendamento e destaques', icon: LinkIcon },
+  { id: 'catalogo', title: 'CatÃ¡logo de ServiÃ§os', subtitle: 'Procedimentos, preÃ§os e duraÃ§Ãµes', icon: ShoppingBag, badge: 'PRO' },
+  { id: 'portfolio', title: 'PortfÃ³lio & Galeria', subtitle: 'Fotos de resultados e subpÃ¡ginas', icon: ImageIcon },
+  { id: 'modulos', title: 'MÃ³dulos & Blocos', subtitle: 'Ligar ou desligar blocos do BioSite', icon: Sliders },
+  { id: 'social', title: 'Prova Social & Depoimentos', subtitle: 'Google reviews e mÃ©tricas', icon: Star },
+  { id: 'vip', title: 'MÃ³dulos VIP de ConversÃ£o', subtitle: '8 ferramentas de fechamento', icon: Crown, isVip: true },
+  { id: 'pixel', title: 'PÃ­xel, AnÃºncios & SEO', subtitle: 'Meta, TikTok e Google Analytics', icon: Zap },
+  { id: 'assinatura', title: 'Assinatura & DomÃ­nio', subtitle: 'Status 48h, PIX e endereÃ§o', icon: CreditCard }
 ]
 
 export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
@@ -218,7 +218,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const [previewCopiedAddress, setPreviewCopiedAddress] = useState(false)
   const [previewLightboxIndex, setPreviewLightboxIndex] = useState<number | null>(null)
 
-  // Permissões e Módulos configurados pelo Administrador
+  // PermissÃµes e MÃ³dulos configurados pelo Administrador
   const [clientConfig, setClientConfig] = useState(() => getClientConfig(props.slug))
 
   useEffect(() => {
@@ -270,7 +270,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
     props.setHasUnsavedChanges(true)
   }
 
-  // Configurações Oficiais de Galeria & Portfólio (BioVip Original)
+  // ConfiguraÃ§Ãµes Oficiais de Galeria & PortfÃ³lio (BioVip Original)
   const defaultGalleryPhotos = [
     'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
@@ -282,9 +282,9 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
 
   const effectiveGalleryConfig: StudentGridConfig = props.galleryConfig || {
     enabled: true,
-    badge: 'PORTFÓLIO & ESTRUTURA VIP',
-    headline: 'Resultados Reais & Portfólio em Destaque',
-    subtitle: 'Registros reais do nosso padrão de entrega e procedimentos',
+    badge: 'PORTFÃ“LIO & ESTRUTURA VIP',
+    headline: 'Resultados Reais & PortfÃ³lio em Destaque',
+    subtitle: 'Registros reais do nosso padrÃ£o de entrega e procedimentos',
     layout: 'mosaic',
     aspectRatio: 'square',
     enableLightbox: true,
@@ -411,7 +411,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
     const cloned = {
       ...target,
       id: `btn-${Date.now()}`,
-      label: `${target.label || 'Botão'} (Cópia)`
+      label: `${target.label || 'BotÃ£o'} (CÃ³pia)`
     }
     const updated = [...props.buttons]
     updated.splice(btnIndex + 1, 0, cloned)
@@ -511,10 +511,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           <button
             onClick={props.onBackToDashboard}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-700/80 hover:border-amber-400 bg-stone-900/80 text-xs font-mono uppercase tracking-wider text-stone-300 hover:text-white transition cursor-pointer"
-            title="Voltar para Minha Área"
+            title="Voltar para Minha Ãrea"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Minha Área</span>
+            <span className="hidden sm:inline">Minha Ãrea</span>
           </button>
 
           <div className="h-4 w-px bg-stone-800 hidden sm:block" />
@@ -577,14 +577,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             type="button"
             onClick={props.handleAiAutoFill}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/40 hover:border-amber-400 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-mono text-amber-300 font-bold transition shadow-sm cursor-pointer"
-            title="Preencher textos, bio e serviços com IA"
+            title="Preencher textos, bio e serviÃ§os com IA"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
             <span>Preencher com IA</span>
           </button>
         </div>
 
-        {/* Lado Direito: Notificação de Salvo & Botão Salvar Principal */}
+        {/* Lado Direito: NotificaÃ§Ã£o de Salvo & BotÃ£o Salvar Principal */}
         <div className="flex items-center gap-2">
           {props.savedSuccess && (
             <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full animate-fade-in">
@@ -605,7 +605,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
       </header>
 
       {/* ========================================================= */}
-      {/* BARRA MOBILE: MODO EDITOR vs PRÉVIA */}
+      {/* BARRA MOBILE: MODO EDITOR vs PRÃ‰VIA */}
       {/* ========================================================= */}
       <div className="lg:hidden h-11 border-b border-stone-800 bg-[#121216] px-4 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2">
@@ -635,12 +635,12 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
       {/* ========================================================= */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* --------------------------------------------------------- */}
-        {/* COLUNA 1 — Menu de Navegação / Seções (Desktop: w-72) */}
+        {/* COLUNA 1 â€” Menu de NavegaÃ§Ã£o / SeÃ§Ãµes (Desktop: w-72) */}
         {/* --------------------------------------------------------- */}
         <aside className="hidden lg:flex w-72 border-r border-stone-800/80 bg-[#0D0D11] flex-col shrink-0 select-none">
           <div className="p-4 border-b border-stone-800/60 flex items-center justify-between">
             <span className="text-[11px] font-mono uppercase tracking-widest text-stone-400 font-bold">
-              Estrutura da Página
+              Estrutura da PÃ¡gina
             </span>
             <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
               {SECTION_ITEMS.length} BLOCOS
@@ -717,7 +717,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             })}
           </nav>
 
-          {/* Rodapé da Coluna 1: Status do BioSite */}
+          {/* RodapÃ© da Coluna 1: Status do BioSite */}
           <div className="p-4 border-t border-stone-800/60 bg-[#09090C] text-[11px] space-y-2">
             <div className="flex items-center justify-between text-stone-400">
               <span>Status do BioSite:</span>
@@ -734,14 +734,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
         </aside>
 
         {/* --------------------------------------------------------- */}
-        {/* COLUNA 2 — Palco Central / Canvas de Visualização (flex-1) */}
+        {/* COLUNA 2 â€” Palco Central / Canvas de VisualizaÃ§Ã£o (flex-1) */}
         {/* --------------------------------------------------------- */}
         <section
           className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-6 bg-[#070709] relative overflow-hidden ${
             mobileMode === 'editor' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          {/* Fundo com iluminação sutil de estúdio */}
+          {/* Fundo com iluminaÃ§Ã£o sutil de estÃºdio */}
           <div
             className="absolute inset-0 pointer-events-none opacity-20"
             style={{
@@ -775,7 +775,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   color: props.selectedPalette.text
                 }}
               >
-                {/* 1. Barra de Anúncio Superior (se ativada) */}
+                {/* 1. Barra de AnÃºncio Superior (se ativada) */}
                 {props.announcementData?.enabled && (
                   <div
                     className="py-1.5 px-3 text-[8px] font-mono font-bold flex items-center justify-center gap-1.5 border-b"
@@ -792,13 +792,13 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         color: props.selectedPalette.buttonText || '#000'
                       }}
                     >
-                      ● {props.announcementData.badge}
+                      â— {props.announcementData.badge}
                     </span>
                     <span className="truncate">{props.announcementData.text}</span>
                   </div>
                 )}
 
-                {/* Ilha Dinâmica e Registro no Topo */}
+                {/* Ilha DinÃ¢mica e Registro no Topo */}
                 <div className="relative z-20 pt-2 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase">
                   <div className="w-14 h-3 bg-black rounded-full mx-auto" />
                   <span className="font-bold opacity-80 absolute right-4 top-2 text-[8px]">
@@ -806,7 +806,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </span>
                 </div>
 
-                {/* Foto do Perfil com Efeito de Fusão de Estúdio */}
+                {/* Foto do Perfil com Efeito de FusÃ£o de EstÃºdio */}
                 <div className="relative w-full h-40 overflow-hidden -mt-2 select-none shrink-0">
                   <img
                     src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
@@ -823,7 +823,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   )}
                 </div>
 
-                {/* Bloco de Informações Principais */}
+                {/* Bloco de InformaÃ§Ãµes Principais */}
                 <div className="px-3.5 pt-1 pb-6 flex-1 flex flex-col items-center">
                   <span
                     className="text-[8px] font-mono uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border mb-1"
@@ -843,13 +843,13 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     {props.businessTitle || props.brandName}
                   </h3>
 
-                  {/* Avaliações Google */}
+                  {/* AvaliaÃ§Ãµes Google */}
                   <div className="mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono">
-                    <span>★★★★★</span>
+                    <span>â˜…â˜…â˜…â˜…â˜…</span>
                     <span className="opacity-80">{props.rating} ({props.reviewsCount})</span>
                   </div>
 
-                  {/* Barra Rápida (WhatsApp & Agendar) */}
+                  {/* Barra RÃ¡pida (WhatsApp & Agendar) */}
                   <div className="w-full grid grid-cols-2 gap-1.5 mt-2">
                     <div
                       className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1"
@@ -874,7 +874,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   </div>
 
-                  {/* Banner de Urgência & Cronômetro */}
+                  {/* Banner de UrgÃªncia & CronÃ´metro */}
                   {props.urgencyData?.enabled && (
                     <div
                       className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left"
@@ -900,7 +900,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* Subpáginas Pro */}
+                  {/* SubpÃ¡ginas Pro */}
                   {props.additionalPages.length > 0 && (
                     <div className="flex items-center justify-center gap-1 mt-2 mb-1 flex-wrap">
                       {props.additionalPages.slice(0, 3).map((p: any) => (
@@ -915,11 +915,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* Botões Principais de Ação (Configurações BioVip Oficial) */}
+                  {/* BotÃµes Principais de AÃ§Ã£o (ConfiguraÃ§Ãµes BioVip Oficial) */}
                   <div className="w-full space-y-1.5 mt-2">
                     {props.buttons.map((btn: any, btnIdx: number) => {
                       const isHigh = !!btn.isHighlighted || btn.variant === 'accent' || btnIdx === 0
-                      const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? '⭐ MAIS ESCOLHIDO' : '')
+                      const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? 'â­ MAIS ESCOLHIDO' : '')
                       const titleText = btn.label || btn.title
                       const subtitleText = btn.subtitle || ''
                       const cardImg = btn.cardImage || btn.image
@@ -1022,7 +1022,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               className="text-[10px] font-bold"
                               style={{ color: props.selectedPalette.accent }}
                             >
-                              →
+                              â†’
                             </span>
                           </div>
                         </div>
@@ -1030,7 +1030,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     })}
                   </div>
 
-                  {/* Botão de Quiz Anti-curiosos */}
+                  {/* BotÃ£o de Quiz Anti-curiosos */}
                   {props.quizData?.enabled && (
                     <div
                       className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer"
@@ -1047,12 +1047,12 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </span>
                       </div>
                       <span className="text-[9px] font-bold" style={{ color: props.selectedPalette.accent }}>
-                        →
+                        â†’
                       </span>
                     </div>
                   )}
 
-                  {/* Métricas de Autoridade */}
+                  {/* MÃ©tricas de Autoridade */}
                   {props.metricsData && props.metricsData.length > 0 && (
                     <div
                       className="w-full grid grid-cols-3 gap-1 p-2 rounded-xl border mt-2 text-center"
@@ -1113,7 +1113,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* 11. Catálogo Completo de Procedimentos & Preços */}
+                  {/* 11. CatÃ¡logo Completo de Procedimentos & PreÃ§os */}
                   {props.servicesCatalogData?.enabled && props.servicesCatalogData.items && props.servicesCatalogData.items.length > 0 && (
                     <div className="w-full mt-3 space-y-2 text-left">
                       <div className="flex items-center justify-between">
@@ -1121,7 +1121,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           className="text-[7.5px] font-mono uppercase tracking-widest font-bold"
                           style={{ color: props.selectedPalette.accent }}
                         >
-                          CATÁLOGO VIP
+                          CATÃLOGO VIP
                         </span>
                         <span className="text-[7px] font-mono opacity-70">
                           {props.servicesCatalogData.items.length} procedimentos
@@ -1157,7 +1157,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </div>
                       )}
 
-                      {/* Lista de Itens do Catálogo */}
+                      {/* Lista de Itens do CatÃ¡logo */}
                       <div className="space-y-2">
                         {props.servicesCatalogData.items
                           .filter((item: any) => previewCatalogCategory === 'TODOS' || item.category === previewCatalogCategory)
@@ -1225,7 +1225,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                       }}
                                     >
                                       <span>Reservar</span>
-                                      <span>→</span>
+                                      <span>â†’</span>
                                     </span>
                                   </div>
                                 </div>
@@ -1293,7 +1293,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                     }}
                                   >
                                     <span>Reservar</span>
-                                    <span>→</span>
+                                    <span>â†’</span>
                                   </span>
                                 </div>
                               </div>
@@ -1311,30 +1311,30 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       >
                         <div className="flex items-center gap-1 text-stone-300">
                           <CreditCard className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                          <span className="truncate">Cartão até 12x</span>
+                          <span className="truncate">CartÃ£o atÃ© 12x</span>
                         </div>
                         <div className="flex items-center gap-1 text-stone-300">
                           <Zap className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                          <span className="truncate">Pix Instantâneo</span>
+                          <span className="truncate">Pix InstantÃ¢neo</span>
                         </div>
                         <div className="flex items-center gap-1 text-stone-300">
                           <Car className="w-2.5 h-2.5 text-sky-400 shrink-0" />
-                          <span className="truncate">Fácil Acesso</span>
+                          <span className="truncate">FÃ¡cil Acesso</span>
                         </div>
                         <div className="flex items-center gap-1 text-stone-300">
                           <ShieldCheck className="w-2.5 h-2.5 text-purple-400 shrink-0" />
-                          <span className="truncate">Espaço VIP</span>
+                          <span className="truncate">EspaÃ§o VIP</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
+                  {/* 12. Galeria de Fotos / PortfÃ³lio (ConfiguraÃ§Ãµes Oficiais BioVip) */}
                   {effectiveGalleryConfig.enabled && effectiveGalleryConfig.photos && effectiveGalleryConfig.photos.length > 0 && (
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div className="flex items-center justify-between">
                         <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300">
-                          {effectiveGalleryConfig.badge || 'PORTFÓLIO & ESTRUTURA VIP'}
+                          {effectiveGalleryConfig.badge || 'PORTFÃ“LIO & ESTRUTURA VIP'}
                         </span>
                         <span className="text-[7px] font-mono text-stone-400">
                           {effectiveGalleryConfig.photos.length} fotos
@@ -1405,7 +1405,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </div>
                       )}
 
-                      {/* Layout 3: Mosaico Dinâmico Bento (1ª Foto Grande + Grade) */}
+                      {/* Layout 3: Mosaico DinÃ¢mico Bento (1Âª Foto Grande + Grade) */}
                       {effectiveGalleryConfig.layout === 'mosaic' && (
                         <div className="grid grid-cols-2 gap-1">
                           <div
@@ -1417,7 +1417,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             <img src={effectiveGalleryConfig.photos[0]} alt="" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-between p-2">
                               <span className="self-start px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-amber-400 text-stone-950 uppercase">
-                                ⭐ Destaque
+                                â­ Destaque
                               </span>
                               {effectiveGalleryConfig.captions?.[0] && (
                                 <span className="text-[7.5px] text-white line-clamp-1 font-medium">
@@ -1483,7 +1483,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             >
                               <img
                                 src={imgUrl}
-                                alt={`Portfólio ${i + 1}`}
+                                alt={`PortfÃ³lio ${i + 1}`}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1496,7 +1496,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   )}
 
-                  {/* 13. Localização & Rotas GPS */}
+                  {/* 13. LocalizaÃ§Ã£o & Rotas GPS */}
                   {props.locationData?.enabled && (
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div
@@ -1508,7 +1508,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-[7px] font-mono uppercase tracking-widest font-bold opacity-75">
-                            NOSSA LOCALIZAÇÃO
+                            NOSSA LOCALIZAÃ‡ÃƒO
                           </span>
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[7px] font-mono">
                             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
@@ -1526,7 +1526,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           </div>
                         </div>
 
-                        {/* 4 Botões de Rota */}
+                        {/* 4 BotÃµes de Rota */}
                         <div className="grid grid-cols-4 gap-1 pt-1">
                           <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
                             <Navigation className="w-2 h-2 text-sky-400" />
@@ -1554,11 +1554,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div className="flex items-center justify-between">
                         <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80">
-                          AVALIAÇÕES NO GOOGLE
+                          AVALIAÃ‡Ã•ES NO GOOGLE
                         </span>
                         <span className="text-[7.5px] font-mono text-amber-400 font-bold flex items-center gap-0.5">
                           <span>5.0</span>
-                          <span>★★★★★</span>
+                          <span>â˜…â˜…â˜…â˜…â˜…</span>
                         </span>
                       </div>
                       <div className="space-y-1.5">
@@ -1572,16 +1572,16 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             }}
                           >
                             <div className="flex items-center justify-between text-amber-400 text-[8px]">
-                              <span>★★★★★</span>
+                              <span>â˜…â˜…â˜…â˜…â˜…</span>
                               <span className="text-[6.5px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
-                                ✓ Verificado
+                                âœ“ Verificado
                               </span>
                             </div>
                             <p className="text-[8px] text-stone-300 font-sans italic leading-snug line-clamp-2">
-                              "{t.text}"
+                              &ldquo;{t.text}&rdquo;
                             </p>
                             <div className="text-[7px] font-mono text-stone-400">
-                              {t.clientName || t.name} · {t.city || t.role}
+                              {t.clientName || t.name} Â· {t.city || t.role}
                             </div>
                           </div>
                         ))}
@@ -1607,18 +1607,18 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </p>
                         {(props.aboutMeData.closingPhrase || props.aboutMeData.quote) && (
                           <div className="text-[7px] italic font-serif pt-0.5" style={{ color: props.selectedPalette.accent }}>
-                            "{props.aboutMeData.closingPhrase || props.aboutMeData.quote}"
+                            &ldquo;{props.aboutMeData.closingPhrase || props.aboutMeData.quote}&rdquo;
                           </div>
                         )}
                       </div>
                     </div>
                   )}
 
-                  {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
+                  {/* 16. DÃºvidas Frequentes (FAQ Sanfonado) */}
                   {props.faqData && props.faqData.length > 0 && (
                     <div className="w-full mt-3 space-y-1 text-left">
                       <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-0.5">
-                        DÚVIDAS FREQUENTES
+                        DÃšVIDAS FREQUENTES
                       </span>
                       <div className="space-y-1">
                         {props.faqData.slice(0, 4).map((item: any, i: number) => {
@@ -1664,7 +1664,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                   </div>
 
-                  {/* 18. Monograma e Assinatura Editorial de Rodapé */}
+                  {/* 18. Monograma e Assinatura Editorial de RodapÃ© */}
                   <div className="mt-4 pb-4 w-full flex flex-col items-center text-center">
                     <div
                       className="w-10 h-px mb-1.5 opacity-40"
@@ -1677,10 +1677,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       {props.monogram || 'AF'}
                     </span>
                     <div className="text-[6.5px] font-mono text-stone-500 mt-1">
-                      © {new Date().getFullYear()} {props.businessTitle || props.brandName}. Todos os direitos reservados.
+                      Â© {new Date().getFullYear()} {props.businessTitle || props.brandName}. Todos os direitos reservados.
                     </div>
                     <div className="text-[6px] font-mono text-stone-500 hover:text-amber-400 transition mt-0.5">
-                      ✨ Desenvolvido com padrão BioVip
+                      âœ¨ Desenvolvido com padrÃ£o BioVip
                     </div>
                   </div>
                 </div>
@@ -1690,14 +1690,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
         </section>
 
         {/* --------------------------------------------------------- */}
-        {/* COLUNA 3 — Painel de Edição do Bloco Ativo (w-80 a w-96) */}
+        {/* COLUNA 3 â€” Painel de EdiÃ§Ã£o do Bloco Ativo (w-80 a w-96) */}
         {/* --------------------------------------------------------- */}
         <section
           className={`w-full lg:w-96 border-l border-stone-800/80 bg-[#121216] flex flex-col shrink-0 select-none ${
             mobileMode === 'preview' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          {/* Cabeçalho do Bloco Ativo na Coluna 3 */}
+          {/* CabeÃ§alho do Bloco Ativo na Coluna 3 */}
           <div className="p-4 border-b border-stone-800/80 flex items-center justify-between shrink-0 bg-[#0E0E12]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
@@ -1722,10 +1722,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             </button>
           </div>
 
-          {/* Área de Formulário com Rolagem Independente */}
+          {/* Ãrea de FormulÃ¡rio com Rolagem Independente */}
           <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin scrollbar-thumb-stone-800">
             {/* ======================================================= */}
-            {/* 1. SEÇÃO: PALETA & TIPOGRAFIA */}
+            {/* 1. SEÃ‡ÃƒO: PALETA & TIPOGRAFIA */}
             {/* ======================================================= */}
             {activeSection === 'paleta' && (
               <div className="space-y-5 animate-fade-in">
@@ -1733,7 +1733,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
-                      Paleta de Cores ({PALETTES.length} opções luxo)
+                      Paleta de Cores ({PALETTES.length} opÃ§Ãµes luxo)
                       {!canEditTheme && <Lock className="w-3 h-3 text-amber-400" />}
                     </label>
                   </div>
@@ -1743,7 +1743,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                       <div>
                         <span className="text-[11px] font-bold block uppercase tracking-wider">Cores Bloqueadas pelo Administrador</span>
-                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A paleta de cores deste BioSite foi bloqueada para alterações pelo cliente.</p>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A paleta de cores deste BioSite foi bloqueada para alteraÃ§Ãµes pelo cliente.</p>
                       </div>
                     </div>
                   )}
@@ -1795,7 +1795,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                       <div>
                         <span className="text-[11px] font-bold block uppercase tracking-wider">Fontes Bloqueadas pelo Administrador</span>
-                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A tipografia deste modelo foi selecionada pelo administrador e está protegida.</p>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A tipografia deste modelo foi selecionada pelo administrador e estÃ¡ protegida.</p>
                       </div>
                     </div>
                   )}
@@ -1834,12 +1834,12 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </fieldset>
                 </div>
 
-                {/* Estilos e Efeitos de Botão */}
+                {/* Estilos e Efeitos de BotÃ£o */}
                 <fieldset disabled={!canEditButtons} className={!canEditButtons ? 'opacity-50 pointer-events-none' : ''}>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                        Estilo do Botão
+                        Estilo do BotÃ£o
                       </label>
                       <select
                         value={props.buttonStyle}
@@ -1858,7 +1858,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                        Animação do Botão
+                        AnimaÃ§Ã£o do BotÃ£o
                       </label>
                       <select
                         value={props.buttonAnimation}
@@ -1886,7 +1886,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: 'organico', label: 'Fusão Orgânica' },
+                        { id: 'organico', label: 'FusÃ£o OrgÃ¢nica' },
                         { id: 'original', label: 'Foto Pura' },
                         { id: 'silhueta', label: 'Silhueta VIP' }
                       ].map((treat) => (
@@ -1913,19 +1913,19 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 2. SEÇÃO: CABEÇALHO & PERFIL */}
+            {/* 2. SEÃ‡ÃƒO: CABEÃ‡ALHO & PERFIL */}
             {/* ======================================================= */}
             {activeSection === 'cabecalho' && (
               <div className="space-y-4 animate-fade-in">
-                {/* Banner de IA para Preenchimento Automático */}
+                {/* Banner de IA para Preenchimento AutomÃ¡tico */}
                 <fieldset disabled={!canEditBio} className={!canEditBio ? 'opacity-50 pointer-events-none' : ''}>
                   <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex items-center justify-between gap-3 mb-2">
                     <div>
                       <span className="text-[10px] font-mono uppercase text-amber-300 font-black block">
-                        ✨ Inteligência Artificial BioVip
+                        âœ¨ InteligÃªncia Artificial BioVip
                       </span>
                       <p className="text-[11px] text-stone-300 leading-tight mt-0.5">
-                        Gere bio, especialidade e textos de alta conversão para o seu nicho.
+                        Gere bio, especialidade e textos de alta conversÃ£o para o seu nicho.
                       </p>
                     </div>
                     <button
@@ -1942,7 +1942,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
-                      Foto do Perfil / Retrato de Estúdio
+                      Foto do Perfil / Retrato de EstÃºdio
                       {!canEditPhotos && <Lock className="w-3 h-3 text-amber-400" />}
                     </label>
                   </div>
@@ -1952,7 +1952,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                       <div>
                         <span className="text-[11px] font-bold block uppercase tracking-wider">Foto do Perfil Bloqueada</span>
-                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A foto principal de estúdio foi definida pela agência e está travada.</p>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A foto principal de estÃºdio foi definida pela agÃªncia e estÃ¡ travada.</p>
                       </div>
                     </div>
                   )}
@@ -2007,14 +2007,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
                       <span className="text-[11px] font-bold block uppercase tracking-wider">Bio & Identidade Bloqueadas</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As informações editoriais e registros oficiais foram configurados pelo administrador.</p>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As informaÃ§Ãµes editoriais e registros oficiais foram configurados pelo administrador.</p>
                     </div>
                   </div>
                 )}
 
                 <fieldset disabled={!canEditBio} className={!canEditBio ? 'opacity-50 pointer-events-none' : ''}>
                   <div className="space-y-4">
-                    {/* Nome e Título */}
+                    {/* Nome e TÃ­tulo */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
@@ -2032,7 +2032,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       </div>
                       <div>
                         <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                          Título de Exibição
+                          TÃ­tulo de ExibiÃ§Ã£o
                         </label>
                         <input
                           type="text"
@@ -2122,7 +2122,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 3. SEÇÃO: BOTÕES & LINKS PRINCIPAIS (BIOVIP ORIGINAL) */}
+            {/* 3. SEÃ‡ÃƒO: BOTÃ•ES & LINKS PRINCIPAIS (BIOVIP ORIGINAL) */}
             {/* ======================================================= */}
             {activeSection === 'botoes' && (
               <div className="space-y-4 animate-fade-in">
@@ -2130,15 +2130,15 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono uppercase text-stone-200 font-bold">
-                        Botões VIP de Alta Conversão
+                        BotÃµes VIP de Alta ConversÃ£o
                       </span>
                       {!canEditButtons && <Lock className="w-3.5 h-3.5 text-amber-400" />}
                       <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
-                        {props.buttons.length} BOTÕES
+                        {props.buttons.length} BOTÃ•ES
                       </span>
                     </div>
                     <p className="text-[10px] text-stone-400 mt-0.5">
-                      Suporte a fotos pop-out, pills de ação, badges e mensagens automáticas de WhatsApp.
+                      Suporte a fotos pop-out, pills de aÃ§Ã£o, badges e mensagens automÃ¡ticas de WhatsApp.
                     </p>
                   </div>
                   {canEditButtons && (
@@ -2147,16 +2147,16 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       onClick={() => {
                         const newBtn = {
                           id: `cta-${Date.now()}`,
-                          label: 'AGENDAR HORÁRIO VIP',
-                          subtitle: 'Toque para atendimento prioritário e sem fila',
+                          label: 'AGENDAR HORÃRIO VIP',
+                          subtitle: 'Toque para atendimento prioritÃ¡rio e sem fila',
                           icon: 'calendar',
                           url: '#booking',
                           linkType: 'booking' as const,
-                          whatsappMessage: `Olá! Gostaria de consultar horários disponíveis no ${props.businessTitle || 'studio'}.`,
+                          whatsappMessage: `OlÃ¡! Gostaria de consultar horÃ¡rios disponÃ­veis no ${props.businessTitle || 'studio'}.`,
                           animation: 'pulse-glow' as const,
                           variant: 'accent' as const,
                           badgeText: 'MAIS PROCURADO',
-                          ctaActionText: 'RESERVAR HORÁRIO',
+                          ctaActionText: 'RESERVAR HORÃRIO',
                           imagePosition: 'none' as const,
                           imageFitStyle: 'popout' as const,
                           isHighlighted: true
@@ -2166,7 +2166,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       }}
                       className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-[#E2B857] hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs uppercase flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Adicionar Botão VIP
+                      <Plus className="w-3.5 h-3.5" /> Adicionar BotÃ£o VIP
                     </button>
                   )}
                 </div>
@@ -2175,8 +2175,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold block uppercase tracking-wider">Edição de Botões Bloqueada</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os botões e links de conversão deste BioSite estão bloqueados para alteração.</p>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">EdiÃ§Ã£o de BotÃµes Bloqueada</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os botÃµes e links de conversÃ£o deste BioSite estÃ£o bloqueados para alteraÃ§Ã£o.</p>
                     </div>
                   </div>
                 )}
@@ -2188,14 +2188,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       key={btn.id || `btn-${idx}`}
                       className="p-3.5 sm:p-4 rounded-2xl bg-stone-900 border border-stone-800/90 hover:border-stone-700 transition space-y-3 shadow-md"
                     >
-                      {/* Top Bar do Card de Botão */}
+                      {/* Top Bar do Card de BotÃ£o */}
                       <div className="flex items-center justify-between pb-2 border-b border-stone-800/70">
                         <div className="flex items-center gap-2">
                           <span className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono font-bold flex items-center justify-center">
                             #{idx + 1}
                           </span>
                           <span className="text-xs font-bold text-stone-200 truncate max-w-[180px]">
-                            {btn.label || btn.title || 'Botão sem título'}
+                            {btn.label || btn.title || 'BotÃ£o sem tÃ­tulo'}
                           </span>
                           {btn.badgeText && (
                             <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-amber-400 text-stone-950">
@@ -2204,12 +2204,12 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           )}
                           {btn.cardImage && (
                             <span className="text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded-full">
-                              📷 COM FOTO
+                              ðŸ“· COM FOTO
                             </span>
                           )}
                         </div>
 
-                        {/* Ações: Mover, Duplicar, Excluir */}
+                        {/* AÃ§Ãµes: Mover, Duplicar, Excluir */}
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
@@ -2233,7 +2233,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             type="button"
                             onClick={() => duplicateButton(idx)}
                             className="p-1 rounded bg-stone-800 text-stone-300 hover:text-amber-400 cursor-pointer transition"
-                            title="Duplicar botão"
+                            title="Duplicar botÃ£o"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -2245,7 +2245,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                 props.setHasUnsavedChanges(true)
                               }}
                               className="p-1 rounded bg-stone-800 text-stone-400 hover:text-red-400 cursor-pointer transition"
-                              title="Remover botão"
+                              title="Remover botÃ£o"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -2253,11 +2253,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </div>
                       </div>
 
-                      {/* Textos: Título Principal e Subtítulo */}
+                      {/* Textos: TÃ­tulo Principal e SubtÃ­tulo */}
                       <div className="space-y-2">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Título Principal do Botão
+                            TÃ­tulo Principal do BotÃ£o
                           </label>
                           <input
                             type="text"
@@ -2269,14 +2269,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: AGENDAR HORÁRIO VIP"
+                            placeholder="Ex: AGENDAR HORÃRIO VIP"
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold focus:border-amber-400 focus:outline-none"
                           />
                         </div>
 
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Subtítulo / Descrição Curta
+                            SubtÃ­tulo / DescriÃ§Ã£o Curta
                           </label>
                           <input
                             type="text"
@@ -2287,17 +2287,17 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: Toque para atendimento prioritário e sem fila"
+                            placeholder="Ex: Toque para atendimento prioritÃ¡rio e sem fila"
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-[11px] focus:border-amber-400 focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      {/* Tipo de Destino e Ação */}
+                      {/* Tipo de Destino e AÃ§Ã£o */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Tipo de Ação / Link
+                            Tipo de AÃ§Ã£o / Link
                           </label>
                           <select
                             value={btn.linkType || (btn.url?.includes('wa.me') ? 'whatsapp' : btn.url?.startsWith('#') ? btn.url.replace('#', '') : 'custom')}
@@ -2314,18 +2314,18 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             }}
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-medium focus:border-amber-400 focus:outline-none"
                           >
-                            <option value="whatsapp">💬 WhatsApp (Conversa Direta)</option>
-                            <option value="booking">📅 Agendamento Online (#booking)</option>
-                            <option value="catalogo">✨ Catálogo de Serviços (#catalogo)</option>
-                            <option value="quiz">🎯 Triagem / Quiz VIP (#quiz)</option>
-                            <option value="maps">📍 Localização / Google Maps</option>
-                            <option value="custom">🔗 Link Personalizado / Externo</option>
+                            <option value="whatsapp">ðŸ’¬ WhatsApp (Conversa Direta)</option>
+                            <option value="booking">ðŸ“… Agendamento Online (#booking)</option>
+                            <option value="catalogo">âœ¨ CatÃ¡logo de ServiÃ§os (#catalogo)</option>
+                            <option value="quiz">ðŸŽ¯ Triagem / Quiz VIP (#quiz)</option>
+                            <option value="maps">ðŸ“ LocalizaÃ§Ã£o / Google Maps</option>
+                            <option value="custom">ðŸ”— Link Personalizado / Externo</option>
                           </select>
                         </div>
 
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Ícone do Botão
+                            Ãcone do BotÃ£o
                           </label>
                           <select
                             value={btn.icon || 'whatsapp'}
@@ -2338,21 +2338,21 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
                             <option value="whatsapp">WhatsApp</option>
-                            <option value="calendar">Agenda / Calendário</option>
+                            <option value="calendar">Agenda / CalendÃ¡rio</option>
                             <option value="sparkles">Brilho / VIP / Estrela</option>
-                            <option value="map">Localização / Mapa</option>
-                            <option value="scissors">Tesoura / Barbearia / Salão</option>
+                            <option value="map">LocalizaÃ§Ã£o / Mapa</option>
+                            <option value="scissors">Tesoura / Barbearia / SalÃ£o</option>
                             <option value="star">Estrela Destaque</option>
                             <option value="message">Mensagem / Bate-papo</option>
                           </select>
                         </div>
                       </div>
 
-                      {/* Se for WhatsApp: Mensagem Automática */}
+                      {/* Se for WhatsApp: Mensagem AutomÃ¡tica */}
                       {(btn.linkType === 'whatsapp' || btn.url?.includes('wa.me')) ? (
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-emerald-400 mb-1 flex items-center gap-1 font-bold">
-                            <MessageCircle className="w-3 h-3 text-emerald-400" /> Mensagem Pré-formatada de WhatsApp
+                            <MessageCircle className="w-3 h-3 text-emerald-400" /> Mensagem PrÃ©-formatada de WhatsApp
                           </label>
                           <input
                             type="text"
@@ -2365,7 +2365,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: Olá! Vim pelo site e gostaria de agendar uma consulta."
+                            placeholder="Ex: OlÃ¡! Vim pelo site e gostaria de agendar uma consulta."
                             className="w-full p-2 rounded-xl bg-stone-950 text-emerald-200 border border-emerald-500/30 text-xs focus:border-emerald-400 focus:outline-none"
                           />
                         </div>
@@ -2389,7 +2389,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </div>
                       )}
 
-                      {/* Badges, Pills de Ação e Efeitos VIP */}
+                      {/* Badges, Pills de AÃ§Ã£o e Efeitos VIP */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
@@ -2412,7 +2412,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
 
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Texto de Ação Direta (Pill Direita)
+                            Texto de AÃ§Ã£o Direta (Pill Direita)
                           </label>
                           <input
                             type="text"
@@ -2423,17 +2423,17 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: RESERVAR HORÁRIO, VER VALORES"
+                            placeholder="Ex: RESERVAR HORÃRIO, VER VALORES"
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-bold uppercase focus:border-amber-400 focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      {/* Animação & Estilo Visual */}
+                      {/* AnimaÃ§Ã£o & Estilo Visual */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Animação VIP do Botão
+                            AnimaÃ§Ã£o VIP do BotÃ£o
                           </label>
                           <select
                             value={btn.animation || (btn.isHighlighted ? 'pulse-glow' : 'none')}
@@ -2446,10 +2446,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             }}
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
-                            <option value="pulse-glow">✨ Pulso Luminoso (Glow VIP)</option>
-                            <option value="shimmer">💫 Reflexo Metálico (Shimmer Sweep)</option>
-                            <option value="bounce">⚡ Saltinho Suave (Bounce)</option>
-                            <option value="none">Sem Animação</option>
+                            <option value="pulse-glow">âœ¨ Pulso Luminoso (Glow VIP)</option>
+                            <option value="shimmer">ðŸ’« Reflexo MetÃ¡lico (Shimmer Sweep)</option>
+                            <option value="bounce">âš¡ Saltinho Suave (Bounce)</option>
+                            <option value="none">Sem AnimaÃ§Ã£o</option>
                           </select>
                         </div>
 
@@ -2468,18 +2468,18 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             }}
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
-                            <option value="accent">⭐ Dourado / Accent (Foco Total)</option>
+                            <option value="accent">â­ Dourado / Accent (Foco Total)</option>
                             <option value="default">Elegante Escuro (Borda Fina)</option>
                           </select>
                         </div>
                       </div>
 
-                      {/* Foto no Botão (BioVip Original: Pop-out ou Framed) */}
+                      {/* Foto no BotÃ£o (BioVip Original: Pop-out ou Framed) */}
                       <div className="p-3 rounded-xl bg-stone-950/80 border border-stone-800/80 space-y-2.5">
                         <div className="flex items-center justify-between">
                           <label className="text-[10px] font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
                             <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
-                            Foto Integrada ao Botão
+                            Foto Integrada ao BotÃ£o
                           </label>
                           {btn.cardImage && (
                             <button
@@ -2501,7 +2501,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
-                              Posição da Foto
+                              PosiÃ§Ã£o da Foto
                             </label>
                             <select
                               value={btn.imagePosition || (btn.cardImage ? 'right' : 'none')}
@@ -2533,7 +2533,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               }}
                               className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-[11px]"
                             >
-                              <option value="popout">Avatar Pop-Out (Salta do botão com aro)</option>
+                              <option value="popout">Avatar Pop-Out (Salta do botÃ£o com aro)</option>
                               <option value="framed">Moldura Retangular Elegante</option>
                             </select>
                           </div>
@@ -2544,7 +2544,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             {btn.cardImage && (
                               <img
                                 src={btn.cardImage}
-                                alt="Foto do botão"
+                                alt="Foto do botÃ£o"
                                 className={`w-8 h-8 object-cover border border-amber-400/50 shrink-0 ${
                                   btn.imageFitStyle === 'framed' ? 'rounded-md' : 'rounded-full'
                                 }`}
@@ -2586,7 +2586,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 4. SEÇÃO: CATÁLOGO DE SERVIÇOS */}
+            {/* 4. SEÃ‡ÃƒO: CATÃLOGO DE SERVIÃ‡OS */}
             {/* ======================================================= */}
             {activeSection === 'catalogo' && (
               <div className="space-y-4 animate-fade-in">
@@ -2594,8 +2594,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold block uppercase tracking-wider">Catálogo Bloqueado pelo Administrador</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os procedimentos, durações e preços foram fixados pelo administrador e estão em modo somente-leitura.</p>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">CatÃ¡logo Bloqueado pelo Administrador</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os procedimentos, duraÃ§Ãµes e preÃ§os foram fixados pelo administrador e estÃ£o em modo somente-leitura.</p>
                     </div>
                   </div>
                 )}
@@ -2605,11 +2605,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
-                      Catálogo Interativo VIP
+                      CatÃ¡logo Interativo VIP
                       {!canEditServices && <Lock className="w-3 h-3 text-amber-400" />}
                     </h3>
                     <p className="text-[10px] text-stone-400">
-                      Tabela visual com preços, durações e agendamento instantâneo.
+                      Tabela visual com preÃ§os, duraÃ§Ãµes e agendamento instantÃ¢neo.
                     </p>
                   </div>
                   <button
@@ -2635,7 +2635,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                        Título do Catálogo
+                        TÃ­tulo do CatÃ¡logo
                       </label>
                       <input
                         type="text"
@@ -2662,9 +2662,9 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             id: `srv-${Date.now()}`,
                             category: 'PRINCIPAL',
                             name: 'Novo Procedimento Exclusivo',
-                            description: 'Descrição dos benefícios e resultados para o cliente.',
+                            description: 'DescriÃ§Ã£o dos benefÃ­cios e resultados para o cliente.',
                             price: 'R$ 220',
-                            duration: '⏱ 1h',
+                            duration: 'â± 1h',
                             badge: 'EXCLUSIVO'
                           }
                           const updated = {
@@ -2729,7 +2729,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                 props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
                                 props.setHasUnsavedChanges(true)
                               }}
-                              placeholder="Preço (ex: R$ 250)"
+                              placeholder="PreÃ§o (ex: R$ 250)"
                               className="w-full p-1.5 rounded-lg bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
                             />
                             <input
@@ -2741,7 +2741,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                 props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
                                 props.setHasUnsavedChanges(true)
                               }}
-                              placeholder="Duração (ex: ⏱ 1h)"
+                              placeholder="DuraÃ§Ã£o (ex: â± 1h)"
                               className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-xs font-mono"
                             />
                           </div>
@@ -2755,11 +2755,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                               props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Descrição dos benefícios..."
+                            placeholder="DescriÃ§Ã£o dos benefÃ­cios..."
                             className="w-full p-2 rounded-lg bg-stone-950 text-stone-400 border border-stone-800 text-[11px]"
                           />
 
-                          {/* Foto do Serviço / Procedimento e Modo de Exibição */}
+                          {/* Foto do ServiÃ§o / Procedimento e Modo de ExibiÃ§Ã£o */}
                           <div className="pt-2 border-t border-stone-800/80 space-y-1.5">
                             <div className="flex items-center justify-between">
                               <label className="text-[10px] font-mono text-stone-300 flex items-center gap-1 font-semibold">
@@ -2782,7 +2782,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                       ? 'bg-amber-500 text-stone-950 shadow-sm'
                                       : 'text-stone-400 hover:text-white'
                                   }`}
-                                  title="Foto em miniatura integrada dentro do botão ao lado do nome"
+                                  title="Foto em miniatura integrada dentro do botÃ£o ao lado do nome"
                                 >
                                   Miniatura
                                 </button>
@@ -2799,7 +2799,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                       ? 'bg-amber-500 text-stone-950 shadow-sm'
                                       : 'text-stone-400 hover:text-white'
                                   }`}
-                                  title="Imagem maior de destaque com botão de agendamento e valor abaixo dela"
+                                  title="Imagem maior de destaque com botÃ£o de agendamento e valor abaixo dela"
                                 >
                                   Imagem Maior
                                 </button>
@@ -2846,8 +2846,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             </div>
                             <p className="text-[9.5px] text-stone-500 leading-snug">
                               {(srv.imageLayout || 'thumb') === 'cover'
-                                ? '✨ Exibindo como Card Editorial: Imagem grande com valor e agendamento logo abaixo.'
-                                : '✨ Exibindo como Botão com Miniatura: Foto quadrada de 60px ao lado do nome do serviço.'}
+                                ? 'âœ¨ Exibindo como Card Editorial: Imagem grande com valor e agendamento logo abaixo.'
+                                : 'âœ¨ Exibindo como BotÃ£o com Miniatura: Foto quadrada de 60px ao lado do nome do serviÃ§o.'}
                             </p>
                           </div>
                         </div>
@@ -2860,7 +2860,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 5. SEÇÃO: PORTFÓLIO & GALERIA */}
+            {/* 5. SEÃ‡ÃƒO: PORTFÃ“LIO & GALERIA */}
             {/* ======================================================= */}
             {activeSection === 'portfolio' && (
               <div className="space-y-4 animate-fade-in">
@@ -2869,20 +2869,20 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
                       <span className="text-[11px] font-bold block uppercase tracking-wider">Galeria de Fotos Bloqueada</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As fotos do portfólio foram curadas pelo administrador e estão em modo somente-leitura.</p>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As fotos do portfÃ³lio foram curadas pelo administrador e estÃ£o em modo somente-leitura.</p>
                     </div>
                   </div>
                 )}
 
                 <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
-                {/* Subpáginas Pro Integradas */}
+                {/* SubpÃ¡ginas Pro Integradas */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800">
                   <h3 className="font-bold text-xs text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    Páginas Pro Integradas ({props.additionalPages.length}/3)
+                    PÃ¡ginas Pro Integradas ({props.additionalPages.length}/3)
                     {!canEditPhotos && <Lock className="w-3 h-3 text-amber-400" />}
                   </h3>
                   <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
-                    Cada página Pro inclui slider de Antes &amp; Depois, tabela completa de procedimentos e agenda VIP.
+                    Cada pÃ¡gina Pro inclui slider de Antes &amp; Depois, tabela completa de procedimentos e agenda VIP.
                   </p>
 
                   <div className="space-y-2">
@@ -2903,9 +2903,9 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </div>
                 </div>
 
-                {/* Galeria Oficial de Fotos & Portfólio (studentGrid / BioVip Oficial) */}
+                {/* Galeria Oficial de Fotos & PortfÃ³lio (studentGrid / BioVip Oficial) */}
                 <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-4">
-                  {/* Header do Módulo com Switch */}
+                  {/* Header do MÃ³dulo com Switch */}
                   <div className="flex items-center justify-between pb-2 border-b border-stone-800/80">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center">
@@ -2914,7 +2914,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-stone-200">
-                            Galeria de Fotos &amp; Portfólio
+                            Galeria de Fotos &amp; PortfÃ³lio
                           </span>
                           <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                             {effectiveGalleryConfig.photos?.length || 0} FOTOS
@@ -2949,7 +2949,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           </label>
                           <input
                             type="text"
-                            placeholder="Ex: PORTFÓLIO VIP"
+                            placeholder="Ex: PORTFÃ“LIO VIP"
                             value={effectiveGalleryConfig.badge || ''}
                             onChange={(e) => updateGalleryConfig(prev => ({ ...prev, badge: e.target.value }))}
                             className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-amber-300 font-bold uppercase focus:border-amber-400 focus:outline-none"
@@ -2958,11 +2958,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
 
                         <div className="sm:col-span-2">
                           <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
-                            Título da Galeria
+                            TÃ­tulo da Galeria
                           </label>
                           <input
                             type="text"
-                            placeholder="Ex: Resultados Reais & Portfólio"
+                            placeholder="Ex: Resultados Reais & PortfÃ³lio"
                             value={effectiveGalleryConfig.headline || ''}
                             onChange={(e) => updateGalleryConfig(prev => ({ ...prev, headline: e.target.value }))}
                             className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-100 font-semibold focus:border-amber-400 focus:outline-none"
@@ -2972,28 +2972,28 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
 
                       <div>
                         <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
-                          Subtítulo Explicativo
+                          SubtÃ­tulo Explicativo
                         </label>
                         <input
                           type="text"
-                          placeholder="Ex: Transformações reais geradas pelo método e registros de alto padrão"
+                          placeholder="Ex: TransformaÃ§Ãµes reais geradas pelo mÃ©todo e registros de alto padrÃ£o"
                           value={effectiveGalleryConfig.subtitle || ''}
                           onChange={(e) => updateGalleryConfig(prev => ({ ...prev, subtitle: e.target.value }))}
                           className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-300 focus:border-amber-400 focus:outline-none"
                         />
                       </div>
 
-                      {/* 4 Formatos de Exibição no Celular (BioVip Original) */}
+                      {/* 4 Formatos de ExibiÃ§Ã£o no Celular (BioVip Original) */}
                       <div className="space-y-1.5">
                         <label className="text-[10.5px] font-mono uppercase font-bold text-stone-300 block">
-                          Formato de Exibição no Celular
+                          Formato de ExibiÃ§Ã£o no Celular
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {[
-                            { id: 'carousel-snap', label: '🎠 Carrossel Touch', desc: 'Deslize horizontal fluido' },
-                            { id: 'grid-2col', label: '📱 Grade 2 Colunas', desc: 'Fotos lado a lado' },
-                            { id: 'mosaic', label: '🎨 Mosaico Dinâmico', desc: 'Destaque 1ª grande + grid' },
-                            { id: 'scroll-cards', label: '🃏 Cards Expandidos', desc: '1 por vez com foco total' }
+                            { id: 'carousel-snap', label: 'ðŸŽ  Carrossel Touch', desc: 'Deslize horizontal fluido' },
+                            { id: 'grid-2col', label: 'ðŸ“± Grade 2 Colunas', desc: 'Fotos lado a lado' },
+                            { id: 'mosaic', label: 'ðŸŽ¨ Mosaico DinÃ¢mico', desc: 'Destaque 1Âª grande + grid' },
+                            { id: 'scroll-cards', label: 'ðŸƒ Cards Expandidos', desc: '1 por vez com foco total' }
                           ].map((t) => {
                             const isSelected = (effectiveGalleryConfig.layout || 'carousel-snap') === t.id
                             return (
@@ -3015,15 +3015,15 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                         </div>
                       </div>
 
-                      {/* Proporção das Imagens & Lightbox */}
+                      {/* ProporÃ§Ã£o das Imagens & Lightbox */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-mono uppercase font-semibold text-stone-300 block">
-                            Formato das Imagens (Proporção)
+                            Formato das Imagens (ProporÃ§Ã£o)
                           </label>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                             {[
-                              { id: 'auto', label: '🤖 Auto' },
+                              { id: 'auto', label: 'ðŸ¤– Auto' },
                               { id: 'square', label: '1:1 Quadrado' },
                               { id: 'portrait', label: '4:5 Retrato' },
                               { id: 'landscape', label: '4:3 Paisagem' }
@@ -3069,7 +3069,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       <div className="space-y-1.5 pt-2 border-t border-stone-800/80">
                         <label className="text-[10px] font-mono uppercase font-bold text-amber-400 flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                          Preencher Fotos com Exemplos de Alto Padrão por Nicho:
+                          Preencher Fotos com Exemplos de Alto PadrÃ£o por Nicho:
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           <button
@@ -3077,28 +3077,28 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             onClick={() => loadGalleryPreset('beauty')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            💅 Beleza &amp; Lash
+                            ðŸ’… Beleza &amp; Lash
                           </button>
                           <button
                             type="button"
                             onClick={() => loadGalleryPreset('barber')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            ✂️ Barbearia
+                            âœ‚ï¸ Barbearia
                           </button>
                           <button
                             type="button"
                             onClick={() => loadGalleryPreset('health')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            🩺 Saúde &amp; Clínica
+                            ðŸ©º SaÃºde &amp; ClÃ­nica
                           </button>
                           <button
                             type="button"
                             onClick={() => loadGalleryPreset('exec')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            💼 Executivo &amp; Cursos
+                            ðŸ’¼ Executivo &amp; Cursos
                           </button>
                         </div>
                       </div>
@@ -3141,7 +3141,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                     #{i + 1}
                                   </span>
 
-                                  {/* Botão Zoom Lightbox */}
+                                  {/* BotÃ£o Zoom Lightbox */}
                                   <button
                                     type="button"
                                     onClick={() => setPreviewLightboxIndex(i)}
@@ -3257,7 +3257,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 5.5. SEÇÃO: MÓDULOS & BLOCOS DO BIOSITE (15 BLOCOS) */}
+            {/* 5.5. SEÃ‡ÃƒO: MÃ“DULOS & BLOCOS DO BIOSITE (15 BLOCOS) */}
             {/* ======================================================= */}
             {activeSection === 'modulos' && (
               <div className="space-y-4 animate-fade-in">
@@ -3270,7 +3270,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       </span>
                     </div>
                     <p className="text-[11px] text-stone-300 leading-relaxed mt-1">
-                      Ative ou desative qualquer um dos 15 módulos do seu BioSite com apenas 1 clique. As alterações são sincronizadas instantaneamente no seu link.
+                      Ative ou desative qualquer um dos 15 mÃ³dulos do seu BioSite com apenas 1 clique. As alteraÃ§Ãµes sÃ£o sincronizadas instantaneamente no seu link.
                     </p>
                   </div>
 
@@ -3299,16 +3299,16 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
                       <span className="text-[11px] font-bold block uppercase tracking-wider">
-                        Controle de Módulos Bloqueado pelo Administrador
+                        Controle de MÃ³dulos Bloqueado pelo Administrador
                       </span>
                       <p className="text-[10px] text-stone-400 leading-snug mt-0.5">
-                        Os módulos deste BioSite são administrados diretamente pela agência. Abaixo você pode visualizar quais blocos estão ativos.
+                        Os mÃ³dulos deste BioSite sÃ£o administrados diretamente pela agÃªncia. Abaixo vocÃª pode visualizar quais blocos estÃ£o ativos.
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* Lista com os 15 Módulos */}
+                {/* Lista com os 15 MÃ³dulos */}
                 <div className="space-y-2.5">
                   {(Object.keys(modules) as Array<keyof ModuleToggles>).map((key) => {
                     const isEnabled = modules[key]
@@ -3351,7 +3351,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                                     : 'bg-stone-800 text-stone-500 border border-stone-700'
                                 }`}
                               >
-                                {isEnabled ? 'Visível' : 'Oculto'}
+                                {isEnabled ? 'VisÃ­vel' : 'Oculto'}
                               </span>
                             </div>
                             <p className="text-[10.5px] text-stone-400 leading-snug mt-0.5">
@@ -3381,14 +3381,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 6. SEÇÃO: PROVA SOCIAL & DEPOIMENTOS */}
+            {/* 6. SEÃ‡ÃƒO: PROVA SOCIAL & DEPOIMENTOS */}
             {/* ======================================================= */}
             {activeSection === 'social' && (
               <div className="space-y-4 animate-fade-in">
                 {/* Nota do Google */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
-                    Avaliações do Google Meu Negócio
+                    AvaliaÃ§Ãµes do Google Meu NegÃ³cio
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -3407,7 +3407,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                     </div>
                     <div>
                       <label className="block text-[9px] font-mono uppercase text-stone-400 mb-1">
-                        Número de Reviews
+                        NÃºmero de Reviews
                       </label>
                       <input
                         type="text"
@@ -3422,10 +3422,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   </div>
                 </div>
 
-                {/* Métricas de Autoridade */}
+                {/* MÃ©tricas de Autoridade */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-stone-300 font-bold block">
-                    Métricas de Autoridade (3 Destaques)
+                    MÃ©tricas de Autoridade (3 Destaques)
                   </span>
                   <div className="space-y-2">
                     {(props.metricsData || []).map((m: any, idx: number) => (
@@ -3451,7 +3451,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                             props.setMetricsData(updated)
                             props.setHasUnsavedChanges(true)
                           }}
-                          placeholder="Rótulo (ex: CLIENTES)"
+                          placeholder="RÃ³tulo (ex: CLIENTES)"
                           className="p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs font-mono uppercase"
                         />
                       </div>
@@ -3470,8 +3470,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       onClick={() => {
                         const newTestimonial = {
                           clientName: 'Cliente VIP',
-                          city: 'São Paulo - SP',
-                          text: 'Experiência maravilhosa, atendimento impecável e resultado incrível!',
+                          city: 'SÃ£o Paulo - SP',
+                          text: 'ExperiÃªncia maravilhosa, atendimento impecÃ¡vel e resultado incrÃ­vel!',
                           rating: 5
                         }
                         props.setTestimonialsData([...(props.testimonialsData || []), newTestimonial])
@@ -3541,7 +3541,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setTestimonialsData(updated)
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Texto da avaliação..."
+                        placeholder="Texto da avaliaÃ§Ã£o..."
                         className="w-full p-2 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-[11px] leading-relaxed"
                       />
                     </div>
@@ -3551,7 +3551,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 7. SEÇÃO: MÓDULOS VIP DE CONVERSÃO (8 MÓDULOS) */}
+            {/* 7. SEÃ‡ÃƒO: MÃ“DULOS VIP DE CONVERSÃƒO (8 MÃ“DULOS) */}
             {/* ======================================================= */}
             {activeSection === 'vip' && (
               <div className="space-y-3.5 animate-fade-in">
@@ -3559,8 +3559,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold block uppercase tracking-wider">Módulos VIP Bloqueados</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A ativação dos módulos VIP é configurada pelo administrador.</p>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">MÃ³dulos VIP Bloqueados</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A ativaÃ§Ã£o dos mÃ³dulos VIP Ã© configurada pelo administrador.</p>
                     </div>
                   </div>
                 )}
@@ -3568,10 +3568,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <fieldset disabled={!canEditModules} className={!canEditModules ? 'opacity-50 pointer-events-none' : ''}>
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/40">
                   <span className="text-[10px] font-mono text-amber-300 font-black uppercase tracking-wider block mb-1">
-                    👑 8 MÓDULOS VIP DE ALTA CONVERSÃO
+                    ðŸ‘‘ 8 MÃ“DULOS VIP DE ALTA CONVERSÃƒO
                   </span>
                   <p className="text-xs text-stone-300 leading-relaxed">
-                    Personalize gatilhos de escassez, cronômetro de urgência, quiz qualificador, GPS e FAQ sanfonado.
+                    Personalize gatilhos de escassez, cronÃ´metro de urgÃªncia, quiz qualificador, GPS e FAQ sanfonado.
                   </p>
                 </div>
 
@@ -3579,7 +3579,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      📢 Barra de Aviso Superior
+                      ðŸ“¢ Barra de Aviso Superior
                     </span>
                     <button
                       type="button"
@@ -3623,11 +3623,11 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   )}
                 </div>
 
-                {/* 2. Gatilho de Urgência & Cronômetro */}
+                {/* 2. Gatilho de UrgÃªncia & CronÃ´metro */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      🔥 Gatilho de Urgência &amp; Cronômetro
+                      ðŸ”¥ Gatilho de UrgÃªncia &amp; CronÃ´metro
                     </span>
                     <button
                       type="button"
@@ -3654,7 +3654,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setUrgencyData({ ...props.urgencyData, headline: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Título de Urgência (ex: 🔥 CONDIÇÃO ESPECIAL DE HOJE)"
+                        placeholder="TÃ­tulo de UrgÃªncia (ex: ðŸ”¥ CONDIÃ‡ÃƒO ESPECIAL DE HOJE)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
                       />
                       <input
@@ -3664,7 +3664,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setUrgencyData({ ...props.urgencyData, subtitle: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Subtítulo..."
+                        placeholder="SubtÃ­tulo..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs"
                       />
                     </div>
@@ -3675,7 +3675,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      🎯 Triagem Anti-Curiosos (Quiz VIP)
+                      ðŸŽ¯ Triagem Anti-Curiosos (Quiz VIP)
                     </span>
                     <button
                       type="button"
@@ -3702,18 +3702,18 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setQuizData({ ...props.quizData, buttonLabel: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Texto do botão do Quiz"
+                        placeholder="Texto do botÃ£o do Quiz"
                         className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-bold"
                       />
                     </div>
                   )}
                 </div>
 
-                {/* 4. Localização com GPS & Aberto Agora */}
+                {/* 4. LocalizaÃ§Ã£o com GPS & Aberto Agora */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      📍 Localização com GPS &amp; Aberto Agora
+                      ðŸ“ LocalizaÃ§Ã£o com GPS &amp; Aberto Agora
                     </span>
                     <button
                       type="button"
@@ -3740,7 +3740,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setLocationData({ ...props.locationData, address: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Endereço físico..."
+                        placeholder="EndereÃ§o fÃ­sico..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs"
                       />
                       <input
@@ -3750,7 +3750,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setLocationData({ ...props.locationData, hours: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Horários (ex: Seg a Sex · 09h às 19h)"
+                        placeholder="HorÃ¡rios (ex: Seg a Sex Â· 09h Ã s 19h)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-xs font-mono"
                       />
                     </div>
@@ -3761,7 +3761,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      👩‍⚕️ Sobre o Especialista
+                      ðŸ‘©â€âš•ï¸ Sobre o Especialista
                     </span>
                     <button
                       type="button"
@@ -3788,7 +3788,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           props.setAboutMeData({ ...props.aboutMeData, headline: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Título (ex: Sobre Nosso Atendimento)"
+                        placeholder="TÃ­tulo (ex: Sobre Nosso Atendimento)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-bold"
                       />
                       <textarea
@@ -3805,18 +3805,18 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   )}
                 </div>
 
-                {/* 6. Dúvidas Frequentes (FAQ) */}
+                {/* 6. DÃºvidas Frequentes (FAQ) */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      ❓ Dúvidas Frequentes ({props.faqData?.length || 0})
+                      â“ DÃºvidas Frequentes ({props.faqData?.length || 0})
                     </span>
                     <button
                       type="button"
                       onClick={() => {
                         const newFaq = {
-                          question: 'Como agendar um horário?',
-                          answer: 'Basta tocar no botão de WhatsApp e escolher o procedimento.'
+                          question: 'Como agendar um horÃ¡rio?',
+                          answer: 'Basta tocar no botÃ£o de WhatsApp e escolher o procedimento.'
                         }
                         props.setFaqData([...(props.faqData || []), newFaq])
                         props.setHasUnsavedChanges(true)
@@ -3872,7 +3872,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 8. SEÇÃO: PÍXEL, ANÚNCIOS & SEO */}
+            {/* 8. SEÃ‡ÃƒO: PÃXEL, ANÃšNCIOS & SEO */}
             {/* ======================================================= */}
             {activeSection === 'pixel' && (
               <div className="space-y-4 animate-fade-in">
@@ -3926,7 +3926,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
 
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
-                    Rastreamento Automático de Conversões
+                    Rastreamento AutomÃ¡tico de ConversÃµes
                   </span>
                   <label className="flex items-center gap-2.5 text-xs text-stone-300 cursor-pointer">
                     <input
@@ -3938,7 +3938,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                       }}
                       className="accent-amber-400 rounded"
                     />
-                    <span>Disparar evento &quot;Lead&quot; ao clicar em qualquer botão do WhatsApp</span>
+                    <span>Disparar evento &quot;Lead&quot; ao clicar em qualquer botÃ£o do WhatsApp</span>
                   </label>
                   <label className="flex items-center gap-2.5 text-xs text-stone-300 cursor-pointer">
                     <input
@@ -3957,7 +3957,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
 
             {/* ======================================================= */}
-            {/* 9. SEÇÃO: ASSINATURA & DOMÍNIO */}
+            {/* 9. SEÃ‡ÃƒO: ASSINATURA & DOMÃNIO */}
             {/* ======================================================= */}
             {activeSection === 'assinatura' && (
               <div className="space-y-4 animate-fade-in">
@@ -3987,17 +3987,17 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                   {props.paymentStatus === 'pendente' ? (
                     <div className="space-y-2 mt-2">
                       <p className="text-xs text-stone-200 leading-relaxed">
-                        Seu BioSite foi gerado e se encontra no ar em período de cortesia. Se após{' '}
+                        Seu BioSite foi gerado e se encontra no ar em perÃ­odo de cortesia. Se apÃ³s{' '}
                         <strong className="text-amber-400 font-mono">
                           {props.remainingHours}h restantes
                         </strong>{' '}
-                        o pagamento não for confirmado, a página será suspensa.
+                        o pagamento nÃ£o for confirmado, a pÃ¡gina serÃ¡ suspensa.
                       </p>
 
                       <div className="p-3 rounded-xl bg-black/60 border border-amber-500/30 space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-stone-400">Plano Anual BioVip:</span>
-                          <span className="font-bold text-amber-300 font-mono">R$ 49,90 /mês</span>
+                          <span className="font-bold text-amber-300 font-mono">R$ 49,90 /mÃªs</span>
                         </div>
                         <button
                           type="button"
@@ -4012,21 +4012,21 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
                           onClick={props.handleConfirmPayment}
                           className="w-full py-2 rounded-lg border border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs font-mono uppercase transition cursor-pointer"
                         >
-                          {props.isProcessingPayment ? 'Validando...' : '✓ Já Efetuei o Pagamento'}
+                          {props.isProcessingPayment ? 'Validando...' : 'âœ“ JÃ¡ Efetuei o Pagamento'}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <p className="text-xs text-stone-300 leading-relaxed">
-                      Sua assinatura anual está confirmada e seu BioSite está com alta prioridade nos servidores CDN.
+                      Sua assinatura anual estÃ¡ confirmada e seu BioSite estÃ¡ com alta prioridade nos servidores CDN.
                     </p>
                   )}
                 </div>
 
-                {/* Domínio & Endereço */}
+                {/* DomÃ­nio & EndereÃ§o */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-stone-400 font-bold block">
-                    Endereço Oficial na Web
+                    EndereÃ§o Oficial na Web
                   </span>
                   <div className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
                     <code className="text-xs text-amber-300 font-mono">
@@ -4046,7 +4046,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             )}
           </div>
 
-          {/* Rodapé Fixo da Coluna 3: Salvar Alterações */}
+          {/* RodapÃ© Fixo da Coluna 3: Salvar AlteraÃ§Ãµes */}
           <div className="p-4 border-t border-stone-800 bg-[#0E0E12] shrink-0">
             <button
               type="button"
@@ -4054,14 +4054,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-[#E2B857] to-amber-400 hover:from-amber-300 hover:to-amber-300 text-stone-950 font-black text-xs uppercase tracking-wider font-mono shadow-lg shadow-amber-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
             >
               <Save className="w-4 h-4" />
-              <span>Salvar Alterações</span>
+              <span>Salvar AlteraÃ§Ãµes</span>
             </button>
           </div>
         </section>
       </div>
 
       {/* ========================================================= */}
-      {/* BARRA DE NAVEGAÇÃO INFERIOR FIXA (SMARTPHONES < 1024px) */}
+      {/* BARRA DE NAVEGAÃ‡ÃƒO INFERIOR FIXA (SMARTPHONES < 1024px) */}
       {/* ========================================================= */}
       <footer className="lg:hidden h-14 border-t border-stone-800 bg-[#0D0D11] grid grid-cols-4 items-center px-2 z-30 shrink-0">
         <button
@@ -4070,7 +4070,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           className="flex flex-col items-center gap-1 text-[10px] font-semibold transition text-stone-400 hover:text-stone-200"
         >
           <Layers className="w-4 h-4" />
-          <span>Seções</span>
+          <span>SeÃ§Ãµes</span>
         </button>
 
         <button
@@ -4095,7 +4095,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           }`}
         >
           <Smartphone className="w-4 h-4" />
-          <span>{mobileMode === 'editor' ? 'Ver Prévia' : 'Editar'}</span>
+          <span>{mobileMode === 'editor' ? 'Ver PrÃ©via' : 'Editar'}</span>
         </button>
 
         <button
@@ -4121,7 +4121,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           <div className="relative bg-[#141418] border-t border-stone-800 rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up shadow-2xl">
             <div className="p-4 border-b border-stone-800 flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-widest text-stone-300 font-bold">
-                Selecione a Seção para Editar
+                Selecione a SeÃ§Ã£o para Editar
               </span>
               <button
                 type="button"
@@ -4207,7 +4207,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           >
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                {effectiveGalleryConfig.badge || 'PORTFÓLIO OFICIAL'}
+                {effectiveGalleryConfig.badge || 'PORTFÃ“LIO OFICIAL'}
               </span>
               <span className="text-xs font-bold text-stone-200 hidden sm:inline">
                 {effectiveGalleryConfig.headline || 'Galeria de Procedimentos & Resultados'}
@@ -4228,7 +4228,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             </div>
           </div>
 
-          {/* Imagem Central com Setas de Navegação */}
+          {/* Imagem Central com Setas de NavegaÃ§Ã£o */}
           <div
             className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-3 px-2"
             onClick={(e) => e.stopPropagation()}
@@ -4249,7 +4249,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             <div className="relative max-h-[72vh] max-w-full flex items-center justify-center">
               <img
                 src={effectiveGalleryConfig.photos[previewLightboxIndex]}
-                alt={`Portfólio ampliado ${previewLightboxIndex + 1}`}
+                alt={`PortfÃ³lio ampliado ${previewLightboxIndex + 1}`}
                 className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10"
               />
             </div>

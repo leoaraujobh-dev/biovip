@@ -241,6 +241,12 @@ export async function createSession(passwordOrPin: string): Promise<string> {
   }
 
   sessionStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(sessionData))
+
+  // Define cookie de sessão legível pelo middleware Next.js (HttpOnly não é possível em client-side)
+  // Expira junto com a sessão configurada (2h padrão)
+  const expiresDate = new Date(expiresAt).toUTCString()
+  document.cookie = `biovip_admin_auth=${sessionToken}; path=/; expires=${expiresDate}; SameSite=Strict`
+
   // Reseta tentativas
   resetAttempts()
   logAccess(true, 'Login autorizado com sucesso')
@@ -295,6 +301,10 @@ export function destroySession(): void {
   if (typeof window === 'undefined') return
   sessionStorage.removeItem(STORAGE_KEYS.SESSION)
   sessionStorage.removeItem('biovip_admin_auth') // remove legado se houver
+
+  // Remove o cookie de sessão do middleware
+  document.cookie = 'biovip_admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict'
+
   logAccess(true, 'Logout efetuado')
 }
 

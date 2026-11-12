@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -82,14 +82,14 @@ interface AdditionalPage {
 }
 
 export default function ContaClient() {
-  // Controle de Visualização: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
+  // Controle de VisualizaÃ§Ã£o: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
   const [currentView, setCurrentView] = useState<'dashboard' | 'editar_pagina' | 'adicionar_pagina'>('dashboard')
   const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'servicos' | 'galeria' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'pagamento' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
   const [leadsList, setLeadsList] = useState<LeadSubmission[]>([])
   const [leadFilter, setLeadFilter] = useState<'TODOS' | 'WHATSAPP' | 'QUIZ' | 'CATALOGO'>('TODOS')
   const [loadingLeads, setLoadingLeads] = useState(false)
 
-  // Estado de Pagamento, Prazo de 48h & Tolerância
+  // Estado de Pagamento, Prazo de 48h & TolerÃ¢ncia
   const [paymentStatus, setPaymentStatus] = useState<'pendente' | 'ativa' | 'suspensa'>('pendente')
   const [deadline48h, setDeadline48h] = useState<string>('')
   const [remainingHours, setRemainingHours] = useState<number>(48)
@@ -103,7 +103,7 @@ export default function ContaClient() {
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false)
   const [paymentSuccessFeedback, setPaymentSuccessFeedback] = useState<boolean>(false)
 
-  // Seletor de Modelo (Páginas Adicionais)
+  // Seletor de Modelo (PÃ¡ginas Adicionais)
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('para_voce')
   const [previewModalTemplate, setPreviewModalTemplate] = useState<PageTemplate | null>(null)
 
@@ -114,7 +114,7 @@ export default function ContaClient() {
   const [pixModalOpen, setPixModalOpen] = useState(false)
   const [pixCopied, setPixCopied] = useState(false)
 
-  // Accordion da Edição de Página (qual aba está aberta)
+  // Accordion da EdiÃ§Ã£o de PÃ¡gina (qual aba estÃ¡ aberta)
   const [openAccordion, setOpenAccordion] = useState<string | null>('paleta')
 
   // Dados do Bio Site
@@ -122,7 +122,7 @@ export default function ContaClient() {
   const [businessTitle, setBusinessTitle] = useState('Teste')
   const [niche, setNiche] = useState('Manicure e pedicure')
   const [tagline, setTagline] = useState('Estou testando')
-  const [selectedPalette, setSelectedPalette] = useState(PALETTES[2]) // Clínico sereno
+  const [selectedPalette, setSelectedPalette] = useState(PALETTES[2]) // ClÃ­nico sereno
   const [backgroundStyle, setBackgroundStyle] = useState('aura')
   const [selectedTypography, setSelectedTypography] = useState(TYPOGRAPHIES[3]) // DM Serif Display
   const [buttonStyle, setButtonStyle] = useState('cartao_nobre')
@@ -145,7 +145,7 @@ export default function ContaClient() {
   const [userEmail, setUserEmail] = useState('leoaraujobh@gmail.com')
   const [userPhone, setUserPhone] = useState('')
 
-  // Estratégia Híbrida de Foto & IA
+  // EstratÃ©gia HÃ­brida de Foto & IA
   const [storyModalOpen, setStoryModalOpen] = useState(false)
   const [isGeneratingStoryPng, setIsGeneratingStoryPng] = useState(false)
   const [customPhotoSrc, setCustomPhotoSrc] = useState<string | null>(null)
@@ -159,12 +159,12 @@ export default function ContaClient() {
     'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
   ])
 
-  // Configuração Oficial de Galeria e Portfólio (BioVip Original)
+  // ConfiguraÃ§Ã£o Oficial de Galeria e PortfÃ³lio (BioVip Original)
   const [galleryConfig, setGalleryConfig] = useState<StudentGridConfig>({
     enabled: true,
-    badge: 'PORTFÓLIO & ESTRUTURA VIP',
-    headline: 'Resultados Reais & Portfólio em Destaque',
-    subtitle: 'Registros reais do nosso padrão de entrega e procedimentos',
+    badge: 'PORTFÃ“LIO & ESTRUTURA VIP',
+    headline: 'Resultados Reais & PortfÃ³lio em Destaque',
+    subtitle: 'Registros reais do nosso padrÃ£o de entrega e procedimentos',
     layout: 'mosaic',
     aspectRatio: 'square',
     enableLightbox: true,
@@ -177,7 +177,7 @@ export default function ContaClient() {
     captions: []
   })
 
-  // Pixel & Tráfego Pago (Diferencial Competitivo Exclusivo)
+  // Pixel & TrÃ¡fego Pago (Diferencial Competitivo Exclusivo)
   const [metaPixelId, setMetaPixelId] = useState('')
   const [tiktokPixelId, setTiktokPixelId] = useState('')
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState('')
@@ -185,16 +185,16 @@ export default function ContaClient() {
   const [trackPageView, setTrackPageView] = useState(true)
   const [pixelSavedSuccess, setPixelSavedSuccess] = useState(false)
 
-  // Módulos VIP de Alta Conversão (12 Módulos Inteligentes)
+  // MÃ³dulos VIP de Alta ConversÃ£o (12 MÃ³dulos Inteligentes)
   const [announcementData, setAnnouncementData] = useState<{ enabled: boolean; badge: string; text: string }>({
     enabled: true,
     badge: 'AGENDA VIP ABERTA',
-    text: 'Últimos horários disponíveis para esta semana.'
+    text: 'Ãšltimos horÃ¡rios disponÃ­veis para esta semana.'
   })
   const [urgencyData, setUrgencyData] = useState<{ enabled: boolean; headline: string; subtitle: string; minutes: number }>({
     enabled: true,
-    headline: '🔥 CONDIÇÃO ESPECIAL DE HOJE',
-    subtitle: 'Garanta sua vaga com atendimento prioritário antes que expire:',
+    headline: 'ðŸ”¥ CONDIÃ‡ÃƒO ESPECIAL DE HOJE',
+    subtitle: 'Garanta sua vaga com atendimento prioritÃ¡rio antes que expire:',
     minutes: 15
   })
   const [servicesCatalogData, setServicesCatalogData] = useState<{
@@ -205,28 +205,28 @@ export default function ContaClient() {
     items: any[]
   }>({
     enabled: true,
-    headline: 'Procedimentos & Soluções Exclusivas',
-    subtitle: 'Protocolos de alto padrão sob medida',
+    headline: 'Procedimentos & SoluÃ§Ãµes Exclusivas',
+    subtitle: 'Protocolos de alto padrÃ£o sob medida',
     categories: ['TODOS', 'MAIS PROCURADO', 'EXCLUSIVO'],
     items: [
       {
         id: 'srv-1',
         category: 'MAIS PROCURADO',
         name: 'Procedimento de Destaque VIP',
-        description: 'Técnica exclusiva com materiais importados de alta pureza e conforto absoluto.',
+        description: 'TÃ©cnica exclusiva com materiais importados de alta pureza e conforto absoluto.',
         price: 'R$ 250',
-        duration: '⏱ 1h30',
+        duration: 'â± 1h30',
         badge: 'MAIS PROCURADO',
         featured: true,
-        whatsappMessage: 'Olá! Gostaria de agendar o procedimento de destaque.'
+        whatsappMessage: 'OlÃ¡! Gostaria de agendar o procedimento de destaque.'
       }
     ]
   })
   const [locationData, setLocationData] = useState<{ enabled: boolean; address: string; hours: string; openStatus: string; mapsUrl: string }>({
     enabled: true,
-    address: 'Av. Boa Viagem, 2190 - Sala 918 · Boa Viagem - Recife, PE',
-    hours: 'Seg a Sex · 08:30 às 19:30 | Sáb · 08:30 às 13:00',
-    openStatus: 'Aberto Agora · Agendamento VIP',
+    address: 'Av. Boa Viagem, 2190 - Sala 918 Â· Boa Viagem - Recife, PE',
+    hours: 'Seg a Sex Â· 08:30 Ã s 19:30 | SÃ¡b Â· 08:30 Ã s 13:00',
+    openStatus: 'Aberto Agora Â· Agendamento VIP',
     mapsUrl: 'https://maps.google.com'
   })
   const [quizData, setQuizData] = useState<{
@@ -237,48 +237,48 @@ export default function ContaClient() {
     questions: Array<{ id: string; question: string; options: string[] }>
   }>({
     enabled: true,
-    buttonLabel: '✨ Descobrir Procedimento Ideal (Triagem VIP)',
+    buttonLabel: 'âœ¨ Descobrir Procedimento Ideal (Triagem VIP)',
     headline: 'Atendimento Personalizado',
-    subtitle: 'Responda 3 perguntas rápidas para agilizar seu atendimento:',
+    subtitle: 'Responda 3 perguntas rÃ¡pidas para agilizar seu atendimento:',
     questions: [
       {
         id: 'q-1',
-        question: 'Qual procedimento você mais deseja realizar?',
-        options: ['Tratamento Principal', 'Manutenção Periódica', 'Avaliação Inicial']
+        question: 'Qual procedimento vocÃª mais deseja realizar?',
+        options: ['Tratamento Principal', 'ManutenÃ§Ã£o PeriÃ³dica', 'AvaliaÃ§Ã£o Inicial']
       },
       {
         id: 'q-2',
-        question: 'Qual o melhor período para seu atendimento?',
-        options: ['Manhã (08h às 12h)', 'Tarde (13h às 18h)', 'Sábado']
+        question: 'Qual o melhor perÃ­odo para seu atendimento?',
+        options: ['ManhÃ£ (08h Ã s 12h)', 'Tarde (13h Ã s 18h)', 'SÃ¡bado']
       }
     ]
   })
 
-  // Módulos VIP Expandidos (Métricas, Passos, Depoimentos, Sobre Mim, FAQ)
+  // MÃ³dulos VIP Expandidos (MÃ©tricas, Passos, Depoimentos, Sobre Mim, FAQ)
   const [metricsData, setMetricsData] = useState<Array<{ value: string; label: string }>>([
     { value: '+1.000', label: 'CLIENTES ATENDIDOS' },
-    { value: '8 ANOS', label: 'DE EXPERIÊNCIA' },
-    { value: '5.0★', label: 'AVALIAÇÃO NO GOOGLE' }
+    { value: '8 ANOS', label: 'DE EXPERIÃŠNCIA' },
+    { value: '5.0â˜…', label: 'AVALIAÃ‡ÃƒO NO GOOGLE' }
   ])
   const [howItWorksData, setHowItWorksData] = useState<Array<{ number: string; title: string; description: string }>>([
-    { number: '01', title: 'Primeiro Contato & Triagem', description: 'Você relata sua necessidade pelo WhatsApp ou formulário e alinhamos a prioridade.' },
-    { number: '02', title: 'Avaliação Estratégica', description: 'Diagnóstico detalhado do seu objetivo com plano de ação sob medida.' },
-    { number: '03', title: 'Execução & Acompanhamento', description: 'Atendimento de alta excelência e suporte contínuo em todas as etapas.' }
+    { number: '01', title: 'Primeiro Contato & Triagem', description: 'VocÃª relata sua necessidade pelo WhatsApp ou formulÃ¡rio e alinhamos a prioridade.' },
+    { number: '02', title: 'AvaliaÃ§Ã£o EstratÃ©gica', description: 'DiagnÃ³stico detalhado do seu objetivo com plano de aÃ§Ã£o sob medida.' },
+    { number: '03', title: 'ExecuÃ§Ã£o & Acompanhamento', description: 'Atendimento de alta excelÃªncia e suporte contÃ­nuo em todas as etapas.' }
   ])
   const [testimonialsData, setTestimonialsData] = useState<Array<{ clientName: string; city: string; text: string; rating: number }>>([
-    { clientName: 'Juliana Mendes', city: 'São Paulo - SP', text: 'Atendimento impecável! O ambiente é lindo, super higienizado e o resultado superou todas as expectativas.', rating: 5 },
-    { clientName: 'Carlos Eduardo Silveira', city: 'Belo Horizonte - MG', text: 'Profissionalismo de altíssimo nível. Pontualidade britânica e muita atenção a cada detalhe.', rating: 5 }
+    { clientName: 'Juliana Mendes', city: 'SÃ£o Paulo - SP', text: 'Atendimento impecÃ¡vel! O ambiente Ã© lindo, super higienizado e o resultado superou todas as expectativas.', rating: 5 },
+    { clientName: 'Carlos Eduardo Silveira', city: 'Belo Horizonte - MG', text: 'Profissionalismo de altÃ­ssimo nÃ­vel. Pontualidade britÃ¢nica e muita atenÃ§Ã£o a cada detalhe.', rating: 5 }
   ])
   const [aboutMeData, setAboutMeData] = useState<{ enabled: boolean; headline: string; paragraph: string; closingPhrase: string }>({
     enabled: true,
     headline: 'Sobre Nosso Atendimento',
-    paragraph: 'Com vasta trajetória no segmento de alto padrão, nosso propósito é entregar resultados de autoridade com ética, pontualidade e sofisticação em cada atendimento.',
-    closingPhrase: 'Excelência e cuidado em cada detalhe.'
+    paragraph: 'Com vasta trajetÃ³ria no segmento de alto padrÃ£o, nosso propÃ³sito Ã© entregar resultados de autoridade com Ã©tica, pontualidade e sofisticaÃ§Ã£o em cada atendimento.',
+    closingPhrase: 'ExcelÃªncia e cuidado em cada detalhe.'
   })
   const [faqData, setFaqData] = useState<Array<{ question: string; answer: string }>>([
-    { question: 'Como funciona o agendamento de horários?', answer: 'Basta escolher o procedimento no catálogo ou clicar no botão de WhatsApp para falar diretamente com nossa equipe executiva.' },
-    { question: 'Onde o espaço está localizado?', answer: 'Estamos localizados em ponto nobre, com estacionamento privativo e ambiente climatizado.' },
-    { question: 'Quais são as formas de pagamento aceitas?', answer: 'Aceitamos Pix com confirmação imediata e cartões de crédito em até 12 parcelas.' }
+    { question: 'Como funciona o agendamento de horÃ¡rios?', answer: 'Basta escolher o procedimento no catÃ¡logo ou clicar no botÃ£o de WhatsApp para falar diretamente com nossa equipe executiva.' },
+    { question: 'Onde o espaÃ§o estÃ¡ localizado?', answer: 'Estamos localizados em ponto nobre, com estacionamento privativo e ambiente climatizado.' },
+    { question: 'Quais sÃ£o as formas de pagamento aceitas?', answer: 'Aceitamos Pix com confirmaÃ§Ã£o imediata e cartÃµes de crÃ©dito em atÃ© 12 parcelas.' }
   ])
 
   // Gateways Conectados na aba VENDAS
@@ -289,7 +289,7 @@ export default function ContaClient() {
     infinitepay: false
   })
 
-  // Botões de Alto Padrão do Bio Site (Padrão Dra. Ana Freire)
+  // BotÃµes de Alto PadrÃ£o do Bio Site (PadrÃ£o Dra. Ana Freire)
   const [buttons, setButtons] = useState<Array<{
     id: string
     label: string
@@ -302,40 +302,40 @@ export default function ContaClient() {
     {
       id: 'btn-1',
       label: 'AGENDAMENTO',
-      subtitle: 'Escolha o melhor horário para sua consulta.',
+      subtitle: 'Escolha o melhor horÃ¡rio para sua consulta.',
       icon: 'calendar',
       url: 'https://wa.me/5581987654321',
       isHighlighted: true,
-      highlightBadge: '⭐ MAIS ESCOLHIDO'
+      highlightBadge: 'â­ MAIS ESCOLHIDO'
     },
     {
       id: 'btn-2',
-      label: 'LOCALIZAÇÃO',
-      subtitle: 'Veja a rota até o consultório / Trade Center',
+      label: 'LOCALIZAÃ‡ÃƒO',
+      subtitle: 'Veja a rota atÃ© o consultÃ³rio / Trade Center',
       icon: 'map',
       url: 'https://maps.google.com'
     },
     {
       id: 'btn-3',
-      label: 'CASOS CLÍNICOS',
+      label: 'CASOS CLÃNICOS',
       subtitle: 'Sorrisos transformados: veja os resultados reais.',
       icon: 'sparkles',
       url: 'https://wa.me/5581987654321'
     }
   ])
 
-  // 3 Páginas Adicionais do Plano Pro
+  // 3 PÃ¡ginas Adicionais do Plano Pro
   const [additionalPages, setAdditionalPages] = useState<AdditionalPage[]>([])
 
   // Modo Administrador Master (Permite editar qualquer Bio Site)
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false)
   const [allAvailableBiosites, setAllAvailableBiosites] = useState<{ slug: string; name: string; type: 'modelo' | 'cliente' }[]>([])
 
-  // Função para carregar qualquer Bio Site no editor visual
+  // FunÃ§Ã£o para carregar qualquer Bio Site no editor visual
   const loadBioSiteData = (targetSlug: string) => {
     setSlug(targetSlug)
 
-    // 1. Verificar se já existe versão editada salva no localStorage
+    // 1. Verificar se jÃ¡ existe versÃ£o editada salva no localStorage
     const savedSiteRaw = localStorage.getItem('biovip_site_' + targetSlug)
     if (savedSiteRaw) {
       try {
@@ -397,7 +397,7 @@ export default function ContaClient() {
       }
     }
 
-    // 2. Fallback: Procurar nos modelos de portfólio
+    // 2. Fallback: Procurar nos modelos de portfÃ³lio
     let foundProj: Project | undefined
     const savedProjectsRaw = localStorage.getItem('biovip_portfolio_projects')
     if (savedProjectsRaw) {
@@ -482,14 +482,15 @@ export default function ContaClient() {
   }
 
   // Carregar dados salvos no localStorage
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- early returns dentro do useEffect sÃ£o vÃ¡lidos (nÃ£o sÃ£o Hooks condicionais)
   useEffect(() => {
     try {
-      // Coletar lista de todos os Bio Sites disponíveis no sistema (para switcher do admin)
+      // Coletar lista de todos os Bio Sites disponÃ­veis no sistema (para switcher do admin)
       const sites: { slug: string; name: string; type: 'modelo' | 'cliente' }[] = []
       const savedProjectsRaw = localStorage.getItem('biovip_portfolio_projects')
       const pList: Project[] = savedProjectsRaw ? JSON.parse(savedProjectsRaw) : defaultProjects
       pList.forEach(p => {
-        sites.push({ slug: p.slug, name: `${p.name} · ${p.category}`, type: 'modelo' })
+        sites.push({ slug: p.slug, name: `${p.name} Â· ${p.category}`, type: 'modelo' })
       })
 
       const storedSubs = localStorage.getItem('biovip_subscriptions')
@@ -505,7 +506,7 @@ export default function ContaClient() {
       }
       setAllAvailableBiosites(sites)
 
-      // 1. Identificar se é Administrador Master autenticado exclusivamente com PIN no /admin
+      // 1. Identificar se Ã© Administrador Master autenticado exclusivamente com PIN no /admin
       const isAdminAuth = typeof window !== 'undefined' && (
         sessionStorage.getItem('biovip_admin_auth') === 'true' ||
         sessionStorage.getItem('biovip_admin_sec_session') !== null
@@ -521,7 +522,7 @@ export default function ContaClient() {
       }
       const clientSessionEmail = typeof window !== 'undefined' ? sessionStorage.getItem('biovip_client_session') : null
 
-      // Parâmetros na URL: ?edit=<slug> ou ?slug=<slug> ou ?novo=true
+      // ParÃ¢metros na URL: ?edit=<slug> ou ?slug=<slug> ou ?novo=true
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
       const editSlug = urlParams?.get('edit') || urlParams?.get('slug')
       const isNovo = urlParams?.get('novo') === 'true'
@@ -544,13 +545,13 @@ export default function ContaClient() {
         }
       } else {
         // =========================================================
-        // MODO CLIENTE: SEGURANÇA ESTRITA E ISOLAMENTO DE DADOS
+        // MODO CLIENTE: SEGURANÃ‡A ESTRITA E ISOLAMENTO DE DADOS
         // =========================================================
         setIsAdminMode(false)
 
-        // 1. Verificar se existe uma sessão válida de cliente autenticado
+        // 1. Verificar se existe uma sessÃ£o vÃ¡lida de cliente autenticado
         if (!clientSessionEmail && !loggedClient) {
-          console.warn('[SEGURANÇA] Tentativa de acesso não autenticado ao painel /conta. Redirecionando para login.')
+          console.warn('[SEGURANÃ‡A] Tentativa de acesso nÃ£o autenticado ao painel /conta. Redirecionando para login.')
           window.location.replace('/entrar?error=unauthorized')
           return
         }
@@ -582,9 +583,9 @@ export default function ContaClient() {
 
         const authorizedSlug = loggedClient?.slug || matchedUser?.slug || matchedSub?.slug
 
-        // 3. Se a sessão não corresponder a nenhum Bio Site existente, revogar sessão
+        // 3. Se a sessÃ£o nÃ£o corresponder a nenhum Bio Site existente, revogar sessÃ£o
         if (!authorizedSlug) {
-          console.warn(`[SEGURANÇA] Sessão inválida para o e-mail ${cleanSessionEmail}. Redirecionando para /entrar.`)
+          console.warn(`[SEGURANÃ‡A] SessÃ£o invÃ¡lida para o e-mail ${cleanSessionEmail}. Redirecionando para /entrar.`)
           sessionStorage.removeItem('biovip_client_session')
           localStorage.removeItem('biovip_logged_client')
           window.location.replace('/entrar?error=invalid_session')
@@ -592,9 +593,9 @@ export default function ContaClient() {
         }
 
         // 4. ANTI-IDOR / ISOLAMENTO MULTI-TENANT: Travar estritamente no Bio Site desta conta
-        // Se o cliente tentar passar ?edit=outro-slug na URL, impedimos e forçamos o seu slug legítimo
+        // Se o cliente tentar passar ?edit=outro-slug na URL, impedimos e forÃ§amos o seu slug legÃ­timo
         if (editSlug && editSlug !== authorizedSlug) {
-          console.warn(`[SEGURANÇA] Tentativa de adulteração de slug (${editSlug}) bloqueada para ${cleanSessionEmail}. Forçando ${authorizedSlug}.`)
+          console.warn(`[SEGURANÃ‡A] Tentativa de adulteraÃ§Ã£o de slug (${editSlug}) bloqueada para ${cleanSessionEmail}. ForÃ§ando ${authorizedSlug}.`)
           if (typeof window !== 'undefined' && window.history.replaceState) {
             window.history.replaceState(null, '', `/conta?edit=${authorizedSlug}`)
           }
@@ -602,8 +603,8 @@ export default function ContaClient() {
 
         activeSlug = authorizedSlug
 
-        // REGRA DE OURO: Clientes operam exclusivamente na página do cliente ('dashboard').
-        // A página de edição do estúdio (3 colunas) é exclusiva do ADM.
+        // REGRA DE OURO: Clientes operam exclusivamente na pÃ¡gina do cliente ('dashboard').
+        // A pÃ¡gina de ediÃ§Ã£o do estÃºdio (3 colunas) Ã© exclusiva do ADM.
         setCurrentView('dashboard')
 
         if (urlParams?.get('tab') === 'galeria' || urlParams?.get('secao') === 'fotos') {
@@ -630,7 +631,7 @@ export default function ContaClient() {
         if (loggedClient.phone) setUserPhone(loggedClient.phone)
       }
 
-      // Carregar configurações visuais salvas do BioVip (Paleta, Tipografia, Botões, Foto, etc.)
+      // Carregar configuraÃ§Ãµes visuais salvas do BioVip (Paleta, Tipografia, BotÃµes, Foto, etc.)
       const savedSiteRaw = localStorage.getItem('biovip_site_' + activeSlug) || localStorage.getItem('biovip_user_site')
       if (savedSiteRaw) {
         try {
@@ -672,7 +673,7 @@ export default function ContaClient() {
         if (p.trackPageView !== undefined) setTrackPageView(p.trackPageView)
       }
 
-      // 4. Carregar status da assinatura, verificação de pendência e prazo de 48 horas
+      // 4. Carregar status da assinatura, verificaÃ§Ã£o de pendÃªncia e prazo de 48 horas
       if (storedSubs) {
         try {
           const subs = JSON.parse(storedSubs)
@@ -703,7 +704,7 @@ export default function ContaClient() {
     }
   }, [])
 
-  // Ação de Confirmação e Regularização de Pagamento
+  // AÃ§Ã£o de ConfirmaÃ§Ã£o e RegularizaÃ§Ã£o de Pagamento
   const handleConfirmPayment = () => {
     setIsProcessingPayment(true)
     setTimeout(() => {
@@ -774,7 +775,7 @@ export default function ContaClient() {
     document.body.removeChild(link)
   }
 
-  // Salvar alterações de qualquer Bio Site
+  // Salvar alteraÃ§Ãµes de qualquer Bio Site
   const handleSavePage = () => {
     let existingData: any = {}
     try {
@@ -812,7 +813,7 @@ export default function ContaClient() {
       subpages: additionalPages.map(ap => ({
         slug: ap.slug,
         title: ap.title,
-        description: `Página ${ap.title} de ${businessTitle || brandName}`,
+        description: `PÃ¡gina ${ap.title} de ${businessTitle || brandName}`,
         previewType: (ap.templateId as any) || 'services'
       }))
     }
@@ -822,13 +823,13 @@ export default function ContaClient() {
       localStorage.setItem('biovip_site_' + slug, JSON.stringify(siteData))
       localStorage.setItem('biovip_site_' + slug + '_pages', JSON.stringify(additionalPages))
 
-      // 2. Se não estiver no modo admin (ou se for o site do próprio usuário)
+      // 2. Se nÃ£o estiver no modo admin (ou se for o site do prÃ³prio usuÃ¡rio)
       if (!isAdminMode) {
         localStorage.setItem('biovip_user_site', JSON.stringify(siteData))
         localStorage.setItem('biovip_client_pages', JSON.stringify(additionalPages))
       }
 
-      // 3. Se for modelo de portfólio, sincroniza no biovip_portfolio_projects
+      // 3. Se for modelo de portfÃ³lio, sincroniza no biovip_portfolio_projects
       const storedProjects = localStorage.getItem('biovip_portfolio_projects')
       if (storedProjects) {
         try {
@@ -875,7 +876,7 @@ export default function ContaClient() {
           }
         } catch (e) {}
       }
-      // 5. Sincronização em Nuvem (Supabase se configurado)
+      // 5. SincronizaÃ§Ã£o em Nuvem (Supabase se configurado)
       saveBioSite(slug, siteData).then((res) => {
         if (res.cloudSynced) {
           console.log(`[BioVip Nuvem] Site /${slug} sincronizado com sucesso no Supabase!`)
@@ -904,7 +905,7 @@ export default function ContaClient() {
     setTimeout(() => setPixelSavedSuccess(false), 3000)
   }
 
-  // Preenchimento Automático com IA baseado no nicho
+  // Preenchimento AutomÃ¡tico com IA baseado no nicho
   const handleAiAutoFill = () => {
     const aiData = generateNicheContent(niche)
     setBusinessTitle(aiData.brandName)
@@ -920,7 +921,7 @@ export default function ContaClient() {
     setButtons(aiData.buttons.map(b => ({
       id: b.id,
       label: b.label.toUpperCase(),
-      subtitle: b.label.toLowerCase().includes('agend') ? 'Escolha o melhor horário para sua consulta.' : b.label.toLowerCase().includes('catálogo') || b.label.toLowerCase().includes('proced') ? 'Conheça nossos protocolos e valores exclusivos.' : 'Veja a rota até o consultório / espaço',
+      subtitle: b.label.toLowerCase().includes('agend') ? 'Escolha o melhor horÃ¡rio para sua consulta.' : b.label.toLowerCase().includes('catÃ¡logo') || b.label.toLowerCase().includes('proced') ? 'ConheÃ§a nossos protocolos e valores exclusivos.' : 'Veja a rota atÃ© o consultÃ³rio / espaÃ§o',
       icon: b.icon || 'calendar',
       url: b.targetType === 'whatsapp' ? `https://wa.me/${b.value}` : b.value
     })))
@@ -939,13 +940,13 @@ export default function ContaClient() {
 
   const handleAddButton = () => {
     if (buttons.length >= 20) {
-      alert('Você atingiu o limite de 20 botões.')
+      alert('VocÃª atingiu o limite de 20 botÃµes.')
       return
     }
     const newBtn = {
       id: `btn-${Date.now()}`,
-      label: 'NOVO BOTÃO VIP',
-      subtitle: 'Toque para abrir atendimento prioritário.',
+      label: 'NOVO BOTÃƒO VIP',
+      subtitle: 'Toque para abrir atendimento prioritÃ¡rio.',
       icon: 'sparkles',
       url: 'https://wa.me/5531999999999'
     }
@@ -955,14 +956,14 @@ export default function ContaClient() {
 
   const handleRemoveButton = (btnId: string) => {
     if (buttons.length <= 1) {
-      alert('Seu Bio Site precisa ter pelo menos um botão.')
+      alert('Seu Bio Site precisa ter pelo menos um botÃ£o.')
       return
     }
     setButtons(buttons.filter(b => b.id !== btnId))
     setHasUnsavedChanges(true)
   }
 
-  // Upload e Tratamento Híbrido da Foto (Canvas Fade / Silhueta)
+  // Upload e Tratamento HÃ­brido da Foto (Canvas Fade / Silhueta)
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -1007,17 +1008,17 @@ export default function ContaClient() {
     }
   }
 
-  // Copiar link público
+  // Copiar link pÃºblico
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`https://${fullUrl}`)
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2000)
   }
 
-  // Adicionar Página Adicional
+  // Adicionar PÃ¡gina Adicional
   const handleSelectTemplate = (tpl: PageTemplate) => {
     if (additionalPages.length >= 3) {
-      alert('Você atingiu o limite de 3 páginas adicionais inclusas no seu Plano Pro. Para criar páginas ilimitadas, faça upgrade para o Plano Agência.')
+      alert('VocÃª atingiu o limite de 3 pÃ¡ginas adicionais inclusas no seu Plano Pro. Para criar pÃ¡ginas ilimitadas, faÃ§a upgrade para o Plano AgÃªncia.')
       return
     }
 
@@ -1044,9 +1045,9 @@ export default function ContaClient() {
     setTimeout(() => setSavedSuccess(false), 3000)
   }
 
-  // Excluir Página Adicional
+  // Excluir PÃ¡gina Adicional
   const handleDeletePage = (pageId: string) => {
-    if (confirm('Tem certeza que deseja remover esta página adicional?')) {
+    if (confirm('Tem certeza que deseja remover esta pÃ¡gina adicional?')) {
       const updated = additionalPages.filter(p => p.id !== pageId)
       setAdditionalPages(updated)
       try {
@@ -1057,7 +1058,7 @@ export default function ContaClient() {
     }
   }
 
-  // Alternar conexão de gateway
+  // Alternar conexÃ£o de gateway
   const toggleGateway = (gatewayId: string) => {
     setConnectedGateways(prev => ({
       ...prev,
@@ -1078,7 +1079,7 @@ export default function ContaClient() {
     return true
   })
 
-  // Renderizador Reutilizável: Módulos VIP de Alta Conversão (12 Seções)
+  // Renderizador ReutilizÃ¡vel: MÃ³dulos VIP de Alta ConversÃ£o (12 SeÃ§Ãµes)
   const renderModulosVipEditor = () => (
     <div className="space-y-6 animate-fade-in pt-2">
       {/* 1. BARRA DE ALERTA & ESCASSEZ */}
@@ -1129,7 +1130,7 @@ export default function ContaClient() {
                 setAnnouncementData(prev => ({ ...prev, text: e.target.value }))
                 setHasUnsavedChanges(true)
               }}
-              placeholder="Ex: Últimos horários disponíveis para esta semana."
+              placeholder="Ex: Ãšltimos horÃ¡rios disponÃ­veis para esta semana."
               className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
             />
           </div>
@@ -1146,7 +1147,7 @@ export default function ContaClient() {
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Cronômetro Regressivo</span>
+            <span>CronÃ´metro Regressivo</span>
           </label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-stone-500">Tempo:</span>
@@ -1166,14 +1167,14 @@ export default function ContaClient() {
         </div>
       </div>
 
-      {/* 2. CATÁLOGO DE SERVIÇOS VIP */}
+      {/* 2. CATÃLOGO DE SERVIÃ‡OS VIP */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-500" />
             <div>
-              <h3 className="font-bold text-sm text-stone-900">Catálogo de Procedimentos VIP</h3>
-              <p className="text-[11px] text-stone-500">Apresente seus serviços com preço, duração e WhatsApp individual.</p>
+              <h3 className="font-bold text-sm text-stone-900">CatÃ¡logo de Procedimentos VIP</h3>
+              <p className="text-[11px] text-stone-500">Apresente seus serviÃ§os com preÃ§o, duraÃ§Ã£o e WhatsApp individual.</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer">
@@ -1186,14 +1187,14 @@ export default function ContaClient() {
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Exibir Catálogo</span>
+            <span>Exibir CatÃ¡logo</span>
           </label>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Título da Seção
+              TÃ­tulo da SeÃ§Ã£o
             </label>
             <input
               type="text"
@@ -1207,7 +1208,7 @@ export default function ContaClient() {
           </div>
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Subtítulo
+              SubtÃ­tulo
             </label>
             <input
               type="text"
@@ -1221,7 +1222,7 @@ export default function ContaClient() {
           </div>
         </div>
 
-        {/* Lista de Itens do Catálogo */}
+        {/* Lista de Itens do CatÃ¡logo */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-stone-800">Procedimentos ({servicesCatalogData.items.length})</span>
@@ -1232,12 +1233,12 @@ export default function ContaClient() {
                   id: `srv-${Date.now().toString().slice(-4)}`,
                   category: 'MAIS PROCURADO',
                   name: 'Novo Procedimento VIP',
-                  description: 'Descrição do procedimento exclusivo com atendimento personalizado.',
+                  description: 'DescriÃ§Ã£o do procedimento exclusivo com atendimento personalizado.',
                   price: 'R$ 250',
-                  duration: '⏱ 1h30',
+                  duration: 'â± 1h30',
                   badge: 'MAIS PROCURADO',
                   featured: true,
-                  whatsappMessage: 'Olá! Gostaria de agendar este procedimento.'
+                  whatsappMessage: 'OlÃ¡! Gostaria de agendar este procedimento.'
                 }
                 setServicesCatalogData(prev => ({
                   ...prev,
@@ -1306,7 +1307,7 @@ export default function ContaClient() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] text-stone-500 mb-0.5">Preço / Investimento</label>
+                  <label className="block text-[10px] text-stone-500 mb-0.5">PreÃ§o / Investimento</label>
                   <input
                     type="text"
                     value={item.price}
@@ -1321,7 +1322,7 @@ export default function ContaClient() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-stone-500 mb-0.5">Duração Estimada</label>
+                  <label className="block text-[10px] text-stone-500 mb-0.5">DuraÃ§Ã£o Estimada</label>
                   <input
                     type="text"
                     value={item.duration}
@@ -1331,14 +1332,14 @@ export default function ContaClient() {
                       setServicesCatalogData(prev => ({ ...prev, items: updated }))
                       setHasUnsavedChanges(true)
                     }}
-                    placeholder="Ex: ⏱ 1h30"
+                    placeholder="Ex: â± 1h30"
                     className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs bg-white text-stone-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] text-stone-500 mb-0.5">Descrição Curta</label>
+                <label className="block text-[10px] text-stone-500 mb-0.5">DescriÃ§Ã£o Curta</label>
                 <input
                   type="text"
                   value={item.description}
@@ -1352,7 +1353,7 @@ export default function ContaClient() {
                 />
               </div>
 
-              {/* Foto do Serviço / Procedimento e Modo de Exibição */}
+              {/* Foto do ServiÃ§o / Procedimento e Modo de ExibiÃ§Ã£o */}
               <div className="pt-2 border-t border-stone-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-semibold text-stone-700 flex items-center gap-1">
@@ -1425,14 +1426,14 @@ export default function ContaClient() {
         </div>
       </div>
 
-      {/* 3. LOCALIZAÇÃO & ROTAS (GPS WAZE / UBER / MAPS) */}
+      {/* 3. LOCALIZAÃ‡ÃƒO & ROTAS (GPS WAZE / UBER / MAPS) */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-500" />
             <div>
-              <h3 className="font-bold text-sm text-stone-900">Localização & Rotas com GPS</h3>
-              <p className="text-[11px] text-stone-500">Botões de rota direta no Waze, Google Maps e Uber.</p>
+              <h3 className="font-bold text-sm text-stone-900">LocalizaÃ§Ã£o & Rotas com GPS</h3>
+              <p className="text-[11px] text-stone-500">BotÃµes de rota direta no Waze, Google Maps e Uber.</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer">
@@ -1445,14 +1446,14 @@ export default function ContaClient() {
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Exibir Localização</span>
+            <span>Exibir LocalizaÃ§Ã£o</span>
           </label>
         </div>
 
         <div className="space-y-2.5">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Endereço Completo
+              EndereÃ§o Completo
             </label>
             <input
               type="text"
@@ -1461,7 +1462,7 @@ export default function ContaClient() {
                 setLocationData(prev => ({ ...prev, address: e.target.value }))
                 setHasUnsavedChanges(true)
               }}
-              placeholder="Ex: Av. Boa Viagem, 2190 - Sala 918 · Recife, PE"
+              placeholder="Ex: Av. Boa Viagem, 2190 - Sala 918 Â· Recife, PE"
               className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
             />
           </div>
@@ -1469,7 +1470,7 @@ export default function ContaClient() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-                Horários de Atendimento
+                HorÃ¡rios de Atendimento
               </label>
               <input
                 type="text"
@@ -1478,7 +1479,7 @@ export default function ContaClient() {
                   setLocationData(prev => ({ ...prev, hours: e.target.value }))
                   setHasUnsavedChanges(true)
                 }}
-                placeholder="Ex: Seg a Sex · 08:30 às 19:30"
+                placeholder="Ex: Seg a Sex Â· 08:30 Ã s 19:30"
                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
               />
             </div>
@@ -1493,7 +1494,7 @@ export default function ContaClient() {
                   setLocationData(prev => ({ ...prev, openStatus: e.target.value }))
                   setHasUnsavedChanges(true)
                 }}
-                placeholder="Ex: Aberto Agora · Agendamento VIP"
+                placeholder="Ex: Aberto Agora Â· Agendamento VIP"
                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
               />
             </div>
@@ -1528,7 +1529,7 @@ export default function ContaClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Texto do Botão de Abertura
+              Texto do BotÃ£o de Abertura
             </label>
             <input
               type="text"
@@ -1542,7 +1543,7 @@ export default function ContaClient() {
           </div>
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Título do Modal
+              TÃ­tulo do Modal
             </label>
             <input
               type="text"
@@ -1557,14 +1558,14 @@ export default function ContaClient() {
         </div>
       </div>
 
-      {/* 5. INDICADORES DE AUTORIDADE / MÉTRICAS */}
+      {/* 5. INDICADORES DE AUTORIDADE / MÃ‰TRICAS */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-600" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Indicadores de Autoridade & Prova Social</h3>
-              <p className="text-[11px] text-stone-500">Números que geram autoridade imediata no topo do perfil.</p>
+              <p className="text-[11px] text-stone-500">NÃºmeros que geram autoridade imediata no topo do perfil.</p>
             </div>
           </div>
           <button
@@ -1575,7 +1576,7 @@ export default function ContaClient() {
             }}
             className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition"
           >
-            <Plus className="w-3 h-3" /> Adicionar Métrica
+            <Plus className="w-3 h-3" /> Adicionar MÃ©trica
           </button>
         </div>
 
@@ -1590,11 +1591,11 @@ export default function ContaClient() {
                 }}
                 className="absolute top-2 right-2 text-stone-400 hover:text-rose-600 text-[11px] font-bold cursor-pointer"
               >
-                ✕
+                âœ•
               </button>
               <div>
                 <label className="block text-[9px] font-mono uppercase text-stone-400 font-bold mb-0.5">
-                  NÚMERO / VALOR
+                  NÃšMERO / VALOR
                 </label>
                 <input
                   type="text"
@@ -1610,7 +1611,7 @@ export default function ContaClient() {
               </div>
               <div>
                 <label className="block text-[9px] font-mono uppercase text-stone-400 font-bold mb-0.5">
-                  RÓTULO
+                  RÃ“TULO
                 </label>
                 <input
                   type="text"
@@ -1636,7 +1637,7 @@ export default function ContaClient() {
             <Clock className="w-4 h-4 text-blue-500" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Como Funciona (3 Etapas)</h3>
-              <p className="text-[11px] text-stone-500">Explica a jornada do cliente desde o primeiro clique até a entrega.</p>
+              <p className="text-[11px] text-stone-500">Explica a jornada do cliente desde o primeiro clique atÃ© a entrega.</p>
             </div>
           </div>
           <button
@@ -1644,7 +1645,7 @@ export default function ContaClient() {
             onClick={() => {
               setHowItWorksData(prev => [
                 ...prev,
-                { number: `0${prev.length + 1}`, title: 'Nova Etapa VIP', description: 'Explicação clara deste passo.' }
+                { number: `0${prev.length + 1}`, title: 'Nova Etapa VIP', description: 'ExplicaÃ§Ã£o clara deste passo.' }
               ])
               setHasUnsavedChanges(true)
             }}
@@ -1678,7 +1679,7 @@ export default function ContaClient() {
                     setHowItWorksData(up)
                     setHasUnsavedChanges(true)
                   }}
-                  placeholder="Título da Etapa"
+                  placeholder="TÃ­tulo da Etapa"
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-bold bg-white text-stone-900"
                 />
                 <input
@@ -1690,7 +1691,7 @@ export default function ContaClient() {
                     setHowItWorksData(up)
                     setHasUnsavedChanges(true)
                   }}
-                  placeholder="Descrição da etapa"
+                  placeholder="DescriÃ§Ã£o da etapa"
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-[11px] bg-white text-stone-700"
                 />
               </div>
@@ -1702,21 +1703,21 @@ export default function ContaClient() {
                 }}
                 className="text-stone-400 hover:text-rose-600 text-xs font-bold pt-1 cursor-pointer"
               >
-                ✕
+                âœ•
               </button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 7. DEPOIMENTOS & AVALIAÇÕES VIP */}
+      {/* 7. DEPOIMENTOS & AVALIAÃ‡Ã•ES VIP */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-amber-500" />
             <div>
-              <h3 className="font-bold text-sm text-stone-900">Depoimentos & Avaliações VIP</h3>
-              <p className="text-[11px] text-stone-500">Relatos reais de clientes com estrelas e procedência.</p>
+              <h3 className="font-bold text-sm text-stone-900">Depoimentos & AvaliaÃ§Ãµes VIP</h3>
+              <p className="text-[11px] text-stone-500">Relatos reais de clientes com estrelas e procedÃªncia.</p>
             </div>
           </div>
           <button
@@ -1808,7 +1809,7 @@ export default function ContaClient() {
             <FileText className="w-4 h-4 text-stone-700" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Sobre Mim & Posicionamento VIP</h3>
-              <p className="text-[11px] text-stone-500">Histórico profissional e diferenciais para reforçar credibilidade.</p>
+              <p className="text-[11px] text-stone-500">HistÃ³rico profissional e diferenciais para reforÃ§ar credibilidade.</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer">
@@ -1821,14 +1822,14 @@ export default function ContaClient() {
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Exibir Seção</span>
+            <span>Exibir SeÃ§Ã£o</span>
           </label>
         </div>
 
         <div className="space-y-2.5">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Título da Seção
+              TÃ­tulo da SeÃ§Ã£o
             </label>
             <input
               type="text"
@@ -1843,7 +1844,7 @@ export default function ContaClient() {
 
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Texto de Apresentação & Autoridade
+              Texto de ApresentaÃ§Ã£o & Autoridade
             </label>
             <textarea
               rows={3}
@@ -1880,7 +1881,7 @@ export default function ContaClient() {
             <HelpCircle className="w-4 h-4 text-amber-600" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Perguntas Frequentes (FAQ)</h3>
-              <p className="text-[11px] text-stone-500">Elimine objeções comuns antes do primeiro contato.</p>
+              <p className="text-[11px] text-stone-500">Elimine objeÃ§Ãµes comuns antes do primeiro contato.</p>
             </div>
           </div>
           <button
@@ -1925,7 +1926,7 @@ export default function ContaClient() {
                     setFaqData(up)
                     setHasUnsavedChanges(true)
                   }}
-                  placeholder="Qual é a pergunta?"
+                  placeholder="Qual Ã© a pergunta?"
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-bold bg-white text-stone-900"
                 />
               </div>
@@ -1949,7 +1950,7 @@ export default function ContaClient() {
         </div>
       </div>
 
-      {/* BOTÃO FIXO DE SALVAMENTO DE MÓDULOS */}
+      {/* BOTÃƒO FIXO DE SALVAMENTO DE MÃ“DULOS */}
       <div className="pt-2 flex items-center justify-between flex-wrap gap-3">
         <button
           type="button"
@@ -1961,7 +1962,7 @@ export default function ContaClient() {
           className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
-          SALVAR MÓDULOS VIP NO AR
+          SALVAR MÃ“DULOS VIP NO AR
         </button>
 
         <a
@@ -1976,30 +1977,30 @@ export default function ContaClient() {
     </div>
   )
 
-  // Renderizador Reutilizável: Pixels & Anúncios (Meta, GA4, TikTok)
+  // Renderizador ReutilizÃ¡vel: Pixels & AnÃºncios (Meta, GA4, TikTok)
   const renderPixelEditor = () => (
     <div className="space-y-6 animate-fade-in pt-2">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-purple-600 block font-bold">
-            RASTREAMENTO & CONVERSÕES
+            RASTREAMENTO & CONVERSÃ•ES
           </span>
           <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-900 text-[10px] font-mono font-bold">
-            PRO & AGÊNCIA
+            PRO & AGÃŠNCIA
           </span>
         </div>
         <h3 className="text-lg font-serif font-bold text-stone-900">
-          Pixels de Tráfego Pago & Anúncios
+          Pixels de TrÃ¡fego Pago & AnÃºncios
         </h3>
         <p className="text-xs text-stone-500 mt-0.5">
-          Rastreie cliques no WhatsApp, visualizações de catálogo e conversões de Meta Ads, Google Ads e TikTok.
+          Rastreie cliques no WhatsApp, visualizaÃ§Ãµes de catÃ¡logo e conversÃµes de Meta Ads, Google Ads e TikTok.
         </p>
       </div>
 
       {pixelSavedSuccess && (
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          Pixels salvos com sucesso! Os eventos serão disparados no seu BioSite.
+          Pixels salvos com sucesso! Os eventos serÃ£o disparados no seu BioSite.
         </div>
       )}
 
@@ -2037,7 +2038,7 @@ export default function ContaClient() {
             )}
           </div>
           <div>
-            <label className="text-[9px] font-mono uppercase text-stone-400 block font-bold mb-1">ID MEDIÇÃO GA4</label>
+            <label className="text-[9px] font-mono uppercase text-stone-400 block font-bold mb-1">ID MEDIÃ‡ÃƒO GA4</label>
             <input
               type="text"
               value={googleAnalyticsId}
@@ -2080,8 +2081,8 @@ export default function ContaClient() {
             className="mt-0.5 accent-black w-4 h-4 rounded cursor-pointer"
           />
           <div>
-            <span className="text-xs font-bold text-stone-900">Disparar evento 'Lead' ao tocar no WhatsApp</span>
-            <p className="text-[11px] text-stone-500">Mede conversão real de campanhas de tráfego pago.</p>
+            <span className="text-xs font-bold text-stone-900">Disparar evento &apos;Lead&apos; ao tocar no WhatsApp</span>
+            <p className="text-[11px] text-stone-500">Mede conversÃ£o real de campanhas de trÃ¡fego pago.</p>
           </div>
         </label>
 
@@ -2093,8 +2094,8 @@ export default function ContaClient() {
             className="mt-0.5 accent-black w-4 h-4 rounded cursor-pointer"
           />
           <div>
-            <span className="text-xs font-bold text-stone-900">Disparar 'PageView' e 'ViewContent' ao abrir o BioSite</span>
-            <p className="text-[11px] text-stone-500">Permite criar públicos de remarketing para quem visitou seu link.</p>
+            <span className="text-xs font-bold text-stone-900">Disparar &apos;PageView&apos; e &apos;ViewContent&apos; ao abrir o BioSite</span>
+            <p className="text-[11px] text-stone-500">Permite criar pÃºblicos de remarketing para quem visitou seu link.</p>
           </div>
         </label>
       </div>
@@ -2104,19 +2105,19 @@ export default function ContaClient() {
         onClick={handleSavePixels}
         className="px-6 py-2.5 rounded-xl bg-black hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-sm"
       >
-        SALVAR CONFIGURAÇÃO DE PIXELS
+        SALVAR CONFIGURAÃ‡ÃƒO DE PIXELS
       </button>
     </div>
   )
 
-  // Renderizador Reutilizável: Aba de Pagamento & Regularização 48h
+  // Renderizador ReutilizÃ¡vel: Aba de Pagamento & RegularizaÃ§Ã£o 48h
   const renderPagamentoSection = () => {
     const isPendente = paymentStatus === 'pendente'
     const pixCopyCode = `00020126580014br.gov.bcb.pix0136biovip-${slug}-2026520400005303986540555.925802BR5925BIOVIP TECNOLOGIA LTDA6009SAO PAULO62070503***6304ABCD`
 
     return (
       <div className="space-y-6 animate-fade-in pt-2">
-        {/* CABEÇALHO DA SEÇÃO */}
+        {/* CABEÃ‡ALHO DA SEÃ‡ÃƒO */}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
@@ -2127,31 +2128,31 @@ export default function ContaClient() {
                 ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
                 : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
             }`}>
-              {isPendente ? 'PAGAMENTO PENDENTE (48H)' : 'PAGAMENTO CONFIRMADO · ATIVO'}
+              {isPendente ? 'PAGAMENTO PENDENTE (48H)' : 'PAGAMENTO CONFIRMADO Â· ATIVO'}
             </span>
           </div>
           <h3 className="text-xl font-serif font-bold text-stone-900">
-            Aba de Pagamento & Regularização do Bio Site
+            Aba de Pagamento & RegularizaÃ§Ã£o do Bio Site
           </h3>
           <p className="text-xs text-stone-500 mt-0.5">
             Gerencie sua assinatura, consulte faturas e regularize seu plano para manter seu link oficial online.
           </p>
         </div>
 
-        {/* FEEDBACK DE SUCESSO DE CONFIRMAÇÃO */}
+        {/* FEEDBACK DE SUCESSO DE CONFIRMAÃ‡ÃƒO */}
         {paymentSuccessFeedback && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-medium flex items-start gap-3 animate-fade-in shadow-xs">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
             <div>
               <strong className="block text-sm font-bold text-emerald-900">
-                🎉 Pagamento Confirmado com Sucesso!
+                ðŸŽ‰ Pagamento Confirmado com Sucesso!
               </strong>
-              Seu Bio Site <code className="font-mono font-bold">biovip.com.br/{slug}</code> está com assinatura 100% ativa, hospedagem protegida e livre de qualquer risco de suspensão.
+              Seu Bio Site <code className="font-mono font-bold">biovip.com.br/{slug}</code> estÃ¡ com assinatura 100% ativa, hospedagem protegida e livre de qualquer risco de suspensÃ£o.
             </div>
           </div>
         )}
 
-        {/* CARD PRINCIPAL DE STATUS COM AVISO EXIGIDO PELO USUÁRIO */}
+        {/* CARD PRINCIPAL DE STATUS COM AVISO EXIGIDO PELO USUÃRIO */}
         <div className={`p-6 rounded-3xl border transition-all ${
           isPendente
             ? 'bg-gradient-to-br from-amber-50/80 via-white to-amber-50/50 border-amber-300/80 shadow-sm'
@@ -2172,14 +2173,14 @@ export default function ContaClient() {
                   {isPendente ? 'Pagamento Pendente' : 'Assinatura Ativa & Regularizada'}
                 </h4>
                 <p className="text-xs text-stone-500">
-                  Plano BioVip Pro Anual · Domínio <span className="font-mono font-semibold text-stone-800">biovip.com.br/{slug}</span>
+                  Plano BioVip Pro Anual Â· DomÃ­nio <span className="font-mono font-semibold text-stone-800">biovip.com.br/{slug}</span>
                 </p>
               </div>
             </div>
 
             <div className="text-left sm:text-right">
               <div className="text-2xl font-bold font-mono text-stone-900">
-                R$ 55,92 <span className="text-xs font-normal text-stone-500 font-sans">/mês no anual</span>
+                R$ 55,92 <span className="text-xs font-normal text-stone-500 font-sans">/mÃªs no anual</span>
               </div>
               <div className="text-[11px] text-stone-500 font-mono">
                 Total R$ 671,04/ano ou R$ 79,00 avulso
@@ -2187,41 +2188,41 @@ export default function ContaClient() {
             </div>
           </div>
 
-          {/* ALERTA DE TOLERÂNCIA DE 48 HORAS */}
+          {/* ALERTA DE TOLERÃ‚NCIA DE 48 HORAS */}
           {isPendente ? (
             <div className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs leading-relaxed space-y-2">
               <div className="flex items-center gap-2 font-bold text-amber-900 uppercase tracking-wide">
                 <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                <span>Aviso de Tolerância de 48 Horas:</span>
+                <span>Aviso de TolerÃ¢ncia de 48 Horas:</span>
               </div>
               <p className="font-medium text-stone-800">
-                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se após 48 horas o pagamento não for confirmado, o Bio Site será suspenso.</strong>
+                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se apÃ³s 48 horas o pagamento nÃ£o for confirmado, o Bio Site serÃ¡ suspenso.</strong>
               </p>
               <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-amber-800">
                 <Clock className="w-3.5 h-3.5" />
-                <span>Tempo restante estimado: <strong>{remainingHours} horas</strong> para confirmação.</span>
+                <span>Tempo restante estimado: <strong>{remainingHours} horas</strong> para confirmaÃ§Ã£o.</span>
               </div>
             </div>
           ) : (
             <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Assinatura regularizada. Próxima renovação automática programada para daqui a 1 ano.</span>
+              <span>Assinatura regularizada. PrÃ³xima renovaÃ§Ã£o automÃ¡tica programada para daqui a 1 ano.</span>
             </div>
           )}
         </div>
 
-        {/* FORMAS DE PAGAMENTO COM LIBERAÇÃO */}
+        {/* FORMAS DE PAGAMENTO COM LIBERAÃ‡ÃƒO */}
         <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-6 shadow-xs">
           <div>
             <h4 className="text-base font-serif font-bold text-stone-900">
               Escolha a Forma de Pagamento
             </h4>
             <p className="text-xs text-stone-500 mt-0.5">
-              Pague com segurança criptografada e liberação imediata da sua conta.
+              Pague com seguranÃ§a criptografada e liberaÃ§Ã£o imediata da sua conta.
             </p>
           </div>
 
-          {/* SELETOR PIX OU CARTÃO */}
+          {/* SELETOR PIX OU CARTÃƒO */}
           <div className="grid grid-cols-2 gap-3 p-1 rounded-2xl bg-stone-100">
             <button
               type="button"
@@ -2233,9 +2234,9 @@ export default function ContaClient() {
               }`}
             >
               <QrCode className="w-4 h-4 text-emerald-600" />
-              <span>PIX Instantâneo</span>
+              <span>PIX InstantÃ¢neo</span>
               <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold hidden sm:inline">
-                LIBERAÇÃO IMEDIATA
+                LIBERAÃ‡ÃƒO IMEDIATA
               </span>
             </button>
 
@@ -2249,14 +2250,14 @@ export default function ContaClient() {
               }`}
             >
               <CreditCard className="w-4 h-4 text-indigo-600" />
-              <span>Cartão de Crédito</span>
+              <span>CartÃ£o de CrÃ©dito</span>
               <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 font-mono font-bold hidden sm:inline">
-                ATÉ 12X
+                ATÃ‰ 12X
               </span>
             </button>
           </div>
 
-          {/* CONTEÚDO DO PIX */}
+          {/* CONTEÃšDO DO PIX */}
           {activePaymentMethod === 'pix' && (
             <div className="space-y-6 pt-2 animate-fade-in">
               <div className="flex flex-col sm:flex-row items-center gap-6 p-5 rounded-2xl bg-stone-50 border border-stone-200">
@@ -2294,7 +2295,7 @@ export default function ContaClient() {
                     <rect x="84" y="65" width="6" height="6" fill="#1c1917" />
                     <rect x="84" y="84" width="6" height="6" fill="#1c1917" />
                   </svg>
-                  <span className="text-[9px] font-mono text-stone-400 mt-1 uppercase">Aponte a câmera</span>
+                  <span className="text-[9px] font-mono text-stone-400 mt-1 uppercase">Aponte a cÃ¢mera</span>
                 </div>
 
                 <div className="flex-1 space-y-3 w-full">
@@ -2319,7 +2320,7 @@ export default function ContaClient() {
                         <span>{pixCopied ? 'Copiada!' : 'Copiar Chave Celular'}</span>
                       </button>
                       <a
-                        href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Realizei o pagamento via Pix da anuidade do BioSite ${slug} e gostaria de enviar o comprovante para liberação imediata.`)}`}
+                        href={`https://wa.me/5531991390202?text=${encodeURIComponent(`OlÃ¡! Realizei o pagamento via Pix da anuidade do BioSite ${slug} e gostaria de enviar o comprovante para liberaÃ§Ã£o imediata.`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition flex items-center gap-1 cursor-pointer ml-auto"
@@ -2332,10 +2333,10 @@ export default function ContaClient() {
 
                   <div>
                     <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
-                      CÓDIGO PIX COPIA E COLA
+                      CÃ“DIGO PIX COPIA E COLA
                     </span>
                     <p className="text-xs text-stone-600 mt-0.5">
-                      Ou abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o código abaixo:
+                      Ou abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o cÃ³digo abaixo:
                     </p>
                   </div>
 
@@ -2370,8 +2371,8 @@ export default function ContaClient() {
                   </div>
 
                   <div className="flex items-center gap-4 text-[11px] text-stone-500 font-medium">
-                    <span>Beneficiário: <strong>BioVip Tecnologia / Suporte Oficial</strong></span>
-                    <span>•</span>
+                    <span>BeneficiÃ¡rio: <strong>BioVip Tecnologia / Suporte Oficial</strong></span>
+                    <span>â€¢</span>
                     <span>WhatsApp: <strong>(31) 99139-0202</strong></span>
                   </div>
                 </div>
@@ -2399,7 +2400,7 @@ export default function ContaClient() {
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>{isPendente ? 'CONFIRMAR PAGAMENTO (ATIVAR IMEDIATAMENTE)' : 'PAGAMENTO JÁ CONFIRMADO'}</span>
+                      <span>{isPendente ? 'CONFIRMAR PAGAMENTO (ATIVAR IMEDIATAMENTE)' : 'PAGAMENTO JÃ CONFIRMADO'}</span>
                     </>
                   )}
                 </button>
@@ -2407,13 +2408,13 @@ export default function ContaClient() {
             </div>
           )}
 
-          {/* CONTEÚDO DO CARTÃO */}
+          {/* CONTEÃšDO DO CARTÃƒO */}
           {activePaymentMethod === 'cartao' && (
             <div className="space-y-4 pt-2 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
-                    NOME IMPRESSO NO CARTÃO *
+                    NOME IMPRESSO NO CARTÃƒO *
                   </label>
                   <input
                     type="text"
@@ -2426,7 +2427,7 @@ export default function ContaClient() {
 
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
-                    NÚMERO DO CARTÃO *
+                    NÃšMERO DO CARTÃƒO *
                   </label>
                   <div className="relative">
                     <input
@@ -2457,7 +2458,7 @@ export default function ContaClient() {
 
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
-                    CÓDIGO CVV *
+                    CÃ“DIGO CVV *
                   </label>
                   <input
                     type="password"
@@ -2478,7 +2479,7 @@ export default function ContaClient() {
                     onChange={(e) => setCardInstallments(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900 bg-white"
                   >
-                    <option value="1">1x de R$ 671,04 à vista (com desconto anual)</option>
+                    <option value="1">1x de R$ 671,04 Ã  vista (com desconto anual)</option>
                     <option value="3">3x de R$ 223,68 sem juros</option>
                     <option value="6">6x de R$ 111,84 sem juros</option>
                     <option value="12">12x de R$ 55,92 sem juros (Recomendado)</option>
@@ -2493,11 +2494,11 @@ export default function ContaClient() {
                 className="w-full py-4 rounded-xl bg-stone-950 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
                 {isProcessingPayment ? (
-                  <span>Processando transação segura...</span>
+                  <span>Processando transaÃ§Ã£o segura...</span>
                 ) : (
                   <>
                     <Lock className="w-4 h-4 text-amber-400" />
-                    <span>PAGAR COM CARTÃO & ATIVAR BIOSITE</span>
+                    <span>PAGAR COM CARTÃƒO & ATIVAR BIOSITE</span>
                   </>
                 )}
               </button>
@@ -2510,7 +2511,7 @@ export default function ContaClient() {
           )}
         </div>
 
-        {/* BENEFÍCIOS GARANTIDOS */}
+        {/* BENEFÃCIOS GARANTIDOS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
             <ShieldCheck className="w-5 h-5 text-emerald-600 mx-auto" />
@@ -2519,13 +2520,13 @@ export default function ContaClient() {
           </div>
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
             <Sparkles className="w-5 h-5 text-amber-600 mx-auto" />
-            <h5 className="text-xs font-bold text-stone-900">12 Módulos VIP Liberados</h5>
-            <p className="text-[11px] text-stone-500">Todos os módulos de conversão, catálogo e quiz ativos.</p>
+            <h5 className="text-xs font-bold text-stone-900">12 MÃ³dulos VIP Liberados</h5>
+            <p className="text-[11px] text-stone-500">Todos os mÃ³dulos de conversÃ£o, catÃ¡logo e quiz ativos.</p>
           </div>
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
             <Users className="w-5 h-5 text-indigo-600 mx-auto" />
             <h5 className="text-xs font-bold text-stone-900">Suporte Dedicado VIP</h5>
-            <p className="text-[11px] text-stone-500">Atendimento prioritário via WhatsApp direto da equipe.</p>
+            <p className="text-[11px] text-stone-500">Atendimento prioritÃ¡rio via WhatsApp direto da equipe.</p>
           </div>
         </div>
       </div>
@@ -2536,7 +2537,7 @@ export default function ContaClient() {
   // ARQUITETURA MODERNA DE 3 COLUNAS: EDITOR DO BIOSITE (EXCLUSIVO DO ADM)
   // =========================================================
   if (currentView === 'editar_pagina') {
-    // SEGURANÇA E REGRA DE NEGÓCIO: Esta página de edição é 100% exclusiva do ADM
+    // SEGURANÃ‡A E REGRA DE NEGÃ“CIO: Esta pÃ¡gina de ediÃ§Ã£o Ã© 100% exclusiva do ADM
     if (!isAdminMode) {
       if (typeof window !== 'undefined') {
         window.location.replace('/conta')
@@ -2641,7 +2642,7 @@ export default function ContaClient() {
     )
   }
 
-  // Geração e Download Direto da Arte do Story em PNG HD (1080x1920)
+  // GeraÃ§Ã£o e Download Direto da Arte do Story em PNG HD (1080x1920)
   const handleDownloadStoryPng = async () => {
     setIsGeneratingStoryPng(true)
     try {
@@ -2651,7 +2652,7 @@ export default function ContaClient() {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      // 1. Fundo com Degradê Cinematográfico
+      // 1. Fundo com DegradÃª CinematogrÃ¡fico
       const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920)
       bgGrad.addColorStop(0, '#0f1118')
       bgGrad.addColorStop(0.5, '#090a0f')
@@ -2684,9 +2685,9 @@ export default function ContaClient() {
       ctx.fillStyle = '#34d399'
       ctx.font = 'bold 24px monospace'
       ctx.textAlign = 'center'
-      ctx.fillText('● NO AR NO INSTAGRAM', 840, 133)
+      ctx.fillText('â— NO AR NO INSTAGRAM', 840, 133)
 
-      // 4. Foto de Estúdio Circular do Profissional
+      // 4. Foto de EstÃºdio Circular do Profissional
       const photoSrc = customPhotoSrc || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -2729,9 +2730,9 @@ export default function ContaClient() {
 
       ctx.fillStyle = '#fbbf24'
       ctx.font = 'bold 28px monospace'
-      ctx.fillText((businessTitle || niche || 'ODONTOLOGIA ESTÉTICA').toUpperCase(), 540, 1080)
+      ctx.fillText((businessTitle || niche || 'ODONTOLOGIA ESTÃ‰TICA').toUpperCase(), 540, 1080)
 
-      // 6. Selo de Avaliações 5.0
+      // 6. Selo de AvaliaÃ§Ãµes 5.0
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)'
       ctx.lineWidth = 2
@@ -2742,7 +2743,7 @@ export default function ContaClient() {
 
       ctx.fillStyle = '#fde68a'
       ctx.font = '26px sans-serif'
-      ctx.fillText('★ 5.0 · Avaliações 5 Estrelas no Google', 540, 1182)
+      ctx.fillText('â˜… 5.0 Â· AvaliaÃ§Ãµes 5 Estrelas no Google', 540, 1182)
 
       // 7. Figurinha de Link do Instagram (Sticker 3D)
       ctx.fillStyle = '#ffffff'
@@ -2797,7 +2798,7 @@ export default function ContaClient() {
               </div>
             </div>
 
-            {/* Seletor Rápido de Qualquer Outro Bio Site & Links de Ação */}
+            {/* Seletor RÃ¡pido de Qualquer Outro Bio Site & Links de AÃ§Ã£o */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5 bg-stone-950/10 px-2.5 py-1 rounded-lg border border-stone-950/15">
                 <Sliders className="w-3 h-3 text-stone-900" />
@@ -2813,7 +2814,7 @@ export default function ContaClient() {
                   }}
                   className="bg-stone-900 text-amber-300 font-medium text-xs px-2 py-0.5 rounded border border-stone-700 focus:outline-none cursor-pointer"
                 >
-                  <optgroup label="Modelos do Portfólio (13 Nichos)">
+                  <optgroup label="Modelos do PortfÃ³lio (13 Nichos)">
                     {allAvailableBiosites.filter(s => s.type === 'modelo').map(s => (
                       <option key={s.slug} value={s.slug}>
                         {s.name} (/{s.slug})
@@ -2837,7 +2838,7 @@ export default function ContaClient() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-2.5 py-1 rounded-lg bg-stone-950/15 hover:bg-stone-950/25 text-stone-950 text-xs font-bold flex items-center gap-1 transition"
-                title="Abrir página ao vivo em nova aba"
+                title="Abrir pÃ¡gina ao vivo em nova aba"
               >
                 <ExternalLink className="w-3 h-3" /> Ver ao vivo
               </a>
@@ -2854,11 +2855,11 @@ export default function ContaClient() {
       )}
 
       {/* ========================================================= */}
-      {/* BARRA SUPERIOR EXCLUSIVA DO ESPAÇO DE TRABALHO BIOVIP */}
+      {/* BARRA SUPERIOR EXCLUSIVA DO ESPAÃ‡O DE TRABALHO BIOVIP */}
       {/* ========================================================= */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          {/* Logo & Identificação */}
+          {/* Logo & IdentificaÃ§Ã£o */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-serif font-black text-sm group-hover:bg-amber-500 group-hover:text-black transition">
@@ -2870,14 +2871,14 @@ export default function ContaClient() {
             </Link>
             <div className="h-4 w-px bg-stone-300 hidden sm:block" />
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[10px] font-mono font-bold uppercase tracking-wider">
-              ÁREA DO CLIENTE
+              ÃREA DO CLIENTE
             </span>
             <span className="hidden md:inline-flex text-xs font-mono font-semibold text-stone-500 bg-stone-50 px-2 py-0.5 rounded border border-stone-200">
               /{slug}
             </span>
           </div>
 
-          {/* Navegação Rápida entre Visões & Ações */}
+          {/* NavegaÃ§Ã£o RÃ¡pida entre VisÃµes & AÃ§Ãµes */}
           <div className="flex items-center gap-2">
             {isAdminMode && (
               <button
@@ -2901,7 +2902,7 @@ export default function ContaClient() {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">Serviços & Preços</span>
+              <span className="hidden sm:inline">ServiÃ§os & PreÃ§os</span>
             </button>
 
             <button
@@ -2917,7 +2918,7 @@ export default function ContaClient() {
               <span className="hidden sm:inline">Fotos da Galeria</span>
             </button>
 
-            {/* No Dashboard: Botões de Acesso Direto para Módulos VIP e Pixel */}
+            {/* No Dashboard: BotÃµes de Acesso Direto para MÃ³dulos VIP e Pixel */}
             {currentView === 'dashboard' && (
               <>
                 <button
@@ -2930,7 +2931,7 @@ export default function ContaClient() {
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="hidden sm:inline">Módulos VIP</span>
+                  <span className="hidden sm:inline">MÃ³dulos VIP</span>
                 </button>
                 <button
                   type="button"
@@ -2971,7 +2972,7 @@ export default function ContaClient() {
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1.5 transition"
-              title="Abrir página ao vivo em nova aba"
+              title="Abrir pÃ¡gina ao vivo em nova aba"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Ver no ar</span>
@@ -3002,7 +3003,7 @@ export default function ContaClient() {
         </div>
       </header>
 
-      {/* BANNER STICKY DE AVISO: PAGAMENTO PENDENTE & TOLERÂNCIA DE 48 HORAS */}
+      {/* BANNER STICKY DE AVISO: PAGAMENTO PENDENTE & TOLERÃ‚NCIA DE 48 HORAS */}
       {paymentStatus === 'pendente' && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border-b border-amber-500/40 px-4 py-3 sticky top-12 z-40 backdrop-blur-md">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-950 font-medium">
@@ -3012,9 +3013,9 @@ export default function ContaClient() {
               </span>
               <div>
                 <strong className="font-bold text-amber-900 uppercase tracking-wide mr-1.5">
-                  ⚠️ Pagamento Pendente:
+                  âš ï¸ Pagamento Pendente:
                 </strong>
-                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se após 48 horas o pagamento não for confirmado, o Bio Site será suspenso.</strong>
+                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se apÃ³s 48 horas o pagamento nÃ£o for confirmado, o Bio Site serÃ¡ suspenso.</strong>
                 <span className="ml-2 font-mono font-bold text-amber-900 bg-amber-200/90 px-2 py-0.5 rounded-full border border-amber-400">
                   {remainingHours > 0 ? `${remainingHours}h restantes` : 'Prazo limite'}
                 </span>
@@ -3032,29 +3033,29 @@ export default function ContaClient() {
               className="shrink-0 px-4 py-1.5 rounded-full bg-stone-950 hover:bg-stone-800 text-amber-300 hover:text-white font-bold text-xs uppercase tracking-wider transition shadow-sm cursor-pointer flex items-center gap-1.5"
             >
               <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-              <span>Regularizar Pagamento →</span>
+              <span>Regularizar Pagamento â†’</span>
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* 1. TELA PRINCIPAL DA ÁREA DO CLIENTE (IMAGEM 1) */}
+      {/* 1. TELA PRINCIPAL DA ÃREA DO CLIENTE (IMAGEM 1) */}
       {/* ========================================================= */}
       {currentView === 'dashboard' && (
         <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
           {savedSuccess && (
             <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2 animate-fade-in shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              Alterações salvas com sucesso! Sua página no ar foi atualizada.
+              AlteraÃ§Ãµes salvas com sucesso! Sua pÃ¡gina no ar foi atualizada.
             </div>
           )}
 
-          {/* CABEÇALHO COM SAUDAÇÃO E SAIR */}
+          {/* CABEÃ‡ALHO COM SAUDAÃ‡ÃƒO E SAIR */}
           <div className="flex items-start justify-between border-b border-stone-100 pb-8 mb-8">
             <div>
               <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-stone-400 block mb-1">
-                SUA ÁREA
+                SUA ÃREA
               </span>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-900 tracking-tight">
                 Oi, {brandName}.
@@ -3077,9 +3078,9 @@ export default function ContaClient() {
             </button>
           </div>
 
-          {/* GRID COM MENU LATERAL E CONTEÚDO PRINCIPAL (EXATAMENTE COMO NA IMAGEM 1) */}
+          {/* GRID COM MENU LATERAL E CONTEÃšDO PRINCIPAL (EXATAMENTE COMO NA IMAGEM 1) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            {/* SIDEBAR DE NAVEGAÇÃO ESQUERDA */}
+            {/* SIDEBAR DE NAVEGAÃ‡ÃƒO ESQUERDA */}
             <aside className="lg:col-span-3 space-y-1.5">
               <button
                 type="button"
@@ -3090,7 +3091,7 @@ export default function ContaClient() {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                SUA PÁGINA
+                SUA PÃGINA
               </button>
 
               <button
@@ -3104,7 +3105,7 @@ export default function ContaClient() {
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  SERVIÇOS & PREÇOS
+                  SERVIÃ‡OS & PREÃ‡OS
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-800 font-bold border border-amber-400/30">
                   EDITAR
@@ -3182,7 +3183,7 @@ export default function ContaClient() {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                ESTATÍSTICAS
+                ESTATÃSTICAS
               </button>
 
               <button
@@ -3240,7 +3241,7 @@ export default function ContaClient() {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                <span>PIXEL & TRÁFEGO</span>
+                <span>PIXEL & TRÃFEGO</span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-amber-400 text-stone-950 font-bold">
                   PRO
                 </span>
@@ -3257,20 +3258,20 @@ export default function ContaClient() {
               >
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Módulos VIP
+                  MÃ³dulos VIP
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-stone-900 text-amber-300 font-bold">
-                  12 SEÇÕES
+                  12 SEÃ‡Ã•ES
                 </span>
               </button>
             </aside>
 
-            {/* CONTEÚDO PRINCIPAL DA ABA SELECIONADA */}
+            {/* CONTEÃšDO PRINCIPAL DA ABA SELECIONADA */}
             <div className="lg:col-span-9 space-y-12">
-              {/* ABA SUA PÁGINA */}
+              {/* ABA SUA PÃGINA */}
               {activeSidebarTab === 'pagina' && (
                 <>
-                  {/* SEÇÃO 1: NO AR */}
+                  {/* SEÃ‡ÃƒO 1: NO AR */}
                   <div className="border-b border-stone-100 pb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div className="space-y-1.5">
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
@@ -3298,7 +3299,7 @@ export default function ContaClient() {
                         className="px-6 py-3 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-sm flex items-center gap-2"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Editar Serviços</span>
+                        <span>Editar ServiÃ§os</span>
                       </button>
 
                       <button
@@ -3324,7 +3325,7 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* ATALHOS RÁPIDOS DE EDIÇÃO PERMITIDA DO CLIENTE (SERVIÇOS & FOTOS) */}
+                  {/* ATALHOS RÃPIDOS DE EDIÃ‡ÃƒO PERMITIDA DO CLIENTE (SERVIÃ‡OS & FOTOS) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
                     <div
                       onClick={() => setActiveSidebarTab('servicos')}
@@ -3340,14 +3341,14 @@ export default function ContaClient() {
                       </div>
                       <div>
                         <h4 className="font-serif font-bold text-base text-stone-900 group-hover:text-amber-800 transition">
-                          Catálogo de Procedimentos & Preços
+                          CatÃ¡logo de Procedimentos & PreÃ§os
                         </h4>
                         <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                          Altere nomes, valores, durações e mensagens prontas do WhatsApp. Clientes chegam decididas.
+                          Altere nomes, valores, duraÃ§Ãµes e mensagens prontas do WhatsApp. Clientes chegam decididas.
                         </p>
                       </div>
                       <div className="pt-2 text-xs font-bold text-stone-800 flex items-center gap-1 group-hover:text-amber-700">
-                        <span>Gerenciar Serviços</span>
+                        <span>Gerenciar ServiÃ§os</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
@@ -3366,7 +3367,7 @@ export default function ContaClient() {
                       </div>
                       <div>
                         <h4 className="font-serif font-bold text-base text-stone-900 group-hover:text-amber-800 transition">
-                          Galeria & Portfólio de Trabalhos
+                          Galeria & PortfÃ³lio de Trabalhos
                         </h4>
                         <p className="text-xs text-stone-500 mt-1 leading-relaxed">
                           Adicione ou atualize fotos de procedimentos reais com legendas explicativas e zoom interativo.
@@ -3379,11 +3380,11 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* SEÇÃO 2: PÁGINAS ADICIONAIS */}
+                  {/* SEÃ‡ÃƒO 2: PÃGINAS ADICIONAIS */}
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
-                        PÁGINAS ADICIONAIS
+                        PÃGINAS ADICIONAIS
                       </span>
                       <span className="text-xs font-mono text-stone-400">
                         {additionalPages.length} de 3
@@ -3391,16 +3392,16 @@ export default function ContaClient() {
                     </div>
 
                     <p className="text-xs sm:text-sm text-stone-600 font-serif leading-relaxed max-w-2xl">
-                      Seu plano inclui 3 páginas adicionais — cardápio, álbum, resultados e outros modelos prontos, já na identidade do seu Bio Site. A loja é à parte e não ocupa essa vaga.
+                      Seu plano inclui 3 pÃ¡ginas adicionais â€” cardÃ¡pio, Ã¡lbum, resultados e outros modelos prontos, jÃ¡ na identidade do seu Bio Site. A loja Ã© Ã  parte e nÃ£o ocupa essa vaga.
                     </p>
 
-                    {/* LISTA DAS PÁGINAS ATIVAS */}
+                    {/* LISTA DAS PÃGINAS ATIVAS */}
                     {additionalPages.length > 0 && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                         {additionalPages.map((page, i) => (
                           <div key={page.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex flex-col justify-between space-y-3">
                             <div>
-                              <span className="text-[9px] font-mono uppercase text-stone-400 block">PÁGINA {i + 1}</span>
+                              <span className="text-[9px] font-mono uppercase text-stone-400 block">PÃGINA {i + 1}</span>
                               <div className="font-serif font-bold text-stone-900 text-sm mt-0.5">{page.title}</div>
                               <div className="text-[10px] font-mono text-stone-500 mt-1">/{slug}/{page.slug}</div>
                             </div>
@@ -3426,19 +3427,19 @@ export default function ContaClient() {
                       </div>
                     )}
 
-                    {/* BOTÃO CRIAR PÁGINA ADICIONAL */}
+                    {/* BOTÃƒO CRIAR PÃGINA ADICIONAL */}
                     <div className="pt-2">
                       <button
                         type="button"
                         onClick={() => setCurrentView('adicionar_pagina')}
                         className="px-7 py-3 rounded-full border border-stone-300 hover:border-stone-900 text-stone-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
                       >
-                        CRIAR PÁGINA ADICIONAL
+                        CRIAR PÃGINA ADICIONAL
                       </button>
                     </div>
                   </div>
 
-                  {/* SEÇÃO 3: TUTORIAL INSTAGRAM, DISPLAY DE BALCÃO & CARD PARA STORY */}
+                  {/* SEÃ‡ÃƒO 3: TUTORIAL INSTAGRAM, DISPLAY DE BALCÃƒO & CARD PARA STORY */}
                   <div className="pt-8 border-t border-stone-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* CARD 1: TUTORIAL PASSO A PASSO INSTAGRAM */}
                     <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border border-amber-200/80 space-y-4">
@@ -3448,7 +3449,7 @@ export default function ContaClient() {
                         </div>
                         <div>
                           <span className="text-[10px] font-mono uppercase tracking-wider text-amber-800 font-bold block">
-                            DIVULGAÇÃO & CONVERSÃO
+                            DIVULGAÃ‡ÃƒO & CONVERSÃƒO
                           </span>
                           <h4 className="text-sm font-bold text-stone-900">
                             Como colocar na Bio do Instagram
@@ -3493,7 +3494,7 @@ export default function ContaClient() {
                       </div>
                     </div>
 
-                    {/* CARD 2: DISPLAY DE BALCÃO COM QR CODE */}
+                    {/* CARD 2: DISPLAY DE BALCÃƒO COM QR CODE */}
                     <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4 flex flex-col justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2.5">
@@ -3502,15 +3503,15 @@ export default function ContaClient() {
                           </div>
                           <div>
                             <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
-                              EXPERIÊNCIA FÍSICA VIP
+                              EXPERIÃŠNCIA FÃSICA VIP
                             </span>
                             <h4 className="text-sm font-bold text-stone-900">
-                              Display de Balcão & Cartão de Visitas
+                              Display de BalcÃ£o & CartÃ£o de Visitas
                             </h4>
                           </div>
                         </div>
                         <p className="text-xs text-stone-600 leading-relaxed">
-                          Imprima este QR Code em acrílico para o balcão da sua recepção ou no verso do seu cartão. O cliente aponta a câmera e acessa seu catálogo completo!
+                          Imprima este QR Code em acrÃ­lico para o balcÃ£o da sua recepÃ§Ã£o ou no verso do seu cartÃ£o. O cliente aponta a cÃ¢mera e acessa seu catÃ¡logo completo!
                         </p>
                       </div>
 
@@ -3534,7 +3535,7 @@ export default function ContaClient() {
                             <span>Baixar QR Code HD (500px)</span>
                           </a>
                           <span className="text-[10px] text-stone-400 block text-center font-mono">
-                            Pronto para gráfica ou impressão
+                            Pronto para grÃ¡fica ou impressÃ£o
                           </span>
                         </div>
                       </div>
@@ -3557,7 +3558,7 @@ export default function ContaClient() {
                           </div>
                         </div>
                         <p className="text-xs text-stone-300 leading-relaxed">
-                          Divulgue seu novo BioSite nos Stories do Instagram com design cinematográfico de alta conversão.
+                          Divulgue seu novo BioSite nos Stories do Instagram com design cinematogrÃ¡fico de alta conversÃ£o.
                         </p>
                       </div>
 
@@ -3571,7 +3572,7 @@ export default function ContaClient() {
                           <span>Visualizar & Baixar Story HD</span>
                         </button>
                         <span className="text-[10px] text-stone-400 block text-center font-mono">
-                          Formato 1080x1920 · Pronto para postar
+                          Formato 1080x1920 Â· Pronto para postar
                         </span>
                       </div>
                     </div>
@@ -3580,24 +3581,24 @@ export default function ContaClient() {
               )}
 
               {/* ========================================================= */}
-              {/* ABA EDIÇÃO DE SERVIÇOS & PREÇOS (EXCLUSIVA DO CLIENTE) */}
+              {/* ABA EDIÃ‡ÃƒO DE SERVIÃ‡OS & PREÃ‡OS (EXCLUSIVA DO CLIENTE) */}
               {/* ========================================================= */}
               {activeSidebarTab === 'servicos' && (
                 <div className="space-y-8 animate-fade-in">
-                  {/* Cabeçalho da Seção */}
+                  {/* CabeÃ§alho da SeÃ§Ã£o */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                          EDIÇÃO DO CLIENTE
+                          EDIÃ‡ÃƒO DO CLIENTE
                         </span>
                         <span className="text-xs text-stone-400 font-mono">/{slug}</span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-                        Catálogo de Procedimentos & Preços
+                        CatÃ¡logo de Procedimentos & PreÃ§os
                       </h2>
                       <p className="text-xs text-stone-500 max-w-xl">
-                        Altere os nomes, valores fechados, durações e mensagens diretas do WhatsApp. Suas clientes já chegam sabendo o preço e prontas para fechar.
+                        Altere os nomes, valores fechados, duraÃ§Ãµes e mensagens diretas do WhatsApp. Suas clientes jÃ¡ chegam sabendo o preÃ§o e prontas para fechar.
                       </p>
                     </div>
 
@@ -3617,17 +3618,17 @@ export default function ContaClient() {
                         className="px-6 py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
                       >
                         <Save className="w-3.5 h-3.5 text-[#E2B857]" />
-                        <span>Salvar Alterações</span>
+                        <span>Salvar AlteraÃ§Ãµes</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* Configurações Globais do Catálogo */}
+                  {/* ConfiguraÃ§Ãµes Globais do CatÃ¡logo */}
                   <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-500" />
-                        <h3 className="font-bold text-sm text-stone-900">Status do Catálogo na sua Página</h3>
+                        <h3 className="font-bold text-sm text-stone-900">Status do CatÃ¡logo na sua PÃ¡gina</h3>
                       </div>
                       <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
                         <input
@@ -3639,14 +3640,14 @@ export default function ContaClient() {
                           }}
                           className="w-4 h-4 accent-stone-950 rounded cursor-pointer"
                         />
-                        <span>{servicesCatalogData.enabled ? 'Catálogo Visível no Bio Site' : 'Catálogo Oculto'}</span>
+                        <span>{servicesCatalogData.enabled ? 'CatÃ¡logo VisÃ­vel no Bio Site' : 'CatÃ¡logo Oculto'}</span>
                       </label>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          Título do Catálogo
+                          TÃ­tulo do CatÃ¡logo
                         </label>
                         <input
                           type="text"
@@ -3660,7 +3661,7 @@ export default function ContaClient() {
                       </div>
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          Subtítulo Explicativo
+                          SubtÃ­tulo Explicativo
                         </label>
                         <input
                           type="text"
@@ -3682,7 +3683,7 @@ export default function ContaClient() {
                       <div>
                         <h3 className="font-serif font-bold text-lg text-stone-900">Procedimentos Cadastrados</h3>
                         <p className="text-xs text-stone-500">
-                          Você tem <strong>{servicesCatalogData.items.length} procedimentos</strong> ativos. Clique em adicionar para criar mais.
+                          VocÃª tem <strong>{servicesCatalogData.items.length} procedimentos</strong> ativos. Clique em adicionar para criar mais.
                         </p>
                       </div>
 
@@ -3695,10 +3696,10 @@ export default function ContaClient() {
                             name: 'Novo Procedimento Exclusivo',
                             description: 'Atendimento personalizado com protocolo VIP e acompanhamento individual.',
                             price: 'R$ 200,00',
-                            duration: '⏱ 1h30',
+                            duration: 'â± 1h30',
                             badge: 'MAIS PROCURADO',
                             featured: true,
-                            whatsappMessage: 'Olá! Gostaria de agendar este procedimento no BioVip.'
+                            whatsappMessage: 'OlÃ¡! Gostaria de agendar este procedimento no BioVip.'
                           }
                           setServicesCatalogData(prev => ({
                             ...prev,
@@ -3788,7 +3789,7 @@ export default function ContaClient() {
 
                             <div className="sm:col-span-3">
                               <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
-                                Duração Estimada
+                                DuraÃ§Ã£o Estimada
                               </label>
                               <input
                                 type="text"
@@ -3799,14 +3800,14 @@ export default function ContaClient() {
                                   setServicesCatalogData(prev => ({ ...prev, items: updated }))
                                   setHasUnsavedChanges(true)
                                 }}
-                                placeholder="⏱ 1h30"
+                                placeholder="â± 1h30"
                                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
                               />
                             </div>
 
                             <div className="sm:col-span-12">
                               <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
-                                Descrição dos Benefícios
+                                DescriÃ§Ã£o dos BenefÃ­cios
                               </label>
                               <input
                                 type="text"
@@ -3817,14 +3818,14 @@ export default function ContaClient() {
                                   setServicesCatalogData(prev => ({ ...prev, items: updated }))
                                   setHasUnsavedChanges(true)
                                 }}
-                                placeholder="Breve explicação que elimina dúvidas e valoriza o atendimento"
+                                placeholder="Breve explicaÃ§Ã£o que elimina dÃºvidas e valoriza o atendimento"
                                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-700 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
                               />
                             </div>
 
                             <div className="sm:col-span-8">
                               <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
-                                Mensagem Automática para o WhatsApp
+                                Mensagem AutomÃ¡tica para o WhatsApp
                               </label>
                               <input
                                 type="text"
@@ -3864,7 +3865,7 @@ export default function ContaClient() {
 
                     <div className="pt-4 flex items-center justify-between border-t border-stone-100">
                       <span className="text-xs text-stone-500">
-                        Lembre-se de clicar em salvar para publicar as alterações no seu link oficial.
+                        Lembre-se de clicar em salvar para publicar as alteraÃ§Ãµes no seu link oficial.
                       </span>
                       <button
                         type="button"
@@ -3872,7 +3873,7 @@ export default function ContaClient() {
                         className="px-8 py-3 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
                       >
                         <Save className="w-4 h-4 text-[#E2B857]" />
-                        <span>Salvar Serviços no Bio Site</span>
+                        <span>Salvar ServiÃ§os no Bio Site</span>
                       </button>
                     </div>
                   </div>
@@ -3880,21 +3881,21 @@ export default function ContaClient() {
               )}
 
               {/* ========================================================= */}
-              {/* ABA EDIÇÃO DE FOTOS DA GALERIA (EXCLUSIVA DO CLIENTE) */}
+              {/* ABA EDIÃ‡ÃƒO DE FOTOS DA GALERIA (EXCLUSIVA DO CLIENTE) */}
               {/* ========================================================= */}
               {activeSidebarTab === 'galeria' && (
                 <div className="space-y-8 animate-fade-in">
-                  {/* Cabeçalho da Seção */}
+                  {/* CabeÃ§alho da SeÃ§Ã£o */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                          EDIÇÃO DO CLIENTE
+                          EDIÃ‡ÃƒO DO CLIENTE
                         </span>
                         <span className="text-xs text-stone-400 font-mono">/{slug}</span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-                        Fotos da Galeria & Portfólio de Trabalhos
+                        Fotos da Galeria & PortfÃ³lio de Trabalhos
                       </h2>
                       <p className="text-xs text-stone-500 max-w-xl">
                         Atualize os registros dos seus melhores procedimentos para transmitir autoridade e encantar suas visitantes no primeiro olhar.
@@ -3922,12 +3923,12 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* Configurações da Galeria */}
+                  {/* ConfiguraÃ§Ãµes da Galeria */}
                   <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Camera className="w-4 h-4 text-stone-700" />
-                        <h3 className="font-bold text-sm text-stone-900">Configuração da Seção de Galeria</h3>
+                        <h3 className="font-bold text-sm text-stone-900">ConfiguraÃ§Ã£o da SeÃ§Ã£o de Galeria</h3>
                       </div>
                       <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
                         <input
@@ -3939,7 +3940,7 @@ export default function ContaClient() {
                           }}
                           className="w-4 h-4 accent-stone-950 rounded cursor-pointer"
                         />
-                        <span>{galleryConfig.enabled ? 'Galeria Visível no Bio Site' : 'Galeria Oculta'}</span>
+                        <span>{galleryConfig.enabled ? 'Galeria VisÃ­vel no Bio Site' : 'Galeria Oculta'}</span>
                       </label>
                     </div>
 
@@ -3961,7 +3962,7 @@ export default function ContaClient() {
                       </div>
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          Título Principal
+                          TÃ­tulo Principal
                         </label>
                         <input
                           type="text"
@@ -3970,13 +3971,13 @@ export default function ContaClient() {
                             setGalleryConfig(prev => ({ ...prev, headline: e.target.value }))
                             setHasUnsavedChanges(true)
                           }}
-                          placeholder="Ex: Portfólio de Procedimentos"
+                          placeholder="Ex: PortfÃ³lio de Procedimentos"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
                         />
                       </div>
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          Subtítulo
+                          SubtÃ­tulo
                         </label>
                         <input
                           type="text"
@@ -3985,7 +3986,7 @@ export default function ContaClient() {
                             setGalleryConfig(prev => ({ ...prev, subtitle: e.target.value }))
                             setHasUnsavedChanges(true)
                           }}
-                          placeholder="Ex: Veja transformações de clientes reais"
+                          placeholder="Ex: Veja transformaÃ§Ãµes de clientes reais"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
                         />
                       </div>
@@ -3996,7 +3997,7 @@ export default function ContaClient() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-serif font-bold text-lg text-stone-900">Fotos no Portfólio</h3>
+                        <h3 className="font-serif font-bold text-lg text-stone-900">Fotos no PortfÃ³lio</h3>
                         <p className="text-xs text-stone-500">
                           {(galleryConfig.photos || galleryPhotos).length} fotos cadastradas. Cole a URL da imagem ou adicione fotos dos seus atendimentos.
                         </p>
@@ -4092,7 +4093,7 @@ export default function ContaClient() {
                                     setGalleryConfig(prev => ({ ...prev, captions: currentCaptions }))
                                     setHasUnsavedChanges(true)
                                   }}
-                                  placeholder="Ex: Volume Russo com curvatura D e retenção de 30 dias"
+                                  placeholder="Ex: Volume Russo com curvatura D e retenÃ§Ã£o de 30 dias"
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs text-stone-800 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
                                 />
                               </div>
@@ -4104,7 +4105,7 @@ export default function ContaClient() {
 
                     <div className="pt-4 flex items-center justify-between border-t border-stone-100">
                       <span className="text-xs text-stone-500">
-                        Suas fotos são salvas e publicadas em tempo real com zoom e lightbox interativo.
+                        Suas fotos sÃ£o salvas e publicadas em tempo real com zoom e lightbox interativo.
                       </span>
                       <button
                         type="button"
@@ -4130,7 +4131,7 @@ export default function ContaClient() {
                       Recebimentos & Gateways
                     </h2>
                     <p className="text-xs text-stone-500 mt-1">
-                      Conecte a sua conta e a loja passa a receber Pix, cartão e boleto na própria página.
+                      Conecte a sua conta e a loja passa a receber Pix, cartÃ£o e boleto na prÃ³pria pÃ¡gina.
                     </p>
                   </div>
 
@@ -4143,7 +4144,7 @@ export default function ContaClient() {
                           {connectedGateways.mercadopago && <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase">CONECTADO</span>}
                         </div>
                         <p className="text-xs text-stone-500 mt-1">
-                          Pix, cartão e boleto. O que o comprador brasileiro conhece.
+                          Pix, cartÃ£o e boleto. O que o comprador brasileiro conhece.
                         </p>
                       </div>
                       <button
@@ -4153,7 +4154,7 @@ export default function ContaClient() {
                           connectedGateways.mercadopago ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.mercadopago ? 'DESCONECTAR ✕' : 'CONECTAR →'}
+                        {connectedGateways.mercadopago ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
                       </button>
                     </div>
 
@@ -4174,7 +4175,7 @@ export default function ContaClient() {
                           connectedGateways.asaas ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.asaas ? 'DESCONECTAR ✕' : 'CONECTAR →'}
+                        {connectedGateways.asaas ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
                       </button>
                     </div>
 
@@ -4185,7 +4186,7 @@ export default function ContaClient() {
                           {connectedGateways.pagbank && <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase">CONECTADO</span>}
                         </div>
                         <p className="text-xs text-stone-500 mt-1">
-                          Pix e cartão, com a maquininha que a loja já usa.
+                          Pix e cartÃ£o, com a maquininha que a loja jÃ¡ usa.
                         </p>
                       </div>
                       <button
@@ -4195,7 +4196,7 @@ export default function ContaClient() {
                           connectedGateways.pagbank ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.pagbank ? 'DESCONECTAR ✕' : 'CONECTAR →'}
+                        {connectedGateways.pagbank ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
                       </button>
                     </div>
 
@@ -4206,7 +4207,7 @@ export default function ContaClient() {
                           {connectedGateways.infinitepay && <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase">CONECTADO</span>}
                         </div>
                         <p className="text-xs text-stone-500 mt-1">
-                          Pix e cartão, com taxa baixa para quem vende pouco.
+                          Pix e cartÃ£o, com taxa baixa para quem vende pouco.
                         </p>
                       </div>
                       <button
@@ -4216,7 +4217,7 @@ export default function ContaClient() {
                           connectedGateways.infinitepay ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.infinitepay ? 'DESCONECTAR ✕' : 'CONECTAR →'}
+                        {connectedGateways.infinitepay ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
                       </button>
                     </div>
                   </div>
@@ -4224,11 +4225,11 @@ export default function ContaClient() {
                   {/* VENDAS DA LOJA */}
                   <div className="pt-6 border-t border-stone-100">
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
-                      VENDAS · {businessTitle || 'TESTE'}
+                      VENDAS Â· {businessTitle || 'TESTE'}
                     </span>
                     <div className="text-2xl font-bold font-mono text-stone-900 mb-2">0 vendas</div>
                     <p className="text-xs text-stone-500 max-w-xl leading-relaxed">
-                      Nenhuma venda ainda. Assim que alguém fechar uma sacola na sua loja, ela aparece aqui — paga pela página ou combinada no WhatsApp.
+                      Nenhuma venda ainda. Assim que alguÃ©m fechar uma sacola na sua loja, ela aparece aqui â€” paga pela pÃ¡gina ou combinada no WhatsApp.
                     </p>
                   </div>
                 </div>
@@ -4240,13 +4241,13 @@ export default function ContaClient() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
                     <div>
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
-                        CRM & CONVERSÃO EM TEMPO REAL
+                        CRM & CONVERSÃƒO EM TEMPO REAL
                       </span>
                       <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
                         Leads & Triagens
                       </h2>
                       <p className="text-xs text-stone-500 mt-1">
-                        Visitantes que clicaram no WhatsApp, preencheram triagens ou solicitaram serviços na sua página.
+                        Visitantes que clicaram no WhatsApp, preencheram triagens ou solicitaram serviÃ§os na sua pÃ¡gina.
                       </p>
                     </div>
 
@@ -4263,7 +4264,7 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* CARDS DE MÉTRICAS */}
+                  {/* CARDS DE MÃ‰TRICAS */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
                       <span className="text-[10px] font-mono uppercase text-stone-400 font-bold block mb-1">TOTAL DE LEADS</span>
@@ -4288,11 +4289,11 @@ export default function ContaClient() {
                     </div>
 
                     <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200">
-                      <span className="text-[10px] font-mono uppercase text-purple-700 font-bold block mb-1">CATÁLOGO</span>
+                      <span className="text-[10px] font-mono uppercase text-purple-700 font-bold block mb-1">CATÃLOGO</span>
                       <div className="text-2xl sm:text-3xl font-mono font-bold text-purple-900">
                         {leadsList.filter(l => l.action_type === 'catalog_inquiry').length}
                       </div>
-                      <span className="text-[10px] text-purple-600">Interesses em serviços</span>
+                      <span className="text-[10px] text-purple-600">Interesses em serviÃ§os</span>
                     </div>
                   </div>
 
@@ -4309,7 +4310,7 @@ export default function ContaClient() {
                             : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
                         }`}
                       >
-                        {tab === 'TODOS' ? 'Todos os Leads' : tab === 'WHATSAPP' ? 'WhatsApp' : tab === 'QUIZ' ? 'Triagens' : 'Catálogo'}
+                        {tab === 'TODOS' ? 'Todos os Leads' : tab === 'WHATSAPP' ? 'WhatsApp' : tab === 'QUIZ' ? 'Triagens' : 'CatÃ¡logo'}
                       </button>
                     ))}
                   </div>
@@ -4326,7 +4327,7 @@ export default function ContaClient() {
                       </div>
                       <h3 className="font-bold text-stone-900 text-sm">Nenhum lead registrado ainda</h3>
                       <p className="text-xs text-stone-500 max-w-md mx-auto">
-                        Quando um visitante abrir sua página <strong>/{slug}</strong> e clicar em qualquer botão de WhatsApp ou preencher a Triagem Anti-Curiosos, o lead aparecerá aqui instantaneamente sincronizado com o Supabase.
+                        Quando um visitante abrir sua pÃ¡gina <strong>/{slug}</strong> e clicar em qualquer botÃ£o de WhatsApp ou preencher a Triagem Anti-Curiosos, o lead aparecerÃ¡ aqui instantaneamente sincronizado com o Supabase.
                       </p>
                     </div>
                   ) : (
@@ -4339,7 +4340,7 @@ export default function ContaClient() {
                           return true
                         })
                         .map((lead, idx) => {
-                          const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('pt-BR') : 'Agora há pouco'
+                          const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('pt-BR') : 'Agora hÃ¡ pouco'
                           const isQuiz = lead.action_type === 'quiz_completed'
                           const phone = lead.whatsapp || lead.details?.whatsapp
                           return (
@@ -4354,7 +4355,7 @@ export default function ContaClient() {
                                       ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                       : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                   }`}>
-                                    {isQuiz ? 'TRIAGEM CONCLUÍDA' : 'WHATSAPP LEAD'}
+                                    {isQuiz ? 'TRIAGEM CONCLUÃDA' : 'WHATSAPP LEAD'}
                                   </span>
                                   <span className="text-[10px] font-mono text-stone-400">
                                     {dateStr}
@@ -4402,13 +4403,13 @@ export default function ContaClient() {
                   <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
                     AGENDA & ATENDIMENTOS
                   </span>
-                  <h2 className="text-2xl font-serif font-bold text-stone-900">Horários Marcados</h2>
+                  <h2 className="text-2xl font-serif font-bold text-stone-900">HorÃ¡rios Marcados</h2>
                   <div className="p-8 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
                     <p className="text-xs text-stone-600">
-                      Nenhuma das suas páginas tem agenda ligada.
+                      Nenhuma das suas pÃ¡ginas tem agenda ligada.
                     </p>
                     <p className="text-xs text-stone-500">
-                      Crie uma página adicional do modelo <strong>Serviços e Preços</strong> e ligue o agendamento nela. Os horários marcados aparecem aqui.
+                      Crie uma pÃ¡gina adicional do modelo <strong>ServiÃ§os e PreÃ§os</strong> e ligue o agendamento nela. Os horÃ¡rios marcados aparecem aqui.
                     </p>
                     <div className="pt-2">
                       <button
@@ -4416,18 +4417,18 @@ export default function ContaClient() {
                         onClick={() => setCurrentView('adicionar_pagina')}
                         className="px-5 py-2.5 rounded-full bg-black text-white text-xs font-bold uppercase tracking-wider"
                       >
-                        CRIAR PÁGINA DE AGENDAMENTO
+                        CRIAR PÃGINA DE AGENDAMENTO
                       </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* ABA ESTATÍSTICAS (OBSERVADA DIRETAMENTE NO MODELO REAL) */}
+              {/* ABA ESTATÃSTICAS (OBSERVADA DIRETAMENTE NO MODELO REAL) */}
               {activeSidebarTab === 'estatisticas' && (
                 <div className="space-y-10">
                   <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
-                    ESTATÍSTICAS DO SEU BIO SITE
+                    ESTATÃSTICAS DO SEU BIO SITE
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -4440,28 +4441,28 @@ export default function ContaClient() {
                     <div className="p-6 rounded-2xl bg-stone-50 border border-stone-200">
                       <span className="text-[10px] font-mono uppercase text-stone-400 block mb-2 font-bold">CLIQUES</span>
                       <div className="text-4xl font-bold font-mono text-stone-900">0</div>
-                      <div className="text-[10px] text-stone-400 font-mono mt-1">Nos botões principais</div>
+                      <div className="text-[10px] text-stone-400 font-mono mt-1">Nos botÃµes principais</div>
                     </div>
 
                     <div className="p-6 rounded-2xl bg-stone-50 border border-stone-200">
-                      <span className="text-[10px] font-mono uppercase text-stone-400 block mb-2 font-bold">ÚLTIMOS 7 DIAS</span>
-                      <div className="text-4xl font-bold font-mono text-stone-400">—</div>
+                      <span className="text-[10px] font-mono uppercase text-stone-400 block mb-2 font-bold">ÃšLTIMOS 7 DIAS</span>
+                      <div className="text-4xl font-bold font-mono text-stone-400">â€”</div>
                       <div className="text-[10px] text-stone-400 font-mono mt-1">Aguardando mais dados</div>
                     </div>
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-stone-100">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-stone-400 font-mono">
-                      CLIQUES POR BOTÃO
+                      CLIQUES POR BOTÃƒO
                     </h3>
                     <p className="text-xs text-stone-500">
-                      Ninguém clicou ainda. Assim que alguém tocar em um dos seus botões, ele aparece aqui.
+                      NinguÃ©m clicou ainda. Assim que alguÃ©m tocar em um dos seus botÃµes, ele aparece aqui.
                     </p>
                   </div>
 
                   <div className="space-y-3 pt-4 border-t border-stone-100">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-stone-400 font-mono">
-                      DE ONDE VÊM AS VISITAS
+                      DE ONDE VÃŠM AS VISITAS
                     </h3>
                     <div className="flex items-center justify-between p-3.5 rounded-xl bg-stone-50 border border-stone-200 text-xs font-mono">
                       <span className="text-stone-700">Direto / Instagram</span>
@@ -4471,7 +4472,7 @@ export default function ContaClient() {
                 </div>
               )}
 
-              {/* ABA PAGAMENTO & REGULARIZAÇÃO */}
+              {/* ABA PAGAMENTO & REGULARIZAÃ‡ÃƒO */}
               {activeSidebarTab === 'pagamento' && renderPagamentoSection()}
 
               {/* ABA PLANOS */}
@@ -4486,23 +4487,23 @@ export default function ContaClient() {
                         <span className="px-3 py-1 rounded-full bg-black text-white text-[10px] font-mono font-bold uppercase">
                           PLANO PRO ANUAL
                         </span>
-                        <h3 className="text-2xl font-serif font-bold text-stone-900 mt-2">Bio Site Pro + 3 Páginas Inclusas</h3>
-                        <p className="text-xs text-stone-500 mt-1">Hospedagem inclusa, domínio próprio, sem comissão em vendas.</p>
+                        <h3 className="text-2xl font-serif font-bold text-stone-900 mt-2">Bio Site Pro + 3 PÃ¡ginas Inclusas</h3>
+                        <p className="text-xs text-stone-500 mt-1">Hospedagem inclusa, domÃ­nio prÃ³prio, sem comissÃ£o em vendas.</p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold font-mono text-stone-900">R$ 55,92</div>
-                        <span className="text-xs text-stone-400 font-mono">/mês no anual</span>
+                        <span className="text-xs text-stone-400 font-mono">/mÃªs no anual</span>
                       </div>
                     </div>
 
                     <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
-                      <span className="text-xs text-stone-500">Próxima renovação: 15/02/2027</span>
+                      <span className="text-xs text-stone-500">PrÃ³xima renovaÃ§Ã£o: 15/02/2027</span>
                       <button
                         type="button"
                         onClick={() => setPixModalOpen(true)}
                         className="px-5 py-2.5 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider"
                       >
-                        <QrCode className="w-3.5 h-3.5 inline mr-1.5" /> Gerar Pix de Renovação
+                        <QrCode className="w-3.5 h-3.5 inline mr-1.5" /> Gerar Pix de RenovaÃ§Ã£o
                       </button>
                     </div>
                   </div>
@@ -4533,7 +4534,7 @@ export default function ContaClient() {
                         className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-100 text-xs font-mono text-stone-600"
                       />
                       <p className="text-[10px] text-stone-400 mt-1 font-mono">
-                        É com ele que você entra na sua área, em qualquer aparelho. Para trocar o e-mail, fale com a gente.
+                        Ã‰ com ele que vocÃª entra na sua Ã¡rea, em qualquer aparelho. Para trocar o e-mail, fale com a gente.
                       </p>
                     </div>
 
@@ -4562,7 +4563,7 @@ export default function ContaClient() {
                         placeholder="(31) 99999-9999"
                       />
                       <p className="text-[10px] text-stone-400 mt-1 font-mono">
-                        É por onde a gente fala com você sobre a sua página. Não aparece para quem visita o seu Bio Site.
+                        Ã‰ por onde a gente fala com vocÃª sobre a sua pÃ¡gina. NÃ£o aparece para quem visita o seu Bio Site.
                       </p>
                     </div>
 
@@ -4586,7 +4587,7 @@ export default function ContaClient() {
                       </span>
                       <h3 className="font-bold text-sm text-stone-900">Trocar a senha</h3>
                       <p className="text-xs text-stone-500 mt-0.5">
-                        Depois de salvar, é a nova senha que vale para entrar. Esta sessão continua aberta.
+                        Depois de salvar, Ã© a nova senha que vale para entrar. Esta sessÃ£o continua aberta.
                       </p>
                     </div>
 
@@ -4596,7 +4597,7 @@ export default function ContaClient() {
                       </label>
                       <input
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs bg-white"
                       />
                     </div>
@@ -4611,7 +4612,7 @@ export default function ContaClient() {
                         className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs bg-white"
                       />
                       <p className="text-[10px] text-stone-400 mt-1 font-mono">
-                        Pelo menos 8 caracteres, misturando letras e números.
+                        Pelo menos 8 caracteres, misturando letras e nÃºmeros.
                       </p>
                     </div>
 
@@ -4629,16 +4630,16 @@ export default function ContaClient() {
                 </div>
               )}
 
-              {/* ABA PIXEL & TRÁFEGO PAGO (DIFERENCIAL DE MERCADO) */}
+              {/* ABA PIXEL & TRÃFEGO PAGO (DIFERENCIAL DE MERCADO) */}
               {activeSidebarTab === 'pixel' && renderPixelEditor()}
 
-              {/* ABA: MÓDULOS VIP DE ALTA CONVERSÃO */}
+              {/* ABA: MÃ“DULOS VIP DE ALTA CONVERSÃƒO */}
               {activeSidebarTab === 'modulos_vip' && renderModulosVipEditor()}
 
-              {/* RODAPÉ DE SUPORTE PRESENTE EM TODAS AS ABAS */}
+              {/* RODAPÃ‰ DE SUPORTE PRESENTE EM TODAS AS ABAS */}
               <div className="pt-12 border-t border-stone-100">
                 <p className="text-xs text-stone-400">
-                  Precisa trocar o endereço do seu link ou tem qualquer dúvida?{' '}
+                  Precisa trocar o endereÃ§o do seu link ou tem qualquer dÃºvida?{' '}
                   <a
                     href="https://wa.me/5531991390202"
                     target="_blank"
@@ -4655,7 +4656,7 @@ export default function ContaClient() {
       )}
 
       {/* ========================================================= */}
-      {/* 3. TELA DE ADICIONAR PÁGINAS ADICIONAIS */}
+      {/* 3. TELA DE ADICIONAR PÃGINAS ADICIONAIS */}
       {/* ========================================================= */}
       {currentView === 'adicionar_pagina' && (
         <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8 space-y-8">
@@ -4664,19 +4665,19 @@ export default function ContaClient() {
               onClick={() => setCurrentView('dashboard')}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-stone-300 hover:border-stone-900 bg-white text-xs font-mono uppercase tracking-wider text-stone-700 hover:text-stone-900 transition cursor-pointer shadow-2xs"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> MINHA ÁREA
+              <ArrowLeft className="w-3.5 h-3.5" /> MINHA ÃREA
             </button>
           </div>
 
           <div>
             <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-stone-400 block mb-1">
-              PÁGINA ADICIONAL · PLANO PRO ({additionalPages.length} de 3 utilizadas)
+              PÃGINA ADICIONAL Â· PLANO PRO ({additionalPages.length} de 3 utilizadas)
             </span>
             <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-900 tracking-tight">
               Escolha o modelo.
             </h1>
             <p className="text-stone-600 text-xs sm:text-sm font-serif mt-2 max-w-3xl leading-relaxed">
-              O modelo define a estrutura da página. As cores, a fonte e o formato dos botões vêm do seu Bio Site — cada prévia abaixo já está na sua identidade.
+              O modelo define a estrutura da pÃ¡gina. As cores, a fonte e o formato dos botÃµes vÃªm do seu Bio Site â€” cada prÃ©via abaixo jÃ¡ estÃ¡ na sua identidade.
             </p>
           </div>
 
@@ -4753,7 +4754,7 @@ export default function ContaClient() {
                       onClick={() => handleSelectTemplate(tpl)}
                       className="w-full py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center shadow-xs flex items-center justify-center gap-1.5"
                     >
-                      USAR ESTE →
+                      USAR ESTE â†’
                     </button>
                   </div>
                 </div>
@@ -4776,10 +4777,10 @@ export default function ContaClient() {
 
             <div className="text-center">
               <span className="text-[10px] font-mono uppercase tracking-widest text-amber-700 font-bold block mb-1">
-                RENOVAÇÃO DE ANUIDADE
+                RENOVAÃ‡ÃƒO DE ANUIDADE
               </span>
               <h3 className="text-2xl font-serif font-bold text-stone-900">
-                Plano Pro · R$ 290,00
+                Plano Pro Â· R$ 290,00
               </h3>
             </div>
 
@@ -4817,7 +4818,7 @@ export default function ContaClient() {
               </button>
 
               <a
-                href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Realizei o pagamento via Pix de renovação do BioSite e gostaria de enviar o comprovante.`)}`}
+                href={`https://wa.me/5531991390202?text=${encodeURIComponent(`OlÃ¡! Realizei o pagamento via Pix de renovaÃ§Ã£o do BioSite e gostaria de enviar o comprovante.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs block text-center"
@@ -4830,7 +4831,7 @@ export default function ContaClient() {
         </div>
       )}
 
-      {/* MODAL DE CRIAÇÃO COM SUCESSO & PAGAMENTO PENDENTE (EXIGÊNCIA DO CLIENTE) */}
+      {/* MODAL DE CRIAÃ‡ÃƒO COM SUCESSO & PAGAMENTO PENDENTE (EXIGÃŠNCIA DO CLIENTE) */}
       {showPendingPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
@@ -4859,16 +4860,16 @@ export default function ContaClient() {
                 Seu Bio Site se encontra com <strong>pagamento pendente</strong>.
               </p>
               <p className="text-stone-800">
-                Se após <strong>48 horas</strong> o pagamento não for confirmado, o Bio Site <code className="font-mono font-bold text-amber-950">biovip.com.br/{slug}</code> será suspenso.
+                Se apÃ³s <strong>48 horas</strong> o pagamento nÃ£o for confirmado, o Bio Site <code className="font-mono font-bold text-amber-950">biovip.com.br/{slug}</code> serÃ¡ suspenso.
               </p>
               <div className="flex items-center gap-2 pt-1 font-mono text-xs text-amber-900 font-bold">
                 <Clock className="w-4 h-4 text-amber-700 shrink-0" />
-                <span>Período de tolerância ativo: {remainingHours}h restantes</span>
+                <span>PerÃ­odo de tolerÃ¢ncia ativo: {remainingHours}h restantes</span>
               </div>
             </div>
 
             <p className="text-xs text-stone-500 text-center leading-relaxed">
-              Você já tem acesso livre para editar os textos, botões e catálogo do seu Bio Site, mas não esqueça de regularizar seu plano para manter seu link oficial permanentemente no ar.
+              VocÃª jÃ¡ tem acesso livre para editar os textos, botÃµes e catÃ¡logo do seu Bio Site, mas nÃ£o esqueÃ§a de regularizar seu plano para manter seu link oficial permanentemente no ar.
             </p>
 
             <div className="space-y-2.5 pt-2">
@@ -4885,7 +4886,7 @@ export default function ContaClient() {
                 className="w-full py-3.5 rounded-2xl bg-stone-950 hover:bg-stone-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg cursor-pointer"
               >
                 <CreditCard className="w-4 h-4 text-amber-400" />
-                <span>IR PARA A ABA DE PAGAMENTO & REGULARIZAR →</span>
+                <span>IR PARA A ABA DE PAGAMENTO & REGULARIZAR â†’</span>
               </button>
 
               <button
@@ -4913,24 +4914,24 @@ export default function ContaClient() {
 
             <div className="text-center space-y-1">
               <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
-                PRÉVIA OFICIAL · STORY 9:16
+                PRÃ‰VIA OFICIAL Â· STORY 9:16
               </span>
               <h3 className="text-lg font-serif font-bold text-white">
                 Card para Instagram Story
               </h3>
             </div>
 
-            {/* O CARD 9:16 SIMULADO EM ALTA RESOLUÇÃO */}
+            {/* O CARD 9:16 SIMULADO EM ALTA RESOLUÃ‡ÃƒO */}
             <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-gradient-to-b from-stone-900 via-stone-950 to-black p-5 flex flex-col justify-between select-none">
               {/* Topo do Story: Logo/Monograma & Status */}
               <div className="flex items-center justify-between">
                 <span className="font-serif italic text-lg font-bold text-amber-400">{monogram}</span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[8px] font-mono font-bold uppercase tracking-wider">
-                  ● NO AR NO INSTAGRAM
+                  â— NO AR NO INSTAGRAM
                 </span>
               </div>
 
-              {/* Centro: Foto de Estúdio com Moldura Dourada & Nome */}
+              {/* Centro: Foto de EstÃºdio com Moldura Dourada & Nome */}
               <div className="flex flex-col items-center text-center space-y-3">
                 <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-amber-400/60 shadow-[0_0_25px_rgba(251,191,36,0.25)] relative p-1 bg-gradient-to-tr from-amber-400 to-amber-200">
                   <img
@@ -4948,11 +4949,11 @@ export default function ContaClient() {
                   </p>
                 </div>
                 <div className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[9px] font-mono text-stone-200">
-                  ★ {rating} · Avaliações 5 Estrelas no Google
+                  â˜… {rating} Â· AvaliaÃ§Ãµes 5 Estrelas no Google
                 </div>
               </div>
 
-              {/* Rodapé do Story: Sticker Simulador do Link do Instagram */}
+              {/* RodapÃ© do Story: Sticker Simulador do Link do Instagram */}
               <div className="space-y-2">
                 <div className="p-3 rounded-2xl bg-white text-stone-950 font-bold flex items-center justify-between shadow-2xl border border-white/50">
                   <div className="flex items-center gap-2">
@@ -4967,7 +4968,7 @@ export default function ContaClient() {
               </div>
             </div>
 
-            {/* Ações: Baixar Imagem HD, Copiar Link e Fechar */}
+            {/* AÃ§Ãµes: Baixar Imagem HD, Copiar Link e Fechar */}
             <div className="space-y-2 pt-1">
               <button
                 type="button"
@@ -5004,7 +5005,7 @@ export default function ContaClient() {
                 onClick={() => setStoryModalOpen(false)}
                 className="w-full py-2 rounded-xl text-stone-400 hover:text-white text-xs transition cursor-pointer"
               >
-                Fechar Prévia
+                Fechar PrÃ©via
               </button>
             </div>
           </div>

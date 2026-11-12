@@ -150,6 +150,9 @@ function EntrarForm() {
             phone: matchedUser.phone || matchedSub?.whatsapp || ''
           })
         )
+        // Cookie legível pelo middleware Next.js (proteção server-side da rota /conta)
+        const exp = new Date(Date.now() + 8 * 60 * 60 * 1000).toUTCString()
+        document.cookie = `biovip_client_auth=${cleanEmail}; path=/; expires=${exp}; SameSite=Strict`
 
         router.push('/conta')
         return
@@ -174,6 +177,9 @@ function EntrarForm() {
             phone: matchedSub.whatsapp
           })
         )
+        // Cookie legível pelo middleware Next.js
+        const expB = new Date(Date.now() + 8 * 60 * 60 * 1000).toUTCString()
+        document.cookie = `biovip_client_auth=${matchedSub.email || cleanEmail}; path=/; expires=${expB}; SameSite=Strict`
 
         router.push('/conta')
         return
@@ -191,6 +197,9 @@ function EntrarForm() {
             phone: ''
           })
         )
+        // Cookie legível pelo middleware Next.js
+        const expC = new Date(Date.now() + 8 * 60 * 60 * 1000).toUTCString()
+        document.cookie = `biovip_client_auth=${cleanEmail}; path=/; expires=${expC}; SameSite=Strict`
 
         router.push('/conta')
         return

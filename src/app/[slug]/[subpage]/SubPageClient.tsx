@@ -390,7 +390,7 @@ export default function SubPageClient({
                     <span className="font-bold text-xs text-white">{rev.name}</span>
                     <span className="text-amber-400 text-xs">★★★★★</span>
                   </div>
-                  <p className="text-xs text-stone-400 leading-relaxed italic">"{rev.text}"</p>
+                  <p className="text-xs text-stone-400 leading-relaxed italic">&ldquo;{rev.text}&rdquo;</p>
                   <span className="text-[9px] font-mono text-stone-500 block">{rev.city}</span>
                 </div>
               ))}

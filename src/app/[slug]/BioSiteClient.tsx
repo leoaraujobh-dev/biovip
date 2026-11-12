@@ -738,42 +738,6 @@ export default function BioSiteClient({
   const buttonAnimation = modelData?.buttonAnimation || 'none'
   const monogram = modelData?.monogram || effectiveName.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
 
-  // 1. Verificação de Modo Manutenção (Inadimplência D+7 / Suspensão)
-  if (modelData?.isMaintenanceMode) {
-    return (
-      <div
-        className="min-h-screen text-stone-200 flex flex-col items-center justify-center p-4 font-sans selection:bg-amber-500/20"
-        style={{ backgroundColor: palette.bg }}
-      >
-        <div className="max-w-md w-full bg-[#14161d] border border-stone-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto text-2xl font-serif">
-            {monogram}
-          </div>
-          <div className="space-y-2">
-            <span className="inline-block px-3 py-1 rounded-full bg-stone-800/80 text-stone-400 text-[10px] font-mono tracking-widest uppercase border border-stone-700">
-              Manutenção Programada
-            </span>
-            <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
-              {effectiveName}
-            </h1>
-            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed font-sans">
-              Estamos realizando melhorias programadas em nossa plataforma digital para melhor atendê-lo. Nosso canal direto continua disponível.
-            </p>
-          </div>
-          <a
-            href={`https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(`Olá! Gostaria de falar com ${effectiveName}.`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Atendimento Direto no WhatsApp
-          </a>
-        </div>
-      </div>
-    )
-  }
-
   // Botões Padrão de Ação
   const defaultButtons = [
     {
@@ -995,6 +959,42 @@ export default function BioSiteClient({
     window.open(`https://wa.me/${cleanWhatsapp}?text=${text}`, '_blank')
   }
 
+  // 1. Verificação de Modo Manutenção (Inadimplência D+7 / Suspensão)
+  if (modelData?.isMaintenanceMode) {
+    return (
+      <div
+        className="min-h-screen text-stone-200 flex flex-col items-center justify-center p-4 font-sans selection:bg-amber-500/20"
+        style={{ backgroundColor: palette.bg }}
+      >
+        <div className="max-w-md w-full bg-[#14161d] border border-stone-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto text-2xl font-serif">
+            {monogram}
+          </div>
+          <div className="space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-stone-800/80 text-stone-400 text-[10px] font-mono tracking-widest uppercase border border-stone-700">
+              Manutenção Programada
+            </span>
+            <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
+              {effectiveName}
+            </h1>
+            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed font-sans">
+              Estamos realizando melhorias programadas em nossa plataforma digital para melhor atendê-lo. Nosso canal direto continua disponível.
+            </p>
+          </div>
+          <a
+            href={`https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(`Olá! Gostaria de falar com ${effectiveName}.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Atendimento Direto no WhatsApp
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className={`min-h-screen text-stone-200 flex flex-col items-center justify-center font-sans selection:bg-amber-500/20 ${
@@ -1200,7 +1200,7 @@ export default function BioSiteClient({
 
         {/* 6. Frase de Fechamento / Assinatura Cursiva */}
         <BioSiteScrollReveal direction="fade" delay={100} className="px-6 py-2 text-center text-xs italic opacity-75 font-serif">
-          "{bio}"
+          &ldquo;{bio}&rdquo;
         </BioSiteScrollReveal>
 
         {/* 7. Botões Nobres de Ação */}
@@ -2333,7 +2333,7 @@ export default function BioSiteClient({
                     </span>
                   </div>
                   <p className="text-[11px] text-stone-300 font-sans italic leading-relaxed">
-                    "{t.text}"
+                    &ldquo;{t.text}&rdquo;
                   </p>
                   <div className="text-[9px] font-mono text-stone-400">
                     {t.clientName || t.name} · {t.city || t.role}
@@ -2362,7 +2362,7 @@ export default function BioSiteClient({
               </p>
               {(aboutMe.closingPhrase || aboutMe.quote) && (
                 <div className="text-[10px] italic font-serif pt-1" style={{ color: palette.accent }}>
-                  "{aboutMe.closingPhrase || aboutMe.quote}"
+                  &ldquo;{aboutMe.closingPhrase || aboutMe.quote}&rdquo;
                 </div>
               )}
             </div>
