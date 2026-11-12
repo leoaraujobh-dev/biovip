@@ -710,6 +710,7 @@ export default function ContaClient() {
     } catch (e) {
       console.error(e)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // AÃ§Ã£o de ConfirmaÃ§Ã£o e RegularizaÃ§Ã£o de Pagamento
