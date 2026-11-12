@@ -62,7 +62,7 @@ export default function LiveBioSitePhone({
 
   return (
     <div
-      className={`group/phone relative aspect-[9/19] rounded-[42px] sm:rounded-[46px] p-2 sm:p-2.5 bg-[#15151A] border transition-all duration-500 overflow-hidden ${
+      className={`group/phone relative aspect-[9/19] rounded-[42px] sm:rounded-[46px] p-2 sm:p-2.5 bg-[#15151A] border transition-all duration-500 overflow-hidden hover:[animation-play-state:paused] ${
         isPrimary
           ? 'border-2 border-[#E2B857]/70 shadow-[0_25px_65px_rgba(226,184,87,0.22),0_0_35px_rgba(226,184,87,0.15)] z-20'
           : 'border border-zinc-700/70 hover:border-[#E2B857]/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-10'

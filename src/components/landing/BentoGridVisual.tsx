@@ -1,11 +1,52 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Sparkles, Clock, CheckCircle2, Navigation, Star, MapPin, ArrowUpRight, ShieldCheck, Heart, Car } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import {
+  Sparkles,
+  Clock,
+  CheckCircle2,
+  Navigation,
+  Star,
+  MapPin,
+  ArrowUpRight,
+  ShieldCheck,
+  Heart,
+  Car,
+  X,
+  Phone,
+  Video,
+  CheckCheck,
+  Smile,
+  Paperclip,
+  Mic,
+  MessageCircle
+} from 'lucide-react'
 
 export default function BentoGridVisual() {
   // Estado para o slider Antes/Depois do Card 2
   const [sliderPos, setSliderPos] = useState(50)
+
+  // Estado para o Popup Fictício de Demonstração do WhatsApp
+  const [isWhatsAppDemoOpen, setIsWhatsAppDemoOpen] = useState(false)
+
+  // Fechar com tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsWhatsAppDemoOpen(false)
+      }
+    }
+    if (isWhatsAppDemoOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [isWhatsAppDemoOpen])
 
   return (
     <section id="recursos" className="relative py-20 lg:py-28 bg-[#09090B] overflow-hidden border-t border-zinc-800/80">
@@ -93,15 +134,17 @@ export default function BentoGridVisual() {
                     <span className="text-[10px] text-zinc-500 uppercase font-mono block">Valor Fechado</span>
                     <span className="text-xl sm:text-2xl font-bold font-mono text-[#E2B857]">R$ 180,00</span>
                   </div>
-                  <a
-                    href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20o%20Volume%20Russo%20Imperial."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 px-4 py-2 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white text-xs font-bold transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-1.5"
+
+                  {/* Botão de Demonstração Interativo */}
+                  <button
+                    type="button"
+                    onClick={() => setIsWhatsAppDemoOpen(true)}
+                    className="mt-2 px-4 py-2 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white text-xs font-bold transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-1.5 cursor-pointer active:scale-95 group/btn"
+                    title="Clique para ver a demonstração da mensagem que chega no WhatsApp"
                   >
                     <span>Agendar</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </a>
+                    <ArrowUpRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                  </button>
                 </div>
               </div>
 
@@ -109,7 +152,7 @@ export default function BentoGridVisual() {
                 <span className="flex items-center gap-1 text-emerald-400 font-medium">
                   <CheckCircle2 className="w-3 h-3" /> 85% menos mensagens de curiosos no WhatsApp
                 </span>
-                <span className="text-zinc-500 hidden sm:inline">Cliente já clica decidida a fazer</span>
+                <span className="text-zinc-500 hidden sm:inline">Toque em &quot;Agendar&quot; para testar a simulação</span>
               </div>
             </div>
           </div>
@@ -139,104 +182,108 @@ export default function BentoGridVisual() {
             <div className="relative w-full h-48 sm:h-52 rounded-2xl overflow-hidden select-none border border-zinc-800">
               {/* Imagem DEPOIS (Fundo Total) */}
               <img
-                src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80"
-                alt="Depois"
+                src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=80"
+                alt="Depois da Transformação"
                 className="absolute inset-0 w-full h-full object-cover"
               />
-              <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[9px] font-mono text-[#E2B857] font-bold z-10">
-                DEPOIS (VIP)
+              <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#09090B]/80 text-[#E2B857] text-[10px] font-mono font-bold border border-[#E2B857]/30 backdrop-blur-sm z-10">
+                DEPOIS
               </span>
 
-              {/* Imagem ANTES (Cortada pelo Slider) */}
+              {/* Imagem ANTES (Recortada pela posição do slider) */}
               <div
                 className="absolute inset-y-0 left-0 overflow-hidden"
                 style={{ width: `${sliderPos}%` }}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&auto=format&fit=crop&q=80"
-                  alt="Antes"
-                  className="absolute inset-y-0 left-0 max-w-none h-full object-cover"
+                  src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80"
+                  alt="Antes da Transformação"
+                  className="absolute inset-y-0 left-0 h-full object-cover max-w-none"
                   style={{ width: '100%', minWidth: '320px' }}
                 />
-                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[9px] font-mono text-zinc-300 font-bold z-10">
+                <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-[#09090B]/80 text-zinc-300 text-[10px] font-mono font-bold border border-zinc-700 backdrop-blur-sm z-10">
                   ANTES
                 </span>
               </div>
 
-              {/* Linha Divisória com Controle Central */}
+              {/* Linha Divisória com Botão Central de Arraste */}
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-[#E2B857] shadow-[0_0_10px_#E2B857]"
+                className="absolute inset-y-0 w-0.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-20"
                 style={{ left: `${sliderPos}%` }}
               >
-                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-[#E2B857] border-2 border-black flex items-center justify-center text-black font-bold text-[10px] shadow-lg cursor-ew-resize">
+                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-[#E2B857] text-stone-950 font-bold flex items-center justify-center text-xs shadow-xl cursor-ew-resize">
                   ⬌
                 </div>
               </div>
 
-              {/* Input Range Invisível para Drag Suave */}
+              {/* Input Invisível para Arrastar em Mobile e Desktop */}
               <input
                 type="range"
-                min="5"
-                max="95"
+                min="0"
+                max="100"
                 value={sliderPos}
                 onChange={(e) => setSliderPos(Number(e.target.value))}
-                aria-label="Controle deslizante antes e depois"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
+                className="absolute inset-0 opacity-0 cursor-ew-resize w-full h-full z-30"
+                aria-label="Controle de Antes e Depois"
               />
             </div>
           </div>
 
           {/* ========================================================= */}
-          {/* CARD 3: LOCALIZAÇÃO COM 1 TOQUE (WAZE, MAPS, UBER) */}
+          {/* CARD 3: LOCALIZAÇÃO A 1 TOQUE (WAZE, GOOGLE MAPS, UBER) */}
           {/* ========================================================= */}
           <div className="rounded-3xl p-6 sm:p-7 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between reveal-scale delay-300">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#E2B857] px-3 py-1 rounded-full bg-[#E2B857]/10 border border-[#E2B857]/20 font-bold">
-                  ✦ Rota Automática
+                  ✦ Rotas com 1 Toque
                 </span>
+                
                 {/* Indicador Aberto Agora */}
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Aberto Agora
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Aberto Agora</span>
                 </div>
               </div>
 
               <h3 className="text-xl sm:text-2xl font-serif text-white mb-2">
-                Localização com 1 Toque
+                Localização & Rotas Instantâneas
               </h3>
 
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed mb-5">
-                Sem mandar texto ou print de mapa. A cliente clica e o GPS abre traçando a rota direto para a porta do seu espaço.
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed mb-4">
+                Acabe com clientes perdidas ou atrasadas. Rotas diretas no GPS favorito em um único toque.
               </p>
             </div>
 
-            {/* Botoes Waze, Google Maps e Uber */}
-            <div className="p-3.5 rounded-2xl bg-[#09090B] border border-zinc-800 space-y-2.5">
-              <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium">
-                <MapPin className="w-3.5 h-3.5 text-[#E2B857] shrink-0" />
-                <span className="truncate">Savassi • Belo Horizonte, MG</span>
+            {/* Simulação Visual do Card de Endereço */}
+            <div className="rounded-2xl p-4 bg-[#09090B] border border-zinc-800 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#E2B857]/15 border border-[#E2B857]/30 flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4 text-[#E2B857]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-zinc-200 truncate">Edifício Trade Center • Sala 918</p>
+                  <span className="text-[10px] text-zinc-500 truncate block">Bairro Nobre • Estacionamento com manobrista</span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-center hover:border-cyan-400/40 transition">
-                  <span className="text-[10px] font-bold text-cyan-400 block">Waze</span>
-                  <span className="text-[8px] text-zinc-500">Traçar</span>
+              {/* Botões de Navegação Direta */}
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-800/80">
+                <div className="py-2 px-1 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-center text-zinc-300 hover:text-white hover:border-[#E2B857]/40 transition flex items-center justify-center gap-1">
+                  <Navigation className="w-3 h-3 text-[#E2B857]" /> Waze
                 </div>
-                <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-center hover:border-blue-400/40 transition">
-                  <span className="text-[10px] font-bold text-blue-400 block">Maps</span>
-                  <span className="text-[8px] text-zinc-500">Google</span>
+                <div className="py-2 px-1 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-center text-zinc-300 hover:text-white hover:border-[#E2B857]/40 transition flex items-center justify-center gap-1">
+                  <MapPin className="w-3 h-3 text-emerald-400" /> Maps
                 </div>
-                <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-center hover:border-zinc-300/40 transition">
-                  <span className="text-[10px] font-bold text-zinc-200 block">Uber</span>
-                  <span className="text-[8px] text-zinc-500">Pedir Carro</span>
+                <div className="py-2 px-1 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-center text-zinc-300 hover:text-white hover:border-[#E2B857]/40 transition flex items-center justify-center gap-1">
+                  <Car className="w-3 h-3 text-sky-400" /> Uber
                 </div>
               </div>
             </div>
           </div>
 
           {/* ========================================================= */}
-          {/* CARD 4: AUTORIDADE INSTANTÂNEA */}
+          {/* CARD 4: AUTORIDADE & PROVA SOCIAL (2 COLUNAS LG) */}
           {/* ========================================================= */}
           <div className="lg:col-span-2 rounded-3xl p-6 sm:p-8 bg-[#121217] border border-zinc-800 hover:border-[#E2B857]/40 transition-all duration-300 shadow-xl flex flex-col justify-between reveal-scale delay-400">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
@@ -287,7 +334,173 @@ export default function BentoGridVisual() {
         </div>
 
       </div>
+
+      {/* ========================================================= */}
+      {/* MODAL FICTÍCIO DE DEMONSTRAÇÃO: MENSAGEM NO WHATSAPP       */}
+      {/* ========================================================= */}
+      {isWhatsAppDemoOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5"
+          onClick={() => setIsWhatsAppDemoOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl bg-[#0B141A] border border-zinc-700/80 shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden font-sans text-zinc-100 animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabeçalho Oficial do WhatsApp (Dark Mode) */}
+            <div className="bg-[#202C33] px-4 py-3 flex items-center justify-between border-b border-zinc-700/50">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-emerald-500/50 shrink-0">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
+                    alt="Isabela Fontes"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-[#202C33]" />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <h4 className="font-semibold text-sm text-zinc-100 truncate">
+                      Isabela Fontes • Lash Studio
+                    </h4>
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">
+                      ✓
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    online • responde rápido
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-zinc-400">
+                <button
+                  type="button"
+                  onClick={() => setIsWhatsAppDemoOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+                  title="Fechar demonstração"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Banner de Contexto da Demonstração */}
+            <div className="bg-gradient-to-r from-amber-500/15 via-[#E2B857]/20 to-amber-500/15 border-b border-[#E2B857]/30 px-3.5 py-2 text-center">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#E2B857] font-bold block">
+                ✦ Simulação do Filtro Anti-Curiosos
+              </span>
+              <p className="text-[11px] text-zinc-300 leading-snug mt-0.5">
+                Veja como a cliente chega pronta no seu WhatsApp: sem perguntar &quot;qual o preço?&quot;, decidida a fechar!
+              </p>
+            </div>
+
+            {/* Área de Conversa do WhatsApp (Fundo Escuro) */}
+            <div className="p-4 space-y-3 bg-[#0B141A] max-h-[380px] overflow-y-auto text-xs">
+              
+              {/* Badge de Data Centralizada */}
+              <div className="flex justify-center">
+                <span className="px-2.5 py-0.5 rounded-md bg-[#182229] text-[10px] text-zinc-400 font-mono uppercase">
+                  HOJE
+                </span>
+              </div>
+
+              {/* Mensagem de Criptografia */}
+              <div className="p-2 rounded-lg bg-[#182229]/70 text-[9.5px] text-amber-200/80 text-center leading-relaxed border border-amber-500/10">
+                🔒 As mensagens desta simulação ilustram o fluxo real de agendamento gerado pelo BioVip.
+              </div>
+
+              {/* Balão 1: Mensagem enviada pela cliente (Lado Direito - Verde WhatsApp #005C4B) */}
+              <div className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-tr-none p-3 bg-[#005C4B] text-[#E9EDEF] shadow-md space-y-1.5 border border-emerald-600/30">
+                  <p className="text-[11px] sm:text-xs leading-relaxed">
+                    Olá Isabela! Vi seu catálogo de procedimentos no <strong>BioVip</strong> ✨
+                  </p>
+                  
+                  <div className="p-2 rounded-xl bg-black/25 text-[10.5px] space-y-1 border border-white/5">
+                    <div className="flex items-center justify-between text-[#E2B857] font-semibold">
+                      <span>Volume Russo Imperial</span>
+                      <span>R$ 180,00</span>
+                    </div>
+                    <p className="text-[9.5px] text-zinc-300 flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" /> Duração: 2h00 • Manutenção 21 dias
+                    </p>
+                  </div>
+
+                  <p className="text-[11px] sm:text-xs leading-relaxed">
+                    Você tem disponibilidade nesta <strong>quinta-feira ou sexta-feira à tarde</strong>? Já quero deixar marcado! 📅
+                  </p>
+
+                  <div className="flex items-center justify-end gap-1 text-[9px] text-emerald-200/80 pt-0.5">
+                    <span>14:32</span>
+                    <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Balão 2: Resposta Automática do Studio (Lado Esquerdo - Cinza WhatsApp #202C33) */}
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-tl-none p-3 bg-[#202C33] text-[#E9EDEF] shadow-md space-y-1.5 border border-zinc-700/40">
+                  <p className="text-[11px] sm:text-xs leading-relaxed">
+                    Olá! Que maravilha falar com você! 😍 O Volume Russo fica espetacular!
+                  </p>
+                  <p className="text-[11px] sm:text-xs leading-relaxed">
+                    Tenho sim! Seguem os horários livres para esta semana:
+                  </p>
+                  <div className="text-[10.5px] font-mono text-[#E2B857] bg-black/30 p-2 rounded-lg space-y-0.5">
+                    <div>• Quinta-feira às 14:00</div>
+                    <div>• Sexta-feira às 15:30</div>
+                  </div>
+                  <p className="text-[11px] sm:text-xs leading-relaxed">
+                    Qual desses fica melhor para você? Já confirmo na agenda agora mesmo! ✨
+                  </p>
+                  <div className="flex items-center justify-end text-[9px] text-zinc-400 pt-0.5">
+                    <span>14:33</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Barra de Digitação Fictícia do WhatsApp */}
+            <div className="px-3 py-2 bg-[#202C33] flex items-center gap-2 border-t border-zinc-700/50">
+              <Smile className="w-5 h-5 text-zinc-400 shrink-0" />
+              <Paperclip className="w-5 h-5 text-zinc-400 shrink-0" />
+              <div className="flex-1 py-1.5 px-3 rounded-xl bg-[#2A3942] text-[11px] text-zinc-400 flex items-center justify-between">
+                <span>Quinta-feira às 14:00 por favor!</span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-[#00A884] flex items-center justify-center text-white shrink-0 shadow">
+                <Mic className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Rodapé de Conversão do Modal */}
+            <div className="p-4 bg-[#111B21] border-t border-zinc-800 space-y-2.5">
+              <a
+                href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostei%20do%20filtro%20anti-curiosos%20do%20BioVip%20e%20quero%20o%20meu%20pronto%20em%2024h."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 rounded-xl bg-[#22C55E] hover:bg-[#1eb054] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Quero Meu BioVip com Esse Filtro de Vendas</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setIsWhatsAppDemoOpen(false)}
+                className="w-full py-2 text-center text-xs text-zinc-400 hover:text-white transition cursor-pointer"
+              >
+                Voltar à página
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </section>
   )
 }
-
