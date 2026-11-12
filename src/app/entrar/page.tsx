@@ -151,7 +151,7 @@ function EntrarForm() {
           })
         )
 
-        router.push(`/conta?edit=${clientSlug}`)
+        router.push('/conta')
         return
       }
 
@@ -175,7 +175,7 @@ function EntrarForm() {
           })
         )
 
-        router.push(`/conta?edit=${matchedSub.slug}`)
+        router.push('/conta')
         return
       }
 
@@ -192,7 +192,7 @@ function EntrarForm() {
           })
         )
 
-        router.push(`/conta?edit=${supabaseSite.slug}`)
+        router.push('/conta')
         return
       }
     } catch (err) {
@@ -270,7 +270,7 @@ function EntrarForm() {
       )
 
       setShowGoogleModal(false)
-      router.push(`/conta?edit=${clientSlug}`)
+      router.push('/conta')
     } catch (err) {
       setGoogleError('Erro ao autenticar com Google. Tente novamente.')
       setGoogleLoading(false)

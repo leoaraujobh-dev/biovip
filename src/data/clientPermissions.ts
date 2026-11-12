@@ -30,14 +30,14 @@ export interface ModuleToggles {
 }
 
 export const DEFAULT_CLIENT_PERMISSIONS: ClientPermissions = {
-  allowEditServices: true,
-  allowEditPhotos: true,
-  allowEditTheme: true,
-  allowEditTypography: true,
-  allowEditButtons: true,
-  allowEditBio: true,
-  allowEditLocation: true,
-  allowEditModules: true,
+  allowEditServices: true,     // Catálogo & Procedimentos (PADRÃO: ATIVO)
+  allowEditPhotos: true,       // Fotos de Perfil & Galeria (PADRÃO: ATIVO)
+  allowEditTheme: false,      // Cores & Paletas (PADRÃO: EXCLUSIVO ADM)
+  allowEditTypography: false, // Fontes & Tipografia (PADRÃO: EXCLUSIVO ADM)
+  allowEditButtons: false,    // Botões & Links (PADRÃO: EXCLUSIVO ADM)
+  allowEditBio: false,        // Nome, Cargo & Bio (PADRÃO: EXCLUSIVO ADM)
+  allowEditLocation: false,   // Endereço, Maps, Waze (PADRÃO: EXCLUSIVO ADM)
+  allowEditModules: false,    // Ligar / Desligar Módulos (PADRÃO: EXCLUSIVO ADM)
 }
 
 export const DEFAULT_MODULE_TOGGLES: ModuleToggles = {

@@ -22,6 +22,7 @@ import { Subscription } from '@/data/subscriptions'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
 import { applyCanvasOrganicFade, applySilhouetteCutout, readImageAsDataUrl } from '@/utils/imageProcessors'
 import { saveBioSite, getLeads, LeadSubmission } from '@/services/biositeService'
+import { getClientConfig, DEFAULT_CLIENT_PERMISSIONS } from '@/data/clientPermissions'
 import {
   ExternalLink,
   Copy,
@@ -65,7 +66,9 @@ import {
   ShieldCheck,
   Sliders,
   Flame,
-  Download
+  Download,
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react'
 
 interface AdditionalPage {
@@ -81,7 +84,7 @@ interface AdditionalPage {
 export default function ContaClient() {
   // Controle de Visualização: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
   const [currentView, setCurrentView] = useState<'dashboard' | 'editar_pagina' | 'adicionar_pagina'>('dashboard')
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'pagamento' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'servicos' | 'galeria' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'pagamento' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
   const [leadsList, setLeadsList] = useState<LeadSubmission[]>([])
   const [leadFilter, setLeadFilter] = useState<'TODOS' | 'WHATSAPP' | 'QUIZ' | 'CATALOGO'>('TODOS')
   const [loadingLeads, setLoadingLeads] = useState(false)
@@ -503,7 +506,10 @@ export default function ContaClient() {
       setAllAvailableBiosites(sites)
 
       // 1. Identificar se é Administrador Master autenticado exclusivamente com PIN no /admin
-      const isAdminAuth = typeof window !== 'undefined' && sessionStorage.getItem('biovip_admin_auth') === 'true'
+      const isAdminAuth = typeof window !== 'undefined' && (
+        sessionStorage.getItem('biovip_admin_auth') === 'true' ||
+        sessionStorage.getItem('biovip_admin_sec_session') !== null
+      )
 
       // 2. Identificar conta do cliente conectado
       let loggedClient: { name?: string; email?: string; slug?: string; phone?: string } | null = null
@@ -596,9 +602,14 @@ export default function ContaClient() {
 
         activeSlug = authorizedSlug
 
-        // Se veio de criação ou requisição de edição, abre a tela do editor
-        if (editSlug || isNovo) {
-          setCurrentView('editar_pagina')
+        // REGRA DE OURO: Clientes operam exclusivamente na página do cliente ('dashboard').
+        // A página de edição do estúdio (3 colunas) é exclusiva do ADM.
+        setCurrentView('dashboard')
+
+        if (urlParams?.get('tab') === 'galeria' || urlParams?.get('secao') === 'fotos') {
+          setActiveSidebarTab('galeria')
+        } else if (urlParams?.get('tab') === 'servicos' || urlParams?.get('secao') === 'servicos') {
+          setActiveSidebarTab('servicos')
         }
       }
 
@@ -2522,9 +2533,17 @@ export default function ContaClient() {
   }
 
   // =========================================================
-  // ARQUITETURA MODERNA DE 3 COLUNAS: EDITOR DO BIOSITE
+  // ARQUITETURA MODERNA DE 3 COLUNAS: EDITOR DO BIOSITE (EXCLUSIVO DO ADM)
   // =========================================================
   if (currentView === 'editar_pagina') {
+    // SEGURANÇA E REGRA DE NEGÓCIO: Esta página de edição é 100% exclusiva do ADM
+    if (!isAdminMode) {
+      if (typeof window !== 'undefined') {
+        window.location.replace('/conta')
+      }
+      return null
+    }
+
     return (
       <BioSiteEditor3Col
         slug={slug}
@@ -2860,13 +2879,42 @@ export default function ContaClient() {
 
           {/* Navegação Rápida entre Visões & Ações */}
           <div className="flex items-center gap-2">
+            {isAdminMode && (
+              <button
+                type="button"
+                onClick={() => setCurrentView('editar_pagina')}
+                className="px-3 py-1.5 rounded-lg border border-amber-400 bg-amber-400 hover:bg-amber-500 text-stone-950 text-xs font-mono uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer font-bold shadow-xs"
+                title="Acesso Exclusivo do Administrador Master"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Studio ADM (3 Colunas)</span>
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => setCurrentView('editar_pagina')}
-              className="px-3 py-1.5 rounded-lg border border-stone-200 hover:border-stone-900 bg-white text-stone-700 hover:text-stone-900 text-xs font-mono uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer"
+              onClick={() => setActiveSidebarTab('servicos')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                activeSidebarTab === 'servicos'
+                  ? 'bg-stone-900 text-white shadow-xs'
+                  : 'border border-stone-300 hover:border-stone-900 bg-white text-stone-800'
+              }`}
             >
-              <Sliders className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Editar Página</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden sm:inline">Serviços & Preços</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSidebarTab('galeria')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                activeSidebarTab === 'galeria'
+                  ? 'bg-stone-900 text-white shadow-xs'
+                  : 'border border-stone-300 hover:border-stone-900 bg-white text-stone-800'
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-stone-700" />
+              <span className="hidden sm:inline">Fotos da Galeria</span>
             </button>
 
             {/* No Dashboard: Botões de Acesso Direto para Módulos VIP e Pixel */}
@@ -3047,6 +3095,42 @@ export default function ContaClient() {
 
               <button
                 type="button"
+                onClick={() => setActiveSidebarTab('servicos')}
+                className={`w-full text-left px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-between ${
+                  activeSidebarTab === 'servicos'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  SERVIÇOS & PREÇOS
+                </span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-800 font-bold border border-amber-400/30">
+                  EDITAR
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSidebarTab('galeria')}
+                className={`w-full text-left px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-between ${
+                  activeSidebarTab === 'galeria'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <ImageIcon className="w-3.5 h-3.5 text-stone-600" />
+                  FOTOS DA GALERIA
+                </span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-800 font-bold border border-amber-400/30">
+                  EDITAR
+                </span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveSidebarTab('vendas')}
                 className={`w-full text-left px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
                   activeSidebarTab === 'vendas'
@@ -3207,13 +3291,92 @@ export default function ContaClient() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('editar_pagina')}
-                      className="px-8 py-3 rounded-full bg-black hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-sm hover:shadow-md"
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSidebarTab('servicos')}
+                        className="px-6 py-3 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-sm flex items-center gap-2"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Editar Serviços</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveSidebarTab('galeria')}
+                        className="px-6 py-3 rounded-full border border-stone-300 hover:border-stone-900 bg-white text-stone-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-2"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5 text-stone-600" />
+                        <span>Editar Fotos</span>
+                      </button>
+
+                      {isAdminMode && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentView('editar_pagina')}
+                          className="px-5 py-3 rounded-full bg-amber-400 hover:bg-amber-500 text-stone-950 text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-sm flex items-center gap-1.5"
+                          title="Exclusivo Master Admin"
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span>Studio ADM (3 Colunas)</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ATALHOS RÁPIDOS DE EDIÇÃO PERMITIDA DO CLIENTE (SERVIÇOS & FOTOS) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
+                    <div
+                      onClick={() => setActiveSidebarTab('servicos')}
+                      className="p-6 rounded-3xl bg-white border border-stone-200/90 hover:border-amber-400 hover:shadow-md transition cursor-pointer group space-y-3"
                     >
-                      EDITAR PÁGINA
-                    </button>
+                      <div className="flex items-center justify-between">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                          <Sparkles className="w-5 h-5 text-amber-500" />
+                        </div>
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+                          {servicesCatalogData.items.length} PROCEDIMENTOS
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-base text-stone-900 group-hover:text-amber-800 transition">
+                          Catálogo de Procedimentos & Preços
+                        </h4>
+                        <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                          Altere nomes, valores, durações e mensagens prontas do WhatsApp. Clientes chegam decididas.
+                        </p>
+                      </div>
+                      <div className="pt-2 text-xs font-bold text-stone-800 flex items-center gap-1 group-hover:text-amber-700">
+                        <span>Gerenciar Serviços</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setActiveSidebarTab('galeria')}
+                      className="p-6 rounded-3xl bg-white border border-stone-200/90 hover:border-amber-400 hover:shadow-md transition cursor-pointer group space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="w-10 h-10 rounded-2xl bg-stone-100 text-stone-800 flex items-center justify-center font-bold">
+                          <ImageIcon className="w-5 h-5 text-stone-700" />
+                        </div>
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-stone-100 text-stone-800 font-bold border border-stone-200">
+                          {(galleryConfig.photos || galleryPhotos).length} FOTOS ATIVAS
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-base text-stone-900 group-hover:text-amber-800 transition">
+                          Galeria & Portfólio de Trabalhos
+                        </h4>
+                        <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                          Adicione ou atualize fotos de procedimentos reais com legendas explicativas e zoom interativo.
+                        </p>
+                      </div>
+                      <div className="pt-2 text-xs font-bold text-stone-800 flex items-center gap-1 group-hover:text-amber-700">
+                        <span>Gerenciar Fotos</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
                   </div>
 
                   {/* SEÇÃO 2: PÁGINAS ADICIONAIS */}
@@ -3414,6 +3577,546 @@ export default function ContaClient() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ========================================================= */}
+              {/* ABA EDIÇÃO DE SERVIÇOS & PREÇOS (EXCLUSIVA DO CLIENTE) */}
+              {/* ========================================================= */}
+              {activeSidebarTab === 'servicos' && (
+                <div className="space-y-8 animate-fade-in">
+                  {/* Cabeçalho da Seção */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                          EDIÇÃO DO CLIENTE
+                        </span>
+                        <span className="text-xs text-stone-400 font-mono">/{slug}</span>
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
+                        Catálogo de Procedimentos & Preços
+                      </h2>
+                      <p className="text-xs text-stone-500 max-w-xl">
+                        Altere os nomes, valores fechados, durações e mensagens diretas do WhatsApp. Suas clientes já chegam sabendo o preço e prontas para fechar.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <a
+                        href={`/${slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2.5 rounded-xl border border-stone-300 hover:border-stone-900 text-stone-700 text-xs font-bold transition flex items-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Ver no Ar</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleSavePage}
+                        className="px-6 py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
+                      >
+                        <Save className="w-3.5 h-3.5 text-[#E2B857]" />
+                        <span>Salvar Alterações</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Configurações Globais do Catálogo */}
+                  <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <h3 className="font-bold text-sm text-stone-900">Status do Catálogo na sua Página</h3>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={servicesCatalogData.enabled}
+                          onChange={(e) => {
+                            setServicesCatalogData(prev => ({ ...prev, enabled: e.target.checked }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          className="w-4 h-4 accent-stone-950 rounded cursor-pointer"
+                        />
+                        <span>{servicesCatalogData.enabled ? 'Catálogo Visível no Bio Site' : 'Catálogo Oculto'}</span>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
+                          Título do Catálogo
+                        </label>
+                        <input
+                          type="text"
+                          value={servicesCatalogData.headline}
+                          onChange={(e) => {
+                            setServicesCatalogData(prev => ({ ...prev, headline: e.target.value }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
+                          Subtítulo Explicativo
+                        </label>
+                        <input
+                          type="text"
+                          value={servicesCatalogData.subtitle || ''}
+                          onChange={(e) => {
+                            setServicesCatalogData(prev => ({ ...prev, subtitle: e.target.value }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Ex: Valores fechados com atendimento exclusivo"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lista de Procedimentos */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-stone-900">Procedimentos Cadastrados</h3>
+                        <p className="text-xs text-stone-500">
+                          Você tem <strong>{servicesCatalogData.items.length} procedimentos</strong> ativos. Clique em adicionar para criar mais.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newItem = {
+                            id: `srv-${Date.now().toString().slice(-4)}`,
+                            category: 'MAIS PROCURADO',
+                            name: 'Novo Procedimento Exclusivo',
+                            description: 'Atendimento personalizado com protocolo VIP e acompanhamento individual.',
+                            price: 'R$ 200,00',
+                            duration: '⏱ 1h30',
+                            badge: 'MAIS PROCURADO',
+                            featured: true,
+                            whatsappMessage: 'Olá! Gostaria de agendar este procedimento no BioVip.'
+                          }
+                          setServicesCatalogData(prev => ({
+                            ...prev,
+                            items: [...prev.items, newItem]
+                          }))
+                          setHasUnsavedChanges(true)
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4 text-amber-400" />
+                        <span>Adicionar Novo Procedimento</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {servicesCatalogData.items.map((item, idx) => (
+                        <div
+                          key={item.id || idx}
+                          className="p-5 rounded-3xl bg-white border border-stone-200/90 hover:border-stone-400 transition shadow-xs space-y-4"
+                        >
+                          <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-stone-100 font-mono text-[11px] font-bold text-stone-800 flex items-center justify-center">
+                                {idx + 1}
+                              </span>
+                              <span className="font-serif font-bold text-base text-stone-900">
+                                {item.name || `Procedimento #${idx + 1}`}
+                              </span>
+                              {item.badge && (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-mono font-bold border border-emerald-200">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setServicesCatalogData(prev => ({
+                                  ...prev,
+                                  items: prev.items.filter((_, i) => i !== idx)
+                                }))
+                                setHasUnsavedChanges(true)
+                              }}
+                              className="text-stone-400 hover:text-rose-600 transition p-1 cursor-pointer"
+                              title="Excluir este procedimento"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+                            <div className="sm:col-span-6">
+                              <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                Nome do Procedimento
+                              </label>
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={(e) => {
+                                  const updated = [...servicesCatalogData.items]
+                                  updated[idx] = { ...updated[idx], name: e.target.value }
+                                  setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                                  setHasUnsavedChanges(true)
+                                }}
+                                className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-3">
+                              <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                Valor Fechado
+                              </label>
+                              <input
+                                type="text"
+                                value={item.price}
+                                onChange={(e) => {
+                                  const updated = [...servicesCatalogData.items]
+                                  updated[idx] = { ...updated[idx], price: e.target.value }
+                                  setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                                  setHasUnsavedChanges(true)
+                                }}
+                                placeholder="R$ 180,00"
+                                className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-bold text-amber-800 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-3">
+                              <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                Duração Estimada
+                              </label>
+                              <input
+                                type="text"
+                                value={item.duration || ''}
+                                onChange={(e) => {
+                                  const updated = [...servicesCatalogData.items]
+                                  updated[idx] = { ...updated[idx], duration: e.target.value }
+                                  setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                                  setHasUnsavedChanges(true)
+                                }}
+                                placeholder="⏱ 1h30"
+                                className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-12">
+                              <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                Descrição dos Benefícios
+                              </label>
+                              <input
+                                type="text"
+                                value={item.description}
+                                onChange={(e) => {
+                                  const updated = [...servicesCatalogData.items]
+                                  updated[idx] = { ...updated[idx], description: e.target.value }
+                                  setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                                  setHasUnsavedChanges(true)
+                                }}
+                                placeholder="Breve explicação que elimina dúvidas e valoriza o atendimento"
+                                className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-700 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-8">
+                              <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                Mensagem Automática para o WhatsApp
+                              </label>
+                              <input
+                                type="text"
+                                value={item.whatsappMessage || ''}
+                                onChange={(e) => {
+                                  const updated = [...servicesCatalogData.items]
+                                  updated[idx] = { ...updated[idx], whatsappMessage: e.target.value }
+                                  setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                                  setHasUnsavedChanges(true)
+                                }}
+                                placeholder="Texto que chega pronto para a cliente enviar ao clicar em Agendar"
+                                className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-700 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-4">
+                              <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                Selo de Destaque
+                              </label>
+                              <input
+                                type="text"
+                                value={item.badge || ''}
+                                onChange={(e) => {
+                                  const updated = [...servicesCatalogData.items]
+                                  updated[idx] = { ...updated[idx], badge: e.target.value }
+                                  setServicesCatalogData(prev => ({ ...prev, items: updated }))
+                                  setHasUnsavedChanges(true)
+                                }}
+                                placeholder="Ex: MAIS PROCURADO / TOP"
+                                className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-700 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 flex items-center justify-between border-t border-stone-100">
+                      <span className="text-xs text-stone-500">
+                        Lembre-se de clicar em salvar para publicar as alterações no seu link oficial.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleSavePage}
+                        className="px-8 py-3 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
+                      >
+                        <Save className="w-4 h-4 text-[#E2B857]" />
+                        <span>Salvar Serviços no Bio Site</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* ABA EDIÇÃO DE FOTOS DA GALERIA (EXCLUSIVA DO CLIENTE) */}
+              {/* ========================================================= */}
+              {activeSidebarTab === 'galeria' && (
+                <div className="space-y-8 animate-fade-in">
+                  {/* Cabeçalho da Seção */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                          EDIÇÃO DO CLIENTE
+                        </span>
+                        <span className="text-xs text-stone-400 font-mono">/{slug}</span>
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
+                        Fotos da Galeria & Portfólio de Trabalhos
+                      </h2>
+                      <p className="text-xs text-stone-500 max-w-xl">
+                        Atualize os registros dos seus melhores procedimentos para transmitir autoridade e encantar suas visitantes no primeiro olhar.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <a
+                        href={`/${slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2.5 rounded-xl border border-stone-300 hover:border-stone-900 text-stone-700 text-xs font-bold transition flex items-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Ver no Ar</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleSavePage}
+                        className="px-6 py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
+                      >
+                        <Save className="w-3.5 h-3.5 text-[#E2B857]" />
+                        <span>Salvar Galeria</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Configurações da Galeria */}
+                  <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Camera className="w-4 h-4 text-stone-700" />
+                        <h3 className="font-bold text-sm text-stone-900">Configuração da Seção de Galeria</h3>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={galleryConfig.enabled}
+                          onChange={(e) => {
+                            setGalleryConfig(prev => ({ ...prev, enabled: e.target.checked }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          className="w-4 h-4 accent-stone-950 rounded cursor-pointer"
+                        />
+                        <span>{galleryConfig.enabled ? 'Galeria Visível no Bio Site' : 'Galeria Oculta'}</span>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
+                          Selo Superior
+                        </label>
+                        <input
+                          type="text"
+                          value={galleryConfig.badge || ''}
+                          onChange={(e) => {
+                            setGalleryConfig(prev => ({ ...prev, badge: e.target.value }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Ex: RESULTADOS REAIS"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
+                          Título Principal
+                        </label>
+                        <input
+                          type="text"
+                          value={galleryConfig.headline || ''}
+                          onChange={(e) => {
+                            setGalleryConfig(prev => ({ ...prev, headline: e.target.value }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Ex: Portfólio de Procedimentos"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
+                          Subtítulo
+                        </label>
+                        <input
+                          type="text"
+                          value={galleryConfig.subtitle || ''}
+                          onChange={(e) => {
+                            setGalleryConfig(prev => ({ ...prev, subtitle: e.target.value }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          placeholder="Ex: Veja transformações de clientes reais"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grade de Fotos */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-stone-900">Fotos no Portfólio</h3>
+                        <p className="text-xs text-stone-500">
+                          {(galleryConfig.photos || galleryPhotos).length} fotos cadastradas. Cole a URL da imagem ou adicione fotos dos seus atendimentos.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentPhotos = galleryConfig.photos || galleryPhotos
+                          const currentCaptions = galleryConfig.captions || []
+                          const newUrl = 'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80'
+                          const newCaption = 'Procedimento exclusivo com acabamento de luxo'
+                          const updatedPhotos = [...currentPhotos, newUrl]
+                          const updatedCaptions = [...currentCaptions, newCaption]
+                          setGalleryPhotos(updatedPhotos)
+                          setGalleryConfig(prev => ({ ...prev, photos: updatedPhotos, captions: updatedCaptions }))
+                          setHasUnsavedChanges(true)
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4 text-amber-400" />
+                        <span>Adicionar Nova Foto</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(galleryConfig.photos || galleryPhotos).map((photoUrl, idx) => {
+                        const caption = (galleryConfig.captions && galleryConfig.captions[idx]) || ''
+                        return (
+                          <div
+                            key={idx}
+                            className="p-4 rounded-3xl bg-white border border-stone-200/90 hover:border-stone-400 transition shadow-xs space-y-3 flex flex-col justify-between"
+                          >
+                            <div className="space-y-2.5">
+                              <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200">
+                                <img
+                                  src={photoUrl}
+                                  alt={`Foto ${idx + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400'
+                                  }}
+                                />
+                                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[10px] font-mono text-white font-bold">
+                                  #{idx + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentPhotos = galleryConfig.photos || galleryPhotos
+                                    const currentCaptions = galleryConfig.captions || []
+                                    const updatedPhotos = currentPhotos.filter((_, i) => i !== idx)
+                                    const updatedCaptions = currentCaptions.filter((_, i) => i !== idx)
+                                    setGalleryPhotos(updatedPhotos)
+                                    setGalleryConfig(prev => ({ ...prev, photos: updatedPhotos, captions: updatedCaptions }))
+                                    setHasUnsavedChanges(true)
+                                  }}
+                                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-rose-600 text-white transition cursor-pointer"
+                                  title="Remover foto"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                  URL da Imagem
+                                </label>
+                                <input
+                                  type="text"
+                                  value={photoUrl}
+                                  onChange={(e) => {
+                                    const currentPhotos = [...(galleryConfig.photos || galleryPhotos)]
+                                    currentPhotos[idx] = e.target.value
+                                    setGalleryPhotos(currentPhotos)
+                                    setGalleryConfig(prev => ({ ...prev, photos: currentPhotos }))
+                                    setHasUnsavedChanges(true)
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-[11px] font-mono text-stone-800 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
+                                  Legenda do Procedimento
+                                </label>
+                                <input
+                                  type="text"
+                                  value={caption}
+                                  onChange={(e) => {
+                                    const currentCaptions = [...(galleryConfig.captions || [])]
+                                    currentCaptions[idx] = e.target.value
+                                    setGalleryConfig(prev => ({ ...prev, captions: currentCaptions }))
+                                    setHasUnsavedChanges(true)
+                                  }}
+                                  placeholder="Ex: Volume Russo com curvatura D e retenção de 30 dias"
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs text-stone-800 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div className="pt-4 flex items-center justify-between border-t border-stone-100">
+                      <span className="text-xs text-stone-500">
+                        Suas fotos são salvas e publicadas em tempo real com zoom e lightbox interativo.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleSavePage}
+                        className="px-8 py-3 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
+                      >
+                        <Save className="w-4 h-4 text-[#E2B857]" />
+                        <span>Salvar Galeria no Bio Site</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* ABA VENDAS (OBSERVADA DIRETAMENTE NO MODELO REAL) */}
