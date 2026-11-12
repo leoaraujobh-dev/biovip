@@ -484,6 +484,39 @@ export const projects: Project[] = [
       { number: '02', title: 'Plano de Tratamento Personalizado', description: 'Definição das substâncias biocompatíveis de grau médico para resultados naturais.' },
       { number: '03', title: 'Aplicação Médica com Conforto', description: 'Procedimentos com anestesia local tópica e retorno imediato às atividades diárias.' }
     ],
+        galleryPhotosList: [
+      'https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80'
+    ],
+    galleryConfig: {
+      enabled: true,
+      badge: 'CLÍNICA MÉDICA ITAIM BIBI',
+      headline: 'Estrutura Tecnológica & Procedimentos Médicos',
+      subtitle: 'Ambiente planejado com tecnologia dermatológica de padrão internacional',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Consultório e Maca Clínica VIP Dra. Camila Vasconcelos',
+        'Mapeamento Facial 3D e Avaliação Dérmica',
+        'Bioestimuladores de Colágeno e Ácido Hialurônico de Grau Médico',
+        'Tecnologia a Laser de Alta Precisão',
+        'Sala Privativa de Injetáveis com Biossegurança Hospitalar',
+        'Harmonização Facial Sutil e Elegante'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Protocolos & Tecnologias Médicas',
@@ -659,6 +692,39 @@ export const projects: Project[] = [
       { number: '02', title: 'Iluminação & Proteção Plex', description: 'Técnica de mechas com descolorante de baixo impacto e protetores de ligações peptídicas.' },
       { number: '03', title: 'Nutrição & Finalização Editorial', description: 'Banho de brilho, escova modelada e fotos profissionais do seu novo visual.' }
     ],
+        galleryPhotosList: [
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=80'
+    ],
+    galleryConfig: {
+      enabled: true,
+      badge: 'SALÃO VIP JARDINS',
+      headline: 'Transformações de Cabelo & Espaço Helena Duarte',
+      subtitle: 'Visual e resultados reais das nossas clientes nos Jardins',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Bancadas e Poltronas Exclusivas nos Jardins',
+        'Morena Iluminada em Tom Avelã e Mel com Raiz Esfumada',
+        'Loiro Pérola de Alta Luminosidade com Tratamento Fusio-Dose',
+        'Corte Visagista em Camadas Leves e Movimento Natural',
+        'Finalização com Escova Modelada e Brilho Espelhado',
+        'Atendimento Personalizado e Consultoria Visagista'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Menu de Transformações & Spa Capilar',
@@ -749,8 +815,8 @@ export const projects: Project[] = [
     role: 'Nail Designer & Blindagem em Gel',
     category: 'Estética & Nails',
     registrationCode: 'MASTER NAIL DESIGNER',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85',
-    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=85',
+    photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=85',
     description: 'Bio Site de alto padrão para nail designer especialista em alongamento em fibra de vidro, banho em gel e nail art minimalista de luxo.',
     features: ['Tabela de Alongamentos', 'Blindagem Diamante', 'Galeria de Formatos Europeus', 'Reserva de Vagas Mensais', 'Cuidados Pós-Aplicação'],
     link: 'https://biovip.com.br/valeria-nails-couture',
@@ -834,6 +900,39 @@ export const projects: Project[] = [
       { number: '02', title: 'Preparação & Aplicação Estrutural', description: 'Cuticulagem russa sem corte e polimerização com géis hipoalergênicos importados.' },
       { number: '03', title: 'Finalização & Durabilidade', description: 'Top coat ultra brilho com garantia de resistência e brilho espelhado por até 30 dias.' }
     ],
+        galleryPhotosList: [
+      'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80'
+    ],
+    galleryConfig: {
+      enabled: true,
+      badge: 'NAIL ATELIER MOEMA',
+      headline: 'Alongamentos em Fibra & Nail Art Minimalista',
+      subtitle: 'Registros reais de cutilagem russa e acabamento ultrafino em gel',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Alongamento em Fibra de Vidro Silk com Formato Almond',
+        'Esmaltação em Gel Nude com Brilho Diamante',
+        'Nail Art Minimalista com Folhas de Ouro 24k',
+        'Manicure Russa com Cuticulagem Profunda e Sem Cortes',
+        'Bancada Esterilizada e Instrumentais em Autoclave',
+        'Blindagem Diamante com Retenção de até 28 Dias'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Menu de Procedimentos & Alongamentos',
@@ -1009,6 +1108,39 @@ export const projects: Project[] = [
       { number: '02', title: 'Aplicação Relaxante', description: 'Poltrona reclinável ultra confortável, isolamento térmico e cola sem ardor.' },
       { number: '03', title: 'Retenção Prolongada', description: 'Fórmula de alta retenção que garante cílios preenchidos e leves por até 30 dias.' }
     ],
+        galleryPhotosList: [
+      'https://images.unsplash.com/photo-1639629509821-c54cdd984227?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1735151225764-eac694642dbf?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1583001809873-a128495da465?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80'
+    ],
+    galleryConfig: {
+      enabled: true,
+      badge: 'STUDIO PRIVATIVO ITAIM BIBI',
+      headline: 'Técnicas de Cílios & Espaço Isabela Fontes',
+      subtitle: 'Registros reais dos nossos atendimentos com fios de seda premium',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1639629509821-c54cdd984227?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1735151225764-eac694642dbf?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1583001809873-a128495da465?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Volume Russo Imperial com Densidade e Retenção de 30 Dias',
+        'Efeito Molhado (Wet Lash) com Visual Moderno e Marcante',
+        'Aplicação Meticulosa com Isolamento Fio a Fio sem Ardor',
+        'Técnica Fox Eyes com Alongamento dos Cantos Externos',
+        'Lash Lifting com Botox Nutritivo de Queratina',
+        'Poltrona Reclinável de Conforto Máximo e Isolamento Acústico'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Menu de Técnicas & Extensões',
@@ -1192,6 +1324,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'ADVOCACIA EMPRESARIAL FARIA LIMA',
+      headline: 'Banca Tributária & Infraestrutura Corporativa',
+      subtitle: 'Ambiente institucional projetado para negociações de alta complexidade',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Sede Institucional na Av. Brigadeiro Faria Lima - São Paulo',
+        'Salas de Reunião Climatizadas para Deliberações Societárias',
+        'Biblioteca Jurídica Especializada e Acervo Tributário',
+        'Equipe Estratégica em Planejamento Sucessório & Holdings',
+        'Acordos Fiscais Estruturados e Compliance Tributário',
+        'Dr. Rodrigo Mendonça em Despacho Executivo'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Práticas Jurídicas & Soluções Tributárias',
@@ -1379,6 +1536,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'PORTFÓLIO RESIDENCIAL DE ALTO PADRÃO',
+      headline: 'Obras Construídas & Interiores de Luxo',
+      subtitle: 'Registros fotográficos dos projetos entregues pelo Studio Aral',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Living Integrado com Pé-Direito Duplo e Iluminação Cênica',
+        'Fachada Contemporânea em Concreto Aparente e Madeira Cumaru',
+        'Área Gourmet com Ilha em Mármore Michelangelo e Churrasqueira',
+        'Suíte Master com Marcenaria Autoral e Vista Panorâmica',
+        'Piscina com Borda Infinita e Paisagismo Tropical Integrado',
+        'Residência Alphaville: 750m² de Arquitetura de Vanguarda'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Escopos de Projeto & Gestão de Obra',
@@ -1566,6 +1748,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'CONSULTÓRIO MÉDICO & PERFORMANCE',
+      headline: 'Estrutura Clínica & Avaliação Metabólica',
+      subtitle: 'Tecnologia avançada em medicina integrativa e nutrologia desportiva',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Consultório de Nutrologia e Performance no Vila da Serra',
+        'Balança de Bioimpedância Segmentar InBody de Grau Médico',
+        'Análise de Biomarcadores Metabólicos e Otimização Hormonal',
+        'Dr. Lucas Bicalho em Avaliação Antropométrica Detalhada',
+        'Protocolo de Emagrecimento Saudável e Preservação de Massa Magra',
+        'Ambiente Clínico com Acolhimento Humanizado e Conforto'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Protocolos Médicos & Avaliações de Precisão',
@@ -1753,6 +1960,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'ESPAÇO TERAPÊUTICO ACOLHEDOR',
+      headline: 'Consultório de Psicanálise & Saúde Mental',
+      subtitle: 'Ambiente calmo, privativo e seguro para escuta clínica humanizada',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Consultório com Poltrona e Divã em Iluminação Suave',
+        'Acervo de Psicanálise Freudiana e Lacaniana',
+        'Espaço de Conforto e Café para Espera Tranquila',
+        'Carolina Mendes em Atendimento Presencial e Online',
+        'Ambiente Livre de Ruídos com Isolamento Acústico',
+        'Espaço Verde Integrado para Descompressão e Bem-Estar'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Modalidades de Atendimento Clínico',
@@ -1940,6 +2172,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'INSTITUTO VITTAE RECOVERY',
+      headline: 'Reabilitação Fisioterapêutica & Recovery',
+      subtitle: 'Estrutura completa para tratamento de coluna, dor e performance esportiva',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Sala de Avaliação Biomecânica e Termografia Computadorizada',
+        'Maca de Tração e Descompressão para Hérnia de Disco',
+        'Circuito de Recovery com Botas Pneumáticas de Compressão',
+        'Estúdio de Pilates Clínico com Equipamentos Reformer e Cadillac',
+        'Área de Fisioterapia Manual e Liberação Miofascial',
+        'Equipe Multidisciplinar Especializada em Coluna e Reabilitação'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Tratamentos Especializados & Recovery',
@@ -2274,8 +2531,8 @@ export const projects: Project[] = [
     role: 'Joalheria Autoral & Diamantes Certificados',
     category: 'Luxo & Joias',
     registrationCode: 'GIA CERTIFIED LAB',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=85',
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=85',
+    photo: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=85',
     description: 'Bio Site com requinte de revista para joalheria autoral em ouro 18k e diamantes certificados GIA. Encomendas sob medida e solitários.',
     features: ['Ouro 18k Autoral', 'Diamantes GIA', 'Alianças Sob Medida', 'Showroom Cidade Jardim', 'Design Exclusivo'],
     link: 'https://biovip.com.br/aurea-joias',
@@ -2367,6 +2624,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1611591475837-975c6d3dfeb3?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'ALTA JOALHERIA & DIAMANTES GIA',
+      headline: 'Coleções Autorais & Peças Sob Medida',
+      subtitle: 'Registros reais do forjamento em ouro 18k e gemas com certificação internacional',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1611591475837-975c6d3dfeb3?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Colar Riviera em Ouro Branco com Diamantes Lapidação Brilhante',
+        'Anel Solitário de Noivado com Diamante GIA 1.5ct',
+        'Alta Joalheria em Ouro 18k com Esmeraldas Colombianas',
+        'Modelagem Técnica 3D e Forjamento Artesanal no Atelier',
+        'Par de Alianças Matrimoniais Anatômicas em Ouro Amarelo 18k',
+        'Estojo Assinado em Veludo com Certificado de Autenticidade'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Coleções Autorais & Criação Sob Medida',
@@ -2554,6 +2836,31 @@ export const projects: Project[] = [
       'https://images.unsplash.com/photo-1502301103665-0b95cc738daf?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80'
     ],
+        galleryConfig: {
+      enabled: true,
+      badge: 'LE NOIR BISTRÔ · LEBLON',
+      headline: 'Experiência Gastronômica & Salão Intimista',
+      subtitle: 'A atmosfera e os pratos do nosso menu degustação em 7 etapas',
+      layout: 'mosaic',
+      aspectRatio: 'square',
+      enableLightbox: true,
+      photos: [
+        'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1502301103665-0b95cc738daf?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80'
+      ],
+      captions: [
+        'Chef Executivo na Finalização das 7 Etapas do Menu Degustação',
+        'Salão Principal à Meia-Luz com Mesas Bistrô Clássicas',
+        'Entrada Autoral: Tartare de Vieira com Azeite Trufado e Brotos',
+        'Prato Principal: Magret de Canard com Mousseline de Baroa e Redução',
+        'Adega Climatizada com Mais de 400 Rótulos de Grands Crus Franceses',
+        'Harmonização com Vinhos Finos Orientada pelo Sommelier da Casa'
+      ]
+    },
     servicesCatalog: {
       enabled: true,
       headline: 'Menus & Experiências Gastronômicas',

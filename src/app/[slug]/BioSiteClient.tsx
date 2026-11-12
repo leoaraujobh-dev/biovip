@@ -208,44 +208,144 @@ export default function BioSiteClient({
   // 4. Simulador de Procedimentos com Pré-Orçamento (Multi-Select)
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
 
-  // 5. Dados Inteligentes de Antes & Depois por Nicho
+  // 5. Dados Inteligentes de Antes & Depois por Nicho (100% alinhados a cada especialidade)
   const beforeAfterData = useMemo(() => {
-    const cat = (category || '').toLowerCase()
-    if (cat.includes('odonto') || cat.includes('dente') || cat.includes('sorriso')) {
+    const cat = (category || '').toLowerCase();
+    const slg = (slug || '').toLowerCase();
+
+    // Nichos intelectuais / jurídicos / psicanálise: sem antes e depois cosmético (vedado pela ética de classe)
+    if (
+      cat.includes('jurid') ||
+      cat.includes('direito') ||
+      cat.includes('advoc') ||
+      cat.includes('tribut') ||
+      cat.includes('psico') ||
+      cat.includes('terapia') ||
+      cat.includes('mental') ||
+      slg.includes('mendonca') ||
+      slg.includes('mendes-psi')
+    ) {
+      return null;
+    }
+
+    // 1. Odontologia Estética & Reabilitação Oral
+    if (cat.includes('odonto') || cat.includes('dente') || cat.includes('sorriso') || slg.includes('freire')) {
       return {
         title: 'Transformação do Sorriso',
-        subtitle: 'Lentes de Resina & Reabilitação Oral',
-        before: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=800',
+        subtitle: 'Lentes de Porcelana & Reabilitação Estética',
+        before: 'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=800',
         after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=800',
         tag: 'Odontologia Estética'
-      }
+      };
     }
-    if (cat.includes('cilio') || cat.includes('lash') || cat.includes('sobrancelha')) {
+
+    // 2. Extensão de Cílios & Olhar
+    if (cat.includes('cilio') || cat.includes('lash') || cat.includes('sobrancelha') || slg.includes('isabela-lash')) {
       return {
-        title: 'Extensão & Realce do Olhar',
-        subtitle: 'Volume Brasileiro com Acabamento Natural',
-        before: 'https://images.unsplash.com/photo-1583001809873-a128495da465?auto=format&fit=crop&q=80&w=800',
-        after: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=800',
+        title: 'Transformação & Realce do Olhar',
+        subtitle: 'Volume Russo Imperial com Densidade e Curvatura',
+        before: 'https://images.unsplash.com/photo-1701285857712-48cacba95a8f?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1639629509821-c54cdd984227?auto=format&fit=crop&q=80&w=800',
         tag: 'Lash Designer VIP'
-      }
+      };
     }
-    if (cat.includes('barber') || cat.includes('cabelo') || cat.includes('barba')) {
+
+    // 3. Dermatologia & Harmonização Facial
+    if (cat.includes('dermato') || cat.includes('harmoniza') || cat.includes('pele') || slg.includes('vasconcelos')) {
       return {
-        title: 'Visagismo & Alinhamento',
+        title: 'Rejuvenescimento & Harmonização Facial',
+        subtitle: 'Bioestimulador de Colágeno & Contorno Mandibular Sutil',
+        before: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=800',
+        tag: 'Dermatologia Médica'
+      };
+    }
+
+    // 4. Salão de Beleza Feminino & Cabelos (separado de barbearia!)
+    if ((cat.includes('cabelo') || cat.includes('salao') || cat.includes('visagismo')) && !cat.includes('barber') && !cat.includes('barba') && !slg.includes('barbearia')) {
+      return {
+        title: 'Transformação Capilar & Visagismo Feminino',
+        subtitle: 'Morena Iluminada Signature & Brilho Espelhado',
+        before: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800',
+        tag: 'Visagismo & Cor'
+      };
+    }
+
+    // 5. Barbearia & Grooming Masculino
+    if (cat.includes('barber') || cat.includes('barba') || slg.includes('barbearia')) {
+      return {
+        title: 'Visagismo Masculino & Alinhamento',
         subtitle: 'Corte Clássico & Barboterapia de Precisão',
         before: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800',
         after: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=800',
         tag: 'Grooming & Barba'
-      }
+      };
     }
+
+    // 6. Nail Design & Alongamento em Gel
+    if (cat.includes('nail') || cat.includes('unha') || cat.includes('manicure') || slg.includes('valeria-nails')) {
+      return {
+        title: 'Alongamento & Blindagem de Unhas',
+        subtitle: 'Fibra de Vidro Silk com Esmaltação em Gel Diamante',
+        before: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&q=80&w=800',
+        after: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800',
+        tag: 'Nail Couture VIP'
+      };
+    }
+
+    // 7. Arquitetura Residencial & Interiores de Luxo
+    if (cat.includes('arquit') || cat.includes('interior') || cat.includes('decor') || slg.includes('aral')) {
+      return {
+        title: 'Conceito Arquitetônico & Execução',
+        subtitle: 'Estrutura Inicial vs. Living de Luxo Finalizado',
+        before: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800',
+        after: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800',
+        tag: 'Arquitetura Autoral'
+      };
+    }
+
+    // 8. Alta Joalheria & Ouro 18k
+    if (cat.includes('joia') || cat.includes('joalheria') || cat.includes('diamante') || cat.includes('ouro') || slg.includes('aurea')) {
+      return {
+        title: 'Ourivesaria Autoral & Lapidação',
+        subtitle: 'Modelagem Técnica 3D vs. Solitário em Ouro 18k Concluído',
+        before: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800',
+        after: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800',
+        tag: 'Alta Joalheria GIA'
+      };
+    }
+
+    // 9. Gastronomia & Alta Culinária
+    if (cat.includes('gastro') || cat.includes('restaurante') || cat.includes('bistro') || slg.includes('bistro')) {
+      return {
+        title: 'Alta Gastronomia Francesa',
+        subtitle: 'Ingredientes Nobres Sazonais vs. Empratamento Autoral',
+        before: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800',
+        after: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800',
+        tag: 'Menu Degustação'
+      };
+    }
+
+    // 10. Fisioterapia Especializada & Performance Esportiva
+    if (cat.includes('fisio') || cat.includes('reabilita') || cat.includes('nutro') || cat.includes('performance') || slg.includes('vittae') || slg.includes('bicalho')) {
+      return {
+        title: 'Biomecânica & Performance Corporal',
+        subtitle: 'Diagnóstico Funcional vs. Reabilitação e Alinhamento Muscular',
+        before: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800',
+        after: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800',
+        tag: 'Recovery Ativo'
+      };
+    }
+
     return {
       title: 'Transformação & Resultado Real',
       subtitle: 'Protocolo Exclusivo com Foco em Naturalidade',
       before: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800',
       after: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=800',
       tag: 'Procedimento Exclusivo'
-    }
-  }, [category])
+    };
+  }, [category, slug]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -298,7 +398,7 @@ export default function BioSiteClient({
 
   // Carregar modelo com dados salvos no localStorage (se houver customizações)
   const [modelData, setModelData] = useState<any>(() => {
-    return projects.find(p => p.slug === slug)
+    return projects.find(p => p.slug === slug || (slug === 'ana-freire' && p.slug === 'dra-ana-freire'))
   })
 
   // Sincronização em tempo real de Módulos & Blocos ativados pelo Administrador
@@ -2045,7 +2145,7 @@ export default function BioSiteClient({
         )}
 
         {/* 12.5. Comparador Interativo de Antes & Depois (Split-Slider Arrastável por Toque/Mouse) */}
-        {clientModules.beforeAfter !== false && (
+        {clientModules.beforeAfter !== false && beforeAfterData && (
           <BioSiteScrollReveal direction="up" delay={80} className="px-5 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300 flex items-center gap-1.5">
