@@ -51,7 +51,7 @@ export default function EditorCanvasColumn({
             mobileMode === 'editor' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          {/* Fundo com iluminaÃ§Ã£o sutil de estÃºdio */}
+          {/* Fundo com iluminação sutil de estúdio */}
           <div
             className="absolute inset-0 pointer-events-none opacity-20"
             style={{
@@ -85,7 +85,7 @@ export default function EditorCanvasColumn({
                   color: props.selectedPalette.text
                 }}
               >
-                {/* 1. Barra de AnÃºncio Superior (se ativada) */}
+                {/* 1. Barra de Anúncio Superior (se ativada) */}
                 {props.announcementData?.enabled && (
                   <div
                     className="py-1.5 px-3 text-[8px] font-mono font-bold flex items-center justify-center gap-1.5 border-b"
@@ -102,13 +102,13 @@ export default function EditorCanvasColumn({
                         color: props.selectedPalette.buttonText || '#000'
                       }}
                     >
-                      â— {props.announcementData.badge}
+                      ● {props.announcementData.badge}
                     </span>
                     <span className="truncate">{props.announcementData.text}</span>
                   </div>
                 )}
 
-                {/* Ilha DinÃ¢mica e Registro no Topo */}
+                {/* Ilha Dinâmica e Registro no Topo */}
                 <div className="relative z-20 pt-2 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase">
                   <div className="w-14 h-3 bg-black rounded-full mx-auto" />
                   <span className="font-bold opacity-80 absolute right-4 top-2 text-[8px]">
@@ -116,7 +116,7 @@ export default function EditorCanvasColumn({
                   </span>
                 </div>
 
-                {/* Foto do Perfil com Efeito de FusÃ£o de EstÃºdio */}
+                {/* Foto do Perfil com Efeito de Fusão de Estúdio */}
                 <div className="relative w-full h-40 overflow-hidden -mt-2 select-none shrink-0">
                   <img
                     src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
@@ -133,7 +133,7 @@ export default function EditorCanvasColumn({
                   )}
                 </div>
 
-                {/* Bloco de InformaÃ§Ãµes Principais */}
+                {/* Bloco de Informações Principais */}
                 <div className="px-3.5 pt-1 pb-6 flex-1 flex flex-col items-center">
                   <span
                     className="text-[8px] font-mono uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border mb-1"
@@ -153,13 +153,13 @@ export default function EditorCanvasColumn({
                     {props.businessTitle || props.brandName}
                   </h3>
 
-                  {/* AvaliaÃ§Ãµes Google */}
+                  {/* Avaliações Google */}
                   <div className="mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono">
-                    <span>â˜…â˜…â˜…â˜…â˜…</span>
+                    <span>â˜…â˜…â˜…â˜…★</span>
                     <span className="opacity-80">{props.rating} ({props.reviewsCount})</span>
                   </div>
 
-                  {/* Barra RÃ¡pida (WhatsApp & Agendar) */}
+                  {/* Barra Rápida (WhatsApp & Agendar) */}
                   <div className="w-full grid grid-cols-2 gap-1.5 mt-2">
                     <div
                       className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1"
@@ -184,7 +184,7 @@ export default function EditorCanvasColumn({
                     </div>
                   </div>
 
-                  {/* Banner de UrgÃªncia & CronÃ´metro */}
+                  {/* Banner de Urgência & Cronômetro */}
                   {props.urgencyData?.enabled && (
                     <div
                       className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left"
@@ -210,7 +210,7 @@ export default function EditorCanvasColumn({
                     </div>
                   )}
 
-                  {/* SubpÃ¡ginas Pro */}
+                  {/* Subpáginas Pro */}
                   {props.additionalPages.length > 0 && (
                     <div className="flex items-center justify-center gap-1 mt-2 mb-1 flex-wrap">
                       {props.additionalPages.slice(0, 3).map((p: any) => (
@@ -225,11 +225,11 @@ export default function EditorCanvasColumn({
                     </div>
                   )}
 
-                  {/* BotÃµes Principais de AÃ§Ã£o (ConfiguraÃ§Ãµes BioVip Oficial) */}
+                  {/* Botões Principais de Ação (Configurações BioVip Oficial) */}
                   <div className="w-full space-y-1.5 mt-2">
                     {props.buttons.map((btn: any, btnIdx: number) => {
                       const isHigh = !!btn.isHighlighted || btn.variant === 'accent' || btnIdx === 0
-                      const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? 'â­ MAIS ESCOLHIDO' : '')
+                      const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? '⭐ MAIS ESCOLHIDO' : '')
                       const titleText = btn.label || btn.title
                       const subtitleText = btn.subtitle || ''
                       const cardImg = btn.cardImage || btn.image
@@ -332,7 +332,7 @@ export default function EditorCanvasColumn({
                               className="text-[10px] font-bold"
                               style={{ color: props.selectedPalette.accent }}
                             >
-                              â†’
+                              →
                             </span>
                           </div>
                         </div>
@@ -340,7 +340,7 @@ export default function EditorCanvasColumn({
                     })}
                   </div>
 
-                  {/* BotÃ£o de Quiz Anti-curiosos */}
+                  {/* Botão de Quiz Anti-curiosos */}
                   {props.quizData?.enabled && (
                     <div
                       className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer"
@@ -357,12 +357,12 @@ export default function EditorCanvasColumn({
                         </span>
                       </div>
                       <span className="text-[9px] font-bold" style={{ color: props.selectedPalette.accent }}>
-                        â†’
+                        →
                       </span>
                     </div>
                   )}
 
-                  {/* MÃ©tricas de Autoridade */}
+                  {/* Métricas de Autoridade */}
                   {props.metricsData && props.metricsData.length > 0 && (
                     <div
                       className="w-full grid grid-cols-3 gap-1 p-2 rounded-xl border mt-2 text-center"
@@ -423,7 +423,7 @@ export default function EditorCanvasColumn({
                     </div>
                   )}
 
-                  {/* 11. CatÃ¡logo Completo de Procedimentos & PreÃ§os */}
+                  {/* 11. Catálogo Completo de Procedimentos & Preços */}
                   {props.servicesCatalogData?.enabled && props.servicesCatalogData.items && props.servicesCatalogData.items.length > 0 && (
                     <div className="w-full mt-3 space-y-2 text-left">
                       <div className="flex items-center justify-between">
@@ -431,7 +431,7 @@ export default function EditorCanvasColumn({
                           className="text-[7.5px] font-mono uppercase tracking-widest font-bold"
                           style={{ color: props.selectedPalette.accent }}
                         >
-                          CATÃLOGO VIP
+                          CATÁLOGO VIP
                         </span>
                         <span className="text-[7px] font-mono opacity-70">
                           {props.servicesCatalogData.items.length} procedimentos
@@ -467,7 +467,7 @@ export default function EditorCanvasColumn({
                         </div>
                       )}
 
-                      {/* Lista de Itens do CatÃ¡logo */}
+                      {/* Lista de Itens do Catálogo */}
                       <div className="space-y-2">
                         {props.servicesCatalogData.items
                           .filter((item: any) => previewCatalogCategory === 'TODOS' || item.category === previewCatalogCategory)
@@ -535,7 +535,7 @@ export default function EditorCanvasColumn({
                                       }}
                                     >
                                       <span>Reservar</span>
-                                      <span>â†’</span>
+                                      <span>→</span>
                                     </span>
                                   </div>
                                 </div>
@@ -603,7 +603,7 @@ export default function EditorCanvasColumn({
                                     }}
                                   >
                                     <span>Reservar</span>
-                                    <span>â†’</span>
+                                    <span>→</span>
                                   </span>
                                 </div>
                               </div>
@@ -621,30 +621,30 @@ export default function EditorCanvasColumn({
                       >
                         <div className="flex items-center gap-1 text-stone-300">
                           <CreditCard className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                          <span className="truncate">CartÃ£o atÃ© 12x</span>
+                          <span className="truncate">Cartão até 12x</span>
                         </div>
                         <div className="flex items-center gap-1 text-stone-300">
                           <Zap className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                          <span className="truncate">Pix InstantÃ¢neo</span>
+                          <span className="truncate">Pix Instantâneo</span>
                         </div>
                         <div className="flex items-center gap-1 text-stone-300">
                           <Car className="w-2.5 h-2.5 text-sky-400 shrink-0" />
-                          <span className="truncate">FÃ¡cil Acesso</span>
+                          <span className="truncate">Fácil Acesso</span>
                         </div>
                         <div className="flex items-center gap-1 text-stone-300">
                           <ShieldCheck className="w-2.5 h-2.5 text-purple-400 shrink-0" />
-                          <span className="truncate">EspaÃ§o VIP</span>
+                          <span className="truncate">Espaço VIP</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* 12. Galeria de Fotos / PortfÃ³lio (ConfiguraÃ§Ãµes Oficiais BioVip) */}
+                  {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
                   {effectiveGalleryConfig.enabled && effectiveGalleryConfig.photos && effectiveGalleryConfig.photos.length > 0 && (
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div className="flex items-center justify-between">
                         <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300">
-                          {effectiveGalleryConfig.badge || 'PORTFÃ“LIO & ESTRUTURA VIP'}
+                          {effectiveGalleryConfig.badge || 'PORTFÓLIO & ESTRUTURA VIP'}
                         </span>
                         <span className="text-[7px] font-mono text-stone-400">
                           {effectiveGalleryConfig.photos.length} fotos
@@ -715,7 +715,7 @@ export default function EditorCanvasColumn({
                         </div>
                       )}
 
-                      {/* Layout 3: Mosaico DinÃ¢mico Bento (1Âª Foto Grande + Grade) */}
+                      {/* Layout 3: Mosaico Dinâmico Bento (1ª Foto Grande + Grade) */}
                       {effectiveGalleryConfig.layout === 'mosaic' && (
                         <div className="grid grid-cols-2 gap-1">
                           <div
@@ -727,7 +727,7 @@ export default function EditorCanvasColumn({
                             <img src={effectiveGalleryConfig.photos[0]} alt="" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-between p-2">
                               <span className="self-start px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-amber-400 text-stone-950 uppercase">
-                                â­ Destaque
+                                ⭐ Destaque
                               </span>
                               {effectiveGalleryConfig.captions?.[0] && (
                                 <span className="text-[7.5px] text-white line-clamp-1 font-medium">
@@ -793,7 +793,7 @@ export default function EditorCanvasColumn({
                             >
                               <img
                                 src={imgUrl}
-                                alt={`PortfÃ³lio ${i + 1}`}
+                                alt={`Portfólio ${i + 1}`}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -806,7 +806,7 @@ export default function EditorCanvasColumn({
                     </div>
                   )}
 
-                  {/* 13. LocalizaÃ§Ã£o & Rotas GPS */}
+                  {/* 13. Localização & Rotas GPS */}
                   {props.locationData?.enabled && (
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div
@@ -818,7 +818,7 @@ export default function EditorCanvasColumn({
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-[7px] font-mono uppercase tracking-widest font-bold opacity-75">
-                            NOSSA LOCALIZAÃ‡ÃƒO
+                            NOSSA LOCALIZAÇÃO
                           </span>
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[7px] font-mono">
                             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
@@ -836,7 +836,7 @@ export default function EditorCanvasColumn({
                           </div>
                         </div>
 
-                        {/* 4 BotÃµes de Rota */}
+                        {/* 4 Botões de Rota */}
                         <div className="grid grid-cols-4 gap-1 pt-1">
                           <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
                             <Navigation className="w-2 h-2 text-sky-400" />
@@ -864,11 +864,11 @@ export default function EditorCanvasColumn({
                     <div className="w-full mt-3 space-y-1.5 text-left">
                       <div className="flex items-center justify-between">
                         <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80">
-                          AVALIAÃ‡Ã•ES NO GOOGLE
+                          AVALIAÇÕES NO GOOGLE
                         </span>
                         <span className="text-[7.5px] font-mono text-amber-400 font-bold flex items-center gap-0.5">
                           <span>5.0</span>
-                          <span>â˜…â˜…â˜…â˜…â˜…</span>
+                          <span>â˜…â˜…â˜…â˜…★</span>
                         </span>
                       </div>
                       <div className="space-y-1.5">
@@ -882,16 +882,16 @@ export default function EditorCanvasColumn({
                             }}
                           >
                             <div className="flex items-center justify-between text-amber-400 text-[8px]">
-                              <span>â˜…â˜…â˜…â˜…â˜…</span>
+                              <span>â˜…â˜…â˜…â˜…★</span>
                               <span className="text-[6.5px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
-                                âœ“ Verificado
+                                ✓ Verificado
                               </span>
                             </div>
                             <p className="text-[8px] text-stone-300 font-sans italic leading-snug line-clamp-2">
                               &ldquo;{t.text}&rdquo;
                             </p>
                             <div className="text-[7px] font-mono text-stone-400">
-                              {t.clientName || t.name} Â· {t.city || t.role}
+                              {t.clientName || t.name} · {t.city || t.role}
                             </div>
                           </div>
                         ))}
@@ -924,11 +924,11 @@ export default function EditorCanvasColumn({
                     </div>
                   )}
 
-                  {/* 16. DÃºvidas Frequentes (FAQ Sanfonado) */}
+                  {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
                   {props.faqData && props.faqData.length > 0 && (
                     <div className="w-full mt-3 space-y-1 text-left">
                       <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-0.5">
-                        DÃšVIDAS FREQUENTES
+                        DÚVIDAS FREQUENTES
                       </span>
                       <div className="space-y-1">
                         {props.faqData.slice(0, 4).map((item: any, i: number) => {
@@ -974,7 +974,7 @@ export default function EditorCanvasColumn({
                     </div>
                   </div>
 
-                  {/* 18. Monograma e Assinatura Editorial de RodapÃ© */}
+                  {/* 18. Monograma e Assinatura Editorial de Rodapé */}
                   <div className="mt-4 pb-4 w-full flex flex-col items-center text-center">
                     <div
                       className="w-10 h-px mb-1.5 opacity-40"
@@ -987,10 +987,10 @@ export default function EditorCanvasColumn({
                       {props.monogram || 'AF'}
                     </span>
                     <div className="text-[6.5px] font-mono text-stone-500 mt-1">
-                      Â© {new Date().getFullYear()} {props.businessTitle || props.brandName}. Todos os direitos reservados.
+                      © {new Date().getFullYear()} {props.businessTitle || props.brandName}. Todos os direitos reservados.
                     </div>
                     <div className="text-[6px] font-mono text-stone-500 hover:text-amber-400 transition mt-0.5">
-                      âœ¨ Desenvolvido com padrÃ£o BioVip
+                      ✨ Desenvolvido com padrão BioVip
                     </div>
                   </div>
                 </div>

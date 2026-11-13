@@ -44,17 +44,17 @@ export default function ClientPixelsTab({
           </span>
         </div>
         <h3 className="text-lg font-serif font-bold text-stone-900">
-          Pixels de TrÃ¡fego Pago & AnÃºncios
+          Pixels de Tráfego Pago & Anúncios
         </h3>
         <p className="text-xs text-stone-500 mt-0.5">
-          Rastreie cliques no WhatsApp, visualizaÃ§Ãµes de catÃ¡logo e conversÃµes de Meta Ads, Google Ads e TikTok.
+          Rastreie cliques no WhatsApp, visualizações de catálogo e conversões de Meta Ads, Google Ads e TikTok.
         </p>
       </div>
 
       {pixelSavedSuccess && (
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          Pixels salvos com sucesso! Os eventos serÃ£o disparados no seu BioSite.
+          Pixels salvos com sucesso! Os eventos serão disparados no seu BioSite.
         </div>
       )}
 
@@ -136,7 +136,7 @@ export default function ClientPixelsTab({
           />
           <div>
             <span className="text-xs font-bold text-stone-900">Disparar evento &apos;Lead&apos; ao tocar no WhatsApp</span>
-            <p className="text-[11px] text-stone-500">Mede conversÃ£o real de campanhas de trÃ¡fego pago.</p>
+            <p className="text-[11px] text-stone-500">Mede conversão real de campanhas de tráfego pago.</p>
           </div>
         </label>
 
@@ -149,7 +149,7 @@ export default function ClientPixelsTab({
           />
           <div>
             <span className="text-xs font-bold text-stone-900">Disparar &apos;PageView&apos; e &apos;ViewContent&apos; ao abrir o BioSite</span>
-            <p className="text-[11px] text-stone-500">Permite criar pÃºblicos de remarketing para quem visitou seu link.</p>
+            <p className="text-[11px] text-stone-500">Permite criar públicos de remarketing para quem visitou seu link.</p>
           </div>
         </label>
       </div>

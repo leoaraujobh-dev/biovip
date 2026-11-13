@@ -68,7 +68,7 @@ export default function ClientPaymentTab({
 
   return (
       <div className="space-y-6 animate-fade-in pt-2">
-        {/* CABEÃ‡ALHO DA SEÃ‡ÃƒO */}
+        {/* CABEÇALHO DA SEÇÃO */}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
@@ -79,31 +79,31 @@ export default function ClientPaymentTab({
                 ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
                 : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
             }`}>
-              {isPendente ? 'PAGAMENTO PENDENTE (48H)' : 'PAGAMENTO CONFIRMADO Â· ATIVO'}
+              {isPendente ? 'PAGAMENTO PENDENTE (48H)' : 'PAGAMENTO CONFIRMADO · ATIVO'}
             </span>
           </div>
           <h3 className="text-xl font-serif font-bold text-stone-900">
-            Aba de Pagamento & RegularizaÃ§Ã£o do Bio Site
+            Aba de Pagamento & Regularização do Bio Site
           </h3>
           <p className="text-xs text-stone-500 mt-0.5">
             Gerencie sua assinatura, consulte faturas e regularize seu plano para manter seu link oficial online.
           </p>
         </div>
 
-        {/* FEEDBACK DE SUCESSO DE CONFIRMAÃ‡ÃƒO */}
+        {/* FEEDBACK DE SUCESSO DE CONFIRMAÇÃO */}
         {paymentSuccessFeedback && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-medium flex items-start gap-3 animate-fade-in shadow-xs">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
             <div>
               <strong className="block text-sm font-bold text-emerald-900">
-                ðŸŽ‰ Pagamento Confirmado com Sucesso!
+                🎉 Pagamento Confirmado com Sucesso!
               </strong>
-              Seu Bio Site <code className="font-mono font-bold">biovip.com.br/{slug}</code> estÃ¡ com assinatura 100% ativa, hospedagem protegida e livre de qualquer risco de suspensÃ£o.
+              Seu Bio Site <code className="font-mono font-bold">biovip.com.br/{slug}</code> está com assinatura 100% ativa, hospedagem protegida e livre de qualquer risco de suspensão.
             </div>
           </div>
         )}
 
-        {/* CARD PRINCIPAL DE STATUS COM AVISO EXIGIDO PELO USUÃRIO */}
+        {/* CARD PRINCIPAL DE STATUS COM AVISO EXIGIDO PELO USUÁRIO */}
         <div className={`p-6 rounded-3xl border transition-all ${
           isPendente
             ? 'bg-gradient-to-br from-amber-50/80 via-white to-amber-50/50 border-amber-300/80 shadow-sm'
@@ -124,14 +124,14 @@ export default function ClientPaymentTab({
                   {isPendente ? 'Pagamento Pendente' : 'Assinatura Ativa & Regularizada'}
                 </h4>
                 <p className="text-xs text-stone-500">
-                  Plano BioVip Pro Anual Â· DomÃ­nio <span className="font-mono font-semibold text-stone-800">biovip.com.br/{slug}</span>
+                  Plano BioVip Pro Anual · Domínio <span className="font-mono font-semibold text-stone-800">biovip.com.br/{slug}</span>
                 </p>
               </div>
             </div>
 
             <div className="text-left sm:text-right">
               <div className="text-2xl font-bold font-mono text-stone-900">
-                R$ 55,92 <span className="text-xs font-normal text-stone-500 font-sans">/mÃªs no anual</span>
+                R$ 55,92 <span className="text-xs font-normal text-stone-500 font-sans">/mês no anual</span>
               </div>
               <div className="text-[11px] text-stone-500 font-mono">
                 Total R$ 671,04/ano ou R$ 79,00 avulso
@@ -139,41 +139,41 @@ export default function ClientPaymentTab({
             </div>
           </div>
 
-          {/* ALERTA DE TOLERÃ‚NCIA DE 48 HORAS */}
+          {/* ALERTA DE TOLERÂNCIA DE 48 HORAS */}
           {isPendente ? (
             <div className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs leading-relaxed space-y-2">
               <div className="flex items-center gap-2 font-bold text-amber-900 uppercase tracking-wide">
                 <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                <span>Aviso de TolerÃ¢ncia de 48 Horas:</span>
+                <span>Aviso de Tolerância de 48 Horas:</span>
               </div>
               <p className="font-medium text-stone-800">
-                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se apÃ³s 48 horas o pagamento nÃ£o for confirmado, o Bio Site serÃ¡ suspenso.</strong>
+                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se após 48 horas o pagamento não for confirmado, o Bio Site será suspenso.</strong>
               </p>
               <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-amber-800">
                 <Clock className="w-3.5 h-3.5" />
-                <span>Tempo restante estimado: <strong>{remainingHours} horas</strong> para confirmaÃ§Ã£o.</span>
+                <span>Tempo restante estimado: <strong>{remainingHours} horas</strong> para confirmação.</span>
               </div>
             </div>
           ) : (
             <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Assinatura regularizada. PrÃ³xima renovaÃ§Ã£o automÃ¡tica programada para daqui a 1 ano.</span>
+              <span>Assinatura regularizada. Próxima renovação automática programada para daqui a 1 ano.</span>
             </div>
           )}
         </div>
 
-        {/* FORMAS DE PAGAMENTO COM LIBERAÃ‡ÃƒO */}
+        {/* FORMAS DE PAGAMENTO COM LIBERAÇÃO */}
         <div className="bg-white rounded-3xl border border-stone-200 p-6 space-y-6 shadow-xs">
           <div>
             <h4 className="text-base font-serif font-bold text-stone-900">
               Escolha a Forma de Pagamento
             </h4>
             <p className="text-xs text-stone-500 mt-0.5">
-              Pague com seguranÃ§a criptografada e liberaÃ§Ã£o imediata da sua conta.
+              Pague com segurança criptografada e liberação imediata da sua conta.
             </p>
           </div>
 
-          {/* SELETOR PIX OU CARTÃƒO */}
+          {/* SELETOR PIX OU CARTÃO */}
           <div className="grid grid-cols-2 gap-3 p-1 rounded-2xl bg-stone-100">
             <button
               type="button"
@@ -185,9 +185,9 @@ export default function ClientPaymentTab({
               }`}
             >
               <QrCode className="w-4 h-4 text-emerald-600" />
-              <span>PIX InstantÃ¢neo</span>
+              <span>PIX Instantâneo</span>
               <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold hidden sm:inline">
-                LIBERAÃ‡ÃƒO IMEDIATA
+                LIBERAÇÃO IMEDIATA
               </span>
             </button>
 
@@ -201,14 +201,14 @@ export default function ClientPaymentTab({
               }`}
             >
               <CreditCard className="w-4 h-4 text-indigo-600" />
-              <span>CartÃ£o de CrÃ©dito</span>
+              <span>Cartão de Crédito</span>
               <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 font-mono font-bold hidden sm:inline">
-                ATÃ‰ 12X
+                ATÉ 12X
               </span>
             </button>
           </div>
 
-          {/* CONTEÃšDO DO PIX */}
+          {/* CONTEÚDO DO PIX */}
           {activePaymentMethod === 'pix' && (
             <div className="space-y-6 pt-2 animate-fade-in">
               <div className="flex flex-col sm:flex-row items-center gap-6 p-5 rounded-2xl bg-stone-50 border border-stone-200">
@@ -246,7 +246,7 @@ export default function ClientPaymentTab({
                     <rect x="84" y="65" width="6" height="6" fill="#1c1917" />
                     <rect x="84" y="84" width="6" height="6" fill="#1c1917" />
                   </svg>
-                  <span className="text-[9px] font-mono text-stone-400 mt-1 uppercase">Aponte a cÃ¢mera</span>
+                  <span className="text-[9px] font-mono text-stone-400 mt-1 uppercase">Aponte a câmera</span>
                 </div>
 
                 <div className="flex-1 space-y-3 w-full">
@@ -271,7 +271,7 @@ export default function ClientPaymentTab({
                         <span>{pixCopied ? 'Copiada!' : 'Copiar Chave Celular'}</span>
                       </button>
                       <a
-                        href={`https://wa.me/5531991390202?text=${encodeURIComponent(`OlÃ¡! Realizei o pagamento via Pix da anuidade do BioSite ${slug} e gostaria de enviar o comprovante para liberaÃ§Ã£o imediata.`)}`}
+                        href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Realizei o pagamento via Pix da anuidade do BioSite ${slug} e gostaria de enviar o comprovante para liberação imediata.`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition flex items-center gap-1 cursor-pointer ml-auto"
@@ -284,10 +284,10 @@ export default function ClientPaymentTab({
 
                   <div>
                     <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
-                      CÃ“DIGO PIX COPIA E COLA
+                      CÓDIGO PIX COPIA E COLA
                     </span>
                     <p className="text-xs text-stone-600 mt-0.5">
-                      Ou abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o cÃ³digo abaixo:
+                      Ou abra o app do seu banco, escolha <strong>Pix Copia e Cola</strong> e cole o código abaixo:
                     </p>
                   </div>
 
@@ -322,8 +322,8 @@ export default function ClientPaymentTab({
                   </div>
 
                   <div className="flex items-center gap-4 text-[11px] text-stone-500 font-medium">
-                    <span>BeneficiÃ¡rio: <strong>BioVip Tecnologia / Suporte Oficial</strong></span>
-                    <span>â€¢</span>
+                    <span>Beneficiário: <strong>BioVip Tecnologia / Suporte Oficial</strong></span>
+                    <span>•</span>
                     <span>WhatsApp: <strong>(31) 99139-0202</strong></span>
                   </div>
                 </div>
@@ -351,7 +351,7 @@ export default function ClientPaymentTab({
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>{isPendente ? 'CONFIRMAR PAGAMENTO (ATIVAR IMEDIATAMENTE)' : 'PAGAMENTO JÃ CONFIRMADO'}</span>
+                      <span>{isPendente ? 'CONFIRMAR PAGAMENTO (ATIVAR IMEDIATAMENTE)' : 'PAGAMENTO JÁ CONFIRMADO'}</span>
                     </>
                   )}
                 </button>
@@ -359,13 +359,13 @@ export default function ClientPaymentTab({
             </div>
           )}
 
-          {/* CONTEÃšDO DO CARTÃƒO */}
+          {/* CONTEÚDO DO CARTÃO */}
           {activePaymentMethod === 'cartao' && (
             <div className="space-y-4 pt-2 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
-                    NOME IMPRESSO NO CARTÃƒO *
+                    NOME IMPRESSO NO CARTÃO *
                   </label>
                   <input
                     type="text"
@@ -378,7 +378,7 @@ export default function ClientPaymentTab({
 
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
-                    NÃšMERO DO CARTÃƒO *
+                    NÚMERO DO CARTÃO *
                   </label>
                   <div className="relative">
                     <input
@@ -409,7 +409,7 @@ export default function ClientPaymentTab({
 
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-stone-500 font-bold mb-1">
-                    CÃ“DIGO CVV *
+                    CÓDIGO CVV *
                   </label>
                   <input
                     type="password"
@@ -430,7 +430,7 @@ export default function ClientPaymentTab({
                     onChange={(e) => setCardInstallments(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900 bg-white"
                   >
-                    <option value="1">1x de R$ 671,04 Ã  vista (com desconto anual)</option>
+                    <option value="1">1x de R$ 671,04 à vista (com desconto anual)</option>
                     <option value="3">3x de R$ 223,68 sem juros</option>
                     <option value="6">6x de R$ 111,84 sem juros</option>
                     <option value="12">12x de R$ 55,92 sem juros (Recomendado)</option>
@@ -445,11 +445,11 @@ export default function ClientPaymentTab({
                 className="w-full py-4 rounded-xl bg-stone-950 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
                 {isProcessingPayment ? (
-                  <span>Processando transaÃ§Ã£o segura...</span>
+                  <span>Processando transação segura...</span>
                 ) : (
                   <>
                     <Lock className="w-4 h-4 text-amber-400" />
-                    <span>PAGAR COM CARTÃƒO & ATIVAR BIOSITE</span>
+                    <span>PAGAR COM CARTÃO & ATIVAR BIOSITE</span>
                   </>
                 )}
               </button>
@@ -462,7 +462,7 @@ export default function ClientPaymentTab({
           )}
         </div>
 
-        {/* BENEFÃCIOS GARANTIDOS */}
+        {/* BENEFÍCIOS GARANTIDOS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
             <ShieldCheck className="w-5 h-5 text-emerald-600 mx-auto" />
@@ -471,13 +471,13 @@ export default function ClientPaymentTab({
           </div>
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
             <Sparkles className="w-5 h-5 text-amber-600 mx-auto" />
-            <h5 className="text-xs font-bold text-stone-900">12 MÃ³dulos VIP Liberados</h5>
-            <p className="text-[11px] text-stone-500">Todos os mÃ³dulos de conversÃ£o, catÃ¡logo e quiz ativos.</p>
+            <h5 className="text-xs font-bold text-stone-900">12 Módulos VIP Liberados</h5>
+            <p className="text-[11px] text-stone-500">Todos os módulos de conversão, catálogo e quiz ativos.</p>
           </div>
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
             <Users className="w-5 h-5 text-indigo-600 mx-auto" />
             <h5 className="text-xs font-bold text-stone-900">Suporte Dedicado VIP</h5>
-            <p className="text-[11px] text-stone-500">Atendimento prioritÃ¡rio via WhatsApp direto da equipe.</p>
+            <p className="text-[11px] text-stone-500">Atendimento prioritário via WhatsApp direto da equipe.</p>
           </div>
         </div>
       </div>

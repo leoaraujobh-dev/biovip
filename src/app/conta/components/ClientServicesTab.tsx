@@ -20,7 +20,7 @@ export default function ClientServicesTab({
 }: ClientServicesTabProps) {
   return (
                 <div className="space-y-8 animate-fade-in">
-                  {/* CabeÃ§alho da SeÃ§Ã£o */}
+                  {/* Cabeçalho da Seção */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -30,10 +30,10 @@ export default function ClientServicesTab({
                         <span className="text-xs text-stone-400 font-mono">/{slug}</span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-                        CatÃ¡logo de Procedimentos & PreÃ§os
+                        Catálogo de Procedimentos & Preços
                       </h2>
                       <p className="text-xs text-stone-500 max-w-xl">
-                        Altere os nomes, valores fechados, duraÃ§Ãµes e mensagens diretas do WhatsApp. Suas clientes jÃ¡ chegam sabendo o preÃ§o e prontas para fechar.
+                        Altere os nomes, valores fechados, durações e mensagens diretas do WhatsApp. Suas clientes já chegam sabendo o preço e prontas para fechar.
                       </p>
                     </div>
 
@@ -53,17 +53,17 @@ export default function ClientServicesTab({
                         className="px-6 py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
                       >
                         <Save className="w-3.5 h-3.5 text-[#E2B857]" />
-                        <span>Salvar AlteraÃ§Ãµes</span>
+                        <span>Salvar Alterações</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* ConfiguraÃ§Ãµes Globais do CatÃ¡logo */}
+                  {/* Configurações Globais do Catálogo */}
                   <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-500" />
-                        <h3 className="font-bold text-sm text-stone-900">Status do CatÃ¡logo na sua PÃ¡gina</h3>
+                        <h3 className="font-bold text-sm text-stone-900">Status do Catálogo na sua Página</h3>
                       </div>
                       <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
                         <input
@@ -75,14 +75,14 @@ export default function ClientServicesTab({
                           }}
                           className="w-4 h-4 accent-stone-950 rounded cursor-pointer"
                         />
-                        <span>{servicesCatalogData.enabled ? 'CatÃ¡logo VisÃ­vel no Bio Site' : 'CatÃ¡logo Oculto'}</span>
+                        <span>{servicesCatalogData.enabled ? 'Catálogo Visível no Bio Site' : 'Catálogo Oculto'}</span>
                       </label>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          TÃ­tulo do CatÃ¡logo
+                          Título do Catálogo
                         </label>
                         <input
                           type="text"
@@ -96,7 +96,7 @@ export default function ClientServicesTab({
                       </div>
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          SubtÃ­tulo Explicativo
+                          Subtítulo Explicativo
                         </label>
                         <input
                           type="text"
@@ -118,7 +118,7 @@ export default function ClientServicesTab({
                       <div>
                         <h3 className="font-serif font-bold text-lg text-stone-900">Procedimentos Cadastrados</h3>
                         <p className="text-xs text-stone-500">
-                          VocÃª tem <strong>{servicesCatalogData.items.length} procedimentos</strong> ativos. Clique em adicionar para criar mais.
+                          Você tem <strong>{servicesCatalogData.items.length} procedimentos</strong> ativos. Clique em adicionar para criar mais.
                         </p>
                       </div>
 
@@ -131,10 +131,10 @@ export default function ClientServicesTab({
                             name: 'Novo Procedimento Exclusivo',
                             description: 'Atendimento personalizado com protocolo VIP e acompanhamento individual.',
                             price: 'R$ 200,00',
-                            duration: 'â± 1h30',
+                            duration: '⏱ 1h30',
                             badge: 'MAIS PROCURADO',
                             featured: true,
-                            whatsappMessage: 'OlÃ¡! Gostaria de agendar este procedimento no BioVip.'
+                            whatsappMessage: 'Olá! Gostaria de agendar este procedimento no BioVip.'
                           }
                           setServicesCatalogData((prev: any) => ({
                             ...prev,
@@ -224,7 +224,7 @@ export default function ClientServicesTab({
 
                             <div className="sm:col-span-3">
                               <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
-                                DuraÃ§Ã£o Estimada
+                                Duração Estimada
                               </label>
                               <input
                                 type="text"
@@ -235,14 +235,14 @@ export default function ClientServicesTab({
                                   setServicesCatalogData((prev: any) => ({ ...prev, items: updated }))
                                   setHasUnsavedChanges(true)
                                 }}
-                                placeholder="â± 1h30"
+                                placeholder="⏱ 1h30"
                                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
                               />
                             </div>
 
                             <div className="sm:col-span-12">
                               <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
-                                DescriÃ§Ã£o dos BenefÃ­cios
+                                Descrição dos Benefícios
                               </label>
                               <input
                                 type="text"
@@ -253,14 +253,14 @@ export default function ClientServicesTab({
                                   setServicesCatalogData((prev: any) => ({ ...prev, items: updated }))
                                   setHasUnsavedChanges(true)
                                 }}
-                                placeholder="Breve explicaÃ§Ã£o que elimina dÃºvidas e valoriza o atendimento"
+                                placeholder="Breve explicação que elimina dúvidas e valoriza o atendimento"
                                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-700 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
                               />
                             </div>
 
                             <div className="sm:col-span-8">
                               <label className="block text-[10px] font-mono uppercase text-stone-500 font-semibold mb-1">
-                                Mensagem AutomÃ¡tica para o WhatsApp
+                                Mensagem Automática para o WhatsApp
                               </label>
                               <input
                                 type="text"
@@ -300,7 +300,7 @@ export default function ClientServicesTab({
 
                     <div className="pt-4 flex items-center justify-between border-t border-stone-100">
                       <span className="text-xs text-stone-500">
-                        Lembre-se de clicar em salvar para publicar as alteraÃ§Ãµes no seu link oficial.
+                        Lembre-se de clicar em salvar para publicar as alterações no seu link oficial.
                       </span>
                       <button
                         type="button"
@@ -308,7 +308,7 @@ export default function ClientServicesTab({
                         className="px-8 py-3 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-sm cursor-pointer"
                       >
                         <Save className="w-4 h-4 text-[#E2B857]" />
-                        <span>Salvar ServiÃ§os no Bio Site</span>
+                        <span>Salvar Serviços no Bio Site</span>
                       </button>
                     </div>
                   </div>

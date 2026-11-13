@@ -50,7 +50,7 @@ export default function ClientAccountTab({
                         className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-100 text-xs font-mono text-stone-600"
                       />
                       <p className="text-[10px] text-stone-400 mt-1 font-mono">
-                        Ã‰ com ele que vocÃª entra na sua Ã¡rea, em qualquer aparelho. Para trocar o e-mail, fale com a gente.
+                        É com ele que você entra na sua área, em qualquer aparelho. Para trocar o e-mail, fale com a gente.
                       </p>
                     </div>
 
@@ -79,7 +79,7 @@ export default function ClientAccountTab({
                         placeholder="(31) 99999-9999"
                       />
                       <p className="text-[10px] text-stone-400 mt-1 font-mono">
-                        Ã‰ por onde a gente fala com vocÃª sobre a sua pÃ¡gina. NÃ£o aparece para quem visita o seu Bio Site.
+                        É por onde a gente fala com você sobre a sua página. Não aparece para quem visita o seu Bio Site.
                       </p>
                     </div>
 
@@ -103,7 +103,7 @@ export default function ClientAccountTab({
                       </span>
                       <h3 className="font-bold text-sm text-stone-900">Trocar a senha</h3>
                       <p className="text-xs text-stone-500 mt-0.5">
-                        Depois de salvar, Ã© a nova senha que vale para entrar. Esta sessÃ£o continua aberta.
+                        Depois de salvar, é a nova senha que vale para entrar. Esta sessão continua aberta.
                       </p>
                     </div>
 
@@ -113,7 +113,7 @@ export default function ClientAccountTab({
                       </label>
                       <input
                         type="password"
-                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                        placeholder="••••••••"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs bg-white"
                       />
                     </div>
@@ -128,7 +128,7 @@ export default function ClientAccountTab({
                         className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs bg-white"
                       />
                       <p className="text-[10px] text-stone-400 mt-1 font-mono">
-                        Pelo menos 8 caracteres, misturando letras e nÃºmeros.
+                        Pelo menos 8 caracteres, misturando letras e números.
                       </p>
                     </div>
 

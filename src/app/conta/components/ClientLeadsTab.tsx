@@ -41,7 +41,7 @@ export default function ClientLeadsTab({
                       Recebimentos & Gateways
                     </h2>
                     <p className="text-xs text-stone-500 mt-1">
-                      Conecte a sua conta e a loja passa a receber Pix, cartÃ£o e boleto na prÃ³pria pÃ¡gina.
+                      Conecte a sua conta e a loja passa a receber Pix, cartão e boleto na própria página.
                     </p>
                   </div>
 
@@ -54,7 +54,7 @@ export default function ClientLeadsTab({
                           {connectedGateways.mercadopago && <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase">CONECTADO</span>}
                         </div>
                         <p className="text-xs text-stone-500 mt-1">
-                          Pix, cartÃ£o e boleto. O que o comprador brasileiro conhece.
+                          Pix, cartão e boleto. O que o comprador brasileiro conhece.
                         </p>
                       </div>
                       <button
@@ -64,7 +64,7 @@ export default function ClientLeadsTab({
                           connectedGateways.mercadopago ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.mercadopago ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
+                        {connectedGateways.mercadopago ? 'DESCONECTAR ✕' : 'CONECTAR →'}
                       </button>
                     </div>
 
@@ -85,7 +85,7 @@ export default function ClientLeadsTab({
                           connectedGateways.asaas ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.asaas ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
+                        {connectedGateways.asaas ? 'DESCONECTAR ✕' : 'CONECTAR →'}
                       </button>
                     </div>
 
@@ -96,7 +96,7 @@ export default function ClientLeadsTab({
                           {connectedGateways.pagbank && <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase">CONECTADO</span>}
                         </div>
                         <p className="text-xs text-stone-500 mt-1">
-                          Pix e cartÃ£o, com a maquininha que a loja jÃ¡ usa.
+                          Pix e cartão, com a maquininha que a loja já usa.
                         </p>
                       </div>
                       <button
@@ -106,7 +106,7 @@ export default function ClientLeadsTab({
                           connectedGateways.pagbank ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.pagbank ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
+                        {connectedGateways.pagbank ? 'DESCONECTAR ✕' : 'CONECTAR →'}
                       </button>
                     </div>
 
@@ -117,7 +117,7 @@ export default function ClientLeadsTab({
                           {connectedGateways.infinitepay && <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase">CONECTADO</span>}
                         </div>
                         <p className="text-xs text-stone-500 mt-1">
-                          Pix e cartÃ£o, com taxa baixa para quem vende pouco.
+                          Pix e cartão, com taxa baixa para quem vende pouco.
                         </p>
                       </div>
                       <button
@@ -127,7 +127,7 @@ export default function ClientLeadsTab({
                           connectedGateways.infinitepay ? 'text-rose-600 hover:underline' : 'text-stone-900 hover:underline'
                         }`}
                       >
-                        {connectedGateways.infinitepay ? 'DESCONECTAR âœ•' : 'CONECTAR â†’'}
+                        {connectedGateways.infinitepay ? 'DESCONECTAR ✕' : 'CONECTAR →'}
                       </button>
                     </div>
                   </div>
@@ -135,11 +135,11 @@ export default function ClientLeadsTab({
                   {/* VENDAS DA LOJA */}
                   <div className="pt-6 border-t border-stone-100">
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
-                      VENDAS Â· {businessTitle || 'TESTE'}
+                      VENDAS · {businessTitle || 'TESTE'}
                     </span>
                     <div className="text-2xl font-bold font-mono text-stone-900 mb-2">0 vendas</div>
                     <p className="text-xs text-stone-500 max-w-xl leading-relaxed">
-                      Nenhuma venda ainda. Assim que alguÃ©m fechar uma sacola na sua loja, ela aparece aqui â€” paga pela pÃ¡gina ou combinada no WhatsApp.
+                      Nenhuma venda ainda. Assim que alguém fechar uma sacola na sua loja, ela aparece aqui — paga pela página ou combinada no WhatsApp.
                     </p>
                   </div>
                 </div>
@@ -151,13 +151,13 @@ export default function ClientLeadsTab({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
                     <div>
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
-                        CRM & CONVERSÃƒO EM TEMPO REAL
+                        CRM & CONVERSÃO EM TEMPO REAL
                       </span>
                       <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
                         Leads & Triagens
                       </h2>
                       <p className="text-xs text-stone-500 mt-1">
-                        Visitantes que clicaram no WhatsApp, preencheram triagens ou solicitaram serviÃ§os na sua pÃ¡gina.
+                        Visitantes que clicaram no WhatsApp, preencheram triagens ou solicitaram serviços na sua página.
                       </p>
                     </div>
 
@@ -174,7 +174,7 @@ export default function ClientLeadsTab({
                     </div>
                   </div>
 
-                  {/* CARDS DE MÃ‰TRICAS */}
+                  {/* CARDS DE MÉTRICAS */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
                       <span className="text-[10px] font-mono uppercase text-stone-400 font-bold block mb-1">TOTAL DE LEADS</span>
@@ -199,11 +199,11 @@ export default function ClientLeadsTab({
                     </div>
 
                     <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200">
-                      <span className="text-[10px] font-mono uppercase text-purple-700 font-bold block mb-1">CATÃLOGO</span>
+                      <span className="text-[10px] font-mono uppercase text-purple-700 font-bold block mb-1">CATÁLOGO</span>
                       <div className="text-2xl sm:text-3xl font-mono font-bold text-purple-900">
                         {leadsList.filter((l: any) => l.action_type === 'catalog_inquiry').length}
                       </div>
-                      <span className="text-[10px] text-purple-600">Interesses em serviÃ§os</span>
+                      <span className="text-[10px] text-purple-600">Interesses em serviços</span>
                     </div>
                   </div>
 
@@ -220,7 +220,7 @@ export default function ClientLeadsTab({
                             : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
                         }`}
                       >
-                        {tab === 'TODOS' ? 'Todos os Leads' : tab === 'WHATSAPP' ? 'WhatsApp' : tab === 'QUIZ' ? 'Triagens' : 'CatÃ¡logo'}
+                        {tab === 'TODOS' ? 'Todos os Leads' : tab === 'WHATSAPP' ? 'WhatsApp' : tab === 'QUIZ' ? 'Triagens' : 'Catálogo'}
                       </button>
                     ))}
                   </div>
@@ -237,7 +237,7 @@ export default function ClientLeadsTab({
                       </div>
                       <h3 className="font-bold text-stone-900 text-sm">Nenhum lead registrado ainda</h3>
                       <p className="text-xs text-stone-500 max-w-md mx-auto">
-                        Quando um visitante abrir sua pÃ¡gina <strong>/{slug}</strong> e clicar em qualquer botÃ£o de WhatsApp ou preencher a Triagem Anti-Curiosos, o lead aparecerÃ¡ aqui instantaneamente sincronizado com o Supabase.
+                        Quando um visitante abrir sua página <strong>/{slug}</strong> e clicar em qualquer botão de WhatsApp ou preencher a Triagem Anti-Curiosos, o lead aparecerá aqui instantaneamente sincronizado com o Supabase.
                       </p>
                     </div>
                   ) : (
@@ -250,7 +250,7 @@ export default function ClientLeadsTab({
                           return true
                         })
                         .map((lead, idx) => {
-                          const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('pt-BR') : 'Agora hÃ¡ pouco'
+                          const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString('pt-BR') : 'Agora há pouco'
                           const isQuiz = lead.action_type === 'quiz_completed'
                           const phone = lead.whatsapp || lead.details?.whatsapp
                           return (
@@ -265,7 +265,7 @@ export default function ClientLeadsTab({
                                       ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                       : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                   }`}>
-                                    {isQuiz ? 'TRIAGEM CONCLUÃDA' : 'WHATSAPP LEAD'}
+                                    {isQuiz ? 'TRIAGEM CONCLUÍDA' : 'WHATSAPP LEAD'}
                                   </span>
                                   <span className="text-[10px] font-mono text-stone-400">
                                     {dateStr}

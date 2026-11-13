@@ -90,14 +90,14 @@ interface AdditionalPage {
 }
 
 export default function ContaClient() {
-  // Controle de VisualizaÃ§Ã£o: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
+  // Controle de Visualização: 'dashboard' | 'editar_pagina' | 'adicionar_pagina'
   const [currentView, setCurrentView] = useState<'dashboard' | 'editar_pagina' | 'adicionar_pagina'>('dashboard')
   const [activeSidebarTab, setActiveSidebarTab] = useState<'pagina' | 'servicos' | 'galeria' | 'vendas' | 'leads' | 'agenda' | 'estatisticas' | 'pagamento' | 'planos' | 'conta' | 'pixel' | 'modulos_vip'>('pagina')
   const [leadsList, setLeadsList] = useState<LeadSubmission[]>([])
   const [leadFilter, setLeadFilter] = useState<'TODOS' | 'WHATSAPP' | 'QUIZ' | 'CATALOGO'>('TODOS')
   const [loadingLeads, setLoadingLeads] = useState(false)
 
-  // Estado de Pagamento, Prazo de 48h & TolerÃ¢ncia
+  // Estado de Pagamento, Prazo de 48h & Tolerância
   const [paymentStatus, setPaymentStatus] = useState<'pendente' | 'ativa' | 'suspensa'>('pendente')
   const [deadline48h, setDeadline48h] = useState<string>('')
   const [remainingHours, setRemainingHours] = useState<number>(48)
@@ -111,7 +111,7 @@ export default function ContaClient() {
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false)
   const [paymentSuccessFeedback, setPaymentSuccessFeedback] = useState<boolean>(false)
 
-  // Seletor de Modelo (PÃ¡ginas Adicionais)
+  // Seletor de Modelo (Páginas Adicionais)
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('para_voce')
   const [previewModalTemplate, setPreviewModalTemplate] = useState<PageTemplate | null>(null)
 
@@ -122,7 +122,7 @@ export default function ContaClient() {
   const [pixModalOpen, setPixModalOpen] = useState(false)
   const [pixCopied, setPixCopied] = useState(false)
 
-  // Accordion da EdiÃ§Ã£o de PÃ¡gina (qual aba estÃ¡ aberta)
+  // Accordion da Edição de Página (qual aba está aberta)
   const [openAccordion, setOpenAccordion] = useState<string | null>('paleta')
 
   // Dados do Bio Site
@@ -130,7 +130,7 @@ export default function ContaClient() {
   const [businessTitle, setBusinessTitle] = useState('Teste')
   const [niche, setNiche] = useState('Manicure e pedicure')
   const [tagline, setTagline] = useState('Estou testando')
-  const [selectedPalette, setSelectedPalette] = useState(PALETTES[2]) // ClÃ­nico sereno
+  const [selectedPalette, setSelectedPalette] = useState(PALETTES[2]) // Clínico sereno
   const [backgroundStyle, setBackgroundStyle] = useState('aura')
   const [selectedTypography, setSelectedTypography] = useState(TYPOGRAPHIES[3]) // DM Serif Display
   const [buttonStyle, setButtonStyle] = useState('cartao_nobre')
@@ -153,7 +153,7 @@ export default function ContaClient() {
   const [userEmail, setUserEmail] = useState('leoaraujobh@gmail.com')
   const [userPhone, setUserPhone] = useState('')
 
-  // EstratÃ©gia HÃ­brida de Foto & IA
+  // Estratégia Híbrida de Foto & IA
   const [storyModalOpen, setStoryModalOpen] = useState(false)
   const [isGeneratingStoryPng, setIsGeneratingStoryPng] = useState(false)
   const [customPhotoSrc, setCustomPhotoSrc] = useState<string | null>(null)
@@ -167,12 +167,12 @@ export default function ContaClient() {
     'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=800&auto=format&fit=crop'
   ])
 
-  // ConfiguraÃ§Ã£o Oficial de Galeria e PortfÃ³lio (BioVip Original)
+  // Configuração Oficial de Galeria e Portfólio (BioVip Original)
   const [galleryConfig, setGalleryConfig] = useState<StudentGridConfig>({
     enabled: true,
-    badge: 'PORTFÃ“LIO & ESTRUTURA VIP',
-    headline: 'Resultados Reais & PortfÃ³lio em Destaque',
-    subtitle: 'Registros reais do nosso padrÃ£o de entrega e procedimentos',
+    badge: 'PORTFÓLIO & ESTRUTURA VIP',
+    headline: 'Resultados Reais & Portfólio em Destaque',
+    subtitle: 'Registros reais do nosso padrão de entrega e procedimentos',
     layout: 'mosaic',
     aspectRatio: 'square',
     enableLightbox: true,
@@ -185,7 +185,7 @@ export default function ContaClient() {
     captions: []
   })
 
-  // Pixel & TrÃ¡fego Pago (Diferencial Competitivo Exclusivo)
+  // Pixel & Tráfego Pago (Diferencial Competitivo Exclusivo)
   const [metaPixelId, setMetaPixelId] = useState('')
   const [tiktokPixelId, setTiktokPixelId] = useState('')
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState('')
@@ -193,16 +193,16 @@ export default function ContaClient() {
   const [trackPageView, setTrackPageView] = useState(true)
   const [pixelSavedSuccess, setPixelSavedSuccess] = useState(false)
 
-  // MÃ³dulos VIP de Alta ConversÃ£o (12 MÃ³dulos Inteligentes)
+  // Módulos VIP de Alta Conversão (12 Módulos Inteligentes)
   const [announcementData, setAnnouncementData] = useState<{ enabled: boolean; badge: string; text: string }>({
     enabled: true,
     badge: 'AGENDA VIP ABERTA',
-    text: 'Ãšltimos horÃ¡rios disponÃ­veis para esta semana.'
+    text: 'Últimos horários disponíveis para esta semana.'
   })
   const [urgencyData, setUrgencyData] = useState<{ enabled: boolean; headline: string; subtitle: string; minutes: number }>({
     enabled: true,
-    headline: 'ðŸ”¥ CONDIÃ‡ÃƒO ESPECIAL DE HOJE',
-    subtitle: 'Garanta sua vaga com atendimento prioritÃ¡rio antes que expire:',
+    headline: '🔥 CONDIÇÃO ESPECIAL DE HOJE',
+    subtitle: 'Garanta sua vaga com atendimento prioritário antes que expire:',
     minutes: 15
   })
   const [servicesCatalogData, setServicesCatalogData] = useState<{
@@ -213,28 +213,28 @@ export default function ContaClient() {
     items: any[]
   }>({
     enabled: true,
-    headline: 'Procedimentos & SoluÃ§Ãµes Exclusivas',
-    subtitle: 'Protocolos de alto padrÃ£o sob medida',
+    headline: 'Procedimentos & Soluções Exclusivas',
+    subtitle: 'Protocolos de alto padrão sob medida',
     categories: ['TODOS', 'MAIS PROCURADO', 'EXCLUSIVO'],
     items: [
       {
         id: 'srv-1',
         category: 'MAIS PROCURADO',
         name: 'Procedimento de Destaque VIP',
-        description: 'TÃ©cnica exclusiva com materiais importados de alta pureza e conforto absoluto.',
+        description: 'Técnica exclusiva com materiais importados de alta pureza e conforto absoluto.',
         price: 'R$ 250',
-        duration: 'â± 1h30',
+        duration: '⏱ 1h30',
         badge: 'MAIS PROCURADO',
         featured: true,
-        whatsappMessage: 'OlÃ¡! Gostaria de agendar o procedimento de destaque.'
+        whatsappMessage: 'Olá! Gostaria de agendar o procedimento de destaque.'
       }
     ]
   })
   const [locationData, setLocationData] = useState<{ enabled: boolean; address: string; hours: string; openStatus: string; mapsUrl: string }>({
     enabled: true,
-    address: 'Av. Boa Viagem, 2190 - Sala 918 Â· Boa Viagem - Recife, PE',
-    hours: 'Seg a Sex Â· 08:30 Ã s 19:30 | SÃ¡b Â· 08:30 Ã s 13:00',
-    openStatus: 'Aberto Agora Â· Agendamento VIP',
+    address: 'Av. Boa Viagem, 2190 - Sala 918 · Boa Viagem - Recife, PE',
+    hours: 'Seg a Sex · 08:30 às 19:30 | Sáb · 08:30 às 13:00',
+    openStatus: 'Aberto Agora · Agendamento VIP',
     mapsUrl: 'https://maps.google.com'
   })
   const [quizData, setQuizData] = useState<{
@@ -245,48 +245,48 @@ export default function ContaClient() {
     questions: Array<{ id: string; question: string; options: string[] }>
   }>({
     enabled: true,
-    buttonLabel: 'âœ¨ Descobrir Procedimento Ideal (Triagem VIP)',
+    buttonLabel: '✨ Descobrir Procedimento Ideal (Triagem VIP)',
     headline: 'Atendimento Personalizado',
-    subtitle: 'Responda 3 perguntas rÃ¡pidas para agilizar seu atendimento:',
+    subtitle: 'Responda 3 perguntas rápidas para agilizar seu atendimento:',
     questions: [
       {
         id: 'q-1',
-        question: 'Qual procedimento vocÃª mais deseja realizar?',
-        options: ['Tratamento Principal', 'ManutenÃ§Ã£o PeriÃ³dica', 'AvaliaÃ§Ã£o Inicial']
+        question: 'Qual procedimento você mais deseja realizar?',
+        options: ['Tratamento Principal', 'Manutenção Periódica', 'Avaliação Inicial']
       },
       {
         id: 'q-2',
-        question: 'Qual o melhor perÃ­odo para seu atendimento?',
-        options: ['ManhÃ£ (08h Ã s 12h)', 'Tarde (13h Ã s 18h)', 'SÃ¡bado']
+        question: 'Qual o melhor período para seu atendimento?',
+        options: ['Manhã (08h às 12h)', 'Tarde (13h às 18h)', 'Sábado']
       }
     ]
   })
 
-  // MÃ³dulos VIP Expandidos (MÃ©tricas, Passos, Depoimentos, Sobre Mim, FAQ)
+  // Módulos VIP Expandidos (Métricas, Passos, Depoimentos, Sobre Mim, FAQ)
   const [metricsData, setMetricsData] = useState<Array<{ value: string; label: string }>>([
     { value: '+1.000', label: 'CLIENTES ATENDIDOS' },
-    { value: '8 ANOS', label: 'DE EXPERIÃŠNCIA' },
-    { value: '5.0â˜…', label: 'AVALIAÃ‡ÃƒO NO GOOGLE' }
+    { value: '8 ANOS', label: 'DE EXPERIÊNCIA' },
+    { value: '5.0★', label: 'AVALIAÇÃO NO GOOGLE' }
   ])
   const [howItWorksData, setHowItWorksData] = useState<Array<{ number: string; title: string; description: string }>>([
-    { number: '01', title: 'Primeiro Contato & Triagem', description: 'VocÃª relata sua necessidade pelo WhatsApp ou formulÃ¡rio e alinhamos a prioridade.' },
-    { number: '02', title: 'AvaliaÃ§Ã£o EstratÃ©gica', description: 'DiagnÃ³stico detalhado do seu objetivo com plano de aÃ§Ã£o sob medida.' },
-    { number: '03', title: 'ExecuÃ§Ã£o & Acompanhamento', description: 'Atendimento de alta excelÃªncia e suporte contÃ­nuo em todas as etapas.' }
+    { number: '01', title: 'Primeiro Contato & Triagem', description: 'Você relata sua necessidade pelo WhatsApp ou formulário e alinhamos a prioridade.' },
+    { number: '02', title: 'Avaliação Estratégica', description: 'Diagnóstico detalhado do seu objetivo com plano de ação sob medida.' },
+    { number: '03', title: 'Execução & Acompanhamento', description: 'Atendimento de alta excelência e suporte contínuo em todas as etapas.' }
   ])
   const [testimonialsData, setTestimonialsData] = useState<Array<{ clientName: string; city: string; text: string; rating: number }>>([
-    { clientName: 'Juliana Mendes', city: 'SÃ£o Paulo - SP', text: 'Atendimento impecÃ¡vel! O ambiente Ã© lindo, super higienizado e o resultado superou todas as expectativas.', rating: 5 },
-    { clientName: 'Carlos Eduardo Silveira', city: 'Belo Horizonte - MG', text: 'Profissionalismo de altÃ­ssimo nÃ­vel. Pontualidade britÃ¢nica e muita atenÃ§Ã£o a cada detalhe.', rating: 5 }
+    { clientName: 'Juliana Mendes', city: 'São Paulo - SP', text: 'Atendimento impecável! O ambiente é lindo, super higienizado e o resultado superou todas as expectativas.', rating: 5 },
+    { clientName: 'Carlos Eduardo Silveira', city: 'Belo Horizonte - MG', text: 'Profissionalismo de altíssimo nível. Pontualidade britânica e muita atenção a cada detalhe.', rating: 5 }
   ])
   const [aboutMeData, setAboutMeData] = useState<{ enabled: boolean; headline: string; paragraph: string; closingPhrase: string }>({
     enabled: true,
     headline: 'Sobre Nosso Atendimento',
-    paragraph: 'Com vasta trajetÃ³ria no segmento de alto padrÃ£o, nosso propÃ³sito Ã© entregar resultados de autoridade com Ã©tica, pontualidade e sofisticaÃ§Ã£o em cada atendimento.',
-    closingPhrase: 'ExcelÃªncia e cuidado em cada detalhe.'
+    paragraph: 'Com vasta trajetória no segmento de alto padrão, nosso propósito é entregar resultados de autoridade com ética, pontualidade e sofisticação em cada atendimento.',
+    closingPhrase: 'Excelência e cuidado em cada detalhe.'
   })
   const [faqData, setFaqData] = useState<Array<{ question: string; answer: string }>>([
-    { question: 'Como funciona o agendamento de horÃ¡rios?', answer: 'Basta escolher o procedimento no catÃ¡logo ou clicar no botÃ£o de WhatsApp para falar diretamente com nossa equipe executiva.' },
-    { question: 'Onde o espaÃ§o estÃ¡ localizado?', answer: 'Estamos localizados em ponto nobre, com estacionamento privativo e ambiente climatizado.' },
-    { question: 'Quais sÃ£o as formas de pagamento aceitas?', answer: 'Aceitamos Pix com confirmaÃ§Ã£o imediata e cartÃµes de crÃ©dito em atÃ© 12 parcelas.' }
+    { question: 'Como funciona o agendamento de horários?', answer: 'Basta escolher o procedimento no catálogo ou clicar no botão de WhatsApp para falar diretamente com nossa equipe executiva.' },
+    { question: 'Onde o espaço está localizado?', answer: 'Estamos localizados em ponto nobre, com estacionamento privativo e ambiente climatizado.' },
+    { question: 'Quais são as formas de pagamento aceitas?', answer: 'Aceitamos Pix com confirmação imediata e cartões de crédito em até 12 parcelas.' }
   ])
 
   // Gateways Conectados na aba VENDAS
@@ -297,7 +297,7 @@ export default function ContaClient() {
     infinitepay: false
   })
 
-  // BotÃµes de Alto PadrÃ£o do Bio Site (PadrÃ£o Dra. Ana Freire)
+  // Botões de Alto Padrão do Bio Site (Padrão Dra. Ana Freire)
   const [buttons, setButtons] = useState<Array<{
     id: string
     label: string
@@ -310,40 +310,40 @@ export default function ContaClient() {
     {
       id: 'btn-1',
       label: 'AGENDAMENTO',
-      subtitle: 'Escolha o melhor horÃ¡rio para sua consulta.',
+      subtitle: 'Escolha o melhor horário para sua consulta.',
       icon: 'calendar',
       url: 'https://wa.me/5581987654321',
       isHighlighted: true,
-      highlightBadge: 'â­ MAIS ESCOLHIDO'
+      highlightBadge: '⭐ MAIS ESCOLHIDO'
     },
     {
       id: 'btn-2',
-      label: 'LOCALIZAÃ‡ÃƒO',
-      subtitle: 'Veja a rota atÃ© o consultÃ³rio / Trade Center',
+      label: 'LOCALIZAÇÃO',
+      subtitle: 'Veja a rota até o consultório / Trade Center',
       icon: 'map',
       url: 'https://maps.google.com'
     },
     {
       id: 'btn-3',
-      label: 'CASOS CLÃNICOS',
+      label: 'CASOS CLÍNICOS',
       subtitle: 'Sorrisos transformados: veja os resultados reais.',
       icon: 'sparkles',
       url: 'https://wa.me/5581987654321'
     }
   ])
 
-  // 3 PÃ¡ginas Adicionais do Plano Pro
+  // 3 Páginas Adicionais do Plano Pro
   const [additionalPages, setAdditionalPages] = useState<AdditionalPage[]>([])
 
   // Modo Administrador Master (Permite editar qualquer Bio Site)
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false)
   const [allAvailableBiosites, setAllAvailableBiosites] = useState<{ slug: string; name: string; type: 'modelo' | 'cliente' }[]>([])
 
-  // FunÃ§Ã£o para carregar qualquer Bio Site no editor visual
+  // Função para carregar qualquer Bio Site no editor visual
   const loadBioSiteData = (targetSlug: string) => {
     setSlug(targetSlug)
 
-    // 1. Verificar se jÃ¡ existe versÃ£o editada salva no localStorage
+    // 1. Verificar se já existe versão editada salva no localStorage
     const savedSiteRaw = localStorage.getItem('biovip_site_' + targetSlug)
     if (savedSiteRaw) {
       try {
@@ -405,7 +405,7 @@ export default function ContaClient() {
       }
     }
 
-    // 2. Fallback: Procurar nos modelos de portfÃ³lio
+    // 2. Fallback: Procurar nos modelos de portfólio
     let foundProj: Project | undefined
     const savedProjectsRaw = localStorage.getItem('biovip_portfolio_projects')
     if (savedProjectsRaw) {
@@ -490,15 +490,15 @@ export default function ContaClient() {
   }
 
   // Carregar dados salvos no localStorage
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- early returns dentro do useEffect sÃ£o vÃ¡lidos (nÃ£o sÃ£o Hooks condicionais)
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- early returns dentro do useEffect são válidos (não são Hooks condicionais)
   useEffect(() => {
     try {
-      // Coletar lista de todos os Bio Sites disponÃ­veis no sistema (para switcher do admin)
+      // Coletar lista de todos os Bio Sites disponíveis no sistema (para switcher do admin)
       const sites: { slug: string; name: string; type: 'modelo' | 'cliente' }[] = []
       const savedProjectsRaw = localStorage.getItem('biovip_portfolio_projects')
       const pList: Project[] = savedProjectsRaw ? JSON.parse(savedProjectsRaw) : defaultProjects
       pList.forEach(p => {
-        sites.push({ slug: p.slug, name: `${p.name} Â· ${p.category}`, type: 'modelo' })
+        sites.push({ slug: p.slug, name: `${p.name} · ${p.category}`, type: 'modelo' })
       })
 
       const storedSubs = localStorage.getItem('biovip_subscriptions')
@@ -514,7 +514,7 @@ export default function ContaClient() {
       }
       setAllAvailableBiosites(sites)
 
-      // 1. Identificar se Ã© Administrador Master autenticado exclusivamente com PIN no /admin
+      // 1. Identificar se é Administrador Master autenticado exclusivamente com PIN no /admin
       const isAdminAuth = typeof window !== 'undefined' && (
         sessionStorage.getItem('biovip_admin_auth') === 'true' ||
         sessionStorage.getItem('biovip_admin_sec_session') !== null
@@ -530,7 +530,7 @@ export default function ContaClient() {
       }
       const clientSessionEmail = typeof window !== 'undefined' ? sessionStorage.getItem('biovip_client_session') : null
 
-      // ParÃ¢metros na URL: ?edit=<slug> ou ?slug=<slug> ou ?novo=true
+      // Parâmetros na URL: ?edit=<slug> ou ?slug=<slug> ou ?novo=true
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
       const editSlug = urlParams?.get('edit') || urlParams?.get('slug')
       const isNovo = urlParams?.get('novo') === 'true'
@@ -553,13 +553,13 @@ export default function ContaClient() {
         }
       } else {
         // =========================================================
-        // MODO CLIENTE: SEGURANÃ‡A ESTRITA E ISOLAMENTO DE DADOS
+        // MODO CLIENTE: SEGURANÇA ESTRITA E ISOLAMENTO DE DADOS
         // =========================================================
         setIsAdminMode(false)
 
-        // 1. Verificar se existe uma sessÃ£o vÃ¡lida de cliente autenticado
+        // 1. Verificar se existe uma sessão válida de cliente autenticado
         if (!clientSessionEmail && !loggedClient) {
-          console.warn('[SEGURANÃ‡A] Tentativa de acesso nÃ£o autenticado ao painel /conta. Redirecionando para login.')
+          console.warn('[SEGURANÇA] Tentativa de acesso não autenticado ao painel /conta. Redirecionando para login.')
           window.location.replace('/entrar?error=unauthorized')
           return
         }
@@ -591,9 +591,9 @@ export default function ContaClient() {
 
         const authorizedSlug = loggedClient?.slug || matchedUser?.slug || matchedSub?.slug
 
-        // 3. Se a sessÃ£o nÃ£o corresponder a nenhum Bio Site existente, revogar sessÃ£o
+        // 3. Se a sessão não corresponder a nenhum Bio Site existente, revogar sessão
         if (!authorizedSlug) {
-          console.warn(`[SEGURANÃ‡A] SessÃ£o invÃ¡lida para o e-mail ${cleanSessionEmail}. Redirecionando para /entrar.`)
+          console.warn(`[SEGURANÇA] Sessão inválida para o e-mail ${cleanSessionEmail}. Redirecionando para /entrar.`)
           sessionStorage.removeItem('biovip_client_session')
           localStorage.removeItem('biovip_logged_client')
           window.location.replace('/entrar?error=invalid_session')
@@ -601,9 +601,9 @@ export default function ContaClient() {
         }
 
         // 4. ANTI-IDOR / ISOLAMENTO MULTI-TENANT: Travar estritamente no Bio Site desta conta
-        // Se o cliente tentar passar ?edit=outro-slug na URL, impedimos e forÃ§amos o seu slug legÃ­timo
+        // Se o cliente tentar passar ?edit=outro-slug na URL, impedimos e forçamos o seu slug legítimo
         if (editSlug && editSlug !== authorizedSlug) {
-          console.warn(`[SEGURANÃ‡A] Tentativa de adulteraÃ§Ã£o de slug (${editSlug}) bloqueada para ${cleanSessionEmail}. ForÃ§ando ${authorizedSlug}.`)
+          console.warn(`[SEGURANÇA] Tentativa de adulteração de slug (${editSlug}) bloqueada para ${cleanSessionEmail}. Forçando ${authorizedSlug}.`)
           if (typeof window !== 'undefined' && window.history.replaceState) {
             window.history.replaceState(null, '', `/conta?edit=${authorizedSlug}`)
           }
@@ -611,8 +611,8 @@ export default function ContaClient() {
 
         activeSlug = authorizedSlug
 
-        // REGRA DE OURO: Clientes operam exclusivamente na pÃ¡gina do cliente ('dashboard').
-        // A pÃ¡gina de ediÃ§Ã£o do estÃºdio (3 colunas) Ã© exclusiva do ADM.
+        // REGRA DE OURO: Clientes operam exclusivamente na página do cliente ('dashboard').
+        // A página de edição do estúdio (3 colunas) é exclusiva do ADM.
         setCurrentView('dashboard')
 
         if (urlParams?.get('tab') === 'galeria' || urlParams?.get('secao') === 'fotos') {
@@ -639,7 +639,7 @@ export default function ContaClient() {
         if (loggedClient.phone) setUserPhone(loggedClient.phone)
       }
 
-      // Carregar configuraÃ§Ãµes visuais salvas do BioVip (Paleta, Tipografia, BotÃµes, Foto, etc.)
+      // Carregar configurações visuais salvas do BioVip (Paleta, Tipografia, Botões, Foto, etc.)
       const savedSiteRaw = localStorage.getItem('biovip_site_' + activeSlug) || localStorage.getItem('biovip_user_site')
       if (savedSiteRaw) {
         try {
@@ -681,7 +681,7 @@ export default function ContaClient() {
         if (p.trackPageView !== undefined) setTrackPageView(p.trackPageView)
       }
 
-      // 4. Carregar status da assinatura, verificaÃ§Ã£o de pendÃªncia e prazo de 48 horas
+      // 4. Carregar status da assinatura, verificação de pendência e prazo de 48 horas
       if (storedSubs) {
         try {
           const subs = JSON.parse(storedSubs)
@@ -713,7 +713,7 @@ export default function ContaClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // AÃ§Ã£o de ConfirmaÃ§Ã£o e RegularizaÃ§Ã£o de Pagamento
+  // Ação de Confirmação e Regularização de Pagamento
   const handleConfirmPayment = () => {
     setIsProcessingPayment(true)
     setTimeout(() => {
@@ -784,7 +784,7 @@ export default function ContaClient() {
     document.body.removeChild(link)
   }
 
-  // Salvar alteraÃ§Ãµes de qualquer Bio Site
+  // Salvar alterações de qualquer Bio Site
   const handleSavePage = () => {
     let existingData: any = {}
     try {
@@ -822,7 +822,7 @@ export default function ContaClient() {
       subpages: additionalPages.map(ap => ({
         slug: ap.slug,
         title: ap.title,
-        description: `PÃ¡gina ${ap.title} de ${businessTitle || brandName}`,
+        description: `Página ${ap.title} de ${businessTitle || brandName}`,
         previewType: (ap.templateId as any) || 'services'
       }))
     }
@@ -832,13 +832,13 @@ export default function ContaClient() {
       localStorage.setItem('biovip_site_' + slug, JSON.stringify(siteData))
       localStorage.setItem('biovip_site_' + slug + '_pages', JSON.stringify(additionalPages))
 
-      // 2. Se nÃ£o estiver no modo admin (ou se for o site do prÃ³prio usuÃ¡rio)
+      // 2. Se não estiver no modo admin (ou se for o site do próprio usuário)
       if (!isAdminMode) {
         localStorage.setItem('biovip_user_site', JSON.stringify(siteData))
         localStorage.setItem('biovip_client_pages', JSON.stringify(additionalPages))
       }
 
-      // 3. Se for modelo de portfÃ³lio, sincroniza no biovip_portfolio_projects
+      // 3. Se for modelo de portfólio, sincroniza no biovip_portfolio_projects
       const storedProjects = localStorage.getItem('biovip_portfolio_projects')
       if (storedProjects) {
         try {
@@ -885,7 +885,7 @@ export default function ContaClient() {
           }
         } catch (e) {}
       }
-      // 5. SincronizaÃ§Ã£o em Nuvem (Supabase se configurado)
+      // 5. Sincronização em Nuvem (Supabase se configurado)
       saveBioSite(slug, siteData).then((res) => {
         if (res.cloudSynced) {
           console.log(`[BioVip Nuvem] Site /${slug} sincronizado com sucesso no Supabase!`)
@@ -914,7 +914,7 @@ export default function ContaClient() {
     setTimeout(() => setPixelSavedSuccess(false), 3000)
   }
 
-  // Preenchimento AutomÃ¡tico com IA baseado no nicho
+  // Preenchimento Automático com IA baseado no nicho
   const handleAiAutoFill = () => {
     const aiData = generateNicheContent(niche)
     setBusinessTitle(aiData.brandName)
@@ -930,7 +930,7 @@ export default function ContaClient() {
     setButtons(aiData.buttons.map(b => ({
       id: b.id,
       label: b.label.toUpperCase(),
-      subtitle: b.label.toLowerCase().includes('agend') ? 'Escolha o melhor horÃ¡rio para sua consulta.' : b.label.toLowerCase().includes('catÃ¡logo') || b.label.toLowerCase().includes('proced') ? 'ConheÃ§a nossos protocolos e valores exclusivos.' : 'Veja a rota atÃ© o consultÃ³rio / espaÃ§o',
+      subtitle: b.label.toLowerCase().includes('agend') ? 'Escolha o melhor horário para sua consulta.' : b.label.toLowerCase().includes('catálogo') || b.label.toLowerCase().includes('proced') ? 'Conheça nossos protocolos e valores exclusivos.' : 'Veja a rota até o consultório / espaço',
       icon: b.icon || 'calendar',
       url: b.targetType === 'whatsapp' ? `https://wa.me/${b.value}` : b.value
     })))
@@ -949,13 +949,13 @@ export default function ContaClient() {
 
   const handleAddButton = () => {
     if (buttons.length >= 20) {
-      alert('VocÃª atingiu o limite de 20 botÃµes.')
+      alert('Você atingiu o limite de 20 botões.')
       return
     }
     const newBtn = {
       id: `btn-${Date.now()}`,
-      label: 'NOVO BOTÃƒO VIP',
-      subtitle: 'Toque para abrir atendimento prioritÃ¡rio.',
+      label: 'NOVO BOTÃO VIP',
+      subtitle: 'Toque para abrir atendimento prioritário.',
       icon: 'sparkles',
       url: 'https://wa.me/5531999999999'
     }
@@ -965,14 +965,14 @@ export default function ContaClient() {
 
   const handleRemoveButton = (btnId: string) => {
     if (buttons.length <= 1) {
-      alert('Seu Bio Site precisa ter pelo menos um botÃ£o.')
+      alert('Seu Bio Site precisa ter pelo menos um botão.')
       return
     }
     setButtons(buttons.filter(b => b.id !== btnId))
     setHasUnsavedChanges(true)
   }
 
-  // Upload e Tratamento HÃ­brido da Foto (Canvas Fade / Silhueta)
+  // Upload e Tratamento Híbrido da Foto (Canvas Fade / Silhueta)
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -1017,17 +1017,17 @@ export default function ContaClient() {
     }
   }
 
-  // Copiar link pÃºblico
+  // Copiar link público
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`https://${fullUrl}`)
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2000)
   }
 
-  // Adicionar PÃ¡gina Adicional
+  // Adicionar Página Adicional
   const handleSelectTemplate = (tpl: PageTemplate) => {
     if (additionalPages.length >= 3) {
-      alert('VocÃª atingiu o limite de 3 pÃ¡ginas adicionais inclusas no seu Plano Pro. Para criar pÃ¡ginas ilimitadas, faÃ§a upgrade para o Plano AgÃªncia.')
+      alert('Você atingiu o limite de 3 páginas adicionais inclusas no seu Plano Pro. Para criar páginas ilimitadas, faça upgrade para o Plano Agência.')
       return
     }
 
@@ -1054,9 +1054,9 @@ export default function ContaClient() {
     setTimeout(() => setSavedSuccess(false), 3000)
   }
 
-  // Excluir PÃ¡gina Adicional
+  // Excluir Página Adicional
   const handleDeletePage = (pageId: string) => {
-    if (confirm('Tem certeza que deseja remover esta pÃ¡gina adicional?')) {
+    if (confirm('Tem certeza que deseja remover esta página adicional?')) {
       const updated = additionalPages.filter(p => p.id !== pageId)
       setAdditionalPages(updated)
       try {
@@ -1067,7 +1067,7 @@ export default function ContaClient() {
     }
   }
 
-  // Alternar conexÃ£o de gateway
+  // Alternar conexão de gateway
   const toggleGateway = (gatewayId: string) => {
     setConnectedGateways(prev => ({
       ...prev,
@@ -1092,7 +1092,7 @@ export default function ContaClient() {
   // ARQUITETURA MODERNA DE 3 COLUNAS: EDITOR DO BIOSITE (EXCLUSIVO DO ADM)
   // =========================================================
   if (currentView === 'editar_pagina') {
-    // SEGURANÃ‡A E REGRA DE NEGÃ“CIO: Esta pÃ¡gina de ediÃ§Ã£o Ã© 100% exclusiva do ADM
+    // SEGURANÇA E REGRA DE NEGÓCIO: Esta página de edição é 100% exclusiva do ADM
     if (!isAdminMode) {
       if (typeof window !== 'undefined') {
         window.location.replace('/conta')
@@ -1197,7 +1197,7 @@ export default function ContaClient() {
     )
   }
 
-  // GeraÃ§Ã£o e Download Direto da Arte do Story em PNG HD (1080x1920)
+  // Geração e Download Direto da Arte do Story em PNG HD (1080x1920)
   const handleDownloadStoryPng = async () => {
     setIsGeneratingStoryPng(true)
     try {
@@ -1207,7 +1207,7 @@ export default function ContaClient() {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      // 1. Fundo com DegradÃª CinematogrÃ¡fico
+      // 1. Fundo com Degradê Cinematográfico
       const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920)
       bgGrad.addColorStop(0, '#0f1118')
       bgGrad.addColorStop(0.5, '#090a0f')
@@ -1240,9 +1240,9 @@ export default function ContaClient() {
       ctx.fillStyle = '#34d399'
       ctx.font = 'bold 24px monospace'
       ctx.textAlign = 'center'
-      ctx.fillText('â— NO AR NO INSTAGRAM', 840, 133)
+      ctx.fillText('● NO AR NO INSTAGRAM', 840, 133)
 
-      // 4. Foto de EstÃºdio Circular do Profissional
+      // 4. Foto de Estúdio Circular do Profissional
       const photoSrc = customPhotoSrc || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -1285,9 +1285,9 @@ export default function ContaClient() {
 
       ctx.fillStyle = '#fbbf24'
       ctx.font = 'bold 28px monospace'
-      ctx.fillText((businessTitle || niche || 'ODONTOLOGIA ESTÃ‰TICA').toUpperCase(), 540, 1080)
+      ctx.fillText((businessTitle || niche || 'ODONTOLOGIA ESTÉTICA').toUpperCase(), 540, 1080)
 
-      // 6. Selo de AvaliaÃ§Ãµes 5.0
+      // 6. Selo de Avaliações 5.0
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)'
       ctx.lineWidth = 2
@@ -1298,7 +1298,7 @@ export default function ContaClient() {
 
       ctx.fillStyle = '#fde68a'
       ctx.font = '26px sans-serif'
-      ctx.fillText('â˜… 5.0 Â· AvaliaÃ§Ãµes 5 Estrelas no Google', 540, 1182)
+      ctx.fillText('★ 5.0 · Avaliações 5 Estrelas no Google', 540, 1182)
 
       // 7. Figurinha de Link do Instagram (Sticker 3D)
       ctx.fillStyle = '#ffffff'
@@ -1353,7 +1353,7 @@ export default function ContaClient() {
               </div>
             </div>
 
-            {/* Seletor RÃ¡pido de Qualquer Outro Bio Site & Links de AÃ§Ã£o */}
+            {/* Seletor Rápido de Qualquer Outro Bio Site & Links de Ação */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5 bg-stone-950/10 px-2.5 py-1 rounded-lg border border-stone-950/15">
                 <Sliders className="w-3 h-3 text-stone-900" />
@@ -1369,7 +1369,7 @@ export default function ContaClient() {
                   }}
                   className="bg-stone-900 text-amber-300 font-medium text-xs px-2 py-0.5 rounded border border-stone-700 focus:outline-none cursor-pointer"
                 >
-                  <optgroup label="Modelos do PortfÃ³lio (13 Nichos)">
+                  <optgroup label="Modelos do Portfólio (13 Nichos)">
                     {allAvailableBiosites.filter(s => s.type === 'modelo').map(s => (
                       <option key={s.slug} value={s.slug}>
                         {s.name} (/{s.slug})
@@ -1393,7 +1393,7 @@ export default function ContaClient() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-2.5 py-1 rounded-lg bg-stone-950/15 hover:bg-stone-950/25 text-stone-950 text-xs font-bold flex items-center gap-1 transition"
-                title="Abrir pÃ¡gina ao vivo em nova aba"
+                title="Abrir página ao vivo em nova aba"
               >
                 <ExternalLink className="w-3 h-3" /> Ver ao vivo
               </a>
@@ -1410,11 +1410,11 @@ export default function ContaClient() {
       )}
 
       {/* ========================================================= */}
-      {/* BARRA SUPERIOR EXCLUSIVA DO ESPAÃ‡O DE TRABALHO BIOVIP */}
+      {/* BARRA SUPERIOR EXCLUSIVA DO ESPAÇO DE TRABALHO BIOVIP */}
       {/* ========================================================= */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          {/* Logo & IdentificaÃ§Ã£o */}
+          {/* Logo & Identificação */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-serif font-black text-sm group-hover:bg-amber-500 group-hover:text-black transition">
@@ -1426,14 +1426,14 @@ export default function ContaClient() {
             </Link>
             <div className="h-4 w-px bg-stone-300 hidden sm:block" />
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[10px] font-mono font-bold uppercase tracking-wider">
-              ÃREA DO CLIENTE
+              ÁREA DO CLIENTE
             </span>
             <span className="hidden md:inline-flex text-xs font-mono font-semibold text-stone-500 bg-stone-50 px-2 py-0.5 rounded border border-stone-200">
               /{slug}
             </span>
           </div>
 
-          {/* NavegaÃ§Ã£o RÃ¡pida entre VisÃµes & AÃ§Ãµes */}
+          {/* Navegação Rápida entre Visões & Ações */}
           <div className="flex items-center gap-2">
             {isAdminMode && (
               <button
@@ -1457,7 +1457,7 @@ export default function ContaClient() {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">ServiÃ§os & PreÃ§os</span>
+              <span className="hidden sm:inline">Serviços & Preços</span>
             </button>
 
             <button
@@ -1473,7 +1473,7 @@ export default function ContaClient() {
               <span className="hidden sm:inline">Fotos da Galeria</span>
             </button>
 
-            {/* No Dashboard: BotÃµes de Acesso Direto para MÃ³dulos VIP e Pixel */}
+            {/* No Dashboard: Botões de Acesso Direto para Módulos VIP e Pixel */}
             {currentView === 'dashboard' && (
               <>
                 <button
@@ -1486,7 +1486,7 @@ export default function ContaClient() {
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="hidden sm:inline">MÃ³dulos VIP</span>
+                  <span className="hidden sm:inline">Módulos VIP</span>
                 </button>
                 <button
                   type="button"
@@ -1527,7 +1527,7 @@ export default function ContaClient() {
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1.5 transition"
-              title="Abrir pÃ¡gina ao vivo em nova aba"
+              title="Abrir página ao vivo em nova aba"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Ver no ar</span>
@@ -1558,7 +1558,7 @@ export default function ContaClient() {
         </div>
       </header>
 
-      {/* BANNER STICKY DE AVISO: PAGAMENTO PENDENTE & TOLERÃ‚NCIA DE 48 HORAS */}
+      {/* BANNER STICKY DE AVISO: PAGAMENTO PENDENTE & TOLERÂNCIA DE 48 HORAS */}
       {paymentStatus === 'pendente' && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 border-b border-amber-500/40 px-4 py-3 sticky top-12 z-40 backdrop-blur-md">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-950 font-medium">
@@ -1568,9 +1568,9 @@ export default function ContaClient() {
               </span>
               <div>
                 <strong className="font-bold text-amber-900 uppercase tracking-wide mr-1.5">
-                  âš ï¸ Pagamento Pendente:
+                  ⚠️ Pagamento Pendente:
                 </strong>
-                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se apÃ³s 48 horas o pagamento nÃ£o for confirmado, o Bio Site serÃ¡ suspenso.</strong>
+                Seu Bio Site foi criado e se encontra com pagamento pendente. <strong>Se após 48 horas o pagamento não for confirmado, o Bio Site será suspenso.</strong>
                 <span className="ml-2 font-mono font-bold text-amber-900 bg-amber-200/90 px-2 py-0.5 rounded-full border border-amber-400">
                   {remainingHours > 0 ? `${remainingHours}h restantes` : 'Prazo limite'}
                 </span>
@@ -1588,29 +1588,29 @@ export default function ContaClient() {
               className="shrink-0 px-4 py-1.5 rounded-full bg-stone-950 hover:bg-stone-800 text-amber-300 hover:text-white font-bold text-xs uppercase tracking-wider transition shadow-sm cursor-pointer flex items-center gap-1.5"
             >
               <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-              <span>Regularizar Pagamento â†’</span>
+              <span>Regularizar Pagamento →</span>
             </button>
           </div>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* 1. TELA PRINCIPAL DA ÃREA DO CLIENTE (IMAGEM 1) */}
+      {/* 1. TELA PRINCIPAL DA ÁREA DO CLIENTE (IMAGEM 1) */}
       {/* ========================================================= */}
       {currentView === 'dashboard' && (
         <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
           {savedSuccess && (
             <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2 animate-fade-in shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              AlteraÃ§Ãµes salvas com sucesso! Sua pÃ¡gina no ar foi atualizada.
+              Alterações salvas com sucesso! Sua página no ar foi atualizada.
             </div>
           )}
 
-          {/* CABEÃ‡ALHO COM SAUDAÃ‡ÃƒO E SAIR */}
+          {/* CABEÇALHO COM SAUDAÇÃO E SAIR */}
           <div className="flex items-start justify-between border-b border-stone-100 pb-8 mb-8">
             <div>
               <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-stone-400 block mb-1">
-                SUA ÃREA
+                SUA ÁREA
               </span>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-900 tracking-tight">
                 Oi, {brandName}.
@@ -1633,9 +1633,9 @@ export default function ContaClient() {
             </button>
           </div>
 
-          {/* GRID COM MENU LATERAL E CONTEÃšDO PRINCIPAL (EXATAMENTE COMO NA IMAGEM 1) */}
+          {/* GRID COM MENU LATERAL E CONTEÚDO PRINCIPAL (EXATAMENTE COMO NA IMAGEM 1) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            {/* SIDEBAR DE NAVEGAÃ‡ÃƒO ESQUERDA */}
+            {/* SIDEBAR DE NAVEGAÇÃO ESQUERDA */}
             <aside className="lg:col-span-3 space-y-1.5">
               <button
                 type="button"
@@ -1646,7 +1646,7 @@ export default function ContaClient() {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                SUA PÃGINA
+                SUA PÁGINA
               </button>
 
               <button
@@ -1660,7 +1660,7 @@ export default function ContaClient() {
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  SERVIÃ‡OS & PREÃ‡OS
+                  SERVIÇOS & PREÇOS
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-800 font-bold border border-amber-400/30">
                   EDITAR
@@ -1738,7 +1738,7 @@ export default function ContaClient() {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                ESTATÃSTICAS
+                ESTATÍSTICAS
               </button>
 
               <button
@@ -1796,7 +1796,7 @@ export default function ContaClient() {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                <span>PIXEL & TRÃFEGO</span>
+                <span>PIXEL & TRÁFEGO</span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-amber-400 text-stone-950 font-bold">
                   PRO
                 </span>
@@ -1813,20 +1813,20 @@ export default function ContaClient() {
               >
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  MÃ³dulos VIP
+                  Módulos VIP
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-stone-900 text-amber-300 font-bold">
-                  12 SEÃ‡Ã•ES
+                  12 SEÇÕES
                 </span>
               </button>
             </aside>
 
-            {/* CONTEÃšDO PRINCIPAL DA ABA SELECIONADA */}
+            {/* CONTEÚDO PRINCIPAL DA ABA SELECIONADA */}
             <div className="lg:col-span-9 space-y-12">
-              {/* ABA SUA PÃGINA */}
+              {/* ABA SUA PÁGINA */}
               {activeSidebarTab === 'pagina' && (
                 <>
-                  {/* SEÃ‡ÃƒO 1: NO AR */}
+                  {/* SEÇÃO 1: NO AR */}
                   <div className="border-b border-stone-100 pb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div className="space-y-1.5">
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
@@ -1854,7 +1854,7 @@ export default function ContaClient() {
                         className="px-6 py-3 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-sm flex items-center gap-2"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Editar ServiÃ§os</span>
+                        <span>Editar Serviços</span>
                       </button>
 
                       <button
@@ -1880,7 +1880,7 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* ATALHOS RÃPIDOS DE EDIÃ‡ÃƒO PERMITIDA DO CLIENTE (SERVIÃ‡OS & FOTOS) */}
+                  {/* ATALHOS RÁPIDOS DE EDIÇÃO PERMITIDA DO CLIENTE (SERVIÇOS & FOTOS) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
                     <div
                       onClick={() => setActiveSidebarTab('servicos')}
@@ -1896,14 +1896,14 @@ export default function ContaClient() {
                       </div>
                       <div>
                         <h4 className="font-serif font-bold text-base text-stone-900 group-hover:text-amber-800 transition">
-                          CatÃ¡logo de Procedimentos & PreÃ§os
+                          Catálogo de Procedimentos & Preços
                         </h4>
                         <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                          Altere nomes, valores, duraÃ§Ãµes e mensagens prontas do WhatsApp. Clientes chegam decididas.
+                          Altere nomes, valores, durações e mensagens prontas do WhatsApp. Clientes chegam decididas.
                         </p>
                       </div>
                       <div className="pt-2 text-xs font-bold text-stone-800 flex items-center gap-1 group-hover:text-amber-700">
-                        <span>Gerenciar ServiÃ§os</span>
+                        <span>Gerenciar Serviços</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
@@ -1922,7 +1922,7 @@ export default function ContaClient() {
                       </div>
                       <div>
                         <h4 className="font-serif font-bold text-base text-stone-900 group-hover:text-amber-800 transition">
-                          Galeria & PortfÃ³lio de Trabalhos
+                          Galeria & Portfólio de Trabalhos
                         </h4>
                         <p className="text-xs text-stone-500 mt-1 leading-relaxed">
                           Adicione ou atualize fotos de procedimentos reais com legendas explicativas e zoom interativo.
@@ -1935,11 +1935,11 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* SEÃ‡ÃƒO 2: PÃGINAS ADICIONAIS */}
+                  {/* SEÇÃO 2: PÁGINAS ADICIONAIS */}
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
-                        PÃGINAS ADICIONAIS
+                        PÁGINAS ADICIONAIS
                       </span>
                       <span className="text-xs font-mono text-stone-400">
                         {additionalPages.length} de 3
@@ -1947,16 +1947,16 @@ export default function ContaClient() {
                     </div>
 
                     <p className="text-xs sm:text-sm text-stone-600 font-serif leading-relaxed max-w-2xl">
-                      Seu plano inclui 3 pÃ¡ginas adicionais â€” cardÃ¡pio, Ã¡lbum, resultados e outros modelos prontos, jÃ¡ na identidade do seu Bio Site. A loja Ã© Ã  parte e nÃ£o ocupa essa vaga.
+                      Seu plano inclui 3 páginas adicionais — cardápio, álbum, resultados e outros modelos prontos, já na identidade do seu Bio Site. A loja é à parte e não ocupa essa vaga.
                     </p>
 
-                    {/* LISTA DAS PÃGINAS ATIVAS */}
+                    {/* LISTA DAS PÁGINAS ATIVAS */}
                     {additionalPages.length > 0 && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                         {additionalPages.map((page, i) => (
                           <div key={page.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex flex-col justify-between space-y-3">
                             <div>
-                              <span className="text-[9px] font-mono uppercase text-stone-400 block">PÃGINA {i + 1}</span>
+                              <span className="text-[9px] font-mono uppercase text-stone-400 block">PÁGINA {i + 1}</span>
                               <div className="font-serif font-bold text-stone-900 text-sm mt-0.5">{page.title}</div>
                               <div className="text-[10px] font-mono text-stone-500 mt-1">/{slug}/{page.slug}</div>
                             </div>
@@ -1982,19 +1982,19 @@ export default function ContaClient() {
                       </div>
                     )}
 
-                    {/* BOTÃƒO CRIAR PÃGINA ADICIONAL */}
+                    {/* BOTÃO CRIAR PÁGINA ADICIONAL */}
                     <div className="pt-2">
                       <button
                         type="button"
                         onClick={() => setCurrentView('adicionar_pagina')}
                         className="px-7 py-3 rounded-full border border-stone-300 hover:border-stone-900 text-stone-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
                       >
-                        CRIAR PÃGINA ADICIONAL
+                        CRIAR PÁGINA ADICIONAL
                       </button>
                     </div>
                   </div>
 
-                  {/* SEÃ‡ÃƒO 3: TUTORIAL INSTAGRAM, DISPLAY DE BALCÃƒO & CARD PARA STORY */}
+                  {/* SEÇÃO 3: TUTORIAL INSTAGRAM, DISPLAY DE BALCÃO & CARD PARA STORY */}
                   <div className="pt-8 border-t border-stone-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* CARD 1: TUTORIAL PASSO A PASSO INSTAGRAM */}
                     <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border border-amber-200/80 space-y-4">
@@ -2004,7 +2004,7 @@ export default function ContaClient() {
                         </div>
                         <div>
                           <span className="text-[10px] font-mono uppercase tracking-wider text-amber-800 font-bold block">
-                            DIVULGAÃ‡ÃƒO & CONVERSÃƒO
+                            DIVULGAÇÃO & CONVERSÃO
                           </span>
                           <h4 className="text-sm font-bold text-stone-900">
                             Como colocar na Bio do Instagram
@@ -2049,7 +2049,7 @@ export default function ContaClient() {
                       </div>
                     </div>
 
-                    {/* CARD 2: DISPLAY DE BALCÃƒO COM QR CODE */}
+                    {/* CARD 2: DISPLAY DE BALCÃO COM QR CODE */}
                     <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4 flex flex-col justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2.5">
@@ -2058,15 +2058,15 @@ export default function ContaClient() {
                           </div>
                           <div>
                             <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-bold block">
-                              EXPERIÃŠNCIA FÃSICA VIP
+                              EXPERIÊNCIA FÍSICA VIP
                             </span>
                             <h4 className="text-sm font-bold text-stone-900">
-                              Display de BalcÃ£o & CartÃ£o de Visitas
+                              Display de Balcão & Cartão de Visitas
                             </h4>
                           </div>
                         </div>
                         <p className="text-xs text-stone-600 leading-relaxed">
-                          Imprima este QR Code em acrÃ­lico para o balcÃ£o da sua recepÃ§Ã£o ou no verso do seu cartÃ£o. O cliente aponta a cÃ¢mera e acessa seu catÃ¡logo completo!
+                          Imprima este QR Code em acrílico para o balcão da sua recepção ou no verso do seu cartão. O cliente aponta a câmera e acessa seu catálogo completo!
                         </p>
                       </div>
 
@@ -2090,7 +2090,7 @@ export default function ContaClient() {
                             <span>Baixar QR Code HD (500px)</span>
                           </a>
                           <span className="text-[10px] text-stone-400 block text-center font-mono">
-                            Pronto para grÃ¡fica ou impressÃ£o
+                            Pronto para gráfica ou impressão
                           </span>
                         </div>
                       </div>
@@ -2113,7 +2113,7 @@ export default function ContaClient() {
                           </div>
                         </div>
                         <p className="text-xs text-stone-300 leading-relaxed">
-                          Divulgue seu novo BioSite nos Stories do Instagram com design cinematogrÃ¡fico de alta conversÃ£o.
+                          Divulgue seu novo BioSite nos Stories do Instagram com design cinematográfico de alta conversão.
                         </p>
                       </div>
 
@@ -2127,7 +2127,7 @@ export default function ContaClient() {
                           <span>Visualizar & Baixar Story HD</span>
                         </button>
                         <span className="text-[10px] text-stone-400 block text-center font-mono">
-                          Formato 1080x1920 Â· Pronto para postar
+                          Formato 1080x1920 · Pronto para postar
                         </span>
                       </div>
                     </div>
@@ -2136,7 +2136,7 @@ export default function ContaClient() {
               )}
 
               {/* ========================================================= */}
-              {/* ABA EDIÃ‡ÃƒO DE SERVIÃ‡OS & PREÃ‡OS (EXCLUSIVA DO CLIENTE) */}
+              {/* ABA EDIÇÃO DE SERVIÇOS & PREÇOS (EXCLUSIVA DO CLIENTE) */}
               {/* ========================================================= */}
               {activeSidebarTab === 'servicos' && (
               <ClientServicesTab
@@ -2178,13 +2178,13 @@ export default function ContaClient() {
                   <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
                     AGENDA & ATENDIMENTOS
                   </span>
-                  <h2 className="text-2xl font-serif font-bold text-stone-900">HorÃ¡rios Marcados</h2>
+                  <h2 className="text-2xl font-serif font-bold text-stone-900">Horários Marcados</h2>
                   <div className="p-8 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
                     <p className="text-xs text-stone-600">
-                      Nenhuma das suas pÃ¡ginas tem agenda ligada.
+                      Nenhuma das suas páginas tem agenda ligada.
                     </p>
                     <p className="text-xs text-stone-500">
-                      Crie uma pÃ¡gina adicional do modelo <strong>ServiÃ§os e PreÃ§os</strong> e ligue o agendamento nela. Os horÃ¡rios marcados aparecem aqui.
+                      Crie uma página adicional do modelo <strong>Serviços e Preços</strong> e ligue o agendamento nela. Os horários marcados aparecem aqui.
                     </p>
                     <div className="pt-2">
                       <button
@@ -2192,18 +2192,18 @@ export default function ContaClient() {
                         onClick={() => setCurrentView('adicionar_pagina')}
                         className="px-5 py-2.5 rounded-full bg-black text-white text-xs font-bold uppercase tracking-wider"
                       >
-                        CRIAR PÃGINA DE AGENDAMENTO
+                        CRIAR PÁGINA DE AGENDAMENTO
                       </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* ABA ESTATÃSTICAS (OBSERVADA DIRETAMENTE NO MODELO REAL) */}
+              {/* ABA ESTATÍSTICAS (OBSERVADA DIRETAMENTE NO MODELO REAL) */}
               {activeSidebarTab === 'estatisticas' && (
                 <div className="space-y-10">
                   <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold mb-1">
-                    ESTATÃSTICAS DO SEU BIO SITE
+                    ESTATÍSTICAS DO SEU BIO SITE
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -2216,28 +2216,28 @@ export default function ContaClient() {
                     <div className="p-6 rounded-2xl bg-stone-50 border border-stone-200">
                       <span className="text-[10px] font-mono uppercase text-stone-400 block mb-2 font-bold">CLIQUES</span>
                       <div className="text-4xl font-bold font-mono text-stone-900">0</div>
-                      <div className="text-[10px] text-stone-400 font-mono mt-1">Nos botÃµes principais</div>
+                      <div className="text-[10px] text-stone-400 font-mono mt-1">Nos botões principais</div>
                     </div>
 
                     <div className="p-6 rounded-2xl bg-stone-50 border border-stone-200">
-                      <span className="text-[10px] font-mono uppercase text-stone-400 block mb-2 font-bold">ÃšLTIMOS 7 DIAS</span>
-                      <div className="text-4xl font-bold font-mono text-stone-400">â€”</div>
+                      <span className="text-[10px] font-mono uppercase text-stone-400 block mb-2 font-bold">ÚLTIMOS 7 DIAS</span>
+                      <div className="text-4xl font-bold font-mono text-stone-400">—</div>
                       <div className="text-[10px] text-stone-400 font-mono mt-1">Aguardando mais dados</div>
                     </div>
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-stone-100">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-stone-400 font-mono">
-                      CLIQUES POR BOTÃƒO
+                      CLIQUES POR BOTÃO
                     </h3>
                     <p className="text-xs text-stone-500">
-                      NinguÃ©m clicou ainda. Assim que alguÃ©m tocar em um dos seus botÃµes, ele aparece aqui.
+                      Ninguém clicou ainda. Assim que alguém tocar em um dos seus botões, ele aparece aqui.
                     </p>
                   </div>
 
                   <div className="space-y-3 pt-4 border-t border-stone-100">
                     <h3 className="font-bold text-xs uppercase tracking-wider text-stone-400 font-mono">
-                      DE ONDE VÃŠM AS VISITAS
+                      DE ONDE VÊM AS VISITAS
                     </h3>
                     <div className="flex items-center justify-between p-3.5 rounded-xl bg-stone-50 border border-stone-200 text-xs font-mono">
                       <span className="text-stone-700">Direto / Instagram</span>
@@ -2247,7 +2247,7 @@ export default function ContaClient() {
                 </div>
               )}
 
-              {/* ABA PAGAMENTO & REGULARIZAÃ‡ÃƒO */}
+              {/* ABA PAGAMENTO & REGULARIZAÇÃO */}
               {activeSidebarTab === 'pagamento' && (
               <ClientPaymentTab
                 paymentStatus={paymentStatus}
@@ -2286,23 +2286,23 @@ export default function ContaClient() {
                         <span className="px-3 py-1 rounded-full bg-black text-white text-[10px] font-mono font-bold uppercase">
                           PLANO PRO ANUAL
                         </span>
-                        <h3 className="text-2xl font-serif font-bold text-stone-900 mt-2">Bio Site Pro + 3 PÃ¡ginas Inclusas</h3>
-                        <p className="text-xs text-stone-500 mt-1">Hospedagem inclusa, domÃ­nio prÃ³prio, sem comissÃ£o em vendas.</p>
+                        <h3 className="text-2xl font-serif font-bold text-stone-900 mt-2">Bio Site Pro + 3 Páginas Inclusas</h3>
+                        <p className="text-xs text-stone-500 mt-1">Hospedagem inclusa, domínio próprio, sem comissão em vendas.</p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold font-mono text-stone-900">R$ 55,92</div>
-                        <span className="text-xs text-stone-400 font-mono">/mÃªs no anual</span>
+                        <span className="text-xs text-stone-400 font-mono">/mês no anual</span>
                       </div>
                     </div>
 
                     <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
-                      <span className="text-xs text-stone-500">PrÃ³xima renovaÃ§Ã£o: 15/02/2027</span>
+                      <span className="text-xs text-stone-500">Próxima renovação: 15/02/2027</span>
                       <button
                         type="button"
                         onClick={() => setPixModalOpen(true)}
                         className="px-5 py-2.5 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider"
                       >
-                        <QrCode className="w-3.5 h-3.5 inline mr-1.5" /> Gerar Pix de RenovaÃ§Ã£o
+                        <QrCode className="w-3.5 h-3.5 inline mr-1.5" /> Gerar Pix de Renovação
                       </button>
                     </div>
                   </div>
@@ -2342,7 +2342,7 @@ export default function ContaClient() {
               />
             )}
 
-              {/* ABA: MÃ“DULOS VIP DE ALTA CONVERSÃƒO */}
+              {/* ABA: MÓDULOS VIP DE ALTA CONVERSÃO */}
               {activeSidebarTab === 'modulos_vip' && (
               <ClientVipModulesTab
                 announcementData={announcementData}
@@ -2372,10 +2372,10 @@ export default function ContaClient() {
               />
             )}
 
-              {/* RODAPÃ‰ DE SUPORTE PRESENTE EM TODAS AS ABAS */}
+              {/* RODAPÉ DE SUPORTE PRESENTE EM TODAS AS ABAS */}
               <div className="pt-12 border-t border-stone-100">
                 <p className="text-xs text-stone-400">
-                  Precisa trocar o endereÃ§o do seu link ou tem qualquer dÃºvida?{' '}
+                  Precisa trocar o endereço do seu link ou tem qualquer dúvida?{' '}
                   <a
                     href="https://wa.me/5531991390202"
                     target="_blank"
@@ -2392,7 +2392,7 @@ export default function ContaClient() {
       )}
 
       {/* ========================================================= */}
-      {/* 3. TELA DE ADICIONAR PÃGINAS ADICIONAIS */}
+      {/* 3. TELA DE ADICIONAR PÁGINAS ADICIONAIS */}
       {/* ========================================================= */}
       {currentView === 'adicionar_pagina' && (
         <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8 space-y-8">
@@ -2401,19 +2401,19 @@ export default function ContaClient() {
               onClick={() => setCurrentView('dashboard')}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-stone-300 hover:border-stone-900 bg-white text-xs font-mono uppercase tracking-wider text-stone-700 hover:text-stone-900 transition cursor-pointer shadow-2xs"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> MINHA ÃREA
+              <ArrowLeft className="w-3.5 h-3.5" /> MINHA ÁREA
             </button>
           </div>
 
           <div>
             <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-stone-400 block mb-1">
-              PÃGINA ADICIONAL Â· PLANO PRO ({additionalPages.length} de 3 utilizadas)
+              PÁGINA ADICIONAL · PLANO PRO ({additionalPages.length} de 3 utilizadas)
             </span>
             <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-900 tracking-tight">
               Escolha o modelo.
             </h1>
             <p className="text-stone-600 text-xs sm:text-sm font-serif mt-2 max-w-3xl leading-relaxed">
-              O modelo define a estrutura da pÃ¡gina. As cores, a fonte e o formato dos botÃµes vÃªm do seu Bio Site â€” cada prÃ©via abaixo jÃ¡ estÃ¡ na sua identidade.
+              O modelo define a estrutura da página. As cores, a fonte e o formato dos botões vêm do seu Bio Site — cada prévia abaixo já está na sua identidade.
             </p>
           </div>
 
@@ -2490,7 +2490,7 @@ export default function ContaClient() {
                       onClick={() => handleSelectTemplate(tpl)}
                       className="w-full py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center shadow-xs flex items-center justify-center gap-1.5"
                     >
-                      USAR ESTE â†’
+                      USAR ESTE →
                     </button>
                   </div>
                 </div>

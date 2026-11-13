@@ -143,7 +143,7 @@ export default function ClientVipModulesTab({
                 setAnnouncementData(prev => ({ ...prev, text: e.target.value }))
                 setHasUnsavedChanges(true)
               }}
-              placeholder="Ex: Ãšltimos horÃ¡rios disponÃ­veis para esta semana."
+              placeholder="Ex: Últimos horários disponíveis para esta semana."
               className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
             />
           </div>
@@ -160,7 +160,7 @@ export default function ClientVipModulesTab({
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>CronÃ´metro Regressivo</span>
+            <span>Cronômetro Regressivo</span>
           </label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-stone-500">Tempo:</span>
@@ -180,14 +180,14 @@ export default function ClientVipModulesTab({
         </div>
       </div>
 
-      {/* 2. CATÃLOGO DE SERVIÃ‡OS VIP */}
+      {/* 2. CATÁLOGO DE SERVIÇOS VIP */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-500" />
             <div>
-              <h3 className="font-bold text-sm text-stone-900">CatÃ¡logo de Procedimentos VIP</h3>
-              <p className="text-[11px] text-stone-500">Apresente seus serviÃ§os com preÃ§o, duraÃ§Ã£o e WhatsApp individual.</p>
+              <h3 className="font-bold text-sm text-stone-900">Catálogo de Procedimentos VIP</h3>
+              <p className="text-[11px] text-stone-500">Apresente seus serviços com preço, duração e WhatsApp individual.</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer">
@@ -200,14 +200,14 @@ export default function ClientVipModulesTab({
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Exibir CatÃ¡logo</span>
+            <span>Exibir Catálogo</span>
           </label>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              TÃ­tulo da SeÃ§Ã£o
+              Título da Seção
             </label>
             <input
               type="text"
@@ -221,7 +221,7 @@ export default function ClientVipModulesTab({
           </div>
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              SubtÃ­tulo
+              Subtítulo
             </label>
             <input
               type="text"
@@ -235,7 +235,7 @@ export default function ClientVipModulesTab({
           </div>
         </div>
 
-        {/* Lista de Itens do CatÃ¡logo */}
+        {/* Lista de Itens do Catálogo */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-stone-800">Procedimentos ({servicesCatalogData.items.length})</span>
@@ -246,12 +246,12 @@ export default function ClientVipModulesTab({
                   id: `srv-${Date.now().toString().slice(-4)}`,
                   category: 'MAIS PROCURADO',
                   name: 'Novo Procedimento VIP',
-                  description: 'DescriÃ§Ã£o do procedimento exclusivo com atendimento personalizado.',
+                  description: 'Descrição do procedimento exclusivo com atendimento personalizado.',
                   price: 'R$ 250',
-                  duration: 'â± 1h30',
+                  duration: '⏱ 1h30',
                   badge: 'MAIS PROCURADO',
                   featured: true,
-                  whatsappMessage: 'OlÃ¡! Gostaria de agendar este procedimento.'
+                  whatsappMessage: 'Olá! Gostaria de agendar este procedimento.'
                 }
                 setServicesCatalogData(prev => ({
                   ...prev,
@@ -320,7 +320,7 @@ export default function ClientVipModulesTab({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] text-stone-500 mb-0.5">PreÃ§o / Investimento</label>
+                  <label className="block text-[10px] text-stone-500 mb-0.5">Preço / Investimento</label>
                   <input
                     type="text"
                     value={item.price}
@@ -335,7 +335,7 @@ export default function ClientVipModulesTab({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-stone-500 mb-0.5">DuraÃ§Ã£o Estimada</label>
+                  <label className="block text-[10px] text-stone-500 mb-0.5">Duração Estimada</label>
                   <input
                     type="text"
                     value={item.duration}
@@ -345,14 +345,14 @@ export default function ClientVipModulesTab({
                       setServicesCatalogData(prev => ({ ...prev, items: updated }))
                       setHasUnsavedChanges(true)
                     }}
-                    placeholder="Ex: â± 1h30"
+                    placeholder="Ex: ⏱ 1h30"
                     className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs bg-white text-stone-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] text-stone-500 mb-0.5">DescriÃ§Ã£o Curta</label>
+                <label className="block text-[10px] text-stone-500 mb-0.5">Descrição Curta</label>
                 <input
                   type="text"
                   value={item.description}
@@ -366,7 +366,7 @@ export default function ClientVipModulesTab({
                 />
               </div>
 
-              {/* Foto do ServiÃ§o / Procedimento e Modo de ExibiÃ§Ã£o */}
+              {/* Foto do Serviço / Procedimento e Modo de Exibição */}
               <div className="pt-2 border-t border-stone-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-semibold text-stone-700 flex items-center gap-1">
@@ -439,14 +439,14 @@ export default function ClientVipModulesTab({
         </div>
       </div>
 
-      {/* 3. LOCALIZAÃ‡ÃƒO & ROTAS (GPS WAZE / UBER / MAPS) */}
+      {/* 3. LOCALIZAÇÃO & ROTAS (GPS WAZE / UBER / MAPS) */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-500" />
             <div>
-              <h3 className="font-bold text-sm text-stone-900">LocalizaÃ§Ã£o & Rotas com GPS</h3>
-              <p className="text-[11px] text-stone-500">BotÃµes de rota direta no Waze, Google Maps e Uber.</p>
+              <h3 className="font-bold text-sm text-stone-900">Localização & Rotas com GPS</h3>
+              <p className="text-[11px] text-stone-500">Botões de rota direta no Waze, Google Maps e Uber.</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer">
@@ -459,14 +459,14 @@ export default function ClientVipModulesTab({
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Exibir LocalizaÃ§Ã£o</span>
+            <span>Exibir Localização</span>
           </label>
         </div>
 
         <div className="space-y-2.5">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              EndereÃ§o Completo
+              Endereço Completo
             </label>
             <input
               type="text"
@@ -475,7 +475,7 @@ export default function ClientVipModulesTab({
                 setLocationData(prev => ({ ...prev, address: e.target.value }))
                 setHasUnsavedChanges(true)
               }}
-              placeholder="Ex: Av. Boa Viagem, 2190 - Sala 918 Â· Recife, PE"
+              placeholder="Ex: Av. Boa Viagem, 2190 - Sala 918 · Recife, PE"
               className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
             />
           </div>
@@ -483,7 +483,7 @@ export default function ClientVipModulesTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-                HorÃ¡rios de Atendimento
+                Horários de Atendimento
               </label>
               <input
                 type="text"
@@ -492,7 +492,7 @@ export default function ClientVipModulesTab({
                   setLocationData(prev => ({ ...prev, hours: e.target.value }))
                   setHasUnsavedChanges(true)
                 }}
-                placeholder="Ex: Seg a Sex Â· 08:30 Ã s 19:30"
+                placeholder="Ex: Seg a Sex · 08:30 às 19:30"
                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
               />
             </div>
@@ -507,7 +507,7 @@ export default function ClientVipModulesTab({
                   setLocationData(prev => ({ ...prev, openStatus: e.target.value }))
                   setHasUnsavedChanges(true)
                 }}
-                placeholder="Ex: Aberto Agora Â· Agendamento VIP"
+                placeholder="Ex: Aberto Agora · Agendamento VIP"
                 className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 text-stone-900 focus:bg-white focus:outline-none"
               />
             </div>
@@ -542,7 +542,7 @@ export default function ClientVipModulesTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Texto do BotÃ£o de Abertura
+              Texto do Botão de Abertura
             </label>
             <input
               type="text"
@@ -556,7 +556,7 @@ export default function ClientVipModulesTab({
           </div>
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              TÃ­tulo do Modal
+              Título do Modal
             </label>
             <input
               type="text"
@@ -571,14 +571,14 @@ export default function ClientVipModulesTab({
         </div>
       </div>
 
-      {/* 5. INDICADORES DE AUTORIDADE / MÃ‰TRICAS */}
+      {/* 5. INDICADORES DE AUTORIDADE / MÉTRICAS */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-600" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Indicadores de Autoridade & Prova Social</h3>
-              <p className="text-[11px] text-stone-500">NÃºmeros que geram autoridade imediata no topo do perfil.</p>
+              <p className="text-[11px] text-stone-500">Números que geram autoridade imediata no topo do perfil.</p>
             </div>
           </div>
           <button
@@ -589,7 +589,7 @@ export default function ClientVipModulesTab({
             }}
             className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition"
           >
-            <Plus className="w-3 h-3" /> Adicionar MÃ©trica
+            <Plus className="w-3 h-3" /> Adicionar Métrica
           </button>
         </div>
 
@@ -604,11 +604,11 @@ export default function ClientVipModulesTab({
                 }}
                 className="absolute top-2 right-2 text-stone-400 hover:text-rose-600 text-[11px] font-bold cursor-pointer"
               >
-                âœ•
+                ✕
               </button>
               <div>
                 <label className="block text-[9px] font-mono uppercase text-stone-400 font-bold mb-0.5">
-                  NÃšMERO / VALOR
+                  NÚMERO / VALOR
                 </label>
                 <input
                   type="text"
@@ -624,7 +624,7 @@ export default function ClientVipModulesTab({
               </div>
               <div>
                 <label className="block text-[9px] font-mono uppercase text-stone-400 font-bold mb-0.5">
-                  RÃ“TULO
+                  RÓTULO
                 </label>
                 <input
                   type="text"
@@ -650,7 +650,7 @@ export default function ClientVipModulesTab({
             <Clock className="w-4 h-4 text-blue-500" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Como Funciona (3 Etapas)</h3>
-              <p className="text-[11px] text-stone-500">Explica a jornada do cliente desde o primeiro clique atÃ© a entrega.</p>
+              <p className="text-[11px] text-stone-500">Explica a jornada do cliente desde o primeiro clique até a entrega.</p>
             </div>
           </div>
           <button
@@ -658,7 +658,7 @@ export default function ClientVipModulesTab({
             onClick={() => {
               setHowItWorksData(prev => [
                 ...prev,
-                { number: `0${prev.length + 1}`, title: 'Nova Etapa VIP', description: 'ExplicaÃ§Ã£o clara deste passo.' }
+                { number: `0${prev.length + 1}`, title: 'Nova Etapa VIP', description: 'Explicação clara deste passo.' }
               ])
               setHasUnsavedChanges(true)
             }}
@@ -692,7 +692,7 @@ export default function ClientVipModulesTab({
                     setHowItWorksData(up)
                     setHasUnsavedChanges(true)
                   }}
-                  placeholder="TÃ­tulo da Etapa"
+                  placeholder="Título da Etapa"
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-bold bg-white text-stone-900"
                 />
                 <input
@@ -704,7 +704,7 @@ export default function ClientVipModulesTab({
                     setHowItWorksData(up)
                     setHasUnsavedChanges(true)
                   }}
-                  placeholder="DescriÃ§Ã£o da etapa"
+                  placeholder="Descrição da etapa"
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-[11px] bg-white text-stone-700"
                 />
               </div>
@@ -716,21 +716,21 @@ export default function ClientVipModulesTab({
                 }}
                 className="text-stone-400 hover:text-rose-600 text-xs font-bold pt-1 cursor-pointer"
               >
-                âœ•
+                ✕
               </button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 7. DEPOIMENTOS & AVALIAÃ‡Ã•ES VIP */}
+      {/* 7. DEPOIMENTOS & AVALIAÇÕES VIP */}
       <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-amber-500" />
             <div>
-              <h3 className="font-bold text-sm text-stone-900">Depoimentos & AvaliaÃ§Ãµes VIP</h3>
-              <p className="text-[11px] text-stone-500">Relatos reais de clientes com estrelas e procedÃªncia.</p>
+              <h3 className="font-bold text-sm text-stone-900">Depoimentos & Avaliações VIP</h3>
+              <p className="text-[11px] text-stone-500">Relatos reais de clientes com estrelas e procedência.</p>
             </div>
           </div>
           <button
@@ -822,7 +822,7 @@ export default function ClientVipModulesTab({
             <FileText className="w-4 h-4 text-stone-700" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Sobre Mim & Posicionamento VIP</h3>
-              <p className="text-[11px] text-stone-500">HistÃ³rico profissional e diferenciais para reforÃ§ar credibilidade.</p>
+              <p className="text-[11px] text-stone-500">Histórico profissional e diferenciais para reforçar credibilidade.</p>
             </div>
           </div>
           <label className="flex items-center gap-2 text-xs font-semibold text-stone-700 cursor-pointer">
@@ -835,14 +835,14 @@ export default function ClientVipModulesTab({
               }}
               className="accent-black w-4 h-4 rounded"
             />
-            <span>Exibir SeÃ§Ã£o</span>
+            <span>Exibir Seção</span>
           </label>
         </div>
 
         <div className="space-y-2.5">
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              TÃ­tulo da SeÃ§Ã£o
+              Título da Seção
             </label>
             <input
               type="text"
@@ -857,7 +857,7 @@ export default function ClientVipModulesTab({
 
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-wider text-stone-500 mb-1">
-              Texto de ApresentaÃ§Ã£o & Autoridade
+              Texto de Apresentação & Autoridade
             </label>
             <textarea
               rows={3}
@@ -894,7 +894,7 @@ export default function ClientVipModulesTab({
             <HelpCircle className="w-4 h-4 text-amber-600" />
             <div>
               <h3 className="font-bold text-sm text-stone-900">Perguntas Frequentes (FAQ)</h3>
-              <p className="text-[11px] text-stone-500">Elimine objeÃ§Ãµes comuns antes do primeiro contato.</p>
+              <p className="text-[11px] text-stone-500">Elimine objeções comuns antes do primeiro contato.</p>
             </div>
           </div>
           <button
@@ -939,7 +939,7 @@ export default function ClientVipModulesTab({
                     setFaqData(up)
                     setHasUnsavedChanges(true)
                   }}
-                  placeholder="Qual Ã© a pergunta?"
+                  placeholder="Qual é a pergunta?"
                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-bold bg-white text-stone-900"
                 />
               </div>
@@ -963,7 +963,7 @@ export default function ClientVipModulesTab({
         </div>
       </div>
 
-      {/* BOTÃƒO FIXO DE SALVAMENTO DE MÃ“DULOS */}
+      {/* BOTÃO FIXO DE SALVAMENTO DE MÓDULOS */}
       <div className="pt-2 flex items-center justify-between flex-wrap gap-3">
         <button
           type="button"
@@ -975,7 +975,7 @@ export default function ClientVipModulesTab({
           className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-stone-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
-          SALVAR MÃ“DULOS VIP NO AR
+          SALVAR MÓDULOS VIP NO AR
         </button>
 
         <a

@@ -113,7 +113,7 @@ export default function EditorInspectorColumn({
             mobileMode === 'preview' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          {/* CabeÃ§alho do Bloco Ativo na Coluna 3 */}
+          {/* Cabeçalho do Bloco Ativo na Coluna 3 */}
           <div className="p-4 border-b border-stone-800/80 flex items-center justify-between shrink-0 bg-[#0E0E12]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
@@ -138,10 +138,10 @@ export default function EditorInspectorColumn({
             </button>
           </div>
 
-          {/* Ãrea de FormulÃ¡rio com Rolagem Independente */}
+          {/* Área de Formulário com Rolagem Independente */}
           <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin scrollbar-thumb-stone-800">
             {/* ======================================================= */}
-            {/* 1. SEÃ‡ÃƒO: PALETA & TIPOGRAFIA */}
+            {/* 1. SEÇÃO: PALETA & TIPOGRAFIA */}
             {/* ======================================================= */}
             {activeSection === 'paleta' && (
               <div className="space-y-5 animate-fade-in">
@@ -149,7 +149,7 @@ export default function EditorInspectorColumn({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
-                      Paleta de Cores ({PALETTES.length} opÃ§Ãµes luxo)
+                      Paleta de Cores ({PALETTES.length} opções luxo)
                       {!canEditTheme && <Lock className="w-3 h-3 text-amber-400" />}
                     </label>
                   </div>
@@ -159,7 +159,7 @@ export default function EditorInspectorColumn({
                       <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                       <div>
                         <span className="text-[11px] font-bold block uppercase tracking-wider">Cores Bloqueadas pelo Administrador</span>
-                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A paleta de cores deste BioSite foi bloqueada para alteraÃ§Ãµes pelo cliente.</p>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A paleta de cores deste BioSite foi bloqueada para alterações pelo cliente.</p>
                       </div>
                     </div>
                   )}
@@ -211,7 +211,7 @@ export default function EditorInspectorColumn({
                       <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                       <div>
                         <span className="text-[11px] font-bold block uppercase tracking-wider">Fontes Bloqueadas pelo Administrador</span>
-                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A tipografia deste modelo foi selecionada pelo administrador e estÃ¡ protegida.</p>
+                        <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A tipografia deste modelo foi selecionada pelo administrador e está protegida.</p>
                       </div>
                     </div>
                   )}
@@ -250,12 +250,12 @@ export default function EditorInspectorColumn({
                   </fieldset>
                 </div>
 
-                {/* Estilos e Efeitos de BotÃ£o */}
+                {/* Estilos e Efeitos de Botão */}
                 <fieldset disabled={!canEditButtons} className={!canEditButtons ? 'opacity-50 pointer-events-none' : ''}>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                        Estilo do BotÃ£o
+                        Estilo do Botão
                       </label>
                       <select
                         value={props.buttonStyle}
@@ -274,7 +274,7 @@ export default function EditorInspectorColumn({
                     </div>
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                        AnimaÃ§Ã£o do BotÃ£o
+                        Animação do Botão
                       </label>
                       <select
                         value={props.buttonAnimation}
@@ -302,7 +302,7 @@ export default function EditorInspectorColumn({
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: 'organico', label: 'FusÃ£o OrgÃ¢nica' },
+                        { id: 'organico', label: 'Fusão Orgânica' },
                         { id: 'original', label: 'Foto Pura' },
                         { id: 'silhueta', label: 'Silhueta VIP' }
                       ].map((treat) => (
@@ -329,19 +329,19 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 2. SEÃ‡ÃƒO: CABEÃ‡ALHO & PERFIL */}
+            {/* 2. SEÇÃO: CABEÇALHO & PERFIL */}
             {/* ======================================================= */}
             {activeSection === 'cabecalho' && (
               <div className="space-y-4 animate-fade-in">
-                {/* Banner de IA para Preenchimento AutomÃ¡tico */}
+                {/* Banner de IA para Preenchimento Automático */}
                 <fieldset disabled={!canEditBio} className={!canEditBio ? 'opacity-50 pointer-events-none' : ''}>
                   <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex items-center justify-between gap-3 mb-2">
                     <div>
                       <span className="text-[10px] font-mono uppercase text-amber-300 font-black block">
-                        âœ¨ InteligÃªncia Artificial BioVip
+                        ✨ Inteligência Artificial BioVip
                       </span>
                       <p className="text-[11px] text-stone-300 leading-tight mt-0.5">
-                        Gere bio, especialidade e textos de alta conversÃ£o para o seu nicho.
+                        Gere bio, especialidade e textos de alta conversão para o seu nicho.
                       </p>
                     </div>
                     <button
@@ -521,14 +521,14 @@ export default function EditorInspectorColumn({
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
                       <span className="text-[11px] font-bold block uppercase tracking-wider">Bio & Identidade Bloqueadas</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As informaÃ§Ãµes editoriais e registros oficiais foram configurados pelo administrador.</p>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As informações editoriais e registros oficiais foram configurados pelo administrador.</p>
                     </div>
                   </div>
                 )}
 
                 <fieldset disabled={!canEditBio} className={!canEditBio ? 'opacity-50 pointer-events-none' : ''}>
                   <div className="space-y-4">
-                    {/* Nome e TÃ­tulo */}
+                    {/* Nome e Título */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
@@ -546,7 +546,7 @@ export default function EditorInspectorColumn({
                       </div>
                       <div>
                         <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                          TÃ­tulo de ExibiÃ§Ã£o
+                          Título de Exibição
                         </label>
                         <input
                           type="text"
@@ -636,7 +636,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 3. SEÃ‡ÃƒO: BOTÃ•ES & LINKS PRINCIPAIS (BIOVIP ORIGINAL) */}
+            {/* 3. SEÇÃO: BOTÕES & LINKS PRINCIPAIS (BIOVIP ORIGINAL) */}
             {/* ======================================================= */}
             {activeSection === 'botoes' && (
               <div className="space-y-4 animate-fade-in">
@@ -644,15 +644,15 @@ export default function EditorInspectorColumn({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono uppercase text-stone-200 font-bold">
-                        BotÃµes VIP de Alta ConversÃ£o
+                        Botões VIP de Alta Conversão
                       </span>
                       {!canEditButtons && <Lock className="w-3.5 h-3.5 text-amber-400" />}
                       <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
-                        {props.buttons.length} BOTÃ•ES
+                        {props.buttons.length} BOTÕES
                       </span>
                     </div>
                     <p className="text-[10px] text-stone-400 mt-0.5">
-                      Suporte a fotos pop-out, pills de aÃ§Ã£o, badges e mensagens automÃ¡ticas de WhatsApp.
+                      Suporte a fotos pop-out, pills de ação, badges e mensagens automáticas de WhatsApp.
                     </p>
                   </div>
                   {canEditButtons && (
@@ -661,16 +661,16 @@ export default function EditorInspectorColumn({
                       onClick={() => {
                         const newBtn = {
                           id: `cta-${Date.now()}`,
-                          label: 'AGENDAR HORÃRIO VIP',
-                          subtitle: 'Toque para atendimento prioritÃ¡rio e sem fila',
+                          label: 'AGENDAR HORÁRIO VIP',
+                          subtitle: 'Toque para atendimento prioritário e sem fila',
                           icon: 'calendar',
                           url: '#booking',
                           linkType: 'booking' as const,
-                          whatsappMessage: `OlÃ¡! Gostaria de consultar horÃ¡rios disponÃ­veis no ${props.businessTitle || 'studio'}.`,
+                          whatsappMessage: `Olá! Gostaria de consultar horários disponíveis no ${props.businessTitle || 'studio'}.`,
                           animation: 'pulse-glow' as const,
                           variant: 'accent' as const,
                           badgeText: 'MAIS PROCURADO',
-                          ctaActionText: 'RESERVAR HORÃRIO',
+                          ctaActionText: 'RESERVAR HORÁRIO',
                           imagePosition: 'none' as const,
                           imageFitStyle: 'popout' as const,
                           isHighlighted: true
@@ -680,7 +680,7 @@ export default function EditorInspectorColumn({
                       }}
                       className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-[#E2B857] hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs uppercase flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Adicionar BotÃ£o VIP
+                      <Plus className="w-3.5 h-3.5" /> Adicionar Botão VIP
                     </button>
                   )}
                 </div>
@@ -689,8 +689,8 @@ export default function EditorInspectorColumn({
                   <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold block uppercase tracking-wider">EdiÃ§Ã£o de BotÃµes Bloqueada</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os botÃµes e links de conversÃ£o deste BioSite estÃ£o bloqueados para alteraÃ§Ã£o.</p>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Edição de Botões Bloqueada</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os botões e links de conversão deste BioSite estão bloqueados para alteração.</p>
                     </div>
                   </div>
                 )}
@@ -702,14 +702,14 @@ export default function EditorInspectorColumn({
                       key={btn.id || `btn-${idx}`}
                       className="p-3.5 sm:p-4 rounded-2xl bg-stone-900 border border-stone-800/90 hover:border-stone-700 transition space-y-3 shadow-md"
                     >
-                      {/* Top Bar do Card de BotÃ£o */}
+                      {/* Top Bar do Card de Botão */}
                       <div className="flex items-center justify-between pb-2 border-b border-stone-800/70">
                         <div className="flex items-center gap-2">
                           <span className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono font-bold flex items-center justify-center">
                             #{idx + 1}
                           </span>
                           <span className="text-xs font-bold text-stone-200 truncate max-w-[180px]">
-                            {btn.label || btn.title || 'BotÃ£o sem tÃ­tulo'}
+                            {btn.label || btn.title || 'Botão sem título'}
                           </span>
                           {btn.badgeText && (
                             <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-amber-400 text-stone-950">
@@ -718,12 +718,12 @@ export default function EditorInspectorColumn({
                           )}
                           {btn.cardImage && (
                             <span className="text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded-full">
-                              ðŸ“· COM FOTO
+                              📷 COM FOTO
                             </span>
                           )}
                         </div>
 
-                        {/* AÃ§Ãµes: Mover, Duplicar, Excluir */}
+                        {/* Ações: Mover, Duplicar, Excluir */}
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
@@ -747,7 +747,7 @@ export default function EditorInspectorColumn({
                             type="button"
                             onClick={() => duplicateButton(idx)}
                             className="p-1 rounded bg-stone-800 text-stone-300 hover:text-amber-400 cursor-pointer transition"
-                            title="Duplicar botÃ£o"
+                            title="Duplicar botão"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -759,7 +759,7 @@ export default function EditorInspectorColumn({
                                 props.setHasUnsavedChanges(true)
                               }}
                               className="p-1 rounded bg-stone-800 text-stone-400 hover:text-red-400 cursor-pointer transition"
-                              title="Remover botÃ£o"
+                              title="Remover botão"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -767,11 +767,11 @@ export default function EditorInspectorColumn({
                         </div>
                       </div>
 
-                      {/* Textos: TÃ­tulo Principal e SubtÃ­tulo */}
+                      {/* Textos: Título Principal e Subtítulo */}
                       <div className="space-y-2">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            TÃ­tulo Principal do BotÃ£o
+                            Título Principal do Botão
                           </label>
                           <input
                             type="text"
@@ -783,14 +783,14 @@ export default function EditorInspectorColumn({
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: AGENDAR HORÃRIO VIP"
+                            placeholder="Ex: AGENDAR HORÁRIO VIP"
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-bold focus:border-amber-400 focus:outline-none"
                           />
                         </div>
 
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            SubtÃ­tulo / DescriÃ§Ã£o Curta
+                            Subtítulo / Descrição Curta
                           </label>
                           <input
                             type="text"
@@ -801,17 +801,17 @@ export default function EditorInspectorColumn({
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: Toque para atendimento prioritÃ¡rio e sem fila"
+                            placeholder="Ex: Toque para atendimento prioritário e sem fila"
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-[11px] focus:border-amber-400 focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      {/* Tipo de Destino e AÃ§Ã£o */}
+                      {/* Tipo de Destino e Ação */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Tipo de AÃ§Ã£o / Link
+                            Tipo de Ação / Link
                           </label>
                           <select
                             value={btn.linkType || (btn.url?.includes('wa.me') ? 'whatsapp' : btn.url?.startsWith('#') ? btn.url.replace('#', '') : 'custom')}
@@ -828,18 +828,18 @@ export default function EditorInspectorColumn({
                             }}
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-medium focus:border-amber-400 focus:outline-none"
                           >
-                            <option value="whatsapp">ðŸ’¬ WhatsApp (Conversa Direta)</option>
-                            <option value="booking">ðŸ“… Agendamento Online (#booking)</option>
-                            <option value="catalogo">âœ¨ CatÃ¡logo de ServiÃ§os (#catalogo)</option>
-                            <option value="quiz">ðŸŽ¯ Triagem / Quiz VIP (#quiz)</option>
-                            <option value="maps">ðŸ“ LocalizaÃ§Ã£o / Google Maps</option>
-                            <option value="custom">ðŸ”— Link Personalizado / Externo</option>
+                            <option value="whatsapp">💬 WhatsApp (Conversa Direta)</option>
+                            <option value="booking">📅 Agendamento Online (#booking)</option>
+                            <option value="catalogo">✨ Catálogo de Serviços (#catalogo)</option>
+                            <option value="quiz">🎯 Triagem / Quiz VIP (#quiz)</option>
+                            <option value="maps">📍 Localização / Google Maps</option>
+                            <option value="custom">🔗 Link Personalizado / Externo</option>
                           </select>
                         </div>
 
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Ãcone do BotÃ£o
+                            Ícone do Botão
                           </label>
                           <select
                             value={btn.icon || 'whatsapp'}
@@ -852,21 +852,21 @@ export default function EditorInspectorColumn({
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
                             <option value="whatsapp">WhatsApp</option>
-                            <option value="calendar">Agenda / CalendÃ¡rio</option>
+                            <option value="calendar">Agenda / Calendário</option>
                             <option value="sparkles">Brilho / VIP / Estrela</option>
-                            <option value="map">LocalizaÃ§Ã£o / Mapa</option>
-                            <option value="scissors">Tesoura / Barbearia / SalÃ£o</option>
+                            <option value="map">Localização / Mapa</option>
+                            <option value="scissors">Tesoura / Barbearia / Salão</option>
                             <option value="star">Estrela Destaque</option>
                             <option value="message">Mensagem / Bate-papo</option>
                           </select>
                         </div>
                       </div>
 
-                      {/* Se for WhatsApp: Mensagem AutomÃ¡tica */}
+                      {/* Se for WhatsApp: Mensagem Automática */}
                       {(btn.linkType === 'whatsapp' || btn.url?.includes('wa.me')) ? (
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-emerald-400 mb-1 flex items-center gap-1 font-bold">
-                            <MessageCircle className="w-3 h-3 text-emerald-400" /> Mensagem PrÃ©-formatada de WhatsApp
+                            <MessageCircle className="w-3 h-3 text-emerald-400" /> Mensagem Pré-formatada de WhatsApp
                           </label>
                           <input
                             type="text"
@@ -879,7 +879,7 @@ export default function EditorInspectorColumn({
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: OlÃ¡! Vim pelo site e gostaria de agendar uma consulta."
+                            placeholder="Ex: Olá! Vim pelo site e gostaria de agendar uma consulta."
                             className="w-full p-2 rounded-xl bg-stone-950 text-emerald-200 border border-emerald-500/30 text-xs focus:border-emerald-400 focus:outline-none"
                           />
                         </div>
@@ -903,7 +903,7 @@ export default function EditorInspectorColumn({
                         </div>
                       )}
 
-                      {/* Badges, Pills de AÃ§Ã£o e Efeitos VIP */}
+                      {/* Badges, Pills de Ação e Efeitos VIP */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
@@ -926,7 +926,7 @@ export default function EditorInspectorColumn({
 
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            Texto de AÃ§Ã£o Direta (Pill Direita)
+                            Texto de Ação Direta (Pill Direita)
                           </label>
                           <input
                             type="text"
@@ -937,17 +937,17 @@ export default function EditorInspectorColumn({
                               props.setButtons(updated)
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="Ex: RESERVAR HORÃRIO, VER VALORES"
+                            placeholder="Ex: RESERVAR HORÁRIO, VER VALORES"
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-bold uppercase focus:border-amber-400 focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      {/* AnimaÃ§Ã£o & Estilo Visual */}
+                      {/* Animação & Estilo Visual */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                         <div>
                           <label className="block text-[9.5px] font-mono uppercase text-stone-400 mb-1">
-                            AnimaÃ§Ã£o VIP do BotÃ£o
+                            Animação VIP do Botão
                           </label>
                           <select
                             value={btn.animation || (btn.isHighlighted ? 'pulse-glow' : 'none')}
@@ -960,10 +960,10 @@ export default function EditorInspectorColumn({
                             }}
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
-                            <option value="pulse-glow">âœ¨ Pulso Luminoso (Glow VIP)</option>
-                            <option value="shimmer">ðŸ’« Reflexo MetÃ¡lico (Shimmer Sweep)</option>
-                            <option value="bounce">âš¡ Saltinho Suave (Bounce)</option>
-                            <option value="none">Sem AnimaÃ§Ã£o</option>
+                            <option value="pulse-glow">✨ Pulso Luminoso (Glow VIP)</option>
+                            <option value="shimmer">💫 Reflexo Metálico (Shimmer Sweep)</option>
+                            <option value="bounce">⚡ Saltinho Suave (Bounce)</option>
+                            <option value="none">Sem Animação</option>
                           </select>
                         </div>
 
@@ -982,18 +982,18 @@ export default function EditorInspectorColumn({
                             }}
                             className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs focus:border-amber-400 focus:outline-none"
                           >
-                            <option value="accent">â­ Dourado / Accent (Foco Total)</option>
+                            <option value="accent">⭐ Dourado / Accent (Foco Total)</option>
                             <option value="default">Elegante Escuro (Borda Fina)</option>
                           </select>
                         </div>
                       </div>
 
-                      {/* Foto no BotÃ£o (BioVip Original: Pop-out ou Framed) */}
+                      {/* Foto no Botão (BioVip Original: Pop-out ou Framed) */}
                       <div className="p-3 rounded-xl bg-stone-950/80 border border-stone-800/80 space-y-2.5">
                         <div className="flex items-center justify-between">
                           <label className="text-[10px] font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
                             <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
-                            Foto Integrada ao BotÃ£o
+                            Foto Integrada ao Botão
                           </label>
                           {btn.cardImage && (
                             <button
@@ -1015,7 +1015,7 @@ export default function EditorInspectorColumn({
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <label className="block text-[9px] font-mono uppercase text-stone-400 mb-0.5">
-                              PosiÃ§Ã£o da Foto
+                              Posição da Foto
                             </label>
                             <select
                               value={btn.imagePosition || (btn.cardImage ? 'right' : 'none')}
@@ -1047,7 +1047,7 @@ export default function EditorInspectorColumn({
                               }}
                               className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-[11px]"
                             >
-                              <option value="popout">Avatar Pop-Out (Salta do botÃ£o com aro)</option>
+                              <option value="popout">Avatar Pop-Out (Salta do botão com aro)</option>
                               <option value="framed">Moldura Retangular Elegante</option>
                             </select>
                           </div>
@@ -1058,7 +1058,7 @@ export default function EditorInspectorColumn({
                             {btn.cardImage && (
                               <img
                                 src={btn.cardImage}
-                                alt="Foto do botÃ£o"
+                                alt="Foto do botão"
                                 className={`w-8 h-8 object-cover border border-amber-400/50 shrink-0 ${
                                   btn.imageFitStyle === 'framed' ? 'rounded-md' : 'rounded-full'
                                 }`}
@@ -1100,7 +1100,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 4. SEÃ‡ÃƒO: CATÃLOGO DE SERVIÃ‡OS */}
+            {/* 4. SEÇÃO: CATÁLOGO DE SERVIÇOS */}
             {/* ======================================================= */}
             {activeSection === 'catalogo' && (
               <div className="space-y-4 animate-fade-in">
@@ -1108,8 +1108,8 @@ export default function EditorInspectorColumn({
                   <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold block uppercase tracking-wider">CatÃ¡logo Bloqueado pelo Administrador</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os procedimentos, duraÃ§Ãµes e preÃ§os foram fixados pelo administrador e estÃ£o em modo somente-leitura.</p>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Catálogo Bloqueado pelo Administrador</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">Os procedimentos, durações e preços foram fixados pelo administrador e estão em modo somente-leitura.</p>
                     </div>
                   </div>
                 )}
@@ -1119,11 +1119,11 @@ export default function EditorInspectorColumn({
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
-                      CatÃ¡logo Interativo VIP
+                      Catálogo Interativo VIP
                       {!canEditServices && <Lock className="w-3 h-3 text-amber-400" />}
                     </h3>
                     <p className="text-[10px] text-stone-400">
-                      Tabela visual com preÃ§os, duraÃ§Ãµes e agendamento instantÃ¢neo.
+                      Tabela visual com preços, durações e agendamento instantâneo.
                     </p>
                   </div>
                   <button
@@ -1149,7 +1149,7 @@ export default function EditorInspectorColumn({
                   <div className="space-y-3">
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-1">
-                        TÃ­tulo do CatÃ¡logo
+                        Título do Catálogo
                       </label>
                       <input
                         type="text"
@@ -1176,9 +1176,9 @@ export default function EditorInspectorColumn({
                             id: `srv-${Date.now()}`,
                             category: 'PRINCIPAL',
                             name: 'Novo Procedimento Exclusivo',
-                            description: 'DescriÃ§Ã£o dos benefÃ­cios e resultados para o cliente.',
+                            description: 'Descrição dos benefícios e resultados para o cliente.',
                             price: 'R$ 220',
-                            duration: 'â± 1h',
+                            duration: '⏱ 1h',
                             badge: 'EXCLUSIVO'
                           }
                           const updated = {
@@ -1243,7 +1243,7 @@ export default function EditorInspectorColumn({
                                 props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
                                 props.setHasUnsavedChanges(true)
                               }}
-                              placeholder="PreÃ§o (ex: R$ 250)"
+                              placeholder="Preço (ex: R$ 250)"
                               className="w-full p-1.5 rounded-lg bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
                             />
                             <input
@@ -1255,7 +1255,7 @@ export default function EditorInspectorColumn({
                                 props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
                                 props.setHasUnsavedChanges(true)
                               }}
-                              placeholder="DuraÃ§Ã£o (ex: â± 1h)"
+                              placeholder="Duração (ex: ⏱ 1h)"
                               className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-xs font-mono"
                             />
                           </div>
@@ -1269,11 +1269,11 @@ export default function EditorInspectorColumn({
                               props.setServicesCatalogData({ ...props.servicesCatalogData, items: updatedItems })
                               props.setHasUnsavedChanges(true)
                             }}
-                            placeholder="DescriÃ§Ã£o dos benefÃ­cios..."
+                            placeholder="Descrição dos benefícios..."
                             className="w-full p-2 rounded-lg bg-stone-950 text-stone-400 border border-stone-800 text-[11px]"
                           />
 
-                          {/* Foto do ServiÃ§o / Procedimento e Modo de ExibiÃ§Ã£o */}
+                          {/* Foto do Serviço / Procedimento e Modo de Exibição */}
                           <div className="pt-2 border-t border-stone-800/80 space-y-1.5">
                             <div className="flex items-center justify-between">
                               <label className="text-[10px] font-mono text-stone-300 flex items-center gap-1 font-semibold">
@@ -1296,7 +1296,7 @@ export default function EditorInspectorColumn({
                                       ? 'bg-amber-500 text-stone-950 shadow-sm'
                                       : 'text-stone-400 hover:text-white'
                                   }`}
-                                  title="Foto em miniatura integrada dentro do botÃ£o ao lado do nome"
+                                  title="Foto em miniatura integrada dentro do botão ao lado do nome"
                                 >
                                   Miniatura
                                 </button>
@@ -1313,7 +1313,7 @@ export default function EditorInspectorColumn({
                                       ? 'bg-amber-500 text-stone-950 shadow-sm'
                                       : 'text-stone-400 hover:text-white'
                                   }`}
-                                  title="Imagem maior de destaque com botÃ£o de agendamento e valor abaixo dela"
+                                  title="Imagem maior de destaque com botão de agendamento e valor abaixo dela"
                                 >
                                   Imagem Maior
                                 </button>
@@ -1408,8 +1408,8 @@ export default function EditorInspectorColumn({
                             </div>
                             <p className="text-[9.5px] text-stone-500 leading-snug">
                               {(srv.imageLayout || 'thumb') === 'cover'
-                                ? 'âœ¨ Exibindo como Card Editorial: Imagem grande com valor e agendamento logo abaixo.'
-                                : 'âœ¨ Exibindo como BotÃ£o com Miniatura: Foto quadrada de 60px ao lado do nome do serviÃ§o.'}
+                                ? '✨ Exibindo como Card Editorial: Imagem grande com valor e agendamento logo abaixo.'
+                                : '✨ Exibindo como Botão com Miniatura: Foto quadrada de 60px ao lado do nome do serviço.'}
                             </p>
                           </div>
                         </div>
@@ -1422,7 +1422,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 5. SEÃ‡ÃƒO: PORTFÃ“LIO & GALERIA */}
+            {/* 5. SEÇÃO: PORTFÓLIO & GALERIA */}
             {/* ======================================================= */}
             {activeSection === 'portfolio' && (
               <div className="space-y-4 animate-fade-in">
@@ -1431,20 +1431,20 @@ export default function EditorInspectorColumn({
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
                       <span className="text-[11px] font-bold block uppercase tracking-wider">Galeria de Fotos Bloqueada</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As fotos do portfÃ³lio foram curadas pelo administrador e estÃ£o em modo somente-leitura.</p>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">As fotos do portfólio foram curadas pelo administrador e estão em modo somente-leitura.</p>
                     </div>
                   </div>
                 )}
 
                 <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
-                {/* SubpÃ¡ginas Pro Integradas */}
+                {/* Subpáginas Pro Integradas */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800">
                   <h3 className="font-bold text-xs text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    PÃ¡ginas Pro Integradas ({props.additionalPages.length}/3)
+                    Páginas Pro Integradas ({props.additionalPages.length}/3)
                     {!canEditPhotos && <Lock className="w-3 h-3 text-amber-400" />}
                   </h3>
                   <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
-                    Cada pÃ¡gina Pro inclui slider de Antes &amp; Depois, tabela completa de procedimentos e agenda VIP.
+                    Cada página Pro inclui slider de Antes &amp; Depois, tabela completa de procedimentos e agenda VIP.
                   </p>
 
                   <div className="space-y-2">
@@ -1465,9 +1465,9 @@ export default function EditorInspectorColumn({
                   </div>
                 </div>
 
-                {/* Galeria Oficial de Fotos & PortfÃ³lio (studentGrid / BioVip Oficial) */}
+                {/* Galeria Oficial de Fotos & Portfólio (studentGrid / BioVip Oficial) */}
                 <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-4">
-                  {/* Header do MÃ³dulo com Switch */}
+                  {/* Header do Módulo com Switch */}
                   <div className="flex items-center justify-between pb-2 border-b border-stone-800/80">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center">
@@ -1476,7 +1476,7 @@ export default function EditorInspectorColumn({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-stone-200">
-                            Galeria de Fotos &amp; PortfÃ³lio
+                            Galeria de Fotos &amp; Portfólio
                           </span>
                           <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                             {effectiveGalleryConfig.photos?.length || 0} FOTOS
@@ -1511,7 +1511,7 @@ export default function EditorInspectorColumn({
                           </label>
                           <input
                             type="text"
-                            placeholder="Ex: PORTFÃ“LIO VIP"
+                            placeholder="Ex: PORTFÓLIO VIP"
                             value={effectiveGalleryConfig.badge || ''}
                             onChange={(e) => updateGalleryConfig((prev: any) => ({ ...prev, badge: e.target.value }))}
                             className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-amber-300 font-bold uppercase focus:border-amber-400 focus:outline-none"
@@ -1520,11 +1520,11 @@ export default function EditorInspectorColumn({
 
                         <div className="sm:col-span-2">
                           <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
-                            TÃ­tulo da Galeria
+                            Título da Galeria
                           </label>
                           <input
                             type="text"
-                            placeholder="Ex: Resultados Reais & PortfÃ³lio"
+                            placeholder="Ex: Resultados Reais & Portfólio"
                             value={effectiveGalleryConfig.headline || ''}
                             onChange={(e) => updateGalleryConfig((prev: any) => ({ ...prev, headline: e.target.value }))}
                             className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-100 font-semibold focus:border-amber-400 focus:outline-none"
@@ -1534,28 +1534,28 @@ export default function EditorInspectorColumn({
 
                       <div>
                         <label className="text-[10px] font-mono uppercase text-stone-400 block mb-1">
-                          SubtÃ­tulo Explicativo
+                          Subtítulo Explicativo
                         </label>
                         <input
                           type="text"
-                          placeholder="Ex: TransformaÃ§Ãµes reais geradas pelo mÃ©todo e registros de alto padrÃ£o"
+                          placeholder="Ex: Transformações reais geradas pelo método e registros de alto padrão"
                           value={effectiveGalleryConfig.subtitle || ''}
                           onChange={(e) => updateGalleryConfig((prev: any) => ({ ...prev, subtitle: e.target.value }))}
                           className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-stone-950 border border-stone-800 text-stone-300 focus:border-amber-400 focus:outline-none"
                         />
                       </div>
 
-                      {/* 4 Formatos de ExibiÃ§Ã£o no Celular (BioVip Original) */}
+                      {/* 4 Formatos de Exibição no Celular (BioVip Original) */}
                       <div className="space-y-1.5">
                         <label className="text-[10.5px] font-mono uppercase font-bold text-stone-300 block">
-                          Formato de ExibiÃ§Ã£o no Celular
+                          Formato de Exibição no Celular
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {[
-                            { id: 'carousel-snap', label: 'ðŸŽ  Carrossel Touch', desc: 'Deslize horizontal fluido' },
-                            { id: 'grid-2col', label: 'ðŸ“± Grade 2 Colunas', desc: 'Fotos lado a lado' },
-                            { id: 'mosaic', label: 'ðŸŽ¨ Mosaico DinÃ¢mico', desc: 'Destaque 1Âª grande + grid' },
-                            { id: 'scroll-cards', label: 'ðŸƒ Cards Expandidos', desc: '1 por vez com foco total' }
+                            { id: 'carousel-snap', label: '🎠 Carrossel Touch', desc: 'Deslize horizontal fluido' },
+                            { id: 'grid-2col', label: '📱 Grade 2 Colunas', desc: 'Fotos lado a lado' },
+                            { id: 'mosaic', label: '🎨 Mosaico Dinâmico', desc: 'Destaque 1ª grande + grid' },
+                            { id: 'scroll-cards', label: '🃏 Cards Expandidos', desc: '1 por vez com foco total' }
                           ].map((t) => {
                             const isSelected = (effectiveGalleryConfig.layout || 'carousel-snap') === t.id
                             return (
@@ -1577,15 +1577,15 @@ export default function EditorInspectorColumn({
                         </div>
                       </div>
 
-                      {/* ProporÃ§Ã£o das Imagens & Lightbox */}
+                      {/* Proporção das Imagens & Lightbox */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-mono uppercase font-semibold text-stone-300 block">
-                            Formato das Imagens (ProporÃ§Ã£o)
+                            Formato das Imagens (Proporção)
                           </label>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                             {[
-                              { id: 'auto', label: 'ðŸ¤– Auto' },
+                              { id: 'auto', label: '🤖 Auto' },
                               { id: 'square', label: '1:1 Quadrado' },
                               { id: 'portrait', label: '4:5 Retrato' },
                               { id: 'landscape', label: '4:3 Paisagem' }
@@ -1631,7 +1631,7 @@ export default function EditorInspectorColumn({
                       <div className="space-y-1.5 pt-2 border-t border-stone-800/80">
                         <label className="text-[10px] font-mono uppercase font-bold text-amber-400 flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                          Preencher Fotos com Exemplos de Alto PadrÃ£o por Nicho:
+                          Preencher Fotos com Exemplos de Alto Padrão por Nicho:
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           <button
@@ -1639,28 +1639,28 @@ export default function EditorInspectorColumn({
                             onClick={() => loadGalleryPreset('beauty')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            ðŸ’… Beleza &amp; Lash
+                            💅 Beleza &amp; Lash
                           </button>
                           <button
                             type="button"
                             onClick={() => loadGalleryPreset('barber')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            âœ‚ï¸ Barbearia
+                            ✂️ Barbearia
                           </button>
                           <button
                             type="button"
                             onClick={() => loadGalleryPreset('health')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            ðŸ©º SaÃºde &amp; ClÃ­nica
+                            🩺 Saúde &amp; Clínica
                           </button>
                           <button
                             type="button"
                             onClick={() => loadGalleryPreset('exec')}
                             className="px-2.5 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-500/40 text-[11px] text-stone-300 font-medium transition cursor-pointer text-center"
                           >
-                            ðŸ’¼ Executivo &amp; Cursos
+                            💼 Executivo &amp; Cursos
                           </button>
                         </div>
                       </div>
@@ -1703,7 +1703,7 @@ export default function EditorInspectorColumn({
                                     #{i + 1}
                                   </span>
 
-                                  {/* BotÃ£o Zoom Lightbox */}
+                                  {/* Botão Zoom Lightbox */}
                                   <button
                                     type="button"
                                     onClick={() => setPreviewLightboxIndex(i)}
@@ -1819,7 +1819,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 5.5. SEÃ‡ÃƒO: MÃ“DULOS & BLOCOS DO BIOSITE (15 BLOCOS) */}
+            {/* 5.5. SEÇÃO: MÓDULOS & BLOCOS DO BIOSITE (15 BLOCOS) */}
             {/* ======================================================= */}
             {activeSection === 'modulos' && (
               <div className="space-y-4 animate-fade-in">
@@ -1832,7 +1832,7 @@ export default function EditorInspectorColumn({
                       </span>
                     </div>
                     <p className="text-[11px] text-stone-300 leading-relaxed mt-1">
-                      Ative ou desative qualquer um dos 15 mÃ³dulos do seu BioSite com apenas 1 clique. As alteraÃ§Ãµes sÃ£o sincronizadas instantaneamente no seu link.
+                      Ative ou desative qualquer um dos 15 módulos do seu BioSite com apenas 1 clique. As alterações são sincronizadas instantaneamente no seu link.
                     </p>
                   </div>
 
@@ -1861,16 +1861,16 @@ export default function EditorInspectorColumn({
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
                       <span className="text-[11px] font-bold block uppercase tracking-wider">
-                        Controle de MÃ³dulos Bloqueado pelo Administrador
+                        Controle de Módulos Bloqueado pelo Administrador
                       </span>
                       <p className="text-[10px] text-stone-400 leading-snug mt-0.5">
-                        Os mÃ³dulos deste BioSite sÃ£o administrados diretamente pela agÃªncia. Abaixo vocÃª pode visualizar quais blocos estÃ£o ativos.
+                        Os módulos deste BioSite são administrados diretamente pela agência. Abaixo você pode visualizar quais blocos estão ativos.
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* Lista com os 15 MÃ³dulos */}
+                {/* Lista com os 15 Módulos */}
                 <div className="space-y-2.5">
                   {(Object.keys(modules) as Array<keyof ModuleToggles>).map((key) => {
                     const isEnabled = modules[key]
@@ -1913,7 +1913,7 @@ export default function EditorInspectorColumn({
                                     : 'bg-stone-800 text-stone-500 border border-stone-700'
                                 }`}
                               >
-                                {isEnabled ? 'VisÃ­vel' : 'Oculto'}
+                                {isEnabled ? 'Visível' : 'Oculto'}
                               </span>
                             </div>
                             <p className="text-[10.5px] text-stone-400 leading-snug mt-0.5">
@@ -1943,14 +1943,14 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 6. SEÃ‡ÃƒO: PROVA SOCIAL & DEPOIMENTOS */}
+            {/* 6. SEÇÃO: PROVA SOCIAL & DEPOIMENTOS */}
             {/* ======================================================= */}
             {activeSection === 'social' && (
               <div className="space-y-4 animate-fade-in">
                 {/* Nota do Google */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
-                    AvaliaÃ§Ãµes do Google Meu NegÃ³cio
+                    Avaliações do Google Meu Negócio
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -1969,7 +1969,7 @@ export default function EditorInspectorColumn({
                     </div>
                     <div>
                       <label className="block text-[9px] font-mono uppercase text-stone-400 mb-1">
-                        NÃºmero de Reviews
+                        Número de Reviews
                       </label>
                       <input
                         type="text"
@@ -1984,10 +1984,10 @@ export default function EditorInspectorColumn({
                   </div>
                 </div>
 
-                {/* MÃ©tricas de Autoridade */}
+                {/* Métricas de Autoridade */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-stone-300 font-bold block">
-                    MÃ©tricas de Autoridade (3 Destaques)
+                    Métricas de Autoridade (3 Destaques)
                   </span>
                   <div className="space-y-2">
                     {(props.metricsData || []).map((m: any, idx: number) => (
@@ -2013,7 +2013,7 @@ export default function EditorInspectorColumn({
                             props.setMetricsData(updated)
                             props.setHasUnsavedChanges(true)
                           }}
-                          placeholder="RÃ³tulo (ex: CLIENTES)"
+                          placeholder="Rótulo (ex: CLIENTES)"
                           className="p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs font-mono uppercase"
                         />
                       </div>
@@ -2032,8 +2032,8 @@ export default function EditorInspectorColumn({
                       onClick={() => {
                         const newTestimonial = {
                           clientName: 'Cliente VIP',
-                          city: 'SÃ£o Paulo - SP',
-                          text: 'ExperiÃªncia maravilhosa, atendimento impecÃ¡vel e resultado incrÃ­vel!',
+                          city: 'São Paulo - SP',
+                          text: 'Experiência maravilhosa, atendimento impecável e resultado incrível!',
                           rating: 5
                         }
                         props.setTestimonialsData([...(props.testimonialsData || []), newTestimonial])
@@ -2103,7 +2103,7 @@ export default function EditorInspectorColumn({
                           props.setTestimonialsData(updated)
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Texto da avaliaÃ§Ã£o..."
+                        placeholder="Texto da avaliação..."
                         className="w-full p-2 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-[11px] leading-relaxed"
                       />
                     </div>
@@ -2113,7 +2113,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 7. SEÃ‡ÃƒO: MÃ“DULOS VIP DE CONVERSÃƒO (8 MÃ“DULOS) */}
+            {/* 7. SEÇÃO: MÓDULOS VIP DE CONVERSÃO (8 MÓDULOS) */}
             {/* ======================================================= */}
             {activeSection === 'vip' && (
               <div className="space-y-3.5 animate-fade-in">
@@ -2121,8 +2121,8 @@ export default function EditorInspectorColumn({
                   <div className="p-3 mb-2 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-amber-300">
                     <Lock className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                     <div>
-                      <span className="text-[11px] font-bold block uppercase tracking-wider">MÃ³dulos VIP Bloqueados</span>
-                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A ativaÃ§Ã£o dos mÃ³dulos VIP Ã© configurada pelo administrador.</p>
+                      <span className="text-[11px] font-bold block uppercase tracking-wider">Módulos VIP Bloqueados</span>
+                      <p className="text-[10px] text-stone-400 leading-snug mt-0.5">A ativação dos módulos VIP é configurada pelo administrador.</p>
                     </div>
                   </div>
                 )}
@@ -2130,10 +2130,10 @@ export default function EditorInspectorColumn({
                 <fieldset disabled={!canEditModules} className={!canEditModules ? 'opacity-50 pointer-events-none' : ''}>
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/40">
                   <span className="text-[10px] font-mono text-amber-300 font-black uppercase tracking-wider block mb-1">
-                    ðŸ‘‘ 8 MÃ“DULOS VIP DE ALTA CONVERSÃƒO
+                    👑 8 MÓDULOS VIP DE ALTA CONVERSÃO
                   </span>
                   <p className="text-xs text-stone-300 leading-relaxed">
-                    Personalize gatilhos de escassez, cronÃ´metro de urgÃªncia, quiz qualificador, GPS e FAQ sanfonado.
+                    Personalize gatilhos de escassez, cronômetro de urgência, quiz qualificador, GPS e FAQ sanfonado.
                   </p>
                 </div>
 
@@ -2141,7 +2141,7 @@ export default function EditorInspectorColumn({
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      ðŸ“¢ Barra de Aviso Superior
+                      📢 Barra de Aviso Superior
                     </span>
                     <button
                       type="button"
@@ -2185,11 +2185,11 @@ export default function EditorInspectorColumn({
                   )}
                 </div>
 
-                {/* 2. Gatilho de UrgÃªncia & CronÃ´metro */}
+                {/* 2. Gatilho de Urgência & Cronômetro */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      ðŸ”¥ Gatilho de UrgÃªncia &amp; CronÃ´metro
+                      🔥 Gatilho de Urgência &amp; Cronômetro
                     </span>
                     <button
                       type="button"
@@ -2216,7 +2216,7 @@ export default function EditorInspectorColumn({
                           props.setUrgencyData({ ...props.urgencyData, headline: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="TÃ­tulo de UrgÃªncia (ex: ðŸ”¥ CONDIÃ‡ÃƒO ESPECIAL DE HOJE)"
+                        placeholder="Título de Urgência (ex: 🔥 CONDIÇÃO ESPECIAL DE HOJE)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-mono font-bold"
                       />
                       <input
@@ -2226,7 +2226,7 @@ export default function EditorInspectorColumn({
                           props.setUrgencyData({ ...props.urgencyData, subtitle: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="SubtÃ­tulo..."
+                        placeholder="Subtítulo..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs"
                       />
                     </div>
@@ -2237,7 +2237,7 @@ export default function EditorInspectorColumn({
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      ðŸŽ¯ Triagem Anti-Curiosos (Quiz VIP)
+                      🎯 Triagem Anti-Curiosos (Quiz VIP)
                     </span>
                     <button
                       type="button"
@@ -2264,18 +2264,18 @@ export default function EditorInspectorColumn({
                           props.setQuizData({ ...props.quizData, buttonLabel: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="Texto do botÃ£o do Quiz"
+                        placeholder="Texto do botão do Quiz"
                         className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-bold"
                       />
                     </div>
                   )}
                 </div>
 
-                {/* 4. LocalizaÃ§Ã£o com GPS & Aberto Agora */}
+                {/* 4. Localização com GPS & Aberto Agora */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      ðŸ“ LocalizaÃ§Ã£o com GPS &amp; Aberto Agora
+                      📍 Localização com GPS &amp; Aberto Agora
                     </span>
                     <button
                       type="button"
@@ -2302,7 +2302,7 @@ export default function EditorInspectorColumn({
                           props.setLocationData({ ...props.locationData, address: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="EndereÃ§o fÃ­sico..."
+                        placeholder="Endereço físico..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs"
                       />
                       <input
@@ -2312,7 +2312,7 @@ export default function EditorInspectorColumn({
                           props.setLocationData({ ...props.locationData, hours: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="HorÃ¡rios (ex: Seg a Sex Â· 09h Ã s 19h)"
+                        placeholder="Horários (ex: Seg a Sex · 09h às 19h)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-xs font-mono"
                       />
                     </div>
@@ -2323,7 +2323,7 @@ export default function EditorInspectorColumn({
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      ðŸ‘©â€âš•ï¸ Sobre o Especialista
+                      👩‍⚕️ Sobre o Especialista
                     </span>
                     <button
                       type="button"
@@ -2350,7 +2350,7 @@ export default function EditorInspectorColumn({
                           props.setAboutMeData({ ...props.aboutMeData, headline: e.target.value })
                           props.setHasUnsavedChanges(true)
                         }}
-                        placeholder="TÃ­tulo (ex: Sobre Nosso Atendimento)"
+                        placeholder="Título (ex: Sobre Nosso Atendimento)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs font-bold"
                       />
                       <textarea
@@ -2367,18 +2367,18 @@ export default function EditorInspectorColumn({
                   )}
                 </div>
 
-                {/* 6. DÃºvidas Frequentes (FAQ) */}
+                {/* 6. Dúvidas Frequentes (FAQ) */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      â“ DÃºvidas Frequentes ({props.faqData?.length || 0})
+                      ❓ Dúvidas Frequentes ({props.faqData?.length || 0})
                     </span>
                     <button
                       type="button"
                       onClick={() => {
                         const newFaq = {
-                          question: 'Como agendar um horÃ¡rio?',
-                          answer: 'Basta tocar no botÃ£o de WhatsApp e escolher o procedimento.'
+                          question: 'Como agendar um horário?',
+                          answer: 'Basta tocar no botão de WhatsApp e escolher o procedimento.'
                         }
                         props.setFaqData([...(props.faqData || []), newFaq])
                         props.setHasUnsavedChanges(true)
@@ -2434,7 +2434,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 8. SEÃ‡ÃƒO: PÃXEL, ANÃšNCIOS & SEO */}
+            {/* 8. SEÇÃO: PÍXEL, ANÚNCIOS & SEO */}
             {/* ======================================================= */}
             {activeSection === 'pixel' && (
               <div className="space-y-4 animate-fade-in">
@@ -2488,7 +2488,7 @@ export default function EditorInspectorColumn({
 
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
-                    Rastreamento AutomÃ¡tico de ConversÃµes
+                    Rastreamento Automático de Conversões
                   </span>
                   <label className="flex items-center gap-2.5 text-xs text-stone-300 cursor-pointer">
                     <input
@@ -2500,7 +2500,7 @@ export default function EditorInspectorColumn({
                       }}
                       className="accent-amber-400 rounded"
                     />
-                    <span>Disparar evento &quot;Lead&quot; ao clicar em qualquer botÃ£o do WhatsApp</span>
+                    <span>Disparar evento &quot;Lead&quot; ao clicar em qualquer botão do WhatsApp</span>
                   </label>
                   <label className="flex items-center gap-2.5 text-xs text-stone-300 cursor-pointer">
                     <input
@@ -2519,7 +2519,7 @@ export default function EditorInspectorColumn({
             )}
 
             {/* ======================================================= */}
-            {/* 9. SEÃ‡ÃƒO: ASSINATURA & DOMÃNIO */}
+            {/* 9. SEÇÃO: ASSINATURA & DOMÍNIO */}
             {/* ======================================================= */}
             {activeSection === 'assinatura' && (
               <div className="space-y-4 animate-fade-in">
@@ -2549,17 +2549,17 @@ export default function EditorInspectorColumn({
                   {props.paymentStatus === 'pendente' ? (
                     <div className="space-y-2 mt-2">
                       <p className="text-xs text-stone-200 leading-relaxed">
-                        Seu BioSite foi gerado e se encontra no ar em perÃ­odo de cortesia. Se apÃ³s{' '}
+                        Seu BioSite foi gerado e se encontra no ar em período de cortesia. Se após{' '}
                         <strong className="text-amber-400 font-mono">
                           {props.remainingHours}h restantes
                         </strong>{' '}
-                        o pagamento nÃ£o for confirmado, a pÃ¡gina serÃ¡ suspensa.
+                        o pagamento não for confirmado, a página será suspensa.
                       </p>
 
                       <div className="p-3 rounded-xl bg-black/60 border border-amber-500/30 space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-stone-400">Plano Anual BioVip:</span>
-                          <span className="font-bold text-amber-300 font-mono">R$ 49,90 /mÃªs</span>
+                          <span className="font-bold text-amber-300 font-mono">R$ 49,90 /mês</span>
                         </div>
                         <button
                           type="button"
@@ -2574,21 +2574,21 @@ export default function EditorInspectorColumn({
                           onClick={props.handleConfirmPayment}
                           className="w-full py-2 rounded-lg border border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs font-mono uppercase transition cursor-pointer"
                         >
-                          {props.isProcessingPayment ? 'Validando...' : 'âœ“ JÃ¡ Efetuei o Pagamento'}
+                          {props.isProcessingPayment ? 'Validando...' : '✓ Já Efetuei o Pagamento'}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <p className="text-xs text-stone-300 leading-relaxed">
-                      Sua assinatura anual estÃ¡ confirmada e seu BioSite estÃ¡ com alta prioridade nos servidores CDN.
+                      Sua assinatura anual está confirmada e seu BioSite está com alta prioridade nos servidores CDN.
                     </p>
                   )}
                 </div>
 
-                {/* DomÃ­nio & EndereÃ§o */}
+                {/* Domínio & Endereço */}
                 <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-stone-400 font-bold block">
-                    EndereÃ§o Oficial na Web
+                    Endereço Oficial na Web
                   </span>
                   <div className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between">
                     <code className="text-xs text-amber-300 font-mono">
@@ -2608,7 +2608,7 @@ export default function EditorInspectorColumn({
             )}
           </div>
 
-          {/* RodapÃ© Fixo da Coluna 3: Salvar AlteraÃ§Ãµes */}
+          {/* Rodapé Fixo da Coluna 3: Salvar Alterações */}
           <div className="p-4 border-t border-stone-800 bg-[#0E0E12] shrink-0">
             <button
               type="button"
@@ -2616,7 +2616,7 @@ export default function EditorInspectorColumn({
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-[#E2B857] to-amber-400 hover:from-amber-300 hover:to-amber-300 text-stone-950 font-black text-xs uppercase tracking-wider font-mono shadow-lg shadow-amber-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
             >
               <Save className="w-4 h-4" />
-              <span>Salvar AlteraÃ§Ãµes</span>
+              <span>Salvar Alterações</span>
             </button>
           </div>
         </section>

@@ -196,16 +196,16 @@ export interface SectionItem {
 }
 
 export const SECTION_ITEMS: SectionItem[] = [
-  { id: 'paleta', title: 'Paleta & Tipografia', subtitle: 'Cores, fontes e estilos de botÃ£o', icon: Palette },
-  { id: 'cabecalho', title: 'CabeÃ§alho & Perfil', subtitle: 'Foto, nome, bio e IA', icon: User },
-  { id: 'botoes', title: 'BotÃµes & Links Principais', subtitle: 'WhatsApp, agendamento e destaques', icon: LinkIcon },
-  { id: 'catalogo', title: 'CatÃ¡logo de ServiÃ§os', subtitle: 'Procedimentos, preÃ§os e duraÃ§Ãµes', icon: ShoppingBag, badge: 'PRO' },
-  { id: 'portfolio', title: 'PortfÃ³lio & Galeria', subtitle: 'Fotos de resultados e subpÃ¡ginas', icon: ImageIcon },
-  { id: 'modulos', title: 'MÃ³dulos & Blocos', subtitle: 'Ligar ou desligar blocos do BioSite', icon: Sliders },
-  { id: 'social', title: 'Prova Social & Depoimentos', subtitle: 'Google reviews e mÃ©tricas', icon: Star },
-  { id: 'vip', title: 'MÃ³dulos VIP de ConversÃ£o', subtitle: '8 ferramentas de fechamento', icon: Crown, isVip: true },
-  { id: 'pixel', title: 'PÃ­xel, AnÃºncios & SEO', subtitle: 'Meta, TikTok e Google Analytics', icon: Zap },
-  { id: 'assinatura', title: 'Assinatura & DomÃ­nio', subtitle: 'Status 48h, PIX e endereÃ§o', icon: CreditCard }
+  { id: 'paleta', title: 'Paleta & Tipografia', subtitle: 'Cores, fontes e estilos de botão', icon: Palette },
+  { id: 'cabecalho', title: 'Cabeçalho & Perfil', subtitle: 'Foto, nome, bio e IA', icon: User },
+  { id: 'botoes', title: 'Botões & Links Principais', subtitle: 'WhatsApp, agendamento e destaques', icon: LinkIcon },
+  { id: 'catalogo', title: 'Catálogo de Serviços', subtitle: 'Procedimentos, preços e durações', icon: ShoppingBag, badge: 'PRO' },
+  { id: 'portfolio', title: 'Portfólio & Galeria', subtitle: 'Fotos de resultados e subpáginas', icon: ImageIcon },
+  { id: 'modulos', title: 'Módulos & Blocos', subtitle: 'Ligar ou desligar blocos do BioSite', icon: Sliders },
+  { id: 'social', title: 'Prova Social & Depoimentos', subtitle: 'Google reviews e métricas', icon: Star },
+  { id: 'vip', title: 'Módulos VIP de Conversão', subtitle: '8 ferramentas de fechamento', icon: Crown, isVip: true },
+  { id: 'pixel', title: 'Píxel, Anúncios & SEO', subtitle: 'Meta, TikTok e Google Analytics', icon: Zap },
+  { id: 'assinatura', title: 'Assinatura & Domínio', subtitle: 'Status 48h, PIX e endereço', icon: CreditCard }
 ]
 
 export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
@@ -221,7 +221,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const [previewCopiedAddress, setPreviewCopiedAddress] = useState(false)
   const [previewLightboxIndex, setPreviewLightboxIndex] = useState<number | null>(null)
 
-  // PermissÃµes e MÃ³dulos configurados pelo Administrador
+  // Permissões e Módulos configurados pelo Administrador
   const [clientConfig, setClientConfig] = useState(() => getClientConfig(props.slug))
 
   useEffect(() => {
@@ -273,7 +273,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
     props.setHasUnsavedChanges(true)
   }
 
-  // ConfiguraÃ§Ãµes Oficiais de Galeria & PortfÃ³lio (BioVip Original)
+  // Configurações Oficiais de Galeria & Portfólio (BioVip Original)
   const defaultGalleryPhotos = [
     'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
@@ -286,8 +286,8 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
   const effectiveGalleryConfig: StudentGridConfig = props.galleryConfig || {
     enabled: true,
     badge: 'PORTFÃ“LIO & ESTRUTURA VIP',
-    headline: 'Resultados Reais & PortfÃ³lio em Destaque',
-    subtitle: 'Registros reais do nosso padrÃ£o de entrega e procedimentos',
+    headline: 'Resultados Reais & Portfólio em Destaque',
+    subtitle: 'Registros reais do nosso padrão de entrega e procedimentos',
     layout: 'mosaic',
     aspectRatio: 'square',
     enableLightbox: true,
@@ -414,7 +414,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
     const cloned = {
       ...target,
       id: `btn-${Date.now()}`,
-      label: `${target.label || 'BotÃ£o'} (CÃ³pia)`
+      label: `${target.label || 'Botão'} (Cópia)`
     }
     const updated = [...props.buttons]
     updated.splice(btnIndex + 1, 0, cloned)
@@ -514,10 +514,10 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           <button
             onClick={props.onBackToDashboard}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-700/80 hover:border-amber-400 bg-stone-900/80 text-xs font-mono uppercase tracking-wider text-stone-300 hover:text-white transition cursor-pointer"
-            title="Voltar para Minha Ãrea"
+            title="Voltar para Minha Área"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Minha Ãrea</span>
+            <span className="hidden sm:inline">Minha Área</span>
           </button>
 
           <div className="h-4 w-px bg-stone-800 hidden sm:block" />
@@ -580,14 +580,14 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             type="button"
             onClick={props.handleAiAutoFill}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/40 hover:border-amber-400 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-mono text-amber-300 font-bold transition shadow-sm cursor-pointer"
-            title="Preencher textos, bio e serviÃ§os com IA"
+            title="Preencher textos, bio e serviços com IA"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
             <span>Preencher com IA</span>
           </button>
         </div>
 
-        {/* Lado Direito: NotificaÃ§Ã£o de Salvo & BotÃ£o Salvar Principal */}
+        {/* Lado Direito: Notificação de Salvo & Botão Salvar Principal */}
         <div className="flex items-center gap-2">
           {props.savedSuccess && (
             <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full animate-fade-in">
@@ -715,7 +715,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           className="flex flex-col items-center gap-1 text-[10px] font-semibold transition text-stone-400 hover:text-stone-200"
         >
           <Layers className="w-4 h-4" />
-          <span>SeÃ§Ãµes</span>
+          <span>Seções</span>
         </button>
 
         <button
@@ -740,7 +740,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           }`}
         >
           <Smartphone className="w-4 h-4" />
-          <span>{mobileMode === 'editor' ? 'Ver PrÃ©via' : 'Editar'}</span>
+          <span>{mobileMode === 'editor' ? 'Ver Prévia' : 'Editar'}</span>
         </button>
 
         <button
@@ -766,7 +766,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
           <div className="relative bg-[#141418] border-t border-stone-800 rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up shadow-2xl">
             <div className="p-4 border-b border-stone-800 flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-widest text-stone-300 font-bold">
-                Selecione a SeÃ§Ã£o para Editar
+                Selecione a Seção para Editar
               </span>
               <button
                 type="button"
@@ -873,7 +873,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             </div>
           </div>
 
-          {/* Imagem Central com Setas de NavegaÃ§Ã£o */}
+          {/* Imagem Central com Setas de Navegação */}
           <div
             className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-3 px-2"
             onClick={(e) => e.stopPropagation()}
@@ -894,7 +894,7 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
             <div className="relative max-h-[72vh] max-w-full flex items-center justify-center">
               <img
                 src={effectiveGalleryConfig.photos[previewLightboxIndex]}
-                alt={`PortfÃ³lio ampliado ${previewLightboxIndex + 1}`}
+                alt={`Portfólio ampliado ${previewLightboxIndex + 1}`}
                 className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10"
               />
             </div>

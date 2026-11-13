@@ -86,10 +86,10 @@ export default function ClientModals({
 
             <div className="text-center">
               <span className="text-[10px] font-mono uppercase tracking-widest text-amber-700 font-bold block mb-1">
-                RENOVAÃ‡ÃƒO DE ANUIDADE
+                RENOVAÇÃO DE ANUIDADE
               </span>
               <h3 className="text-2xl font-serif font-bold text-stone-900">
-                Plano Pro Â· R$ 290,00
+                Plano Pro · R$ 290,00
               </h3>
             </div>
 
@@ -127,7 +127,7 @@ export default function ClientModals({
               </button>
 
               <a
-                href={`https://wa.me/5531991390202?text=${encodeURIComponent(`OlÃ¡! Realizei o pagamento via Pix de renovaÃ§Ã£o do BioSite e gostaria de enviar o comprovante.`)}`}
+                href={`https://wa.me/5531991390202?text=${encodeURIComponent(`Olá! Realizei o pagamento via Pix de renovação do BioSite e gostaria de enviar o comprovante.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs block text-center"
@@ -140,7 +140,7 @@ export default function ClientModals({
         </div>
       )}
 
-      {/* MODAL DE CRIAÃ‡ÃƒO COM SUCESSO & PAGAMENTO PENDENTE (EXIGÃŠNCIA DO CLIENTE) */}
+      {/* MODAL DE CRIAÇÃO COM SUCESSO & PAGAMENTO PENDENTE (EXIGÊNCIA DO CLIENTE) */}
       {showPendingPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
@@ -169,16 +169,16 @@ export default function ClientModals({
                 Seu Bio Site se encontra com <strong>pagamento pendente</strong>.
               </p>
               <p className="text-stone-800">
-                Se apÃ³s <strong>48 horas</strong> o pagamento nÃ£o for confirmado, o Bio Site <code className="font-mono font-bold text-amber-950">biovip.com.br/{slug}</code> serÃ¡ suspenso.
+                Se após <strong>48 horas</strong> o pagamento não for confirmado, o Bio Site <code className="font-mono font-bold text-amber-950">biovip.com.br/{slug}</code> será suspenso.
               </p>
               <div className="flex items-center gap-2 pt-1 font-mono text-xs text-amber-900 font-bold">
                 <Clock className="w-4 h-4 text-amber-700 shrink-0" />
-                <span>PerÃ­odo de tolerÃ¢ncia ativo: {remainingHours}h restantes</span>
+                <span>Período de tolerância ativo: {remainingHours}h restantes</span>
               </div>
             </div>
 
             <p className="text-xs text-stone-500 text-center leading-relaxed">
-              VocÃª jÃ¡ tem acesso livre para editar os textos, botÃµes e catÃ¡logo do seu Bio Site, mas nÃ£o esqueÃ§a de regularizar seu plano para manter seu link oficial permanentemente no ar.
+              Você já tem acesso livre para editar os textos, botões e catálogo do seu Bio Site, mas não esqueça de regularizar seu plano para manter seu link oficial permanentemente no ar.
             </p>
 
             <div className="space-y-2.5 pt-2">
@@ -195,7 +195,7 @@ export default function ClientModals({
                 className="w-full py-3.5 rounded-2xl bg-stone-950 hover:bg-stone-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg cursor-pointer"
               >
                 <CreditCard className="w-4 h-4 text-amber-400" />
-                <span>IR PARA A ABA DE PAGAMENTO & REGULARIZAR â†’</span>
+                <span>IR PARA A ABA DE PAGAMENTO & REGULARIZAR →</span>
               </button>
 
               <button
@@ -223,24 +223,24 @@ export default function ClientModals({
 
             <div className="text-center space-y-1">
               <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
-                PRÃ‰VIA OFICIAL Â· STORY 9:16
+                PRÉVIA OFICIAL · STORY 9:16
               </span>
               <h3 className="text-lg font-serif font-bold text-white">
                 Card para Instagram Story
               </h3>
             </div>
 
-            {/* O CARD 9:16 SIMULADO EM ALTA RESOLUÃ‡ÃƒO */}
+            {/* O CARD 9:16 SIMULADO EM ALTA RESOLUÇÃO */}
             <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-gradient-to-b from-stone-900 via-stone-950 to-black p-5 flex flex-col justify-between select-none">
               {/* Topo do Story: Logo/Monograma & Status */}
               <div className="flex items-center justify-between">
                 <span className="font-serif italic text-lg font-bold text-amber-400">{monogram}</span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[8px] font-mono font-bold uppercase tracking-wider">
-                  â— NO AR NO INSTAGRAM
+                  ● NO AR NO INSTAGRAM
                 </span>
               </div>
 
-              {/* Centro: Foto de EstÃºdio com Moldura Dourada & Nome */}
+              {/* Centro: Foto de Estúdio com Moldura Dourada & Nome */}
               <div className="flex flex-col items-center text-center space-y-3">
                 <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-amber-400/60 shadow-[0_0_25px_rgba(251,191,36,0.25)] relative p-1 bg-gradient-to-tr from-amber-400 to-amber-200">
                   <img
@@ -258,11 +258,11 @@ export default function ClientModals({
                   </p>
                 </div>
                 <div className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[9px] font-mono text-stone-200">
-                  â˜… {rating} Â· AvaliaÃ§Ãµes 5 Estrelas no Google
+                  ★ {rating} · Avaliações 5 Estrelas no Google
                 </div>
               </div>
 
-              {/* RodapÃ© do Story: Sticker Simulador do Link do Instagram */}
+              {/* Rodapé do Story: Sticker Simulador do Link do Instagram */}
               <div className="space-y-2">
                 <div className="p-3 rounded-2xl bg-white text-stone-950 font-bold flex items-center justify-between shadow-2xl border border-white/50">
                   <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export default function ClientModals({
               </div>
             </div>
 
-            {/* AÃ§Ãµes: Baixar Imagem HD, Copiar Link e Fechar */}
+            {/* Ações: Baixar Imagem HD, Copiar Link e Fechar */}
             <div className="space-y-2 pt-1">
               <button
                 type="button"
@@ -314,7 +314,7 @@ export default function ClientModals({
                 onClick={() => setStoryModalOpen(false)}
                 className="w-full py-2 rounded-xl text-stone-400 hover:text-white text-xs transition cursor-pointer"
               >
-                Fechar PrÃ©via
+                Fechar Prévia
               </button>
             </div>
           </div>

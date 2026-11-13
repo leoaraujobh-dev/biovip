@@ -24,7 +24,7 @@ export default function ClientGalleryTab({
 }: ClientGalleryTabProps) {
   return (
                 <div className="space-y-8 animate-fade-in">
-                  {/* CabeÃ§alho da SeÃ§Ã£o */}
+                  {/* Cabeçalho da Seção */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export default function ClientGalleryTab({
                         <span className="text-xs text-stone-400 font-mono">/{slug}</span>
                       </div>
                       <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-                        Fotos da Galeria & PortfÃ³lio de Trabalhos
+                        Fotos da Galeria & Portfólio de Trabalhos
                       </h2>
                       <p className="text-xs text-stone-500 max-w-xl">
                         Atualize os registros dos seus melhores procedimentos para transmitir autoridade e encantar suas visitantes no primeiro olhar.
@@ -62,12 +62,12 @@ export default function ClientGalleryTab({
                     </div>
                   </div>
 
-                  {/* ConfiguraÃ§Ãµes da Galeria */}
+                  {/* Configurações da Galeria */}
                   <div className="p-6 rounded-3xl bg-stone-50 border border-stone-200 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Camera className="w-4 h-4 text-stone-700" />
-                        <h3 className="font-bold text-sm text-stone-900">ConfiguraÃ§Ã£o da SeÃ§Ã£o de Galeria</h3>
+                        <h3 className="font-bold text-sm text-stone-900">Configuração da Seção de Galeria</h3>
                       </div>
                       <label className="flex items-center gap-2 text-xs font-bold text-stone-800 cursor-pointer">
                         <input
@@ -79,7 +79,7 @@ export default function ClientGalleryTab({
                           }}
                           className="w-4 h-4 accent-stone-950 rounded cursor-pointer"
                         />
-                        <span>{galleryConfig.enabled ? 'Galeria VisÃ­vel no Bio Site' : 'Galeria Oculta'}</span>
+                        <span>{galleryConfig.enabled ? 'Galeria Visível no Bio Site' : 'Galeria Oculta'}</span>
                       </label>
                     </div>
 
@@ -101,7 +101,7 @@ export default function ClientGalleryTab({
                       </div>
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          TÃ­tulo Principal
+                          Título Principal
                         </label>
                         <input
                           type="text"
@@ -110,13 +110,13 @@ export default function ClientGalleryTab({
                             setGalleryConfig((prev: any) => ({ ...prev, headline: e.target.value }))
                             setHasUnsavedChanges(true)
                           }}
-                          placeholder="Ex: PortfÃ³lio de Procedimentos"
+                          placeholder="Ex: Portfólio de Procedimentos"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
                         />
                       </div>
                       <div>
                         <label className="block text-[11px] font-mono uppercase text-stone-600 font-semibold mb-1">
-                          SubtÃ­tulo
+                          Subtítulo
                         </label>
                         <input
                           type="text"
@@ -125,7 +125,7 @@ export default function ClientGalleryTab({
                             setGalleryConfig((prev: any) => ({ ...prev, subtitle: e.target.value }))
                             setHasUnsavedChanges(true)
                           }}
-                          placeholder="Ex: Veja transformaÃ§Ãµes de clientes reais"
+                          placeholder="Ex: Veja transformações de clientes reais"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
                         />
                       </div>
@@ -136,7 +136,7 @@ export default function ClientGalleryTab({
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-serif font-bold text-lg text-stone-900">Fotos no PortfÃ³lio</h3>
+                        <h3 className="font-serif font-bold text-lg text-stone-900">Fotos no Portfólio</h3>
                         <p className="text-xs text-stone-500">
                           {(galleryConfig.photos || galleryPhotos).length} fotos cadastradas. Cole a URL da imagem ou adicione fotos dos seus atendimentos.
                         </p>
@@ -232,7 +232,7 @@ export default function ClientGalleryTab({
                                     setGalleryConfig((prev: any) => ({ ...prev, captions: currentCaptions }))
                                     setHasUnsavedChanges(true)
                                   }}
-                                  placeholder="Ex: Volume Russo com curvatura D e retenÃ§Ã£o de 30 dias"
+                                  placeholder="Ex: Volume Russo com curvatura D e retenção de 30 dias"
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs text-stone-800 bg-stone-50 focus:bg-white focus:outline-none focus:border-stone-900"
                                 />
                               </div>
@@ -244,7 +244,7 @@ export default function ClientGalleryTab({
 
                     <div className="pt-4 flex items-center justify-between border-t border-stone-100">
                       <span className="text-xs text-stone-500">
-                        Suas fotos sÃ£o salvas e publicadas em tempo real com zoom e lightbox interativo.
+                        Suas fotos são salvas e publicadas em tempo real com zoom e lightbox interativo.
                       </span>
                       <button
                         type="button"
