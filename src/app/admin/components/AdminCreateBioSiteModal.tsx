@@ -30,13 +30,16 @@ import {
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
 import { saveClientConfig, DEFAULT_CLIENT_PERMISSIONS, DEFAULT_MODULE_TOGGLES } from '@/data/clientPermissions'
 import { saveBioSite } from '@/services/biositeService'
+import { compressImageFile } from '@/utils/imageProcessors'
 import {
   Sliders,
   ChevronLeft,
   RefreshCw,
   Check,
   Key,
-  Dices
+  Dices,
+  Upload,
+  Camera
 } from 'lucide-react'
 
 const slugifyText = (text: string) => {
@@ -644,21 +647,86 @@ export default function AdminCreateBioSiteModal({
                         <p className="text-xs text-stone-400">Retrato principal com fusão orgânica ou recorte.</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-stone-700 bg-stone-900 shrink-0">
+                        <label
+                          className="w-16 h-16 rounded-2xl overflow-hidden border border-stone-700 bg-stone-900 shrink-0 relative group cursor-pointer shadow-md"
+                          title="Clique para escolher foto do seu computador"
+                        >
                           <img
                             src={manualPhotoUrl || (manualGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
                             alt="Foto"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
-                        </div>
-                        <div className="flex-1 space-y-2">
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center text-amber-300">
+                            <Camera className="w-4 h-4" />
+                            <span className="text-[8px] font-mono font-bold mt-0.5 uppercase">Trocar</span>
+                          </div>
                           <input
-                            type="text"
-                            value={manualPhotoUrl}
-                            onChange={(e) => setManualPhotoUrl(e.target.value)}
-                            placeholder="URL da Foto do Cliente (https://...)"
-                            className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                const compressed = await compressImageFile(file, 1000, 0.85)
+                                if (compressed) {
+                                  setManualPhotoUrl(compressed)
+                                }
+                              }
+                              e.target.value = ''
+                            }}
                           />
+                        </label>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            {manualPhotoUrl?.startsWith('data:') ? (
+                              <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs min-w-0">
+                                <span className="flex items-center gap-1.5 font-medium truncate text-xs">
+                                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span className="truncate">Foto do computador</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setManualPhotoUrl('')}
+                                  className="text-stone-400 hover:text-rose-400 text-xs ml-2 shrink-0 underline cursor-pointer"
+                                  title="Remover e usar padrão"
+                                >
+                                  Remover
+                                </button>
+                              </div>
+                            ) : (
+                              <input
+                                type="text"
+                                value={manualPhotoUrl}
+                                onChange={(e) => setManualPhotoUrl(e.target.value)}
+                                placeholder="URL da Foto do Cliente (https://...)"
+                                className="flex-1 p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-mono focus:border-amber-500/50 focus:outline-none"
+                              />
+                            )}
+
+                            <label
+                              className="px-3 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/40 text-xs font-semibold cursor-pointer flex items-center gap-1.5 shrink-0 transition"
+                              title="Carregar foto do seu computador"
+                            >
+                              <Upload className="w-3.5 h-3.5 text-amber-400" />
+                              <span className="text-xs">Subir Foto</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    const compressed = await compressImageFile(file, 1000, 0.85)
+                                    if (compressed) {
+                                      setManualPhotoUrl(compressed)
+                                    }
+                                  }
+                                  e.target.value = ''
+                                }}
+                              />
+                            </label>
+                          </div>
+
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
@@ -666,8 +734,8 @@ export default function AdminCreateBioSiteModal({
                                 setManualGender('mulher')
                                 setManualPhotoUrl('')
                               }}
-                              className={`px-3 py-1 text-xs rounded-lg border font-mono ${
-                                manualGender === 'mulher' && !manualPhotoUrl ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-stone-900 text-stone-400 border-stone-800'
+                              className={`px-3 py-1 text-xs rounded-lg border font-mono transition ${
+                                manualGender === 'mulher' && !manualPhotoUrl ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-stone-300'
                               }`}
                             >
                               Modelo Feminino
@@ -678,12 +746,22 @@ export default function AdminCreateBioSiteModal({
                                 setManualGender('homem')
                                 setManualPhotoUrl('')
                               }}
-                              className={`px-3 py-1 text-xs rounded-lg border font-mono ${
-                                manualGender === 'homem' && !manualPhotoUrl ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-stone-900 text-stone-400 border-stone-800'
+                              className={`px-3 py-1 text-xs rounded-lg border font-mono transition ${
+                                manualGender === 'homem' && !manualPhotoUrl ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-stone-300'
                               }`}
                             >
                               Modelo Masculino
                             </button>
+                            {manualPhotoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setManualPhotoUrl('')}
+                                className="px-2 py-1 text-xs rounded-lg border border-rose-900/50 text-rose-400 hover:bg-rose-950/40 transition font-mono cursor-pointer"
+                                title="Limpar foto"
+                              >
+                                Limpar
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

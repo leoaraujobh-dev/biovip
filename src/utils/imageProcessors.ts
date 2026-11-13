@@ -14,6 +14,49 @@ export function readImageAsDataUrl(file: File): Promise<string> {
 }
 
 /**
+ * Comprime e redimensiona fotos enviadas do computador para Base64 segura e otimizada (evita estouro de cota e lentidão)
+ */
+export function compressImageFile(file: File, maxWidth = 1000, quality = 0.85): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const src = e.target?.result as string
+      if (!src) return resolve('')
+      const img = new Image()
+      img.onload = () => {
+        try {
+          let { width, height } = img
+          if (width > maxWidth || height > maxWidth) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width)
+              width = maxWidth
+            } else {
+              width = Math.round((width * maxWidth) / height)
+              height = maxWidth
+            }
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height)
+            const isPng = file.type === 'image/png'
+            resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality))
+            return
+          }
+        } catch (err) {}
+        resolve(src)
+      }
+      img.onerror = () => resolve(src)
+      img.src = src
+    }
+    reader.onerror = () => resolve('')
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
  * Dissolva a base da foto suavemente em direção à cor do fundo escolhida (Canvas Organic Fade)
  */
 export function applyCanvasOrganicFade(imageSrc: string, targetBgColorHex = '#ffffff'): Promise<string> {

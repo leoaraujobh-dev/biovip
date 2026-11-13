@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
-import { applyPhotoEnhancement } from '@/utils/imageProcessors'
+import { applyPhotoEnhancement, compressImageFile } from '@/utils/imageProcessors'
 import {
   DEMO_PHOTOS,
   PHOTO_LAYOUTS,
@@ -934,12 +934,15 @@ export default function StarterClient() {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0]
                           if (file) {
-                            const url = URL.createObjectURL(file)
-                            setCustomPhotoUrl(url)
+                            const dataUrl = await compressImageFile(file, 1000, 0.85)
+                            if (dataUrl) {
+                              setCustomPhotoUrl(dataUrl)
+                            }
                           }
+                          e.target.value = ''
                         }}
                       />
                     </label>
