@@ -1207,23 +1207,6 @@ export default function BioSiteClient({
         {clientModules.buttons !== false && (
           <BioSiteScrollReveal direction="up" delay={120}>
             <div id="botoes" className="px-5 pt-2 pb-4 space-y-2.5 relative z-10 flex flex-col justify-start">
-            {/* Subpáginas do Plano Pro */}
-            {modelData?.subpages && modelData.subpages.length > 0 && (
-              <div className="flex items-center justify-center gap-1.5 pb-1 flex-wrap">
-                {modelData.subpages.map((sp: any) => (
-                  <Link
-                    key={sp.slug}
-                    href={`/${slug}/${sp.slug}`}
-                    className="px-2.5 py-1 rounded-full text-[9px] font-mono tracking-wider uppercase border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition flex items-center gap-1 active:scale-95 shadow-sm"
-                    style={{ color: palette.accent }}
-                  >
-                    <Sparkles className="w-2.5 h-2.5" />
-                    {sp.title.split(' ')[0]}
-                  </Link>
-                ))}
-              </div>
-            )}
-
           {buttonsToRender.map((btn: any, btnIdx: number) => {
             const isHigh = !!btn.isHighlighted || btn.variant === 'accent' || btnIdx === 0
             const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? '⭐ MAIS ESCOLHIDO' : '')

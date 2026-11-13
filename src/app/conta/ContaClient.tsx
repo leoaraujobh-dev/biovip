@@ -1935,65 +1935,6 @@ export default function ContaClient() {
                     </div>
                   </div>
 
-                  {/* SEÇÃO 2: PÁGINAS ADICIONAIS */}
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-400 block font-bold">
-                        PÁGINAS ADICIONAIS
-                      </span>
-                      <span className="text-xs font-mono text-stone-400">
-                        {additionalPages.length} de 3
-                      </span>
-                    </div>
-
-                    <p className="text-xs sm:text-sm text-stone-600 font-serif leading-relaxed max-w-2xl">
-                      Seu plano inclui 3 páginas adicionais — cardápio, álbum, resultados e outros modelos prontos, já na identidade do seu Bio Site. A loja é à parte e não ocupa essa vaga.
-                    </p>
-
-                    {/* LISTA DAS PÁGINAS ATIVAS */}
-                    {additionalPages.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                        {additionalPages.map((page, i) => (
-                          <div key={page.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex flex-col justify-between space-y-3">
-                            <div>
-                              <span className="text-[9px] font-mono uppercase text-stone-400 block">PÁGINA {i + 1}</span>
-                              <div className="font-serif font-bold text-stone-900 text-sm mt-0.5">{page.title}</div>
-                              <div className="text-[10px] font-mono text-stone-500 mt-1">/{slug}/{page.slug}</div>
-                            </div>
-                            <div className="flex items-center justify-between pt-2 border-t border-stone-200/60">
-                              <a
-                                href={`/${slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[10px] font-mono uppercase tracking-wider text-stone-700 hover:text-black font-bold flex items-center gap-1"
-                              >
-                                Ver ao vivo <ExternalLink className="w-2.5 h-2.5" />
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => handleDeletePage(page.id)}
-                                className="text-stone-400 hover:text-rose-600 transition p-1"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* BOTÃO CRIAR PÁGINA ADICIONAL */}
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentView('adicionar_pagina')}
-                        className="px-7 py-3 rounded-full border border-stone-300 hover:border-stone-900 text-stone-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer"
-                      >
-                        CRIAR PÁGINA ADICIONAL
-                      </button>
-                    </div>
-                  </div>
-
                   {/* SEÇÃO 3: TUTORIAL INSTAGRAM, DISPLAY DE BALCÃO & CARD PARA STORY */}
                   <div className="pt-8 border-t border-stone-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* CARD 1: TUTORIAL PASSO A PASSO INSTAGRAM */}

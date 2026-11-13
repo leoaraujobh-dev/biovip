@@ -1437,34 +1437,6 @@ export default function EditorInspectorColumn({
                 )}
 
                 <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
-                {/* Subpáginas Pro Integradas */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800">
-                  <h3 className="font-bold text-xs text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    Páginas Pro Integradas ({props.additionalPages.length}/3)
-                    {!canEditPhotos && <Lock className="w-3 h-3 text-amber-400" />}
-                  </h3>
-                  <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
-                    Cada página Pro inclui slider de Antes &amp; Depois, tabela completa de procedimentos e agenda VIP.
-                  </p>
-
-                  <div className="space-y-2">
-                    {props.additionalPages.map((pg: any) => (
-                      <div
-                        key={pg.id}
-                        className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between gap-2"
-                      >
-                        <div>
-                          <p className="font-bold text-xs text-stone-200">{pg.title}</p>
-                          <p className="text-[10px] font-mono text-stone-500">/{pg.slug}</p>
-                        </div>
-                        <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          ATIVA
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Galeria Oficial de Fotos & Portfólio (studentGrid / BioVip Oficial) */}
                 <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-4">
                   {/* Header do Módulo com Switch */}
