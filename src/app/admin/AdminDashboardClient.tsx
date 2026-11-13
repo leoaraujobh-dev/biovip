@@ -2091,6 +2091,22 @@ export default function AdminDashboardClient() {
         setShowPassword={setShowCredentialsModalPassword}
       />
 
+      {/* MODAL: PERMISSÕES DO CLIENTE E ATIVAÇÃO DE MÓDULOS */}
+      <AdminPermissionsModal
+        slug={permissionsModalSlug}
+        title={permissionsModalTitle}
+        onClose={() => setPermissionsModalSlug(null)}
+        activeTab={permissionsActiveTab}
+        setActiveTab={setPermissionsActiveTab}
+        currentClientPermissions={currentClientPermissions}
+        setCurrentClientPermissions={setCurrentClientPermissions}
+        currentModuleToggles={currentModuleToggles}
+        setCurrentModuleToggles={setCurrentModuleToggles}
+        handleSavePermissions={handleSavePermissions}
+        permissionDescriptions={PERMISSION_DESCRIPTIONS}
+        moduleDescriptions={MODULE_DESCRIPTIONS}
+      />
+
       {/* TOAST DE FEEDBACK DE PERMISSÕES */}
       {permissionsSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl bg-indigo-600 text-white font-sans text-xs font-bold shadow-2xl flex items-center gap-2.5 animate-bounce">
