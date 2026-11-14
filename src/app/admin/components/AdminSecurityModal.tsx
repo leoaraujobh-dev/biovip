@@ -138,7 +138,7 @@ export default function AdminSecurityModal({
                   type="password"
                   value={oldSecretInput}
                   onChange={(e) => setOldSecretInput(e.target.value)}
-                  placeholder="Digite a credencial atual (padrão: 2026)"
+                  placeholder="Digite a credencial atual (padrão: 230217)"
                   required
                   className="w-full px-3.5 py-2.5 bg-stone-900 border border-stone-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-amber-400"
                 />

@@ -42,6 +42,33 @@ export interface Subscription {
 
 export const initialSubscriptions: Subscription[] = [
   {
+    id: 'sub-germana-zocrato',
+    clientName: 'Germana Zocrato',
+    businessName: 'Germana Zocrato — Estética & Beleza',
+    email: 'contato@germanazocrato.com.br',
+    whatsapp: '5531991390202',
+    niche: 'Estética & Beleza',
+    slug: 'germanazocrato',
+    planId: 'pro',
+    planName: 'Profissional VIP',
+    cycle: 'mensal',
+    amount: 147,
+    status: 'ativa',
+    paymentMethod: 'pix',
+    startDate: '2026-11-10',
+    nextBillingDate: '2026-12-10',
+    lastPaymentDate: '2026-11-10',
+    bioSiteUrl: 'https://biovip.com.br/germanazocrato',
+    viewsCount: 280,
+    clicksCount: 84,
+    notes: 'BioSite oficial ativo com procedimentos e agendamentos VIP.',
+    isPortfolioModel: false,
+    inPortfolio: true,
+    payments: [
+      { id: 'pay-gz-1', date: '2026-11-10', amount: 147, method: 'pix', status: 'pago' }
+    ]
+  },
+  {
     id: 'sub-001',
     clientName: 'Dra. Ana Freire',
     businessName: 'Dra. Ana Freire Odontologia Estética',

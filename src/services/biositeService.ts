@@ -167,7 +167,6 @@ export async function saveBioSite(slug: string, siteData: any): Promise<{ succes
         testimonials_list: cleanSiteData.testimonialsList || [],
         about_me_section: cleanSiteData.aboutMeSection || null,
         faq_list: cleanSiteData.faqList || [],
-        gallery_photos_list: cleanSiteData.galleryPhotosList || cleanSiteData.galleryPhotos || [],
         pixels: cleanSiteData.pixels || null,
         subpages: cleanSiteData.subpages || [],
         updated_at: new Date().toISOString()

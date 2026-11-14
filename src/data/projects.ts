@@ -2948,6 +2948,176 @@ export const projects: Project[] = [
         answer: 'Sim, permitimos uma garrafa por casal com taxa de rolha de R$ 90, ou isenção caso consuma um rótulo de valor equivalente de nossa adega.'
       }
     ]
+  },
+  {
+    slug: 'germanazocrato',
+    name: 'Germana Zocrato',
+    role: 'Estética & Beleza',
+    category: 'Beleza & Estética',
+    registrationCode: 'CRBM-MG 22.871',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85',
+    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85',
+    description: 'Procedimentos estéticos avançados, rejuvenescimento e harmonização facial com excelência e sofisticação.',
+    features: [
+      'Procedimentos Estéticos VIP',
+      'Avaliação Personalizada',
+      'Atendimento com Hora Marcada',
+      'Biossegurança Rígida'
+    ],
+    link: 'https://biovip.com.br/germanazocrato',
+    paletteId: 'noturno_vibrante',
+    typographyId: 'instrument',
+    buttonStyle: 'cartao_nobre',
+    buttonAnimation: 'shimmer',
+    monogram: 'GZ',
+    stats: {
+      views: '1.8k',
+      clicks: '520',
+      conversion: '28%'
+    },
+    buttons: [
+      {
+        id: 'btn-gz-1',
+        label: 'Agendar Sessão VIP',
+        subtitle: 'Atendimento prioritário e exclusivo no WhatsApp',
+        icon: 'sparkles',
+        url: 'https://wa.me/5531991390202?text=Ol%C3%A1%2C+Germana%21+Gostaria+de+agendar+uma+sess%C3%A3o+de+avalia%C3%A7%C3%A3o+VIP.',
+        isHighlighted: true,
+        highlightBadge: 'PRIORITÁRIO',
+        animation: 'shimmer',
+        variant: 'accent'
+      },
+      {
+        id: 'btn-gz-2',
+        label: 'Acompanhe no Instagram',
+        subtitle: 'Antes & Depois, rotina clínica e novidades @germ_zocrato',
+        icon: 'instagram',
+        url: 'https://instagram.com/germ_zocrato',
+        isHighlighted: false,
+        variant: 'card'
+      }
+    ],
+    announcement: {
+      enabled: true,
+      badge: 'NOVIDADE',
+      text: '✨ Consultas e procedimentos estéticos vip.',
+      link: 'https://wa.me/5531991390202'
+    },
+    urgency: {
+      enabled: true,
+      headline: 'CONDIÇÃO ESPECIAL DE HOJE',
+      subtitle: 'Sessões com avaliação cortesia antes que expire o prazo.',
+      minutes: 15
+    },
+    servicesCatalog: {
+      enabled: true,
+      headline: 'Catálogo de Procedimentos VIP',
+      subtitle: 'Tratamentos de alta performance para realçar sua beleza natural',
+      categories: ['Todos', 'Rejuvenescimento', 'Linhas de Expressão', 'Harmonização'],
+      items: [
+        {
+          id: 'srv-gz-1',
+          name: 'Bioestimulador de Colágeno (Sculptra & Radiesse)',
+          category: 'Rejuvenescimento',
+          description: 'Estímulo potente da produção natural de colágeno, devolvendo firmeza, viço e sustentação à pele.',
+          price: 'Sob Consulta',
+          duration: '45 min',
+          badge: 'MAIS PROCURADO',
+          featured: true,
+          whatsappMessage: 'Olá Germana! Gostaria de saber mais sobre o Bioestimulador de Colágeno.'
+        },
+        {
+          id: 'srv-gz-2',
+          name: 'Toxina Botulínica Preventiva e Reparadora (Botox)',
+          category: 'Linhas de Expressão',
+          description: 'Suavização natural de rugas na testa, glabela e pés de galinha, mantendo a expressividade leve.',
+          price: 'Sob Consulta',
+          duration: '30 min',
+          badge: 'DESTAQUE',
+          featured: true,
+          whatsappMessage: 'Olá Germana! Gostaria de agendar aplicação de Toxina Botulínica.'
+        },
+        {
+          id: 'srv-gz-3',
+          name: 'Preenchimento Labial & Contorno Mandibular com Ácido Hialurônico',
+          category: 'Harmonização',
+          description: 'Definição e hidratação labial com proporções áureas e contorno facial sofisticado e elegante.',
+          price: 'Sob Consulta',
+          duration: '50 min',
+          badge: 'ALTA DEFINIÇÃO',
+          featured: true,
+          whatsappMessage: 'Olá Germana! Gostaria de informações sobre Preenchimento com Ácido Hialurônico.'
+        }
+      ]
+    },
+    locationInfo: {
+      enabled: true,
+      address: 'Av. Brigadeiro Faria Lima, 2000 · Itaim Bibi, São Paulo - SP',
+      hours: 'Seg a Sex · 09:00 às 19:00 | Sáb · 09:00 às 14:00',
+      openStatus: 'Atendimento com Hora Marcada',
+      mapsUrl: 'https://maps.google.com/?q=Av.+Brigadeiro+Faria+Lima,+2000'
+    },
+    metricsList: [
+      { value: '+1.800', label: 'Pacientes Satisfeitas' },
+      { value: '5.0 ★', label: 'Avaliação Máxima Google' },
+      { value: '12 Anos', label: 'Experiência & Especialização' }
+    ],
+    galleryConfig: {
+      enabled: true,
+      headline: 'Resultados Reais & Procedimentos em Destaque',
+      subtitle: 'Excelência técnica e biossegurança em cada detalhe',
+      badge: 'GALERIA VIP',
+      layout: 'carousel-snap',
+      photos: [
+        'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    galleryPhotosList: [
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80'
+    ],
+    testimonialsList: [
+      {
+        id: 't-gz-1',
+        name: 'Dra. Beatriz Mendes',
+        role: 'Advogada',
+        text: 'O atendimento da Germana é impecável! Meu preenchimento labial ficou extremamente sutil e elegante. Ninguém percebe que fiz procedimento, só dizem que estou radiante.',
+        rating: 5,
+        date: 'há 1 semana',
+        verified: true
+      },
+      {
+        id: 't-gz-2',
+        name: 'Camila Albuquerque',
+        role: 'Empresária',
+        text: 'Faço o bioestimulador de colágeno com a Germana há 2 anos. Minha pele mudou completamente, firmeza incrível e zero aspecto artificial. Recomendo de olhos fechados!',
+        rating: 5,
+        date: 'há 3 semanas',
+        verified: true
+      }
+    ],
+    aboutMeSection: {
+      headline: 'Sobre Germana Zocrato',
+      bio: 'Especialista em procedimentos estéticos de alta precisão, Germana Zocrato dedica-se a valorizar os traços individuais de cada cliente com elegância, harmonia e segurança incomparáveis.',
+      quote: '"A verdadeira beleza não transforma quem você é, apenas revela sua melhor e mais confiante versão."'
+    },
+    faqList: [
+      {
+        question: 'Como funciona o agendamento da primeira consulta?',
+        answer: 'Você clica no botão do WhatsApp e conversa diretamente com nossa assessoria para escolher o melhor dia e horário.'
+      },
+      {
+        question: 'Os procedimentos causam dor ou desconforto?',
+        answer: 'Utilizamos anestésicos tópicos potentes e agulhas ultrafinas para garantir conforto máximo e tranquilidade durante toda a sessão.'
+      },
+      {
+        question: 'Quais as formas de pagamento aceitas?',
+        answer: 'Aceitamos PIX com condições especiais e parcelamento no cartão de crédito em até 12x.'
+      }
+    ]
   }
 ]
 

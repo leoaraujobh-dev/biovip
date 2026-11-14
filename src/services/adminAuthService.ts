@@ -25,9 +25,10 @@ export interface SecurityConfig {
 }
 
 const DEFAULT_SALT = 'biovip-sec-salt-2026-luxo'
-// SHA-256 de "2026" com o salt DEFAULT_SALT
-// Pré-computado para o primeiro acesso
-const DEFAULT_PIN_HASH = '1e712a6411516f1c71387d896914f6b28f8045a1659ca44ec2b84cf2ce28f889'
+// Senha Mestra padrão configurada pelo administrador (230217 ou variável de ambiente no Cloudflare)
+export const MASTER_ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '230217'
+// SHA-256 de "230217" com o salt DEFAULT_SALT
+const DEFAULT_PIN_HASH = '7d965f4a9a63785cbde57fdad5aeb931f0ed388018af9fe3fca543be7c3d80bc'
 
 const STORAGE_KEYS = {
   CONFIG: 'biovip_admin_sec_config',
@@ -328,14 +329,14 @@ export async function authenticateAdmin(secretInput: string): Promise<{ success:
   const config = getSecurityConfig()
   const inputHash = await sha256(secretInput + config.salt)
 
-  // Aceita o hash configurado OU o PIN padrão 2026 (calculado contra DEFAULT_PIN_HASH ou input direto)
-  const isDefaultPin = secretInput === '2026'
+  // Aceita o hash configurado OU as senhas mestras autorizadas (230217, variável Cloudflare ou 2026 legado)
+  const isMasterPin = secretInput === '230217' || secretInput === MASTER_ADMIN_PIN || secretInput === '2026'
   const matchesHash = inputHash === config.passwordHash
 
-  if (matchesHash || isDefaultPin) {
-    // Se logou com o default 2026 pela primeira vez, atualiza para o hash definitivo
-    if (isDefaultPin && config.passwordHash !== inputHash) {
-      config.passwordHash = await sha256('2026' + config.salt)
+  if (matchesHash || isMasterPin) {
+    // Atualiza automaticamente o hash definitivo no dispositivo para sincronizar com a nova senha
+    if (config.passwordHash !== inputHash) {
+      config.passwordHash = inputHash
       saveSecurityConfig(config)
     }
 
