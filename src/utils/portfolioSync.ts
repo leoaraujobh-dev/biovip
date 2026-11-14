@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { projects as defaultProjects, Project } from '@/data/projects'
+import { healMojibake } from '@/utils/textSanitizer'
 
 export const PORTFOLIO_STORAGE_KEY = 'biovip_portfolio_projects'
 export const PORTFOLIO_EVENT_NAME = 'biovip_portfolio_updated'
@@ -18,7 +19,7 @@ export function getActivePortfolioProjects(): Project[] {
   try {
     const raw = localStorage.getItem(PORTFOLIO_STORAGE_KEY)
     if (raw) {
-      const parsed: Project[] = JSON.parse(raw)
+      const parsed: Project[] = healMojibake(JSON.parse(raw))
       const active = parsed.filter(p => p.inPortfolio !== false)
       if (active.length > 0) {
         return active

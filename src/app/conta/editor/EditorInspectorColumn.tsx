@@ -194,6 +194,251 @@ export default function EditorInspectorColumn({
                         )
                       })}
                     </div>
+
+                    {/* Área de Personalização de Cores quando 'Minha paleta' estiver selecionada */}
+                    {props.selectedPalette.id === 'minha_paleta' && (
+                      <div className="mt-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/10 space-y-3 animate-fade-in">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                          <div className="flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider">
+                              Personalizar Cores
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-mono text-stone-400">Tempo real</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {/* 1. Fundo da Página */}
+                          <div>
+                            <label className="text-[10px] font-mono text-stone-300 block mb-1">
+                              Fundo da Página
+                            </label>
+                            <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5 focus-within:border-amber-400 transition">
+                              <input
+                                type="color"
+                                value={props.selectedPalette.bg || '#12151b'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    bg: newColor,
+                                    swatches: [newColor, props.selectedPalette.card, props.selectedPalette.accent]
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.selectedPalette.bg || '#12151b'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    bg: newColor,
+                                    swatches: [newColor, props.selectedPalette.card, props.selectedPalette.accent]
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[11px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* 2. Cartões & Blocos */}
+                          <div>
+                            <label className="text-[10px] font-mono text-stone-300 block mb-1">
+                              Cartões & Blocos
+                            </label>
+                            <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5 focus-within:border-amber-400 transition">
+                              <input
+                                type="color"
+                                value={props.selectedPalette.card || '#1e222b'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    card: newColor,
+                                    swatches: [props.selectedPalette.bg, newColor, props.selectedPalette.accent]
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.selectedPalette.card || '#1e222b'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    card: newColor,
+                                    swatches: [props.selectedPalette.bg, newColor, props.selectedPalette.accent]
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[11px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* 3. Cor dos Botões */}
+                          <div>
+                            <label className="text-[10px] font-mono text-stone-300 block mb-1">
+                              Cor dos Botões
+                            </label>
+                            <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5 focus-within:border-amber-400 transition">
+                              <input
+                                type="color"
+                                value={props.selectedPalette.button || '#3b82f6'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    button: newColor
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.selectedPalette.button || '#3b82f6'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    button: newColor
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[11px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* 4. Texto dos Botões */}
+                          <div>
+                            <label className="text-[10px] font-mono text-stone-300 block mb-1">
+                              Texto dos Botões
+                            </label>
+                            <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5 focus-within:border-amber-400 transition">
+                              <input
+                                type="color"
+                                value={props.selectedPalette.buttonText || '#ffffff'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    buttonText: newColor
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.selectedPalette.buttonText || '#ffffff'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    buttonText: newColor
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[11px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* 5. Cor do Texto */}
+                          <div>
+                            <label className="text-[10px] font-mono text-stone-300 block mb-1">
+                              Cor do Texto
+                            </label>
+                            <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5 focus-within:border-amber-400 transition">
+                              <input
+                                type="color"
+                                value={props.selectedPalette.text || '#ffffff'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    text: newColor
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.selectedPalette.text || '#ffffff'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    text: newColor
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[11px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* 6. Destaque / Acento */}
+                          <div>
+                            <label className="text-[10px] font-mono text-stone-300 block mb-1">
+                              Destaque / Acento
+                            </label>
+                            <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5 focus-within:border-amber-400 transition">
+                              <input
+                                type="color"
+                                value={props.selectedPalette.accent || '#3b82f6'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    accent: newColor,
+                                    swatches: [props.selectedPalette.bg, props.selectedPalette.card, newColor]
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.selectedPalette.accent || '#3b82f6'}
+                                onChange={(e) => {
+                                  const newColor = e.target.value
+                                  const updated = {
+                                    ...props.selectedPalette,
+                                    accent: newColor,
+                                    swatches: [props.selectedPalette.bg, props.selectedPalette.card, newColor]
+                                  }
+                                  props.setSelectedPalette(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[11px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </fieldset>
                 </div>
 

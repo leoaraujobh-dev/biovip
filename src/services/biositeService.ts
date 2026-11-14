@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { healMojibake } from '@/utils/textSanitizer'
 
 export interface BioSiteRecord {
   slug: string
@@ -88,14 +89,16 @@ export async function getBioSite(slug: string): Promise<any | null> {
           updatedAt: data.updated_at
         }
 
+        const healedFormatted = healMojibake(formatted)
+
         // Cache local no navegador
         if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('biovip_site_' + slug, JSON.stringify(formatted))
+            localStorage.setItem('biovip_site_' + slug, JSON.stringify(healedFormatted))
           } catch (e) {}
         }
 
-        return formatted
+        return healedFormatted
       }
     } catch (err) {
       console.warn('Erro ao consultar Supabase, utilizando fallback local:', err)
@@ -106,7 +109,14 @@ export async function getBioSite(slug: string): Promise<any | null> {
   if (typeof window !== 'undefined') {
     try {
       const saved = localStorage.getItem('biovip_site_' + slug) || (slug === 'minha-marca' ? localStorage.getItem('biovip_user_site') : null)
-      if (saved) return JSON.parse(saved)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const healed = healMojibake(parsed)
+        try {
+          localStorage.setItem('biovip_site_' + slug, JSON.stringify(healed))
+        } catch {}
+        return healed
+      }
     } catch (e) {}
   }
 
@@ -119,11 +129,12 @@ export async function getBioSite(slug: string): Promise<any | null> {
  */
 export async function saveBioSite(slug: string, siteData: any): Promise<{ success: boolean; cloudSynced: boolean; error?: string }> {
   let cloudSynced = false
+  const cleanSiteData = healMojibake(siteData)
 
   // 1. Persistência local imediata
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('biovip_site_' + slug, JSON.stringify(siteData))
+      localStorage.setItem('biovip_site_' + slug, JSON.stringify(cleanSiteData))
     } catch (e) {
       console.error('Erro ao salvar no localStorage:', e)
     }
@@ -134,31 +145,31 @@ export async function saveBioSite(slug: string, siteData: any): Promise<{ succes
     try {
       const payload: BioSiteRecord = {
         slug: slug,
-        name: siteData.name || siteData.businessTitle || siteData.brandName || '',
-        role: siteData.role || siteData.niche || '',
-        category: siteData.category || siteData.niche || '',
-        registration_code: siteData.registrationCode || '',
-        monogram: siteData.monogram || '',
-        photo: siteData.photo || '',
-        palette_id: siteData.paletteId || '',
-        typography_id: siteData.typographyId || '',
-        button_style: siteData.buttonStyle || '',
-        button_animation: siteData.buttonAnimation || '',
-        whatsapp: siteData.whatsapp || '',
-        buttons: siteData.buttons || [],
-        announcement: siteData.announcement || null,
-        urgency: siteData.urgency || null,
-        services_catalog: siteData.servicesCatalog || null,
-        location_info: siteData.locationInfo || null,
-        qualifier_quiz: siteData.qualifierQuiz || null,
-        metrics_list: siteData.metricsList || [],
-        how_it_works_steps: siteData.howItWorksSteps || [],
-        testimonials_list: siteData.testimonialsList || [],
-        about_me_section: siteData.aboutMeSection || null,
-        faq_list: siteData.faqList || [],
-        gallery_photos_list: siteData.galleryPhotosList || siteData.galleryPhotos || [],
-        pixels: siteData.pixels || null,
-        subpages: siteData.subpages || [],
+        name: cleanSiteData.name || cleanSiteData.businessTitle || cleanSiteData.brandName || '',
+        role: cleanSiteData.role || cleanSiteData.niche || '',
+        category: cleanSiteData.category || cleanSiteData.niche || '',
+        registration_code: cleanSiteData.registrationCode || '',
+        monogram: cleanSiteData.monogram || '',
+        photo: cleanSiteData.photo || '',
+        palette_id: cleanSiteData.paletteId || '',
+        typography_id: cleanSiteData.typographyId || '',
+        button_style: cleanSiteData.buttonStyle || '',
+        button_animation: cleanSiteData.buttonAnimation || '',
+        whatsapp: cleanSiteData.whatsapp || '',
+        buttons: cleanSiteData.buttons || [],
+        announcement: cleanSiteData.announcement || null,
+        urgency: cleanSiteData.urgency || null,
+        services_catalog: cleanSiteData.servicesCatalog || null,
+        location_info: cleanSiteData.locationInfo || null,
+        qualifier_quiz: cleanSiteData.qualifierQuiz || null,
+        metrics_list: cleanSiteData.metricsList || [],
+        how_it_works_steps: cleanSiteData.howItWorksSteps || [],
+        testimonials_list: cleanSiteData.testimonialsList || [],
+        about_me_section: cleanSiteData.aboutMeSection || null,
+        faq_list: cleanSiteData.faqList || [],
+        gallery_photos_list: cleanSiteData.galleryPhotosList || cleanSiteData.galleryPhotos || [],
+        pixels: cleanSiteData.pixels || null,
+        subpages: cleanSiteData.subpages || [],
         updated_at: new Date().toISOString()
       }
 

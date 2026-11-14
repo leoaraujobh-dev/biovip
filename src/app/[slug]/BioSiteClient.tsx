@@ -41,6 +41,7 @@ import {
 import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
 import { getBioSite, trackLead } from '@/services/biositeService'
+import { healMojibake } from '@/utils/textSanitizer'
 import BioSiteScrollReveal from '@/components/BioSiteScrollReveal'
 import { ModuleToggles, DEFAULT_MODULE_TOGGLES, getClientConfig } from '@/data/clientPermissions'
 
@@ -398,7 +399,8 @@ export default function BioSiteClient({
 
   // Carregar modelo com dados salvos no localStorage (se houver customizações)
   const [modelData, setModelData] = useState<any>(() => {
-    return projects.find(p => p.slug === slug || (slug === 'ana-freire' && p.slug === 'dra-ana-freire'))
+    const initial = projects.find(p => p.slug === slug || (slug === 'ana-freire' && p.slug === 'dra-ana-freire'))
+    return initial ? healMojibake(initial) : null
   })
 
   // Sincronização em tempo real de Módulos & Blocos ativados pelo Administrador
@@ -458,10 +460,14 @@ export default function BioSiteClient({
         const savedUserSite = localStorage.getItem('biovip_site_' + slug) || (slug === 'minha-marca' ? localStorage.getItem('biovip_user_site') : null)
         if (savedUserSite) {
           const parsed = JSON.parse(savedUserSite)
+          const healed = healMojibake(parsed)
+          try {
+            localStorage.setItem('biovip_site_' + slug, JSON.stringify(healed))
+          } catch {}
           if (isMounted) {
             setModelData((prev: any) => ({
               ...(prev || {}),
-              ...parsed
+              ...healed
             }))
           }
         } else {
@@ -470,7 +476,7 @@ export default function BioSiteClient({
             const parsed = JSON.parse(stored)
             const found = parsed.find((p: any) => p.slug === slug)
             if (found && isMounted) {
-              setModelData(found)
+              setModelData(healMojibake(found))
             }
           }
         }
@@ -478,9 +484,10 @@ export default function BioSiteClient({
         // Tentar obter dados mais recentes sincronizados no Supabase
         const cloudData = await getBioSite(slug)
         if (cloudData && isMounted) {
+          const healedCloud = healMojibake(cloudData)
           setModelData((prev: any) => ({
             ...(prev || {}),
-            ...cloudData
+            ...healedCloud
           }))
         }
       } catch (e) {
@@ -732,7 +739,10 @@ export default function BioSiteClient({
   const effectiveRole = modelData?.role || role
   const effectivePhoto = modelData?.photo || DEMO_PHOTOS.mulher
   const registrationCode = modelData?.registrationCode || (slug === 'ana-freire' ? 'CRO-PE 22.675' : 'REGISTRO OFICIAL')
-  const palette = PALETTES.find(p => p.id === (modelData?.paletteId || 'luxo_nude')) || PALETTES[0]
+  const basePalette = PALETTES.find(p => p.id === (modelData?.paletteId || 'luxo_nude')) || PALETTES[0]
+  const palette = (modelData?.paletteId === 'minha_paleta' && modelData?.customPalette)
+    ? { ...basePalette, ...modelData.customPalette }
+    : basePalette
   const typography = TYPOGRAPHIES.find(t => t.id === (modelData?.typographyId || 'instrument')) || TYPOGRAPHIES[0]
   const buttonStyle = modelData?.buttonStyle || 'cartao_nobre'
   const buttonAnimation = modelData?.buttonAnimation || 'none'

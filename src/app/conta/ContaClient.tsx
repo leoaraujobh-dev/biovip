@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -30,6 +30,7 @@ import { Subscription } from '@/data/subscriptions'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
 import { applyCanvasOrganicFade, applySilhouetteCutout, readImageAsDataUrl } from '@/utils/imageProcessors'
 import { saveBioSite, getLeads, LeadSubmission } from '@/services/biositeService'
+import { healMojibake } from '@/utils/textSanitizer'
 import { getClientConfig, DEFAULT_CLIENT_PERMISSIONS } from '@/data/clientPermissions'
 import {
   ExternalLink,
@@ -347,7 +348,12 @@ export default function ContaClient() {
     const savedSiteRaw = localStorage.getItem('biovip_site_' + targetSlug)
     if (savedSiteRaw) {
       try {
-        const parsed = JSON.parse(savedSiteRaw)
+        const parsedRaw = JSON.parse(savedSiteRaw)
+        const parsed = healMojibake(parsedRaw)
+        try {
+          localStorage.setItem('biovip_site_' + targetSlug, JSON.stringify(parsed))
+        } catch {}
+
         if (parsed.name) {
           setBrandName(parsed.name)
           setBusinessTitle(parsed.name)
@@ -357,7 +363,10 @@ export default function ContaClient() {
         if (parsed.registrationCode) setRegistrationCode(parsed.registrationCode)
         if (parsed.monogram) setMonogram(parsed.monogram)
         if (parsed.photo) setCustomPhotoSrc(parsed.photo)
-        if (parsed.paletteId) {
+        if (parsed.paletteId === 'minha_paleta' && parsed.customPalette) {
+          const basePal = PALETTES.find(p => p.id === 'minha_paleta') || PALETTES[0]
+          setSelectedPalette({ ...basePal, ...parsed.customPalette })
+        } else if (parsed.paletteId) {
           const pal = PALETTES.find(p => p.id === parsed.paletteId)
           if (pal) setSelectedPalette(pal)
         }
@@ -792,7 +801,7 @@ export default function ContaClient() {
       if (existingRaw) existingData = JSON.parse(existingRaw)
     } catch (e) {}
 
-    const siteData = {
+    const siteData = healMojibake({
       ...existingData,
       slug,
       name: businessTitle || brandName,
@@ -802,6 +811,7 @@ export default function ContaClient() {
       monogram,
       photo: customPhotoSrc || (demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem),
       paletteId: selectedPalette.id,
+      customPalette: selectedPalette.id === 'minha_paleta' ? selectedPalette : undefined,
       typographyId: selectedTypography.id,
       buttonStyle,
       buttonAnimation,
@@ -825,7 +835,7 @@ export default function ContaClient() {
         description: `Página ${ap.title} de ${businessTitle || brandName}`,
         previewType: (ap.templateId as any) || 'services'
       }))
-    }
+    })
 
     try {
       // 1. Salva chave individual do biosite para ser lida por /[slug]

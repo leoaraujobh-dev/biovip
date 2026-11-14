@@ -27,6 +27,7 @@ import {
 import { Project, projects as defaultProjects } from '@/data/projects'
 import { PALETTES, TYPOGRAPHIES, DEMO_PHOTOS, BUTTON_STYLES, BUTTON_ANIMATIONS, NICHES_LIST } from '@/data/bioSiteDesign'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
+import { healMojibake } from '@/utils/textSanitizer'
 import {
   BarChart3,
   TrendingUp,
@@ -408,7 +409,7 @@ export default function AdminDashboardClient() {
     const savedProjects = localStorage.getItem('biovip_portfolio_projects')
     if (savedProjects) {
       try {
-        const parsed: Project[] = JSON.parse(savedProjects)
+        const parsed: Project[] = healMojibake(JSON.parse(savedProjects))
         const existingSlugs = new Set(parsed.map((p: any) => p.slug))
         const missing = defaultProjects.filter(p => !existingSlugs.has(p.slug))
         const merged = [...parsed, ...missing]
@@ -748,7 +749,7 @@ export default function AdminDashboardClient() {
 
     // Clonar configuração visual em biovip_site_<newSlug>
     const sourceSiteRaw = localStorage.getItem('biovip_site_' + sourceSlug)
-    const sourceSite = sourceSiteRaw ? JSON.parse(sourceSiteRaw) : null
+    const sourceSite = sourceSiteRaw ? healMojibake(JSON.parse(sourceSiteRaw)) : null
 
     const newSiteData = {
       slug: newSlug,
