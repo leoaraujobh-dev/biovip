@@ -196,7 +196,7 @@ export default function EditorInspectorColumn({
                     </div>
 
                     {/* Área de Personalização de Cores quando 'Minha paleta' estiver selecionada */}
-                    {props.selectedPalette.id === 'minha_paleta' && (
+                    {(props.selectedPalette.id === 'minha_paleta' || props.selectedPalette.id === 'personalizada' || props.selectedPalette.id === 'custom' || (props.selectedPalette.name || '').toLowerCase().includes('personaliz')) && (
                       <div className="mt-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/10 space-y-3 animate-fade-in">
                         <div className="flex items-center justify-between pb-2 border-b border-white/5">
                           <div className="flex items-center gap-1.5">
@@ -1337,6 +1337,212 @@ export default function EditorInspectorColumn({
                           </div>
                         )}
                       </div>
+
+                      {/* Personalização Visual deste Botão (Cores, Borda e Profundidade 3D) */}
+                      <div className="p-3 rounded-xl bg-stone-950/80 border border-stone-800/80 space-y-2.5">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+                          <label className="text-[10px] font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            Cores, Borda & Profundidade 3D
+                          </label>
+                          <span className="text-[9px] font-mono text-stone-400">Personalizado</span>
+                        </div>
+
+                        {/* Profundidade / Sombra 3D */}
+                        <div>
+                          <label className="block text-[9px] font-mono uppercase text-stone-400 mb-1">
+                            Efeito de Sombra & Profundidade 3D
+                          </label>
+                          <select
+                            value={btn.shadowDepth || 'profunda_3d'}
+                            onChange={(e) => {
+                              const updated = [...props.buttons]
+                              updated[idx].shadowDepth = e.target.value as any
+                              if (e.target.value === 'plana') {
+                                updated[idx].customShadow = 'none'
+                              } else {
+                                updated[idx].customShadow = ''
+                              }
+                              props.setButtons(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-[11px] focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="profunda_3d">💎 Luxo 3D Profundo (Recomendado)</option>
+                            <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                            <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                            <option value="suave">🔘 Relevo Suave</option>
+                            <option value="plana">⚪ Plana (Sem Sombra)</option>
+                          </select>
+                        </div>
+
+                        {/* Cores Específicas do Botão: Fundo, Texto, Borda */}
+                        <div className="grid grid-cols-3 gap-2 pt-1">
+                          {/* Cor de Fundo */}
+                          <div>
+                            <label className="block text-[8.5px] font-mono uppercase text-stone-400 mb-1">
+                              Fundo
+                            </label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={btn.customBg || props.selectedPalette.card || '#14161c'}
+                                onChange={(e) => {
+                                  const updated = [...props.buttons]
+                                  updated[idx].customBg = e.target.value
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={btn.customBg || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  const updated = [...props.buttons]
+                                  updated[idx].customBg = e.target.value
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Cor do Texto */}
+                          <div>
+                            <label className="block text-[8.5px] font-mono uppercase text-stone-400 mb-1">
+                              Texto
+                            </label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={btn.customText || props.selectedPalette.text || '#ffffff'}
+                                onChange={(e) => {
+                                  const updated = [...props.buttons]
+                                  updated[idx].customText = e.target.value
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={btn.customText || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  const updated = [...props.buttons]
+                                  updated[idx].customText = e.target.value
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Cor da Borda */}
+                          <div>
+                            <label className="block text-[8.5px] font-mono uppercase text-stone-400 mb-1">
+                              Borda
+                            </label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={btn.customBorder || props.selectedPalette.accent || '#e2b857'}
+                                onChange={(e) => {
+                                  const updated = [...props.buttons]
+                                  updated[idx].customBorder = e.target.value
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={btn.customBorder || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  const updated = [...props.buttons]
+                                  updated[idx].customBorder = e.target.value
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Atalhos Rápidos de Paleta para o Botão */}
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[8.5px] font-mono text-stone-400">Predefinições rápidas:</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...props.buttons]
+                                updated[idx].customBg = props.selectedPalette.accent
+                                updated[idx].customText = props.selectedPalette.buttonText || '#000000'
+                                updated[idx].customBorder = 'rgba(255,255,255,0.45)'
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold border border-white/20 text-stone-950"
+                              style={{ backgroundColor: props.selectedPalette.accent }}
+                            >
+                              Destaque
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...props.buttons]
+                                updated[idx].customBg = '#ffffff'
+                                updated[idx].customText = '#000000'
+                                updated[idx].customBorder = 'rgba(0,0,0,0.1)'
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-white text-black border border-stone-300"
+                            >
+                              Branco
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...props.buttons]
+                                updated[idx].customBg = '#000000'
+                                updated[idx].customText = '#ffffff'
+                                updated[idx].customBorder = 'rgba(255,255,255,0.2)'
+                                props.setButtons(updated)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-black text-white border border-stone-800"
+                            >
+                              Preto
+                            </button>
+                            {(btn.customBg || btn.customText || btn.customBorder || btn.shadowDepth) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...props.buttons]
+                                  delete updated[idx].customBg
+                                  delete updated[idx].customText
+                                  delete updated[idx].customBorder
+                                  delete updated[idx].customShadow
+                                  delete updated[idx].shadowDepth
+                                  props.setButtons(updated)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="text-[8px] font-mono text-stone-400 hover:text-amber-400 underline ml-1 cursor-pointer"
+                              >
+                                Redefinir
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
                   </div>
@@ -1408,6 +1614,207 @@ export default function EditorInspectorColumn({
                         }}
                         className="w-full p-2.5 rounded-xl bg-stone-900 text-stone-100 border border-stone-800 text-xs font-bold"
                       />
+                    </div>
+
+                    {/* Personalização Visual do Catálogo (Cores dos Cards e Botões) */}
+                    <div className="p-3.5 rounded-2xl bg-stone-950/80 border border-stone-800/80 space-y-3">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
+                        <label className="text-[10.5px] font-mono uppercase text-amber-300 font-bold flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                          Cores dos Cards & Botões do Catálogo
+                        </label>
+                        <span className="text-[9px] font-mono text-stone-400">Tempo real</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {/* 1. Fundo dos Cards de Procedimento */}
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            Fundo dos Cards
+                          </label>
+                          <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5">
+                            <input
+                              type="color"
+                              value={props.servicesCatalogData.customCardBg || props.selectedPalette.card || '#14161c'}
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customCardBg: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                            />
+                            <input
+                              type="text"
+                              value={props.servicesCatalogData.customCardBg || ''}
+                              placeholder="Auto (Paleta)"
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customCardBg: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full bg-transparent text-[10px] font-mono text-stone-200 outline-none uppercase"
+                            />
+                          </div>
+                        </div>
+
+                        {/* 2. Cor do Título/Texto */}
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            Texto dos Cards
+                          </label>
+                          <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5">
+                            <input
+                              type="color"
+                              value={props.servicesCatalogData.customTextColor || '#ffffff'}
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customTextColor: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                            />
+                            <input
+                              type="text"
+                              value={props.servicesCatalogData.customTextColor || ''}
+                              placeholder="#ffffff"
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customTextColor: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full bg-transparent text-[10px] font-mono text-stone-200 outline-none uppercase"
+                            />
+                          </div>
+                        </div>
+
+                        {/* 3. Cor da Borda do Card */}
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            Borda dos Cards
+                          </label>
+                          <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5">
+                            <input
+                              type="color"
+                              value={props.servicesCatalogData.customBorderColor || props.selectedPalette.accent || '#e2b857'}
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customBorderColor: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                            />
+                            <input
+                              type="text"
+                              value={props.servicesCatalogData.customBorderColor || ''}
+                              placeholder="Auto (Accent)"
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customBorderColor: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full bg-transparent text-[10px] font-mono text-stone-200 outline-none uppercase"
+                            />
+                          </div>
+                        </div>
+
+                        {/* 4. Cor do Botão de Agendamento */}
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            Botão Agendar (Fundo)
+                          </label>
+                          <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5">
+                            <input
+                              type="color"
+                              value={props.servicesCatalogData.customBtnBg || props.selectedPalette.accent || '#e2b857'}
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customBtnBg: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                            />
+                            <input
+                              type="text"
+                              value={props.servicesCatalogData.customBtnBg || ''}
+                              placeholder="Auto (Accent)"
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customBtnBg: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full bg-transparent text-[10px] font-mono text-stone-200 outline-none uppercase"
+                            />
+                          </div>
+                        </div>
+
+                        {/* 5. Cor do Texto do Botão */}
+                        <div className="col-span-2">
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            Texto do Botão Agendar
+                          </label>
+                          <div className="flex items-center gap-2 bg-stone-900 border border-stone-800 rounded-lg p-1.5">
+                            <input
+                              type="color"
+                              value={props.servicesCatalogData.customBtnText || props.selectedPalette.buttonText || '#000000'}
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customBtnText: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0"
+                            />
+                            <input
+                              type="text"
+                              value={props.servicesCatalogData.customBtnText || ''}
+                              placeholder="Auto"
+                              onChange={(e) => {
+                                props.setServicesCatalogData({
+                                  ...props.servicesCatalogData,
+                                  customBtnText: e.target.value
+                                })
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="w-full bg-transparent text-[10px] font-mono text-stone-200 outline-none uppercase"
+                            />
+                            {(props.servicesCatalogData.customCardBg || props.servicesCatalogData.customTextColor || props.servicesCatalogData.customBorderColor || props.servicesCatalogData.customBtnBg || props.servicesCatalogData.customBtnText) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const reset = { ...props.servicesCatalogData }
+                                  delete reset.customCardBg
+                                  delete reset.customTextColor
+                                  delete reset.customBorderColor
+                                  delete reset.customBtnBg
+                                  delete reset.customBtnText
+                                  props.setServicesCatalogData(reset)
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="px-2 py-1 rounded bg-stone-800 text-stone-400 hover:text-amber-400 text-[9px] font-mono shrink-0 cursor-pointer"
+                              >
+                                Redefinir
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
@@ -2446,6 +2853,111 @@ export default function EditorInspectorColumn({
                         placeholder="Subtítulo..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs"
                       />
+
+                      {/* Cores do Módulo de Urgência */}
+                      <div className="pt-2 border-t border-white/5 space-y-2">
+                        <label className="text-[9.5px] font-mono uppercase text-amber-300 font-bold block">
+                          Cores do Banner de Urgência
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Fundo</label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.urgencyData.customBg || props.selectedPalette.card || '#14161c'}
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.urgencyData.customBg || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Texto</label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.urgencyData.customTextColor || '#fcd34d'}
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customTextColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.urgencyData.customTextColor || ''}
+                                placeholder="#fcd34d"
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customTextColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Borda</label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.urgencyData.customBorderColor || props.selectedPalette.accent || '#f59e0b'}
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.urgencyData.customBorderColor || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Cronômetro</label>
+                            <div className="flex items-center gap-1.5 bg-stone-900 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.urgencyData.customAccentColor || '#fcd34d'}
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customAccentColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.urgencyData.customAccentColor || ''}
+                                placeholder="#fcd34d"
+                                onChange={(e) => {
+                                  props.setUrgencyData({ ...props.urgencyData, customAccentColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9.5px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -15,6 +15,9 @@ export interface ProjectButton {
   variant?: 'accent' | 'default' | 'card' | 'gold' | 'glass'
   customBg?: string
   customText?: string
+  customBorder?: string
+  customShadow?: string
+  shadowDepth?: 'profunda_3d' | 'elevada_luxo' | 'neon_glow' | 'suave' | 'plana'
   bgImage?: string
   imagePosition?: 'none' | 'left' | 'right' | 'cover'
   cardImage?: string
@@ -102,7 +105,11 @@ export interface Project {
     enabled: boolean
     headline: string
     subtitle: string
-    minutes: number
+    minutes?: number
+    customBg?: string
+    customTextColor?: string
+    customBorderColor?: string
+    customAccentColor?: string
   }
   qualifierQuiz?: {
     enabled: boolean
@@ -128,6 +135,11 @@ export interface Project {
     subtitle?: string
     categories: string[]
     items: ServiceItem[]
+    customCardBg?: string
+    customTextColor?: string
+    customBorderColor?: string
+    customBtnBg?: string
+    customBtnText?: string
   }
   locationInfo?: {
     enabled: boolean

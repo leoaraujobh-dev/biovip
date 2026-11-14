@@ -155,29 +155,31 @@ export default function EditorCanvasColumn({
 
                   {/* Avaliações Google */}
                   <div className="mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono">
-                    <span>â˜…â˜…â˜…â˜…★</span>
+                    <span>★★★★★</span>
                     <span className="opacity-80">{props.rating} ({props.reviewsCount})</span>
                   </div>
 
                   {/* Barra Rápida (WhatsApp & Agendar) */}
                   <div className="w-full grid grid-cols-2 gap-1.5 mt-2">
                     <div
-                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1"
+                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1 shadow-md"
                       style={{
                         backgroundColor: `${props.selectedPalette.card}cc`,
                         borderColor: `${props.selectedPalette.accent}33`,
-                        color: props.selectedPalette.text
+                        color: props.selectedPalette.text,
+                        boxShadow: '0 4px 12px -1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)'
                       }}
                     >
                       <MessageCircle className="w-2.5 h-2.5 text-emerald-400" />
                       <span>WhatsApp</span>
                     </div>
                     <div
-                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1"
+                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1 shadow-md"
                       style={{
                         backgroundColor: props.selectedPalette.accent,
-                        borderColor: 'transparent',
-                        color: props.selectedPalette.buttonText || '#000'
+                        borderColor: 'rgba(255,255,255,0.3)',
+                        color: props.selectedPalette.buttonText || '#000',
+                        boxShadow: '0 4px 12px -1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.22)'
                       }}
                     >
                       <span>Agendar VIP</span>
@@ -189,14 +191,18 @@ export default function EditorCanvasColumn({
                     <div
                       className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left"
                       style={{
-                        backgroundColor: `${props.selectedPalette.card}ee`,
-                        borderColor: `${props.selectedPalette.accent}40`
+                        backgroundColor: props.urgencyData.customBg || `${props.selectedPalette.card}ee`,
+                        borderColor: props.urgencyData.customBorderColor || `${props.selectedPalette.accent}40`,
+                        boxShadow: '0 8px 22px -3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)'
                       }}
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
                         <Flame className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
                         <div className="min-w-0">
-                          <p className="text-[8px] font-bold text-amber-300 font-mono truncate">
+                          <p
+                            className="text-[8px] font-bold font-mono truncate"
+                            style={{ color: props.urgencyData.customTextColor || '#fcd34d' }}
+                          >
                             {props.urgencyData.headline}
                           </p>
                           <p className="text-[7px] text-stone-400 truncate">
@@ -204,7 +210,13 @@ export default function EditorCanvasColumn({
                           </p>
                         </div>
                       </div>
-                      <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/50 text-amber-300 shrink-0">
+                      <span
+                        className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/50 shrink-0 border"
+                        style={{
+                          color: props.urgencyData.customAccentColor || '#fcd34d',
+                          borderColor: props.urgencyData.customAccentColor ? `${props.urgencyData.customAccentColor}50` : 'rgba(251, 191, 36, 0.3)'
+                        }}
+                      >
                         14:52
                       </span>
                     </div>
@@ -227,6 +239,17 @@ export default function EditorCanvasColumn({
                       let cardBg = props.selectedPalette.card || '#14161c'
                       let cardBorder = isHigh ? props.selectedPalette.accent : `${props.selectedPalette.accent}33`
                       let textColor = props.selectedPalette.text
+                      let cardShadow = '0 10px 25px -3px rgba(0,0,0,0.65), 0 4px 6px -2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)'
+
+                      if (btn.shadowDepth === 'elevada_luxo') {
+                        cardShadow = '0 16px 36px -4px rgba(0,0,0,0.75), 0 6px 12px -2px rgba(0,0,0,0.45), inset 0 1px 1px 0 rgba(255,255,255,0.25)'
+                      } else if (btn.shadowDepth === 'neon_glow') {
+                        cardShadow = `0 10px 25px -3px rgba(0,0,0,0.6), 0 0 18px 2px ${props.selectedPalette.accent || '#e2b857'}55, inset 0 1px 0 rgba(255,255,255,0.2)`
+                      } else if (btn.shadowDepth === 'suave') {
+                        cardShadow = '0 6px 16px -2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
+                      } else if (btn.shadowDepth === 'plana') {
+                        cardShadow = 'none'
+                      }
 
                       if (btn.customBg) {
                         cardBg = btn.customBg
@@ -237,18 +260,22 @@ export default function EditorCanvasColumn({
                       } else if (props.buttonStyle === 'vidro_glamour' || props.buttonStyle === 'vidro') {
                         cardBg = 'rgba(255, 255, 255, 0.08)'
                         cardBorder = 'rgba(255, 255, 255, 0.22)'
+                        cardShadow = '0 12px 32px 0 rgba(0,0,0,0.4), inset 0 1px 1px 0 rgba(255,255,255,0.25)'
                       }
 
                       if (btn.customText) textColor = btn.customText
+                      if (btn.customBorder) cardBorder = btn.customBorder
+                      if (btn.customShadow) cardShadow = btn.customShadow
 
                       return (
                         <div
                           key={btn.id}
-                          className={`w-full p-2 rounded-xl border text-left flex items-center justify-between gap-1.5 shadow-sm transition relative overflow-hidden ${animClass}`}
+                          className={`w-full p-2 rounded-xl border text-left flex items-center justify-between gap-1.5 transition relative overflow-hidden ${animClass}`}
                           style={{
                             backgroundColor: cardBg,
                             borderColor: cardBorder,
-                            color: textColor
+                            color: textColor,
+                            boxShadow: cardShadow
                           }}
                         >
                           {/* Efeito Shimmer */}
@@ -467,8 +494,9 @@ export default function EditorCanvasColumn({
                                   key={srv.id}
                                   className="p-2 rounded-xl border space-y-1.5 text-left transition overflow-hidden"
                                   style={{
-                                    backgroundColor: `${props.selectedPalette.card}cc`,
-                                    borderColor: `${props.selectedPalette.accent}25`
+                                    backgroundColor: props.servicesCatalogData.customCardBg || `${props.selectedPalette.card}cc`,
+                                    borderColor: props.servicesCatalogData.customBorderColor || `${props.selectedPalette.accent}25`,
+                                    boxShadow: '0 8px 20px -3px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'
                                   }}
                                 >
                                   {/* Imagem Maior de Destaque no Preview */}
@@ -498,7 +526,10 @@ export default function EditorCanvasColumn({
                                   </div>
 
                                   <div>
-                                    <h5 className="text-[9.5px] font-bold text-white leading-tight">
+                                    <h5
+                                      className="text-[9.5px] font-bold leading-tight"
+                                      style={{ color: props.servicesCatalogData.customTextColor || '#ffffff' }}
+                                    >
                                       {srv.name}
                                     </h5>
                                     {srv.description && (
@@ -513,10 +544,11 @@ export default function EditorCanvasColumn({
                                       {srv.price}
                                     </span>
                                     <span
-                                      className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-sm"
+                                      className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-md"
                                       style={{
-                                        backgroundColor: props.selectedPalette.accent,
-                                        color: props.selectedPalette.buttonText || '#000'
+                                        backgroundColor: props.servicesCatalogData.customBtnBg || props.selectedPalette.accent,
+                                        color: props.servicesCatalogData.customBtnText || props.selectedPalette.buttonText || '#000',
+                                        boxShadow: '0 4px 12px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)'
                                       }}
                                     >
                                       <span>Reservar</span>
@@ -532,8 +564,9 @@ export default function EditorCanvasColumn({
                                 key={srv.id}
                                 className="p-2 rounded-xl border space-y-1 text-left transition"
                                 style={{
-                                  backgroundColor: `${props.selectedPalette.card}cc`,
-                                  borderColor: `${props.selectedPalette.accent}25`
+                                  backgroundColor: props.servicesCatalogData.customCardBg || `${props.selectedPalette.card}cc`,
+                                  borderColor: props.servicesCatalogData.customBorderColor || `${props.selectedPalette.accent}25`,
+                                  boxShadow: '0 8px 20px -3px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'
                                 }}
                               >
                                 <div className="flex items-start gap-1.5">
@@ -559,7 +592,10 @@ export default function EditorCanvasColumn({
                                             {srv.badge}
                                           </span>
                                         )}
-                                        <h5 className="text-[9px] font-bold text-white leading-tight">
+                                        <h5
+                                          className="text-[9px] font-bold leading-tight"
+                                          style={{ color: props.servicesCatalogData.customTextColor || '#ffffff' }}
+                                        >
                                           {srv.name}
                                         </h5>
                                       </div>
@@ -581,10 +617,11 @@ export default function EditorCanvasColumn({
                                     {srv.price}
                                   </span>
                                   <span
-                                    className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-sm"
+                                    className="py-0.5 px-2 rounded text-[7px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-0.5 shadow-md"
                                     style={{
-                                      backgroundColor: props.selectedPalette.accent,
-                                      color: props.selectedPalette.buttonText || '#000'
+                                      backgroundColor: props.servicesCatalogData.customBtnBg || props.selectedPalette.accent,
+                                      color: props.servicesCatalogData.customBtnText || props.selectedPalette.buttonText || '#000',
+                                      boxShadow: '0 4px 12px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)'
                                     }}
                                   >
                                     <span>Reservar</span>
@@ -853,7 +890,7 @@ export default function EditorCanvasColumn({
                         </span>
                         <span className="text-[7.5px] font-mono text-amber-400 font-bold flex items-center gap-0.5">
                           <span>5.0</span>
-                          <span>â˜…â˜…â˜…â˜…★</span>
+                          <span>★★★★★</span>
                         </span>
                       </div>
                       <div className="space-y-1.5">
@@ -867,7 +904,7 @@ export default function EditorCanvasColumn({
                             }}
                           >
                             <div className="flex items-center justify-between text-amber-400 text-[8px]">
-                              <span>â˜…â˜…â˜…â˜…★</span>
+                              <span>★★★★★</span>
                               <span className="text-[6.5px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
                                 ✓ Verificado
                               </span>
