@@ -910,8 +910,8 @@ export default function BioSiteClient({
     }
   ]
 
-  const rawGallery = modelData?.galleryConfig || modelData?.studentGrid
-  const galleryListFallback: string[] = modelData?.galleryPhotosList || modelData?.galleryPhotos || (Array.isArray(modelData?.portfolioGallery) ? modelData?.portfolioGallery : modelData?.portfolioGallery?.items) || []
+  const rawGallery = modelData?.galleryConfig || modelData?.studentGrid || modelData?.pixels?.galleryConfig
+  const galleryListFallback: string[] = modelData?.galleryPhotosList || modelData?.galleryPhotos || modelData?.pixels?.galleryPhotosList || (Array.isArray(modelData?.portfolioGallery) ? modelData?.portfolioGallery : modelData?.portfolioGallery?.items) || []
 
   const galleryConfig = {
     enabled: rawGallery?.enabled !== false,

@@ -388,14 +388,19 @@ export default function ContaClient() {
         if (parsed.testimonialsList) setTestimonialsData(parsed.testimonialsList)
         if (parsed.aboutMeSection) setAboutMeData(parsed.aboutMeSection)
         if (parsed.faqList) setFaqData(parsed.faqList)
-        if (parsed.galleryConfig) {
-          setGalleryConfig(parsed.galleryConfig)
-          if (parsed.galleryConfig.photos && Array.isArray(parsed.galleryConfig.photos)) {
-            setGalleryPhotos(parsed.galleryConfig.photos)
+        const gConfig = parsed.galleryConfig || parsed.pixels?.galleryConfig
+        const gPhotos = parsed.galleryPhotosList || parsed.pixels?.galleryPhotosList || gConfig?.photos
+        if (gConfig) {
+          setGalleryConfig(gConfig)
+          if (gConfig.photos && Array.isArray(gConfig.photos)) {
+            setGalleryPhotos(gConfig.photos)
+          } else if (gPhotos && Array.isArray(gPhotos)) {
+            setGalleryPhotos(gPhotos)
+            setGalleryConfig((prev: any) => ({ ...prev, photos: gPhotos }))
           }
-        } else if (parsed.galleryPhotosList && Array.isArray(parsed.galleryPhotosList)) {
-          setGalleryPhotos(parsed.galleryPhotosList)
-          setGalleryConfig(prev => ({ ...prev, photos: parsed.galleryPhotosList }))
+        } else if (gPhotos && Array.isArray(gPhotos)) {
+          setGalleryPhotos(gPhotos)
+          setGalleryConfig((prev: any) => ({ ...prev, photos: gPhotos }))
         }
         if (parsed.subpages && parsed.subpages.length > 0) {
           setAdditionalPages(parsed.subpages.map((sp: any, idx: number) => ({

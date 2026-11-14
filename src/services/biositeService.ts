@@ -58,6 +58,10 @@ export async function getBioSite(slug: string): Promise<any | null> {
         .single()
 
       if (!error && data) {
+        const galleryConfig = data.pixels?.galleryConfig || (data as any).gallery_config || null
+        const galleryPhotosList = data.pixels?.galleryPhotosList || (data as any).gallery_photos_list || galleryConfig?.photos || []
+        const customPalette = data.pixels?.customPalette || null
+
         // Converte os nomes de colunas do banco (snake_case) para o formato do app (camelCase)
         const formatted = {
           slug: data.slug,
@@ -68,6 +72,7 @@ export async function getBioSite(slug: string): Promise<any | null> {
           monogram: data.monogram,
           photo: data.photo,
           paletteId: data.palette_id,
+          customPalette: customPalette,
           typographyId: data.typography_id,
           buttonStyle: data.button_style,
           buttonAnimation: data.button_animation,
@@ -83,7 +88,8 @@ export async function getBioSite(slug: string): Promise<any | null> {
           testimonialsList: data.testimonials_list || [],
           aboutMeSection: data.about_me_section,
           faqList: data.faq_list || [],
-          galleryPhotosList: data.gallery_photos_list || [],
+          galleryConfig: galleryConfig,
+          galleryPhotosList: galleryPhotosList,
           pixels: data.pixels,
           subpages: data.subpages || [],
           updatedAt: data.updated_at
@@ -167,7 +173,12 @@ export async function saveBioSite(slug: string, siteData: any): Promise<{ succes
         testimonials_list: cleanSiteData.testimonialsList || [],
         about_me_section: cleanSiteData.aboutMeSection || null,
         faq_list: cleanSiteData.faqList || [],
-        pixels: cleanSiteData.pixels || null,
+        pixels: {
+          ...(typeof cleanSiteData.pixels === 'object' && cleanSiteData.pixels !== null ? cleanSiteData.pixels : {}),
+          galleryConfig: cleanSiteData.galleryConfig || null,
+          galleryPhotosList: cleanSiteData.galleryPhotosList || cleanSiteData.galleryPhotos || cleanSiteData.galleryConfig?.photos || [],
+          customPalette: cleanSiteData.customPalette || null
+        },
         subpages: cleanSiteData.subpages || [],
         updated_at: new Date().toISOString()
       }

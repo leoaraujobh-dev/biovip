@@ -1,7 +1,8 @@
 'use client'
 
-import React from 'react'
-import { ExternalLink, Save, Camera, Plus, Trash2 } from 'lucide-react'
+import React, { useRef } from 'react'
+import { ExternalLink, Save, Camera, Plus, Trash2, Upload } from 'lucide-react'
+import { compressImageFile } from '@/utils/imageProcessors'
 
 interface ClientGalleryTabProps {
   slug: string
@@ -142,24 +143,56 @@ export default function ClientGalleryTab({
                         </p>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentPhotos = galleryConfig.photos || galleryPhotos
-                          const currentCaptions = galleryConfig.captions || []
-                          const newUrl = 'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80'
-                          const newCaption = 'Procedimento exclusivo com acabamento de luxo'
-                          const updatedPhotos = [...currentPhotos, newUrl]
-                          const updatedCaptions = [...currentCaptions, newCaption]
-                          setGalleryPhotos(updatedPhotos)
-                          setGalleryConfig((prev: any) => ({ ...prev, photos: updatedPhotos, captions: updatedCaptions }))
-                          setHasUnsavedChanges(true)
-                        }}
-                        className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4 text-amber-400" />
-                        <span>Adicionar Nova Foto</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {/* Botão Enviar Foto do Computador */}
+                        <label className="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                          <Upload className="w-4 h-4 text-stone-950" />
+                          <span>Enviar do Computador</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              try {
+                                const base64 = await compressImageFile(file, 1200, 0.88)
+                                if (base64) {
+                                  const currentPhotos = galleryConfig.photos || galleryPhotos
+                                  const currentCaptions = galleryConfig.captions || []
+                                  const updatedPhotos = [...currentPhotos, base64]
+                                  const updatedCaptions = [...currentCaptions, 'Registro de atendimento']
+                                  setGalleryPhotos(updatedPhotos)
+                                  setGalleryConfig((prev: any) => ({ ...prev, photos: updatedPhotos, captions: updatedCaptions }))
+                                  setHasUnsavedChanges(true)
+                                }
+                              } catch (err) {
+                                console.error('Erro ao processar imagem:', err)
+                              }
+                              e.target.value = ''
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentPhotos = galleryConfig.photos || galleryPhotos
+                            const currentCaptions = galleryConfig.captions || []
+                            const newUrl = 'https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=800&q=80'
+                            const newCaption = 'Procedimento exclusivo com acabamento de luxo'
+                            const updatedPhotos = [...currentPhotos, newUrl]
+                            const updatedCaptions = [...currentCaptions, newCaption]
+                            setGalleryPhotos(updatedPhotos)
+                            setGalleryConfig((prev: any) => ({ ...prev, photos: updatedPhotos, captions: updatedCaptions }))
+                            setHasUnsavedChanges(true)
+                          }}
+                          className="px-3.5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4 text-amber-400" />
+                          <span>Adicionar Link</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -199,6 +232,35 @@ export default function ClientGalleryTab({
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
+
+                                <label
+                                  className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-amber-500 text-white hover:text-black transition cursor-pointer"
+                                  title="Substituir por foto do computador"
+                                >
+                                  <Camera className="w-3.5 h-3.5" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0]
+                                      if (!file) return
+                                      try {
+                                        const base64 = await compressImageFile(file, 1200, 0.88)
+                                        if (base64) {
+                                          const currentPhotos = [...(galleryConfig.photos || galleryPhotos)]
+                                          currentPhotos[idx] = base64
+                                          setGalleryPhotos(currentPhotos)
+                                          setGalleryConfig((prev: any) => ({ ...prev, photos: currentPhotos }))
+                                          setHasUnsavedChanges(true)
+                                        }
+                                      } catch (err) {
+                                        console.error('Erro ao substituir foto:', err)
+                                      }
+                                      e.target.value = ''
+                                    }}
+                                  />
+                                </label>
                               </div>
 
                               <div>
