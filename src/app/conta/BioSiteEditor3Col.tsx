@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import EditorNavColumn from './editor/EditorNavColumn'
@@ -657,6 +657,9 @@ export default function BioSiteEditor3Col(props: BioSiteEditorProps) {
         <EditorCanvasColumn
           props={props}
           mobileMode={mobileMode}
+          setMobileMode={setMobileMode}
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
           previewViewport={previewViewport}
           previewFaqOpenIndex={previewFaqOpenIndex}
           setPreviewFaqOpenIndex={setPreviewFaqOpenIndex}

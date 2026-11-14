@@ -1404,7 +1404,7 @@ export default function BioSiteClient({
                     {renderBtnIcon(btn.icon)}
                   </div>
                   <div className="text-left overflow-hidden flex-1 min-w-0">
-                    <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider font-mono truncate">
+                    <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider font-sans truncate">
                       {titleText}
                     </div>
                     {subtitleText && (
@@ -1428,7 +1428,7 @@ export default function BioSiteClient({
 
                   {ctaAction && (
                     <span
-                      className="px-2 py-0.5 rounded-full text-[8.5px] font-mono font-bold uppercase tracking-wider border shadow-sm hidden sm:inline-block"
+                      className="px-2 py-0.5 rounded-full text-[8.5px] font-sans font-bold uppercase tracking-wider border shadow-sm hidden sm:inline-block"
                       style={{
                         backgroundColor: `${palette.accent}25`,
                         borderColor: `${palette.accent}50`,
@@ -1683,7 +1683,7 @@ export default function BioSiteClient({
                                   prev.includes(srv.id) ? prev.filter(id => id !== srv.id) : [...prev, srv.id]
                                 )
                               }}
-                              className={`py-1.5 px-2.5 rounded-xl text-[9px] font-mono font-bold uppercase transition flex items-center gap-1 border cursor-pointer active:scale-95 shadow-sm ${
+                              className={`py-1.5 px-2.5 rounded-xl text-[9px] font-sans font-bold uppercase transition flex items-center gap-1 border cursor-pointer active:scale-95 shadow-sm ${
                                 selectedServiceIds.includes(srv.id)
                                   ? 'bg-amber-400 text-stone-950 border-amber-300 shadow-sm'
                                   : 'bg-white/5 text-stone-300 border-white/10 hover:border-amber-400/40'
@@ -1709,7 +1709,7 @@ export default function BioSiteClient({
                                 triggerHaptic(14)
                                 handleTrackLead(`Agendar Catálogo (${srv.name})`)
                               }}
-                              className="py-1.5 px-3 rounded-xl text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
+                              className="py-1.5 px-3 rounded-xl text-[10px] font-bold font-sans tracking-wider uppercase transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
                               style={{
                                 backgroundColor: servicesCatalog.customBtnBg || palette.accent,
                                 color: servicesCatalog.customBtnText || palette.buttonText || '#000',
@@ -1801,7 +1801,7 @@ export default function BioSiteClient({
                                 prev.includes(srv.id) ? prev.filter(id => id !== srv.id) : [...prev, srv.id]
                               )
                             }}
-                            className={`py-1 px-2.5 rounded-lg text-[9px] font-mono font-bold uppercase transition flex items-center gap-1 border cursor-pointer active:scale-95 shadow-sm ${
+                            className={`py-1 px-2.5 rounded-lg text-[9px] font-sans font-bold uppercase transition flex items-center gap-1 border cursor-pointer active:scale-95 shadow-sm ${
                               selectedServiceIds.includes(srv.id)
                                 ? 'bg-amber-400 text-stone-950 border-amber-300 shadow-sm'
                                 : 'bg-white/5 text-stone-300 border-white/10 hover:border-amber-400/40'
@@ -1827,7 +1827,7 @@ export default function BioSiteClient({
                               triggerHaptic(14)
                               handleTrackLead(`Agendar Catálogo (${srv.name})`)
                             }}
-                            className="py-1 px-3 rounded-lg text-[10px] font-bold font-mono tracking-wider uppercase transition flex items-center gap-1 shadow-md active:scale-95 cursor-pointer"
+                            className="py-1 px-3 rounded-lg text-[10px] font-bold font-sans tracking-wider uppercase transition flex items-center gap-1 shadow-md active:scale-95 cursor-pointer"
                             style={{
                               backgroundColor: servicesCatalog.customBtnBg || palette.accent,
                               color: servicesCatalog.customBtnText || palette.buttonText || '#000',

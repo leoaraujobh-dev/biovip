@@ -187,7 +187,7 @@ export default function EditorInspectorColumn({
                               <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.card }} />
                               <span className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: pal.accent }} />
                             </div>
-                            <span className={`text-[11px] font-bold block truncate ${isSel ? 'text-amber-300' : 'text-stone-300'}`}>
+                            <span className={`text-[11px] font-bold font-sans antialiased tracking-tight block truncate ${isSel ? 'text-amber-300' : 'text-stone-300'}`}>
                               {pal.name}
                             </span>
                           </button>

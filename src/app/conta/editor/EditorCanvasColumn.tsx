@@ -15,7 +15,8 @@ import {
   ChevronUp,
   ChevronDown,
   Download,
-  Share2
+  Share2,
+  Edit3
 } from 'lucide-react'
 import { BioSiteEditorProps, SectionTabId } from '../BioSiteEditor3Col'
 import { DEMO_PHOTOS } from '@/data/bioSiteDesign'
@@ -23,6 +24,9 @@ import { DEMO_PHOTOS } from '@/data/bioSiteDesign'
 interface EditorCanvasColumnProps {
   props: BioSiteEditorProps
   mobileMode: 'editor' | 'preview'
+  setMobileMode?: (mode: 'editor' | 'preview') => void
+  activeSection?: SectionTabId
+  setActiveSection?: (section: SectionTabId) => void
   previewViewport: 'mobile' | 'desktop'
   previewFaqOpenIndex: number | null
   setPreviewFaqOpenIndex: React.Dispatch<React.SetStateAction<number | null>>
@@ -36,6 +40,9 @@ interface EditorCanvasColumnProps {
 export default function EditorCanvasColumn({
   props,
   mobileMode,
+  setMobileMode,
+  activeSection,
+  setActiveSection,
   previewViewport,
   previewFaqOpenIndex,
   setPreviewFaqOpenIndex,
@@ -45,6 +52,33 @@ export default function EditorCanvasColumn({
   previewLightboxIndex,
   setPreviewLightboxIndex
 }: EditorCanvasColumnProps) {
+  const handleSelectBlock = (section: SectionTabId, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+    }
+    if (setActiveSection) {
+      setActiveSection(section)
+    }
+    if (setMobileMode) {
+      setMobileMode('editor')
+    }
+  }
+
+  const getBlockClass = (sectionId: SectionTabId, extraClass = '') => {
+    const isActive = activeSection === sectionId
+    return `${extraClass} cursor-pointer transition-all duration-200 relative group/block ${
+      isActive
+        ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-black/50 shadow-[0_0_16px_rgba(251,191,36,0.22)]'
+        : 'hover:ring-1 hover:ring-amber-400/80 hover:ring-offset-1 hover:ring-offset-black/30'
+    }`
+  }
+
+  const EditIndicator = ({ label }: { label?: string }) => (
+    <span className="absolute -top-1.5 right-2 opacity-0 group-hover/block:opacity-100 transition-all duration-200 bg-amber-400 text-stone-950 text-[7px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-full shadow-md z-30 flex items-center gap-1 pointer-events-none transform -translate-y-0.5 group-hover/block:translate-y-0">
+      <Edit3 className="w-2 h-2" />
+      <span>{label || 'Editar'}</span>
+    </span>
+  )
   return (
         <section
           className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-6 bg-[#070709] relative overflow-hidden ${
@@ -58,6 +92,12 @@ export default function EditorCanvasColumn({
               background: `radial-gradient(circle at 50% 35%, ${props.selectedPalette.accent}33 0%, transparent 65%)`
             }}
           />
+
+          {/* Dica interativa para o Administrador */}
+          <div className="mb-2 px-3 py-1 rounded-full bg-stone-900/90 border border-amber-400/40 text-stone-200 text-[10px] font-mono flex items-center gap-1.5 shadow-md select-none">
+            <Edit3 className="w-3 h-3 text-amber-400 animate-pulse" />
+            <span>Toque em qualquer bloco para abrir a edição instantânea</span>
+          </div>
 
           {/* Smartphone Frame Mockup */}
           <div
@@ -88,13 +128,16 @@ export default function EditorCanvasColumn({
                 {/* 1. Barra de Anúncio Superior (se ativada) */}
                 {props.announcementData?.enabled && (
                   <div
-                    className="py-1.5 px-3 text-[8px] font-mono font-bold flex items-center justify-center gap-1.5 border-b"
+                    onClick={(e) => handleSelectBlock('vip', e)}
+                    className={getBlockClass('vip', 'py-1.5 px-3 text-[8px] font-mono font-bold flex items-center justify-center gap-1.5 border-b')}
+                    title="Clique para editar a Barra de Anúncio"
                     style={{
                       backgroundColor: `${props.selectedPalette.accent}20`,
                       borderColor: `${props.selectedPalette.accent}40`,
                       color: props.selectedPalette.text
                     }}
                   >
+                    <EditIndicator label="Anúncio" />
                     <span
                       className="px-1.5 py-0.2 rounded-full uppercase text-[7px]"
                       style={{
@@ -109,15 +152,24 @@ export default function EditorCanvasColumn({
                 )}
 
                 {/* Ilha Dinâmica e Registro no Topo */}
-                <div className="relative z-20 pt-2 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase">
+                <div
+                  onClick={(e) => handleSelectBlock('cabecalho', e)}
+                  className="relative z-20 pt-2 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase cursor-pointer group/reg"
+                  title="Clique para editar o Registro Profissional"
+                >
                   <div className="w-14 h-3 bg-black rounded-full mx-auto" />
-                  <span className="font-bold opacity-80 absolute right-4 top-2 text-[8px]">
+                  <span className="font-bold opacity-80 absolute right-4 top-2 text-[8px] group-hover/reg:text-amber-400 transition-colors">
                     {props.registrationCode}
                   </span>
                 </div>
 
                 {/* Foto do Perfil com Efeito de Fusão de Estúdio */}
-                <div className="relative w-full h-40 overflow-hidden -mt-2 select-none shrink-0">
+                <div
+                  onClick={(e) => handleSelectBlock('cabecalho', e)}
+                  className={getBlockClass('cabecalho', 'relative w-full h-40 overflow-hidden -mt-2 select-none shrink-0')}
+                  title="Clique para trocar a Foto de Perfil ou Tratamento"
+                >
+                  <EditIndicator label="Foto & Perfil" />
                   <img
                     src={props.customPhotoSrc || (props.demoGender === 'mulher' ? DEMO_PHOTOS.mulher : DEMO_PHOTOS.homem)}
                     alt={props.businessTitle || props.brandName}
@@ -135,34 +187,51 @@ export default function EditorCanvasColumn({
 
                 {/* Bloco de Informações Principais */}
                 <div className="px-3.5 pt-1 pb-6 flex-1 flex flex-col items-center">
-                  <span
-                    className="text-[8px] font-mono uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border mb-1"
-                    style={{
-                      backgroundColor: `${props.selectedPalette.card}cc`,
-                      color: props.selectedPalette.accent,
-                      borderColor: `${props.selectedPalette.accent}33`
-                    }}
+                  <div
+                    onClick={(e) => handleSelectBlock('cabecalho', e)}
+                    className={getBlockClass('cabecalho', 'w-full flex flex-col items-center py-1 rounded-xl')}
+                    title="Clique para editar Título, Nicho e Nome"
                   >
-                    {props.niche.toUpperCase()}
-                  </span>
+                    <EditIndicator label="Perfil" />
+                    <span
+                      className="text-[8px] font-mono uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full border mb-1"
+                      style={{
+                        backgroundColor: `${props.selectedPalette.card}cc`,
+                        color: props.selectedPalette.accent,
+                        borderColor: `${props.selectedPalette.accent}33`
+                      }}
+                    >
+                      {props.niche.toUpperCase()}
+                    </span>
 
-                  <h3
-                    className="font-bold text-lg leading-tight text-balance"
-                    style={{ fontFamily: props.selectedTypography.cssFont }}
-                  >
-                    {props.businessTitle || props.brandName}
-                  </h3>
+                    <h3
+                      className="font-bold text-lg leading-tight text-balance"
+                      style={{ fontFamily: props.selectedTypography.cssFont }}
+                    >
+                      {props.businessTitle || props.brandName}
+                    </h3>
+                  </div>
 
                   {/* Avaliações Google */}
-                  <div className="mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono">
+                  <div
+                    onClick={(e) => handleSelectBlock('social', e)}
+                    className={getBlockClass('social', 'mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono px-2 py-0.5 rounded-lg')}
+                    title="Clique para editar Avaliações do Google"
+                  >
+                    <EditIndicator label="Avaliações" />
                     <span>★★★★★</span>
                     <span className="opacity-80">{props.rating} ({props.reviewsCount})</span>
                   </div>
 
                   {/* Barra Rápida (WhatsApp & Agendar) */}
-                  <div className="w-full grid grid-cols-2 gap-1.5 mt-2">
+                  <div
+                    onClick={(e) => handleSelectBlock('botoes', e)}
+                    className={getBlockClass('botoes', 'w-full grid grid-cols-2 gap-1.5 mt-2 p-1 rounded-xl')}
+                    title="Clique para editar os Botões de Ação Rápida"
+                  >
+                    <EditIndicator label="Botões" />
                     <div
-                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1 shadow-md"
+                      className="py-1 px-2 rounded-lg border text-[8px] font-sans font-bold flex items-center justify-center gap-1 shadow-md"
                       style={{
                         backgroundColor: `${props.selectedPalette.card}cc`,
                         borderColor: `${props.selectedPalette.accent}33`,
@@ -174,7 +243,7 @@ export default function EditorCanvasColumn({
                       <span>WhatsApp</span>
                     </div>
                     <div
-                      className="py-1 px-2 rounded-lg border text-[8px] font-mono font-bold flex items-center justify-center gap-1 shadow-md"
+                      className="py-1 px-2 rounded-lg border text-[8px] font-sans font-bold flex items-center justify-center gap-1 shadow-md"
                       style={{
                         backgroundColor: props.selectedPalette.accent,
                         borderColor: 'rgba(255,255,255,0.3)',
@@ -189,13 +258,16 @@ export default function EditorCanvasColumn({
                   {/* Banner de Urgência & Cronômetro */}
                   {props.urgencyData?.enabled && (
                     <div
-                      className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left"
+                      onClick={(e) => handleSelectBlock('vip', e)}
+                      className={getBlockClass('vip', 'w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left')}
+                      title="Clique para editar o Módulo de Urgência"
                       style={{
                         backgroundColor: props.urgencyData.customBg || `${props.selectedPalette.card}ee`,
                         borderColor: props.urgencyData.customBorderColor || `${props.selectedPalette.accent}40`,
                         boxShadow: '0 8px 22px -3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)'
                       }}
                     >
+                      <EditIndicator label="Urgência" />
                       <div className="flex items-center gap-1.5 min-w-0">
                         <Flame className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
                         <div className="min-w-0">
@@ -223,7 +295,12 @@ export default function EditorCanvasColumn({
                   )}
 
                   {/* Botões Principais de Ação (Configurações BioVip Oficial) */}
-                  <div className="w-full space-y-1.5 mt-2">
+                  <div
+                    onClick={(e) => handleSelectBlock('botoes', e)}
+                    className={getBlockClass('botoes', 'w-full space-y-1.5 mt-2 p-1 rounded-2xl')}
+                    title="Clique para editar os Botões Principais"
+                  >
+                    <EditIndicator label="Botões" />
                     {props.buttons.map((btn: any, btnIdx: number) => {
                       const isHigh = !!btn.isHighlighted || btn.variant === 'accent' || btnIdx === 0
                       const badgeText = btn.badgeText || btn.highlightBadge || (isHigh ? '⭐ MAIS ESCOLHIDO' : '')
@@ -290,7 +367,7 @@ export default function EditorCanvasColumn({
 
                           {badgeText && (
                             <div
-                              className="absolute -top-1 right-2 px-1.5 py-0.2 rounded-full text-[6.5px] font-mono font-bold uppercase z-10 border shadow"
+                              className="absolute -top-1 right-2 px-1.5 py-0.2 rounded-full text-[6.5px] font-sans font-bold uppercase z-10 border shadow"
                               style={{
                                 backgroundColor: props.selectedPalette.accent,
                                 color: props.selectedPalette.buttonText || '#000',
@@ -309,7 +386,7 @@ export default function EditorCanvasColumn({
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <span className="font-bold text-[9.5px] block leading-tight truncate">
+                              <span className="font-bold text-[9.5px] font-sans block leading-tight truncate">
                                 {titleText}
                               </span>
                               {subtitleText && (
@@ -329,7 +406,7 @@ export default function EditorCanvasColumn({
 
                             {ctaAction && (
                               <span
-                                className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold uppercase border"
+                                className="px-1.5 py-0.5 rounded text-[7px] font-sans font-bold uppercase border"
                                 style={{
                                   backgroundColor: `${props.selectedPalette.accent}20`,
                                   borderColor: `${props.selectedPalette.accent}40`,
@@ -355,16 +432,19 @@ export default function EditorCanvasColumn({
                   {/* Botão de Quiz Anti-curiosos */}
                   {props.quizData?.enabled && (
                     <div
-                      className="w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer"
+                      onClick={(e) => handleSelectBlock('vip', e)}
+                      className={getBlockClass('vip', 'w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer')}
+                      title="Clique para editar o Quiz Anti-curiosos"
                       style={{
                         backgroundColor: `${props.selectedPalette.card}ff`,
                         borderColor: props.selectedPalette.accent,
                         color: props.selectedPalette.text
                       }}
                     >
+                      <EditIndicator label="Quiz" />
                       <div className="flex items-center gap-1.5 min-w-0">
                         <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-                        <span className="text-[8px] font-bold font-mono uppercase truncate">
+                        <span className="text-[8px] font-bold font-sans uppercase truncate">
                           {props.quizData.buttonLabel}
                         </span>
                       </div>
@@ -377,18 +457,21 @@ export default function EditorCanvasColumn({
                   {/* Métricas de Autoridade */}
                   {props.metricsData && props.metricsData.length > 0 && (
                     <div
-                      className="w-full grid grid-cols-3 gap-1 p-2 rounded-xl border mt-2 text-center"
+                      onClick={(e) => handleSelectBlock('social', e)}
+                      className={getBlockClass('social', 'w-full grid grid-cols-3 gap-1 p-2 rounded-xl border mt-2 text-center')}
+                      title="Clique para editar Prova Social e Métricas"
                       style={{
                         backgroundColor: `${props.selectedPalette.card}80`,
                         borderColor: `${props.selectedPalette.accent}20`
                       }}
                     >
+                      <EditIndicator label="Métricas" />
                       {props.metricsData.map((m: any, idx: number) => (
                         <div key={idx}>
                           <div className="font-serif text-[10px] font-bold" style={{ color: props.selectedPalette.accent }}>
                             {m.value}
                           </div>
-                          <div className="text-[6px] font-mono uppercase opacity-70 truncate">
+                          <div className="text-[6px] font-sans uppercase opacity-70 truncate">
                             {m.label}
                           </div>
                         </div>
@@ -398,10 +481,15 @@ export default function EditorCanvasColumn({
 
                   {/* 10. Como Funciona Atendimento */}
                   {props.howItWorksData && props.howItWorksData.length > 0 && (
-                    <div className="w-full mt-3 space-y-1.5 text-left">
+                    <div
+                      onClick={(e) => handleSelectBlock('vip', e)}
+                      className={getBlockClass('vip', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
+                      title="Clique para editar Como Funciona o Atendimento"
+                    >
+                      <EditIndicator label="Passos" />
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: props.selectedPalette.accent }} />
-                        <span className="text-[8px] font-mono uppercase tracking-widest font-bold opacity-80">
+                        <span className="text-[8px] font-sans uppercase tracking-widest font-bold opacity-80">
                           Como Funciona o Atendimento
                         </span>
                       </div>
@@ -437,7 +525,12 @@ export default function EditorCanvasColumn({
 
                   {/* 11. Catálogo Completo de Procedimentos & Preços */}
                   {props.servicesCatalogData?.enabled && props.servicesCatalogData.items && props.servicesCatalogData.items.length > 0 && (
-                    <div className="w-full mt-3 space-y-2 text-left">
+                    <div
+                      onClick={(e) => handleSelectBlock('catalogo', e)}
+                      className={getBlockClass('catalogo', 'w-full mt-3 space-y-2 text-left p-1.5 rounded-2xl')}
+                      title="Clique para editar o Catálogo de Procedimentos"
+                    >
+                      <EditIndicator label="Catálogo" />
                       <div className="flex items-center justify-between">
                         <span
                           className="text-[7.5px] font-mono uppercase tracking-widest font-bold"
@@ -663,7 +756,12 @@ export default function EditorCanvasColumn({
 
                   {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
                   {effectiveGalleryConfig.enabled && effectiveGalleryConfig.photos && effectiveGalleryConfig.photos.length > 0 && (
-                    <div className="w-full mt-3 space-y-1.5 text-left">
+                    <div
+                      onClick={(e) => handleSelectBlock('portfolio', e)}
+                      className={getBlockClass('portfolio', 'w-full mt-3 space-y-1.5 text-left p-1.5 rounded-2xl')}
+                      title="Clique para editar a Galeria de Fotos & Portfólio"
+                    >
+                      <EditIndicator label="Galeria" />
                       <div className="flex items-center justify-between">
                         <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300">
                           {effectiveGalleryConfig.badge || 'PORTFÓLIO & ESTRUTURA VIP'}
@@ -830,7 +928,12 @@ export default function EditorCanvasColumn({
 
                   {/* 13. Localização & Rotas GPS */}
                   {props.locationData?.enabled && (
-                    <div className="w-full mt-3 space-y-1.5 text-left">
+                    <div
+                      onClick={(e) => handleSelectBlock('vip', e)}
+                      className={getBlockClass('vip', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
+                      title="Clique para editar Localização & Horários"
+                    >
+                      <EditIndicator label="Localização" />
                       <div
                         className="p-2.5 rounded-xl border space-y-2"
                         style={{
@@ -839,40 +942,40 @@ export default function EditorCanvasColumn({
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[7px] font-mono uppercase tracking-widest font-bold opacity-75">
+                          <span className="text-[7px] font-sans uppercase tracking-widest font-bold opacity-75">
                             NOSSA LOCALIZAÇÃO
                           </span>
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[7px] font-mono">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[7px] font-sans">
                             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                             {props.locationData.openStatus || 'Aberto Agora'}
                           </span>
                         </div>
 
                         <div className="space-y-0.5">
-                          <div className="text-[9px] font-bold text-white flex items-start gap-1">
+                          <div className="text-[9px] font-bold text-white flex items-start gap-1 font-sans">
                             <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0 mt-0.5" />
                             <span className="line-clamp-2 leading-tight">{props.locationData.address}</span>
                           </div>
-                          <div className="text-[7.5px] text-stone-400 font-mono pl-3.5">
+                          <div className="text-[7.5px] text-stone-400 font-sans pl-3.5">
                             {props.locationData.hours}
                           </div>
                         </div>
 
                         {/* 4 Botões de Rota */}
                         <div className="grid grid-cols-4 gap-1 pt-1">
-                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-sans font-bold flex flex-col items-center justify-center gap-0.5">
                             <Navigation className="w-2 h-2 text-sky-400" />
                             <span>Maps</span>
                           </div>
-                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-sans font-bold flex flex-col items-center justify-center gap-0.5">
                             <Navigation className="w-2 h-2 text-cyan-400" />
                             <span>Waze</span>
                           </div>
-                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-sans font-bold flex flex-col items-center justify-center gap-0.5">
                             <Car className="w-2 h-2 text-white" />
                             <span>Uber</span>
                           </div>
-                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-mono font-bold flex flex-col items-center justify-center gap-0.5">
+                          <div className="py-1 rounded-lg bg-stone-900 border border-stone-800 text-stone-300 text-[7px] font-sans font-bold flex flex-col items-center justify-center gap-0.5">
                             <Copy className="w-2 h-2 text-amber-400" />
                             <span>Copiar</span>
                           </div>
@@ -883,12 +986,17 @@ export default function EditorCanvasColumn({
 
                   {/* 14. Depoimentos de Clientes (Google Reviews) */}
                   {props.testimonialsData && props.testimonialsData.length > 0 && (
-                    <div className="w-full mt-3 space-y-1.5 text-left">
+                    <div
+                      onClick={(e) => handleSelectBlock('social', e)}
+                      className={getBlockClass('social', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
+                      title="Clique para editar Avaliações & Depoimentos"
+                    >
+                      <EditIndicator label="Depoimentos" />
                       <div className="flex items-center justify-between">
-                        <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80">
+                        <span className="text-[7.5px] font-sans uppercase tracking-widest font-bold opacity-80">
                           AVALIAÇÕES NO GOOGLE
                         </span>
-                        <span className="text-[7.5px] font-mono text-amber-400 font-bold flex items-center gap-0.5">
+                        <span className="text-[7.5px] font-sans text-amber-400 font-bold flex items-center gap-0.5">
                           <span>5.0</span>
                           <span>★★★★★</span>
                         </span>
@@ -905,14 +1013,14 @@ export default function EditorCanvasColumn({
                           >
                             <div className="flex items-center justify-between text-amber-400 text-[8px]">
                               <span>★★★★★</span>
-                              <span className="text-[6.5px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
+                              <span className="text-[6.5px] font-sans text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
                                 ✓ Verificado
                               </span>
                             </div>
                             <p className="text-[8px] text-stone-300 font-sans italic leading-snug line-clamp-2">
                               &ldquo;{t.text}&rdquo;
                             </p>
-                            <div className="text-[7px] font-mono text-stone-400">
+                            <div className="text-[7px] font-sans text-stone-400">
                               {t.clientName || t.name} · {t.city || t.role}
                             </div>
                           </div>
@@ -923,7 +1031,12 @@ export default function EditorCanvasColumn({
 
                   {/* 15. Sobre a Especialista */}
                   {props.aboutMeData?.enabled && (
-                    <div className="w-full mt-3 space-y-1 text-left">
+                    <div
+                      onClick={(e) => handleSelectBlock('cabecalho', e)}
+                      className={getBlockClass('cabecalho', 'w-full mt-3 space-y-1 text-left p-1 rounded-xl')}
+                      title="Clique para editar Sobre Mim / Perfil"
+                    >
+                      <EditIndicator label="Sobre Mim" />
                       <div
                         className="p-2.5 rounded-xl border space-y-1"
                         style={{
@@ -948,8 +1061,13 @@ export default function EditorCanvasColumn({
 
                   {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
                   {props.faqData && props.faqData.length > 0 && (
-                    <div className="w-full mt-3 space-y-1 text-left">
-                      <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-0.5">
+                    <div
+                      onClick={(e) => handleSelectBlock('vip', e)}
+                      className={getBlockClass('vip', 'w-full mt-3 space-y-1 text-left p-1 rounded-xl')}
+                      title="Clique para editar Dúvidas Frequentes (FAQ)"
+                    >
+                      <EditIndicator label="FAQ" />
+                      <span className="text-[7.5px] font-sans uppercase tracking-widest font-bold opacity-80 block mb-0.5">
                         DÚVIDAS FREQUENTES
                       </span>
                       <div className="space-y-1">
@@ -966,7 +1084,10 @@ export default function EditorCanvasColumn({
                             >
                               <button
                                 type="button"
-                                onClick={() => setPreviewFaqOpenIndex(isOpen ? null : i)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPreviewFaqOpenIndex(isOpen ? null : i)
+                                }}
                                 className="w-full p-2 text-left flex items-center justify-between text-[8px] font-semibold text-stone-200 hover:text-white transition cursor-pointer"
                               >
                                 <span className="pr-1 leading-snug">{item.question}</span>
@@ -985,19 +1106,29 @@ export default function EditorCanvasColumn({
                   )}
 
                   {/* 17. Salvar Contato (.vcf) & Compartilhar */}
-                  <div className="w-full grid grid-cols-2 gap-1.5 mt-3">
-                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-mono font-bold flex items-center justify-center gap-1 shadow-sm">
+                  <div
+                    onClick={(e) => handleSelectBlock('botoes', e)}
+                    className={getBlockClass('botoes', 'w-full grid grid-cols-2 gap-1.5 mt-3 p-1 rounded-xl')}
+                    title="Clique para editar Contatos e Ações de Rodapé"
+                  >
+                    <EditIndicator label="Contatos" />
+                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-sans font-bold flex items-center justify-center gap-1 shadow-sm">
                       <Download className="w-2.5 h-2.5 text-amber-400" />
                       <span>Salvar Contato</span>
                     </div>
-                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-mono font-bold flex items-center justify-center gap-1 shadow-sm">
+                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-sans font-bold flex items-center justify-center gap-1 shadow-sm">
                       <Share2 className="w-2.5 h-2.5 text-sky-400" />
                       <span>Compartilhar</span>
                     </div>
                   </div>
 
                   {/* 18. Monograma e Assinatura Editorial de Rodapé */}
-                  <div className="mt-4 pb-4 w-full flex flex-col items-center text-center">
+                  <div
+                    onClick={(e) => handleSelectBlock('paleta', e)}
+                    className={getBlockClass('paleta', 'mt-4 pb-4 w-full flex flex-col items-center text-center p-1 rounded-xl')}
+                    title="Clique para editar Identidade, Monograma e Cores"
+                  >
+                    <EditIndicator label="Paleta / Estilo" />
                     <div
                       className="w-10 h-px mb-1.5 opacity-40"
                       style={{ backgroundColor: props.selectedPalette.accent }}
@@ -1008,10 +1139,10 @@ export default function EditorCanvasColumn({
                     >
                       {props.monogram || 'AF'}
                     </span>
-                    <div className="text-[6.5px] font-mono text-stone-500 mt-1">
+                    <div className="text-[6.5px] font-sans text-stone-500 mt-1">
                       © {new Date().getFullYear()} {props.businessTitle || props.brandName}. Todos os direitos reservados.
                     </div>
-                    <div className="text-[6px] font-mono text-stone-500 hover:text-amber-400 transition mt-0.5">
+                    <div className="text-[6px] font-sans text-stone-500 hover:text-amber-400 transition mt-0.5">
                       ✨ Desenvolvido com padrão BioVip
                     </div>
                   </div>
