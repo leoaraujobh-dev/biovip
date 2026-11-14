@@ -38,7 +38,7 @@ import {
   Plus,
   Sliders
 } from 'lucide-react'
-import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES, getShadowStyle } from '@/data/bioSiteDesign'
+import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES, getShadowStyle, isLightPalette } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
 import { getBioSite, trackLead } from '@/services/biositeService'
 import { healMojibake } from '@/utils/textSanitizer'
@@ -745,6 +745,10 @@ export default function BioSiteClient({
     : basePalette
   const globalShadow = modelData?.palette?.moduleShadow || (palette as any)?.moduleShadow || modelData?.moduleShadow || 'profunda_3d'
   const accentColor = palette.accent || '#e2b857'
+  const isLight = isLightPalette(palette)
+  const headingColor = palette.text || (isLight ? '#1c1917' : '#ffffff')
+  const subtextColor = isLight ? 'rgba(0,0,0,0.68)' : 'rgba(255,255,255,0.72)'
+  const subtleBorderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'
   const typography = TYPOGRAPHIES.find(t => t.id === (modelData?.typographyId || 'instrument')) || TYPOGRAPHIES[0]
   const buttonStyle = modelData?.buttonStyle || 'cartao_nobre'
   const buttonAnimation = modelData?.buttonAnimation || 'none'
@@ -1522,7 +1526,7 @@ export default function BioSiteClient({
           <BioSiteScrollReveal direction="up" delay={120} className="px-5 py-3 space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: palette.accent }} />
-              <h3 className="text-[11px] font-mono uppercase tracking-widest font-bold opacity-80">
+              <h3 className="text-[11px] font-mono uppercase tracking-widest font-bold opacity-80" style={{ color: headingColor }}>
                 Como Funciona o Atendimento
               </h3>
             </div>
@@ -1544,10 +1548,10 @@ export default function BioSiteClient({
                     {step.number}
                   </span>
                   <div>
-                    <div className="text-[11px] font-bold text-white mb-0.5">
+                    <div className="text-[11px] font-bold mb-0.5" style={{ color: headingColor }}>
                       {step.title}
                     </div>
-                    <div className="text-[10px] text-stone-400 leading-relaxed font-sans">
+                    <div className="text-[10px] leading-relaxed font-sans" style={{ color: subtextColor }}>
                       {step.description}
                     </div>
                   </div>
@@ -1569,7 +1573,7 @@ export default function BioSiteClient({
                 >
                   CATÁLOGO VIP
                 </span>
-                <h3 className="text-base font-serif font-bold text-white">
+                <h3 className="text-base font-serif font-bold" style={{ color: headingColor }}>
                   {servicesCatalog.headline}
                 </h3>
               </div>
@@ -1588,7 +1592,7 @@ export default function BioSiteClient({
                       className={`px-3 py-1 rounded-xl text-[10px] font-mono tracking-wider uppercase font-semibold transition cursor-pointer whitespace-nowrap border ${
                         isActive
                           ? 'border-transparent text-stone-950 font-bold'
-                          : 'border-white/10 text-stone-400 hover:text-white bg-white/5'
+                          : isLight ? 'border-black/10 text-stone-600 hover:text-black bg-black/5' : 'border-white/10 text-stone-400 hover:text-white bg-white/5'
                       }`}
                       style={{
                         backgroundColor: isActive ? palette.accent : undefined
@@ -1658,21 +1662,21 @@ export default function BioSiteClient({
                         <div className="space-y-1">
                           <h4
                             className="text-sm font-bold leading-tight"
-                            style={{ color: servicesCatalog.customTextColor || '#ffffff' }}
+                            style={{ color: servicesCatalog.customTextColor || headingColor }}
                           >
                             {srv.name}
                           </h4>
                           {srv.description && (
-                            <p className="text-[10.5px] text-stone-300 font-sans leading-relaxed">
+                            <p className="text-[10.5px] font-sans leading-relaxed" style={{ color: subtextColor }}>
                               {srv.description}
                             </p>
                           )}
                         </div>
 
                         {/* Rodapé de Ação: Valor, Simulador e Botão de Agendamento */}
-                        <div className="pt-2 flex items-center justify-between border-t border-white/10 gap-2">
+                        <div className="pt-2 flex items-center justify-between border-t gap-2" style={{ borderColor: subtleBorderColor }}>
                           <div>
-                            <span className="text-[8.5px] font-mono uppercase tracking-wider text-stone-400 block">
+                            <span className="text-[8.5px] font-mono uppercase tracking-wider block" style={{ color: subtextColor }}>
                               Investimento
                             </span>
                             <span className="text-sm font-serif font-bold" style={{ color: palette.accent }}>
@@ -1773,20 +1777,20 @@ export default function BioSiteClient({
                               )}
                               <h4
                                 className="text-xs font-bold leading-tight"
-                                style={{ color: servicesCatalog.customTextColor || '#ffffff' }}
+                                style={{ color: servicesCatalog.customTextColor || headingColor }}
                               >
                                 {srv.name}
                               </h4>
                             </div>
                             {srv.duration && (
-                              <span className="text-[9px] font-mono text-stone-400 flex items-center gap-1 shrink-0">
+                              <span className="text-[9px] font-mono flex items-center gap-1 shrink-0" style={{ color: subtextColor }}>
                                 {srv.duration}
                               </span>
                             )}
                           </div>
 
                           {srv.description && (
-                            <p className="text-[10px] text-stone-400 font-sans leading-relaxed line-clamp-2 mt-1">
+                            <p className="text-[10px] font-sans leading-relaxed line-clamp-2 mt-1" style={{ color: subtextColor }}>
                               {srv.description}
                             </p>
                           )}
@@ -2293,7 +2297,7 @@ export default function BioSiteClient({
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-mono uppercase tracking-widest font-bold opacity-75">
+                <span className="text-[9px] font-mono uppercase tracking-widest font-bold opacity-75" style={{ color: headingColor }}>
                   NOSSA LOCALIZAÇÃO
                 </span>
                 <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-mono ${
@@ -2307,11 +2311,11 @@ export default function BioSiteClient({
               </div>
 
               <div className="space-y-1">
-                <div className="text-xs font-bold text-white flex items-start gap-1.5">
+                <div className="text-xs font-bold flex items-start gap-1.5" style={{ color: headingColor }}>
                   <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                   <span>{locationInfo.address}</span>
                 </div>
-                <div className="text-[10px] text-stone-400 font-mono pl-5">
+                <div className="text-[10px] font-mono pl-5" style={{ color: subtextColor }}>
                   {locationInfo.hours}
                 </div>
               </div>
@@ -2370,7 +2374,7 @@ export default function BioSiteClient({
         {clientModules.reviews !== false && testimonials && testimonials.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80">
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80" style={{ color: headingColor }}>
                 AVALIAÇÕES NO GOOGLE
               </span>
               <span className="text-[9px] font-mono text-amber-400 font-bold flex items-center gap-1">
@@ -2395,10 +2399,10 @@ export default function BioSiteClient({
                       ✓ Verificado
                     </span>
                   </div>
-                  <p className="text-[11px] text-stone-300 font-sans italic leading-relaxed">
+                  <p className="text-[11px] font-sans italic leading-relaxed" style={{ color: isLight ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)' }}>
                     &ldquo;{t.text}&rdquo;
                   </p>
-                  <div className="text-[9px] font-mono text-stone-400">
+                  <div className="text-[9px] font-mono" style={{ color: subtextColor }}>
                     {t.clientName || t.name} · {t.city || t.role}
                   </div>
                 </div>
@@ -2418,10 +2422,10 @@ export default function BioSiteClient({
                 boxShadow: getShadowStyle(aboutMe?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
-              <h4 className="text-xs font-serif font-bold text-white">
+              <h4 className="text-xs font-serif font-bold" style={{ color: headingColor }}>
                 {aboutMe.headline}
               </h4>
-              <p className="text-[10.5px] text-stone-300 font-sans leading-relaxed">
+              <p className="text-[10.5px] font-sans leading-relaxed" style={{ color: subtextColor }}>
                 {aboutMe.paragraph || aboutMe.bio}
               </p>
               {(aboutMe.closingPhrase || aboutMe.quote) && (
@@ -2436,7 +2440,7 @@ export default function BioSiteClient({
         {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
         {clientModules.faq !== false && faq && faq.length > 0 && (
           <BioSiteScrollReveal direction="up" delay={100} className="px-5 py-3 space-y-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-1">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 block mb-1" style={{ color: headingColor }}>
               DÚVIDAS FREQUENTES
             </span>
             <div className="space-y-1.5">
@@ -2455,13 +2459,14 @@ export default function BioSiteClient({
                     <button
                       type="button"
                       onClick={() => setOpenFaqIndex(isOpen ? null : i)}
-                      className="w-full p-3 text-left flex items-center justify-between text-xs font-semibold text-stone-200 hover:text-white transition cursor-pointer"
+                      className="w-full p-3 text-left flex items-center justify-between text-xs font-semibold transition cursor-pointer"
+                      style={{ color: headingColor }}
                     >
                       <span className="pr-2">{item.question}</span>
                       {isOpen ? <ChevronUp className="w-3.5 h-3.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 shrink-0" />}
                     </button>
                     {isOpen && (
-                      <div className="px-3 pb-3 pt-0 text-[10px] text-stone-400 font-sans leading-relaxed border-t border-white/5 animate-fade-in">
+                      <div className="px-3 pb-3 pt-0 text-[10px] font-sans leading-relaxed border-t animate-fade-in" style={{ color: subtextColor, borderColor: subtleBorderColor }}>
                         {item.answer}
                       </div>
                     )}

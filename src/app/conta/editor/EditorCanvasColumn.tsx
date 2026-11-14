@@ -20,7 +20,7 @@ import {
   Sliders
 } from 'lucide-react'
 import { BioSiteEditorProps, SectionTabId } from '../BioSiteEditor3Col'
-import { DEMO_PHOTOS, getShadowStyle } from '@/data/bioSiteDesign'
+import { DEMO_PHOTOS, getShadowStyle, isLightPalette } from '@/data/bioSiteDesign'
 
 interface EditorCanvasColumnProps {
   props: BioSiteEditorProps
@@ -55,6 +55,10 @@ export default function EditorCanvasColumn({
 }: EditorCanvasColumnProps) {
   const globalShadow = props.selectedPalette.moduleShadow || 'profunda_3d'
   const accentColor = props.selectedPalette.accent || '#e2b857'
+  const isLight = isLightPalette(props.selectedPalette)
+  const headingColor = props.selectedPalette.text || (isLight ? '#1c1917' : '#ffffff')
+  const subtextColor = isLight ? 'rgba(0,0,0,0.68)' : 'rgba(255,255,255,0.72)'
+  const subtleBorderColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'
   const [beforeAfterPosition, setBeforeAfterPosition] = useState(50)
 
   const handleSelectBlock = (section: SectionTabId, e?: React.MouseEvent, targetElementId?: string) => {
@@ -531,10 +535,10 @@ export default function EditorCanvasColumn({
                               {step.number}
                             </span>
                             <div className="min-w-0">
-                              <div className="text-[8.5px] font-bold text-white leading-tight">
+                              <div className="text-[8.5px] font-bold leading-tight" style={{ color: headingColor }}>
                                 {step.title}
                               </div>
-                              <div className="text-[7.5px] text-stone-400 leading-snug font-sans line-clamp-2">
+                              <div className="text-[7.5px] leading-snug font-sans line-clamp-2" style={{ color: subtextColor }}>
                                 {step.description}
                               </div>
                             </div>
@@ -563,7 +567,7 @@ export default function EditorCanvasColumn({
                           {props.servicesCatalogData.items.length} procedimentos
                         </span>
                       </div>
-                      <h4 className="text-[11px] font-serif font-bold text-white leading-tight">
+                      <h4 className="text-[11px] font-serif font-bold leading-tight" style={{ color: headingColor }}>
                         {props.servicesCatalogData.headline}
                       </h4>
 
@@ -1045,11 +1049,11 @@ export default function EditorCanvasColumn({
                         </div>
 
                         <div className="space-y-0.5">
-                          <div className="text-[9px] font-bold text-white flex items-start gap-1 font-sans">
+                          <div className="text-[9px] font-bold flex items-start gap-1 font-sans" style={{ color: headingColor }}>
                             <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0 mt-0.5" />
                             <span className="line-clamp-2 leading-tight">{props.locationData.address}</span>
                           </div>
-                          <div className="text-[7.5px] text-stone-400 font-sans pl-3.5">
+                          <div className="text-[7.5px] font-sans pl-3.5" style={{ color: subtextColor }}>
                             {props.locationData.hours}
                           </div>
                         </div>
@@ -1086,7 +1090,7 @@ export default function EditorCanvasColumn({
                     >
                       <EditIndicator label="Depoimentos" />
                       <div className="flex items-center justify-between">
-                        <span className="text-[7.5px] font-sans uppercase tracking-widest font-bold opacity-80">
+                        <span className="text-[7.5px] font-sans uppercase tracking-widest font-bold opacity-80" style={{ color: headingColor }}>
                           AVALIAÇÕES NO GOOGLE
                         </span>
                         <span className="text-[7.5px] font-sans text-amber-400 font-bold flex items-center gap-0.5">
@@ -1110,10 +1114,10 @@ export default function EditorCanvasColumn({
                                 ✓ Verificado
                               </span>
                             </div>
-                            <p className="text-[8px] text-stone-300 font-sans italic leading-snug line-clamp-2">
+                            <p className="text-[8px] font-sans italic leading-snug line-clamp-2" style={{ color: isLight ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)' }}>
                               &ldquo;{t.text}&rdquo;
                             </p>
-                            <div className="text-[7px] font-sans text-stone-400">
+                            <div className="text-[7px] font-sans" style={{ color: subtextColor }}>
                               {t.clientName || t.name} · {t.city || t.role}
                             </div>
                           </div>
@@ -1138,10 +1142,10 @@ export default function EditorCanvasColumn({
                           boxShadow: getShadowStyle(props.aboutMeData?.shadowDepth || globalShadow, undefined, accentColor)
                         }}
                       >
-                        <h5 className="text-[9px] font-serif font-bold text-white">
+                        <h5 className="text-[9px] font-serif font-bold" style={{ color: headingColor }}>
                           {props.aboutMeData.headline}
                         </h5>
-                        <p className="text-[7.5px] text-stone-300 font-sans leading-snug line-clamp-3">
+                        <p className="text-[7.5px] font-sans leading-snug line-clamp-3" style={{ color: subtextColor }}>
                           {props.aboutMeData.paragraph || props.aboutMeData.bio}
                         </p>
                         {(props.aboutMeData.closingPhrase || props.aboutMeData.quote) && (
@@ -1161,7 +1165,7 @@ export default function EditorCanvasColumn({
                       title="Clique para editar Dúvidas Frequentes (FAQ)"
                     >
                       <EditIndicator label="FAQ" />
-                      <span className="text-[7.5px] font-sans uppercase tracking-widest font-bold opacity-80 block mb-0.5">
+                      <span className="text-[7.5px] font-sans uppercase tracking-widest font-bold opacity-80 block mb-0.5" style={{ color: headingColor }}>
                         DÚVIDAS FREQUENTES
                       </span>
                       <div className="space-y-1">
@@ -1183,13 +1187,14 @@ export default function EditorCanvasColumn({
                                   e.stopPropagation()
                                   setPreviewFaqOpenIndex(isOpen ? null : i)
                                 }}
-                                className="w-full p-2 text-left flex items-center justify-between text-[8px] font-semibold text-stone-200 hover:text-white transition cursor-pointer"
+                                className="w-full p-2 text-left flex items-center justify-between text-[8px] font-semibold transition cursor-pointer"
+                                style={{ color: headingColor }}
                               >
                                 <span className="pr-1 leading-snug">{item.question}</span>
                                 {isOpen ? <ChevronUp className="w-2.5 h-2.5 shrink-0" /> : <ChevronDown className="w-2.5 h-2.5 shrink-0" />}
                               </button>
                               {isOpen && (
-                                <div className="px-2 pb-2 pt-0 text-[7.5px] text-stone-400 font-sans leading-snug border-t border-white/5 animate-fade-in">
+                                <div className="px-2 pb-2 pt-0 text-[7.5px] font-sans leading-snug border-t animate-fade-in" style={{ color: subtextColor, borderColor: subtleBorderColor }}>
                                   {item.answer}
                                 </div>
                               )}

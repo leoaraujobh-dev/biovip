@@ -33,22 +33,22 @@ export const PALETTES = [
     bg: '#f7f4ee',
     card: '#ffffff',
     button: '#e8dfd1',
-    buttonText: '#262422',
-    text: '#262422',
-    accent: '#826548',
-    swatches: ['#f7f4ee', '#826548', '#262422']
+    buttonText: '#1a1918',
+    text: '#1a1918',
+    accent: '#5a422d',
+    swatches: ['#f7f4ee', '#5a422d', '#1a1918']
   },
   {
     id: 'clinico_sereno',
     name: 'Clínico sereno',
-    desc: 'Branco com verde-sálvia. Saúde, nutrição, fisioterapia.',
+    desc: 'Branco com verde-sálvia nobre. Saúde, nutrição, fisioterapia.',
     bg: '#f8faf9',
     card: '#ffffff',
-    button: '#5b8271',
+    button: '#2e6b54',
     buttonText: '#ffffff',
-    text: '#1a2e26',
-    accent: '#5b8271',
-    swatches: ['#ffffff', '#5b8271', '#1a2e26']
+    text: '#142920',
+    accent: '#2e6b54',
+    swatches: ['#ffffff', '#2e6b54', '#142920']
   },
   {
     id: 'noturno_vibrante',
@@ -129,10 +129,10 @@ export const PALETTES = [
     bg: '#fcfaf6',
     card: '#ffffff',
     button: '#c59b6d',
-    buttonText: '#ffffff',
-    text: '#221e1a',
-    accent: '#c59b6d',
-    swatches: ['#fcfaf6', '#c59b6d', '#221e1a']
+    buttonText: '#18120c',
+    text: '#1c1917',
+    accent: '#8c6239',
+    swatches: ['#fcfaf6', '#c59b6d', '#1c1917']
   },
   {
     id: 'terracota_mediterraneo',
@@ -140,11 +140,11 @@ export const PALETTES = [
     desc: 'Tom terroso nobre e acolhedor. Gastronomia autoral e bem-estar.',
     bg: '#1c100e',
     card: '#2e1b17',
-    button: '#e07a5f',
+    button: '#b84828',
     buttonText: '#ffffff',
     text: '#ffffff',
-    accent: '#e07a5f',
-    swatches: ['#1c100e', '#e07a5f', '#f4f1de']
+    accent: '#f49774',
+    swatches: ['#1c100e', '#b84828', '#f4f1de']
   },
   {
     id: 'monocromo_grafite',
@@ -274,9 +274,9 @@ export const PALETTES = [
     bg: '#faf8f5',
     card: '#ffffff',
     button: '#c59b6d',
-    buttonText: '#ffffff',
+    buttonText: '#18120c',
     text: '#1c1917',
-    accent: '#b45309',
+    accent: '#8a5a2e',
     swatches: ['#faf8f5', '#c59b6d', '#1c1917']
   },
   {
@@ -285,11 +285,11 @@ export const PALETTES = [
     desc: 'Fundo, cartões, botões, texto e destaques escolhidos por você.',
     bg: '#12151b',
     card: '#1e222b',
-    button: '#3b82f6',
+    button: '#1d4ed8',
     buttonText: '#ffffff',
     text: '#ffffff',
     accent: '#3b82f6',
-    swatches: ['#12151b', '#3b82f6', '#f3f4f6']
+    swatches: ['#12151b', '#1d4ed8', '#f3f4f6']
   }
 ]
 
@@ -572,5 +572,20 @@ export function getShadowStyle(depth?: string, customShadow?: string, accentColo
   // Default: profunda_3d
   return '0 10px 25px -3px rgba(0,0,0,0.65), 0 4px 6px -2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)'
 }
+
+export function isLightPalette(palette?: { bg?: string; card?: string; text?: string } | null): boolean {
+  if (!palette) return false
+  const bg = palette.bg || '#000000'
+  const card = palette.card || '#111111'
+  const getLum = (hex: string) => {
+    if (!hex || typeof hex !== 'string' || !hex.startsWith('#') || hex.length < 7) return 0
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+  }
+  return getLum(bg) > 140 || getLum(card) > 140
+}
+
 
 
