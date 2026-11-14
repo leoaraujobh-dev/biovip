@@ -28,6 +28,7 @@ import { Project, projects as defaultProjects } from '@/data/projects'
 import { PALETTES, TYPOGRAPHIES, DEMO_PHOTOS, BUTTON_STYLES, BUTTON_ANIMATIONS, NICHES_LIST } from '@/data/bioSiteDesign'
 import { generateNicheContent } from '@/utils/aiNicheGenerator'
 import { healMojibake } from '@/utils/textSanitizer'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import {
   BarChart3,
   TrendingUp,
@@ -423,6 +424,100 @@ export default function AdminDashboardClient() {
       setPortfolioList(defaultProjects)
       localStorage.setItem('biovip_portfolio_projects', JSON.stringify(defaultProjects))
     }
+
+    // Sincronização em tempo real de biosites criados na nuvem (Supabase)
+    async function syncCloudBiosites() {
+      if (!isSupabaseConfigured() || !supabase) return
+      try {
+        const { data: cloudBiosites, error } = await supabase.from('biosites').select('*')
+        if (!error && Array.isArray(cloudBiosites) && cloudBiosites.length > 0) {
+          // Atualiza lista de assinaturas para conter todos os biosites criados
+          setSubscriptions((prevSubs) => {
+            const subsSlugs = new Set(prevSubs.map(s => s.slug))
+            const newCloudSubs: Subscription[] = cloudBiosites
+              .filter(cb => !subsSlugs.has(cb.slug))
+              .map(cb => ({
+                id: `sub-cloud-${cb.slug}`,
+                clientName: cb.name || cb.slug,
+                businessName: cb.name || cb.slug,
+                email: `${cb.slug}@biovip.com.br`,
+                whatsapp: cb.whatsapp || '5531991390202',
+                niche: cb.category || cb.role || 'Saúde & Estética',
+                slug: cb.slug,
+                planId: 'pro',
+                planName: 'Profissional',
+                cycle: 'mensal',
+                amount: 49.90,
+                status: 'ativa',
+                paymentMethod: 'pix',
+                startDate: cb.created_at ? cb.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+                bioSiteUrl: `https://biovip.com.br/${cb.slug}`,
+                viewsCount: 15,
+                clicksCount: 5,
+                notes: 'BioSite sincronizado via nuvem Supabase.',
+                isPortfolioModel: false,
+                inPortfolio: true,
+                payments: [
+                  {
+                    id: `pay-${cb.slug}`,
+                    date: new Date().toISOString().split('T')[0],
+                    amount: 49.90,
+                    method: 'pix',
+                    status: 'pago'
+                  }
+                ]
+              }))
+
+            if (newCloudSubs.length > 0) {
+              const updated = [...newCloudSubs, ...prevSubs]
+              localStorage.setItem('biovip_subscriptions', JSON.stringify(updated))
+              return updated
+            }
+            return prevSubs
+          })
+
+          // Atualiza lista de portfólio
+          setPortfolioList((prevProjects) => {
+            const projSlugs = new Set(prevProjects.map(p => p.slug))
+            const newCloudProjects: Project[] = cloudBiosites
+              .filter(cb => !projSlugs.has(cb.slug))
+              .map(cb => ({
+                slug: cb.slug,
+                name: cb.name || cb.slug,
+                role: cb.role || cb.category || 'Atendimento VIP',
+                category: cb.category || 'Beleza & Estética',
+                registrationCode: cb.registration_code || '',
+                image: cb.photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85',
+                photo: cb.photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85',
+                description: cb.about_me_section?.bio || `BioSite oficial de ${cb.name}.`,
+                features: ['Atendimento VIP', 'Agendamento Direto'],
+                link: `https://biovip.com.br/${cb.slug}`,
+                paletteId: cb.palette_id || 'luxo_nude',
+                typographyId: cb.typography_id || 'instrument',
+                buttonStyle: cb.button_style || 'cartao_nobre',
+                buttonAnimation: cb.button_animation || 'none',
+                monogram: cb.monogram || 'BV',
+                stats: { views: '1', clicks: '0', conversion: '0%' },
+                buttons: cb.buttons || [],
+                inPortfolio: true,
+                isPortfolioModel: false
+              }))
+
+            if (newCloudProjects.length > 0) {
+              const updated = [...newCloudProjects, ...prevProjects]
+              localStorage.setItem('biovip_portfolio_projects', JSON.stringify(updated))
+              return updated
+            }
+            return prevProjects
+          })
+        }
+      } catch (err) {
+        console.warn('Erro ao sincronizar biosites do Supabase no Admin:', err)
+      }
+    }
+
+    syncCloudBiosites()
   }, [])
 
   // Salvar no localStorage sempre que mudar

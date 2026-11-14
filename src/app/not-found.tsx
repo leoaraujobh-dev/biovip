@@ -56,6 +56,9 @@ export default function NotFound() {
       .then((cloudSite) => {
         if (cloudSite) {
           setDynamicSite(cloudSite)
+          try {
+            localStorage.setItem('biovip_site_' + path, JSON.stringify(cloudSite))
+          } catch {}
         }
       })
       .finally(() => {
