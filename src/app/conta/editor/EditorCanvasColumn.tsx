@@ -752,30 +752,48 @@ export default function EditorCanvasColumn({
                       </div>
 
                       {/* Tarja de 4 Diferenciais */}
-                      <div
-                        className="p-1.5 rounded-lg border grid grid-cols-2 gap-1 text-[7.5px]"
-                        style={{
-                          backgroundColor: `${props.selectedPalette.card}66`,
-                          borderColor: `${props.selectedPalette.accent}20`
-                        }}
-                      >
-                        <div className="flex items-center gap-1 text-stone-300">
-                          <CreditCard className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                          <span className="truncate">Cartão até 12x</span>
+                      {props.servicesCatalogData?.showAmenities !== false && (
+                        <div
+                          onClick={(e) => handleSelectBlock('catalogo', e, 'block-amenities')}
+                          className={getBlockClass('catalogo', 'w-full p-2 rounded-xl border grid grid-cols-2 gap-1.5 text-[7.5px] cursor-pointer transition relative group mt-2')}
+                          style={{
+                            backgroundColor: props.servicesCatalogData?.amenitiesBg || `${props.selectedPalette.card}88`,
+                            borderColor: props.servicesCatalogData?.amenitiesBorder || `${props.selectedPalette.accent}25`,
+                            boxShadow: getShadowStyle(props.servicesCatalogData?.amenitiesShadowDepth || globalShadow, undefined, accentColor)
+                          }}
+                          title="Clique para editar Selos de Pagamento & Facilidades"
+                        >
+                          <EditIndicator label="Diferenciais" />
+                          <div
+                            className="flex items-center gap-1 font-medium truncate"
+                            style={{ color: props.servicesCatalogData?.amenitiesText || headingColor }}
+                          >
+                            <CreditCard className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                            <span className="truncate">{props.servicesCatalogData?.amenitiesItem1 || 'Cartão até 12x'}</span>
+                          </div>
+                          <div
+                            className="flex items-center gap-1 font-medium truncate"
+                            style={{ color: props.servicesCatalogData?.amenitiesText || headingColor }}
+                          >
+                            <Zap className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                            <span className="truncate">{props.servicesCatalogData?.amenitiesItem2 || 'Pix Instantâneo'}</span>
+                          </div>
+                          <div
+                            className="flex items-center gap-1 font-medium truncate"
+                            style={{ color: props.servicesCatalogData?.amenitiesText || headingColor }}
+                          >
+                            <Car className="w-2.5 h-2.5 text-sky-400 shrink-0" />
+                            <span className="truncate">{props.servicesCatalogData?.amenitiesItem3 || 'Fácil Acesso'}</span>
+                          </div>
+                          <div
+                            className="flex items-center gap-1 font-medium truncate"
+                            style={{ color: props.servicesCatalogData?.amenitiesText || headingColor }}
+                          >
+                            <ShieldCheck className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+                            <span className="truncate">{props.servicesCatalogData?.amenitiesItem4 || 'Espaço VIP'}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 text-stone-300">
-                          <Zap className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                          <span className="truncate">Pix Instantâneo</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-stone-300">
-                          <Car className="w-2.5 h-2.5 text-sky-400 shrink-0" />
-                          <span className="truncate">Fácil Acesso</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-stone-300">
-                          <ShieldCheck className="w-2.5 h-2.5 text-purple-400 shrink-0" />
-                          <span className="truncate">Espaço VIP</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   )}
 

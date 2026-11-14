@@ -1855,30 +1855,45 @@ export default function BioSiteClient({
             </div>
 
             {/* Tarja de 4 Diferenciais */}
-            <div
-              className="p-3 rounded-xl border grid grid-cols-2 gap-2 text-[10px]"
-              style={{
-                backgroundColor: `${palette.card}66`,
-                borderColor: `${palette.accent}20`
-              }}
-            >
-              <div className="flex items-center gap-1.5 text-stone-300">
-                <CreditCard className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                <span>Cartão até 12x</span>
+            {servicesCatalog?.showAmenities !== false && (
+              <div
+                className="p-3 rounded-xl border grid grid-cols-2 gap-2 text-[10px]"
+                style={{
+                  backgroundColor: servicesCatalog?.amenitiesBg || `${palette.card}88`,
+                  borderColor: servicesCatalog?.amenitiesBorder || `${palette.accent}25`,
+                  boxShadow: getShadowStyle(servicesCatalog?.amenitiesShadowDepth || globalShadow, undefined, accentColor)
+                }}
+              >
+                <div
+                  className="flex items-center gap-1.5 font-medium"
+                  style={{ color: servicesCatalog?.amenitiesText || headingColor }}
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  <span>{servicesCatalog?.amenitiesItem1 || 'Cartão até 12x'}</span>
+                </div>
+                <div
+                  className="flex items-center gap-1.5 font-medium"
+                  style={{ color: servicesCatalog?.amenitiesText || headingColor }}
+                >
+                  <Zap className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <span>{servicesCatalog?.amenitiesItem2 || 'Pix Instantâneo'}</span>
+                </div>
+                <div
+                  className="flex items-center gap-1.5 font-medium"
+                  style={{ color: servicesCatalog?.amenitiesText || headingColor }}
+                >
+                  <Car className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                  <span>{servicesCatalog?.amenitiesItem3 || 'Fácil Acesso'}</span>
+                </div>
+                <div
+                  className="flex items-center gap-1.5 font-medium"
+                  style={{ color: servicesCatalog?.amenitiesText || headingColor }}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <span>{servicesCatalog?.amenitiesItem4 || 'Espaço VIP'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-stone-300">
-                <Zap className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                <span>Pix Instantâneo</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-stone-300">
-                <Car className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
-                <span>Fácil Acesso</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-stone-300">
-                <ShieldCheck className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
-                <span>Espaço VIP & Café</span>
-              </div>
-            </div>
+            )}
 
             {/* Barra Flutuante Executiva de Pré-Orçamento (Simulador de Procedimentos) */}
             {selectedServiceIds.length > 0 && (

@@ -20,7 +20,11 @@ import {
   ChevronRight,
   Sliders,
   ExternalLink,
-  Save
+  Save,
+  CreditCard,
+  Zap,
+  Car,
+  ShieldCheck
 } from 'lucide-react'
 import {
   PALETTES,
@@ -2188,6 +2192,222 @@ export default function EditorInspectorColumn({
                     </div>
                   </div>
                 )}
+
+                {/* Tarja de Diferenciais & Selos de Pagamento / Facilidades */}
+                <div id="block-amenities" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-3">
+                  <div className="flex items-center justify-between pb-1 border-b border-stone-800/80">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
+                        💳 Selos de Pagamento &amp; Facilidades (4 Diferenciais)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        props.setServicesCatalogData({
+                          ...props.servicesCatalogData,
+                          showAmenities: props.servicesCatalogData?.showAmenities === false ? true : false
+                        })
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                        props.servicesCatalogData?.showAmenities !== false
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-stone-800 text-stone-400'
+                      }`}
+                    >
+                      {props.servicesCatalogData?.showAmenities !== false ? 'LIGADO' : 'DESLIGADO'}
+                    </button>
+                  </div>
+
+                  {props.servicesCatalogData?.showAmenities !== false && (
+                    <div className="space-y-3 pt-1">
+                      <p className="text-[10px] text-stone-400 leading-relaxed">
+                        Personalize os 4 selos de confiança exibidos abaixo do catálogo de serviços (formas de pagamento, estacionamento, facilidades de acesso e conforto VIP).
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            💳 Item 1 (Pagamento)
+                          </label>
+                          <input
+                            type="text"
+                            value={props.servicesCatalogData?.amenitiesItem1 ?? 'Cartão até 12x'}
+                            onChange={(e) => {
+                              props.setServicesCatalogData({
+                                ...props.servicesCatalogData,
+                                amenitiesItem1: e.target.value
+                              })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Cartão até 12x"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            ⚡ Item 2 (Instantâneo)
+                          </label>
+                          <input
+                            type="text"
+                            value={props.servicesCatalogData?.amenitiesItem2 ?? 'Pix Instantâneo'}
+                            onChange={(e) => {
+                              props.setServicesCatalogData({
+                                ...props.servicesCatalogData,
+                                amenitiesItem2: e.target.value
+                              })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Pix Instantâneo"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            🚗 Item 3 (Acesso / Local)
+                          </label>
+                          <input
+                            type="text"
+                            value={props.servicesCatalogData?.amenitiesItem3 ?? 'Fácil Acesso'}
+                            onChange={(e) => {
+                              props.setServicesCatalogData({
+                                ...props.servicesCatalogData,
+                                amenitiesItem3: e.target.value
+                              })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Fácil Acesso"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] font-mono text-stone-300 block mb-1">
+                            🛡️ Item 4 (Conforto / VIP)
+                          </label>
+                          <input
+                            type="text"
+                            value={props.servicesCatalogData?.amenitiesItem4 ?? 'Espaço VIP'}
+                            onChange={(e) => {
+                              props.setServicesCatalogData({
+                                ...props.servicesCatalogData,
+                                amenitiesItem4: e.target.value
+                              })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            placeholder="Espaço VIP"
+                            className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Cores Personalizadas dos Diferenciais */}
+                      <div className="pt-2 border-t border-white/5 space-y-2">
+                        <label className="text-[9.5px] font-mono uppercase text-amber-300 font-bold block">
+                          Cores dos Selos / Diferenciais
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Fundo</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.servicesCatalogData?.amenitiesBg || props.selectedPalette.card || '#14161c'}
+                                onChange={(e) => {
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.servicesCatalogData?.amenitiesBg || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Texto</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.servicesCatalogData?.amenitiesText || props.selectedPalette.text || '#ffffff'}
+                                onChange={(e) => {
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesText: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.servicesCatalogData?.amenitiesText || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesText: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Borda</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.servicesCatalogData?.amenitiesBorder || props.selectedPalette.accent || '#f59e0b'}
+                                onChange={(e) => {
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesBorder: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.servicesCatalogData?.amenitiesBorder || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesBorder: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sombra 3D dos Diferenciais */}
+                      <div className="pt-2 border-t border-white/5">
+                        <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                          Sombra &amp; Profundidade 3D dos Selos
+                        </label>
+                        <select
+                          value={props.servicesCatalogData?.amenitiesShadowDepth || 'profunda_3d'}
+                          onChange={(e) => {
+                            props.setServicesCatalogData({ ...props.servicesCatalogData, amenitiesShadowDepth: e.target.value })
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                        >
+                          <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                          <option value="elevada_luxo">👑 Relevo Alto &amp; Super Profundo</option>
+                          <option value="neon_glow">✨ Brilho Neon &amp; Glow</option>
+                          <option value="suave">🔘 Relevo Suave</option>
+                          <option value="plana">⚪ Plana (Sem Sombra)</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 </fieldset>
               </div>
             )}
