@@ -30,7 +30,9 @@ import {
   BACKGROUND_STYLES,
   HIGHLIGHT_BADGES,
   NICHES_LIST,
-  DEMO_PHOTOS
+  DEMO_PHOTOS,
+  SHADOW_PRESETS,
+  getShadowStyle
 } from '@/data/bioSiteDesign'
 import { ModuleToggles, MODULE_DESCRIPTIONS } from '@/data/clientPermissions'
 import { applyCanvasOrganicFade, applySilhouetteCutout, readImageAsDataUrl, compressImageFile } from '@/utils/imageProcessors'
@@ -440,6 +442,75 @@ export default function EditorInspectorColumn({
                       </div>
                     )}
                   </fieldset>
+
+                  {/* Efeito de Sombra & Profundidade 3D Global de Todos os Módulos */}
+                  <div className="mt-3 p-3.5 rounded-2xl bg-stone-900/90 border border-amber-500/30 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-sans uppercase text-amber-300 font-bold flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        Sombra & Profundidade 3D (Todos os Módulos)
+                      </label>
+                      <span className="text-[9px] font-sans text-stone-400">Global</span>
+                    </div>
+                    <p className="text-[10.5px] text-stone-300 leading-snug">
+                      Aplica o efeito de relevo e profundidade a todos os blocos, botões, catálogo e módulos VIP do BioSite.
+                    </p>
+                    <select
+                      value={props.selectedPalette.moduleShadow || 'profunda_3d'}
+                      onChange={(e) => {
+                        const newShadow = e.target.value
+                        props.setSelectedPalette({
+                          ...props.selectedPalette,
+                          moduleShadow: newShadow
+                        })
+                        // Sincroniza em cascata para todos os blocos
+                        const updatedButtons = (props.buttons || []).map((b: any) => ({
+                          ...b,
+                          shadowDepth: newShadow,
+                          customShadow: newShadow === 'plana' ? 'none' : ''
+                        }))
+                        props.setButtons(updatedButtons)
+                        if (props.urgencyData) {
+                          props.setUrgencyData({ ...props.urgencyData, shadowDepth: newShadow })
+                        }
+                        if (props.announcementData) {
+                          props.setAnnouncementData({ ...props.announcementData, shadowDepth: newShadow })
+                        }
+                        if (props.quizData) {
+                          props.setQuizData({ ...props.quizData, shadowDepth: newShadow })
+                        }
+                        if (props.locationData) {
+                          props.setLocationData({ ...props.locationData, shadowDepth: newShadow })
+                        }
+                        if (props.servicesCatalogData) {
+                          props.setServicesCatalogData({ ...props.servicesCatalogData, shadowDepth: newShadow })
+                        }
+                        if (props.aboutMeData) {
+                          props.setAboutMeData({ ...props.aboutMeData, shadowDepth: newShadow })
+                        }
+                        if (props.setGalleryConfig && effectiveGalleryConfig) {
+                          props.setGalleryConfig({ ...effectiveGalleryConfig, shadowDepth: newShadow })
+                        }
+                        if (props.testimonialsData) {
+                          props.setTestimonialsData((props.testimonialsData || []).map((t: any) => ({ ...t, shadowDepth: newShadow })))
+                        }
+                        if (props.faqData) {
+                          props.setFaqData((props.faqData || []).map((f: any) => ({ ...f, shadowDepth: newShadow })))
+                        }
+                        if (props.metricsData) {
+                          props.setMetricsData((props.metricsData || []).map((m: any) => ({ ...m, shadowDepth: newShadow })))
+                        }
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-2 rounded-xl bg-stone-950 text-stone-100 border border-stone-800 text-xs font-semibold focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value="profunda_3d">💎 Luxo 3D Profundo (Recomendado)</option>
+                      <option value="elevada_luxo">👑 Relevo Alto & Super Profundo (Efeito Flutuante)</option>
+                      <option value="neon_glow">✨ Brilho Neon & Glow (Aura Dourada / Acento)</option>
+                      <option value="suave">🔘 Relevo Suave (Elegante e Discreto)</option>
+                      <option value="plana">⚪ Plana (Sem Sombra / Flat)</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Tipografia Editorial */}
@@ -1542,6 +1613,30 @@ export default function EditorInspectorColumn({
                             )}
                           </div>
                         </div>
+
+                        {/* Efeito de Sombra & Profundidade 3D dos Cards do Catálogo */}
+                        <div className="col-span-2 pt-2 border-t border-white/5">
+                          <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                            Sombra & Profundidade 3D dos Cards de Serviço
+                          </label>
+                          <select
+                            value={props.servicesCatalogData.shadowDepth || 'profunda_3d'}
+                            onChange={(e) => {
+                              props.setServicesCatalogData({
+                                ...props.servicesCatalogData,
+                                shadowDepth: e.target.value
+                              })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                            <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                            <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                            <option value="suave">🔘 Relevo Suave</option>
+                            <option value="plana">⚪ Plana (Sem Sombra)</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1813,6 +1908,30 @@ export default function EditorInspectorColumn({
                               </button>
                             )}
                           </div>
+                        </div>
+
+                        {/* Efeito de Sombra & Profundidade 3D dos Cards do Catálogo */}
+                        <div className="col-span-2 pt-2 border-t border-white/5">
+                          <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                            Sombra & Profundidade 3D dos Cards de Serviço
+                          </label>
+                          <select
+                            value={props.servicesCatalogData.shadowDepth || 'profunda_3d'}
+                            onChange={(e) => {
+                              props.setServicesCatalogData({
+                                ...props.servicesCatalogData,
+                                shadowDepth: e.target.value
+                              })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-2 rounded-xl bg-stone-900 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                            <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                            <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                            <option value="suave">🔘 Relevo Suave</option>
+                            <option value="plana">⚪ Plana (Sem Sombra)</option>
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -2251,6 +2370,24 @@ export default function EditorInspectorColumn({
                         </div>
                       </div>
 
+                      {/* Efeito de Sombra & Profundidade 3D da Galeria */}
+                      <div className="pt-2 border-t border-stone-800/80">
+                        <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                          Sombra & Profundidade 3D das Fotos / Mosaico
+                        </label>
+                        <select
+                          value={effectiveGalleryConfig.shadowDepth || 'profunda_3d'}
+                          onChange={(e) => updateGalleryConfig((prev: any) => ({ ...prev, shadowDepth: e.target.value }))}
+                          className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                        >
+                          <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                          <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                          <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                          <option value="suave">🔘 Relevo Suave</option>
+                          <option value="plana">⚪ Plana (Sem Sombra)</option>
+                        </select>
+                      </div>
+
                       {/* Presets de Fotos por Nicho (BioVip Original) */}
                       <div className="space-y-1.5 pt-2 border-t border-stone-800/80">
                         <label className="text-[10px] font-mono uppercase font-bold text-amber-400 flex items-center gap-1.5">
@@ -2643,12 +2780,34 @@ export default function EditorInspectorColumn({
                       </div>
                     ))}
                   </div>
+
+                  {/* Sombra 3D das Métricas */}
+                  <div className="pt-2 border-t border-white/5">
+                    <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-400 mb-1">
+                      Sombra & Profundidade 3D das Métricas
+                    </label>
+                    <select
+                      value={props.metricsData?.[0]?.shadowDepth || 'profunda_3d'}
+                      onChange={(e) => {
+                        const updated = (props.metricsData || []).map((m: any) => ({ ...m, shadowDepth: e.target.value }))
+                        props.setMetricsData(updated)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                      <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                      <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                      <option value="suave">🔘 Relevo Suave</option>
+                      <option value="plana">⚪ Plana (Sem Sombra)</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Depoimentos de Clientes */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase text-stone-300 font-bold">
+                    <span className="text-xs font-sans uppercase text-stone-300 font-bold">
                       Depoimentos ({props.testimonialsData?.length || 0})
                     </span>
                     <button
@@ -2667,6 +2826,28 @@ export default function EditorInspectorColumn({
                     >
                       <Plus className="w-3.5 h-3.5" /> Adicionar
                     </button>
+                  </div>
+
+                  {/* Sombra 3D dos Depoimentos */}
+                  <div className="p-3 rounded-xl bg-stone-900 border border-stone-800 space-y-1">
+                    <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-400">
+                      Sombra & Profundidade 3D dos Cards de Depoimento
+                    </label>
+                    <select
+                      value={props.testimonialsData?.[0]?.shadowDepth || 'profunda_3d'}
+                      onChange={(e) => {
+                        const updated = (props.testimonialsData || []).map((t: any) => ({ ...t, shadowDepth: e.target.value }))
+                        props.setTestimonialsData(updated)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                      <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                      <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                      <option value="suave">🔘 Relevo Suave</option>
+                      <option value="plana">⚪ Plana (Sem Sombra)</option>
+                    </select>
                   </div>
 
                   {(props.testimonialsData || []).map((t: any, idx: number) => (
@@ -2805,6 +2986,27 @@ export default function EditorInspectorColumn({
                         placeholder="Texto da barra de aviso..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-200 border border-stone-800 text-xs"
                       />
+
+                      {/* Sombra 3D da Barra de Aviso */}
+                      <div className="pt-2 border-t border-white/5">
+                        <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                          Sombra & Profundidade 3D da Barra
+                        </label>
+                        <select
+                          value={props.announcementData.shadowDepth || 'profunda_3d'}
+                          onChange={(e) => {
+                            props.setAnnouncementData({ ...props.announcementData, shadowDepth: e.target.value })
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                        >
+                          <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                          <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                          <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                          <option value="suave">🔘 Relevo Suave</option>
+                          <option value="plana">⚪ Plana (Sem Sombra)</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2957,6 +3159,27 @@ export default function EditorInspectorColumn({
                             </div>
                           </div>
                         </div>
+
+                        {/* Sombra 3D do Banner de Urgência */}
+                        <div className="pt-2 border-t border-white/5">
+                          <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                            Sombra & Profundidade 3D do Banner de Urgência
+                          </label>
+                          <select
+                            value={props.urgencyData.shadowDepth || 'profunda_3d'}
+                            onChange={(e) => {
+                              props.setUrgencyData({ ...props.urgencyData, shadowDepth: e.target.value })
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                          >
+                            <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                            <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                            <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                            <option value="suave">🔘 Relevo Suave</option>
+                            <option value="plana">⚪ Plana (Sem Sombra)</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2996,6 +3219,27 @@ export default function EditorInspectorColumn({
                         placeholder="Texto do botão do Quiz"
                         className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-bold"
                       />
+
+                      {/* Sombra 3D do Quiz */}
+                      <div className="pt-2 border-t border-white/5">
+                        <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                          Sombra & Profundidade 3D do Botão de Quiz
+                        </label>
+                        <select
+                          value={props.quizData.shadowDepth || 'profunda_3d'}
+                          onChange={(e) => {
+                            props.setQuizData({ ...props.quizData, shadowDepth: e.target.value })
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                        >
+                          <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                          <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                          <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                          <option value="suave">🔘 Relevo Suave</option>
+                          <option value="plana">⚪ Plana (Sem Sombra)</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -3044,6 +3288,27 @@ export default function EditorInspectorColumn({
                         placeholder="Horários (ex: Seg a Sex · 09h às 19h)"
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-xs font-mono"
                       />
+
+                      {/* Sombra 3D da Localização */}
+                      <div className="pt-2 border-t border-white/5">
+                        <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                          Sombra & Profundidade 3D da Localização
+                        </label>
+                        <select
+                          value={props.locationData.shadowDepth || 'profunda_3d'}
+                          onChange={(e) => {
+                            props.setLocationData({ ...props.locationData, shadowDepth: e.target.value })
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                        >
+                          <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                          <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                          <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                          <option value="suave">🔘 Relevo Suave</option>
+                          <option value="plana">⚪ Plana (Sem Sombra)</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -3092,6 +3357,27 @@ export default function EditorInspectorColumn({
                         placeholder="Texto institucional de autoridade..."
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs leading-relaxed"
                       />
+
+                      {/* Sombra 3D do Sobre Mim */}
+                      <div className="pt-2 border-t border-white/5">
+                        <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
+                          Sombra & Profundidade 3D do Bloco Sobre Mim
+                        </label>
+                        <select
+                          value={props.aboutMeData.shadowDepth || 'profunda_3d'}
+                          onChange={(e) => {
+                            props.setAboutMeData({ ...props.aboutMeData, shadowDepth: e.target.value })
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                        >
+                          <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                          <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                          <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                          <option value="suave">🔘 Relevo Suave</option>
+                          <option value="plana">⚪ Plana (Sem Sombra)</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -3116,6 +3402,28 @@ export default function EditorInspectorColumn({
                     >
                       + Pergunta
                     </button>
+                  </div>
+
+                  {/* Sombra 3D do FAQ */}
+                  <div className="pt-1">
+                    <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-400 mb-1">
+                      Sombra & Profundidade 3D das Sanfonas FAQ
+                    </label>
+                    <select
+                      value={props.faqData?.[0]?.shadowDepth || 'profunda_3d'}
+                      onChange={(e) => {
+                        const updated = (props.faqData || []).map((faq: any) => ({ ...faq, shadowDepth: e.target.value }))
+                        props.setFaqData(updated)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                      <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                      <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                      <option value="suave">🔘 Relevo Suave</option>
+                      <option value="plana">⚪ Plana (Sem Sombra)</option>
+                    </select>
                   </div>
                   <div className="space-y-2 pt-1">
                     {(props.faqData || []).map((faq: any, i: number) => (

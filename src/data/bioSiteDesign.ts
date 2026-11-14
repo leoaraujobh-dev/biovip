@@ -547,3 +547,30 @@ export const NICHES_LIST = [
   'Personal Trainer & Fitness'
 ]
 
+export const SHADOW_PRESETS = [
+  { id: 'profunda_3d', name: '💎 Luxo 3D Profundo', desc: 'Profundidade máxima com sombra dupla e borda chanfrada' },
+  { id: 'elevada_luxo', name: '👑 Relevo Alto & Super Profundo', desc: 'Destaque visual supremo com elevação acentuada' },
+  { id: 'neon_glow', name: '✨ Brilho Neon & Glow', desc: 'Aura radiante e brilho na cor de destaque da paleta' },
+  { id: 'suave', name: '🔘 Relevo Suave', desc: 'Sombra suave e elegante' },
+  { id: 'plana', name: '⚪ Plana (Sem Sombra)', desc: 'Design clean sem sombras' }
+]
+
+export function getShadowStyle(depth?: string, customShadow?: string, accentColor: string = '#e2b857'): string {
+  if (customShadow) return customShadow
+  if (depth === 'elevada_luxo') {
+    return '0 16px 36px -4px rgba(0,0,0,0.75), 0 6px 12px -2px rgba(0,0,0,0.45), inset 0 1px 1px 0 rgba(255,255,255,0.25)'
+  }
+  if (depth === 'neon_glow') {
+    return `0 10px 25px -3px rgba(0,0,0,0.6), 0 0 18px 2px ${accentColor}55, inset 0 1px 0 rgba(255,255,255,0.2)`
+  }
+  if (depth === 'suave') {
+    return '0 6px 16px -2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
+  }
+  if (depth === 'plana') {
+    return 'none'
+  }
+  // Default: profunda_3d
+  return '0 10px 25px -3px rgba(0,0,0,0.65), 0 4px 6px -2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)'
+}
+
+

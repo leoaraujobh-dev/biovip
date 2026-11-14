@@ -38,7 +38,7 @@ import {
   Plus,
   Sliders
 } from 'lucide-react'
-import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES } from '@/data/bioSiteDesign'
+import { DEMO_PHOTOS, PALETTES, TYPOGRAPHIES, getShadowStyle } from '@/data/bioSiteDesign'
 import { projects } from '@/data/projects'
 import { getBioSite, trackLead } from '@/services/biositeService'
 import { healMojibake } from '@/utils/textSanitizer'
@@ -743,6 +743,8 @@ export default function BioSiteClient({
   const palette = (modelData?.paletteId === 'minha_paleta' && modelData?.customPalette)
     ? { ...basePalette, ...modelData.customPalette }
     : basePalette
+  const globalShadow = modelData?.palette?.moduleShadow || (palette as any)?.moduleShadow || modelData?.moduleShadow || 'profunda_3d'
+  const accentColor = palette.accent || '#e2b857'
   const typography = TYPOGRAPHIES.find(t => t.id === (modelData?.typographyId || 'instrument')) || TYPOGRAPHIES[0]
   const buttonStyle = modelData?.buttonStyle || 'cartao_nobre'
   const buttonAnimation = modelData?.buttonAnimation || 'none'
@@ -933,7 +935,8 @@ export default function BioSiteClient({
           'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=800&auto=format&fit=crop',
           'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop'
         ],
-    captions: (rawGallery?.captions || modelData?.galleryCaptions || []) as string[]
+    captions: (rawGallery?.captions || modelData?.galleryCaptions || []) as string[],
+    shadowDepth: (rawGallery?.shadowDepth || modelData?.galleryShadowDepth || undefined) as string | undefined
   }
 
   const galleryPhotosList: string[] = galleryConfig.photos
@@ -1038,7 +1041,8 @@ export default function BioSiteClient({
             style={{
               backgroundColor: `${palette.accent}18`,
               borderColor: `${palette.accent}33`,
-              color: palette.text
+              color: palette.text,
+              boxShadow: getShadowStyle(announcement?.shadowDepth || globalShadow, undefined, accentColor)
             }}
             onClick={() => {
               const el = document.getElementById('catalogo') || document.getElementById('botoes')
@@ -1141,7 +1145,7 @@ export default function BioSiteClient({
                 backgroundColor: `${palette.card}cc`,
                 borderColor: `${palette.accent}33`,
                 color: palette.text,
-                boxShadow: '0 8px 20px -2px rgba(0,0,0,0.55), 0 2px 4px -1px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)'
+                boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
               }}
             >
               <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
@@ -1157,7 +1161,7 @@ export default function BioSiteClient({
                 backgroundColor: `${palette.card}cc`,
                 borderColor: `${palette.accent}33`,
                 color: palette.text,
-                boxShadow: '0 8px 20px -2px rgba(0,0,0,0.55), 0 2px 4px -1px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)'
+                boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
               }}
             >
               <Instagram className="w-3.5 h-3.5 text-pink-400" />
@@ -1174,7 +1178,7 @@ export default function BioSiteClient({
                 backgroundColor: palette.accent,
                 borderColor: 'rgba(255,255,255,0.4)',
                 color: palette.buttonText || '#000',
-                boxShadow: '0 8px 20px -2px rgba(0,0,0,0.55), 0 2px 4px -1px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.22)'
+                boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
               }}
             >
               <Calendar className="w-3.5 h-3.5" />
@@ -1191,7 +1195,7 @@ export default function BioSiteClient({
               style={{
                 backgroundColor: urgency.customBg || `${palette.card}ee`,
                 borderColor: urgency.customBorderColor || `${palette.accent}40`,
-                boxShadow: '0 10px 25px -3px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)'
+                boxShadow: getShadowStyle(urgency.shadowDepth || globalShadow, urgency.customShadow, accentColor)
               }}
             >
               <div className="flex items-center gap-2">
@@ -1462,7 +1466,7 @@ export default function BioSiteClient({
                 backgroundColor: `${palette.card}ff`,
                 borderColor: palette.accent,
                 color: palette.text,
-                boxShadow: '0 10px 25px -3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15)'
+                boxShadow: getShadowStyle(quiz?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
               <div className="flex items-center gap-2.5">
@@ -1492,7 +1496,8 @@ export default function BioSiteClient({
               className="p-4 rounded-2xl border grid grid-cols-3 gap-2 text-center"
               style={{
                 backgroundColor: `${palette.card}99`,
-                borderColor: `${palette.accent}20`
+                borderColor: `${palette.accent}20`,
+                boxShadow: getShadowStyle(metrics?.[0]?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
               {metrics.map((m: any, idx: number) => (
@@ -1528,7 +1533,8 @@ export default function BioSiteClient({
                   className="p-3 rounded-xl border flex items-start gap-3"
                   style={{
                     backgroundColor: `${palette.card}80`,
-                    borderColor: `${palette.accent}20`
+                    borderColor: `${palette.accent}20`,
+                    boxShadow: getShadowStyle(step.shadowDepth || globalShadow, undefined, accentColor)
                   }}
                 >
                   <span
@@ -1615,7 +1621,7 @@ export default function BioSiteClient({
                         style={{
                           backgroundColor: servicesCatalog.customCardBg || `${palette.card}cc`,
                           borderColor: servicesCatalog.customBorderColor || `${palette.accent}25`,
-                          boxShadow: '0 10px 24px -4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'
+                          boxShadow: getShadowStyle(servicesCatalog?.shadowDepth || globalShadow, undefined, accentColor)
                         }}
                       >
                         {/* Imagem Maior em Destaque */}
@@ -1733,7 +1739,7 @@ export default function BioSiteClient({
                       style={{
                         backgroundColor: servicesCatalog.customCardBg || `${palette.card}cc`,
                         borderColor: servicesCatalog.customBorderColor || `${palette.accent}25`,
-                        boxShadow: '0 10px 24px -4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'
+                        boxShadow: getShadowStyle(servicesCatalog?.shadowDepth || globalShadow, undefined, accentColor)
                       }}
                     >
                       <div className="flex items-start gap-3">
@@ -1962,13 +1968,16 @@ export default function BioSiteClient({
                         onClick={() => {
                           if (galleryConfig.enableLightbox) setLightboxIndex(i)
                         }}
-                        className={`snap-center shrink-0 w-[78%] sm:w-[65%] rounded-2xl overflow-hidden border border-white/10 relative group cursor-pointer shadow-lg ${
+                        className={`snap-center shrink-0 w-[78%] sm:w-[65%] rounded-2xl overflow-hidden border border-white/10 relative group cursor-pointer ${
                           galleryConfig.aspectRatio === 'portrait'
                             ? 'aspect-[4/5]'
                             : galleryConfig.aspectRatio === 'landscape'
                             ? 'aspect-[4/3]'
                             : 'aspect-square'
                         }`}
+                        style={{
+                          boxShadow: getShadowStyle(galleryConfig?.shadowDepth || globalShadow, undefined, accentColor)
+                        }}
                       >
                         <img
                           src={imgUrl}
@@ -2008,13 +2017,16 @@ export default function BioSiteClient({
                       onClick={() => {
                         if (galleryConfig.enableLightbox) setLightboxIndex(i)
                       }}
-                      className={`rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group shadow-md ${
+                      className={`rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group ${
                         galleryConfig.aspectRatio === 'portrait'
                           ? 'aspect-[4/5]'
                           : galleryConfig.aspectRatio === 'landscape'
                           ? 'aspect-[4/3]'
                           : 'aspect-square'
                       }`}
+                      style={{
+                        boxShadow: getShadowStyle(galleryConfig?.shadowDepth || globalShadow, undefined, accentColor)
+                      }}
                     >
                       <img
                         src={imgUrl}
@@ -2048,6 +2060,9 @@ export default function BioSiteClient({
                     if (galleryConfig.enableLightbox) setLightboxIndex(0)
                   }}
                   className="col-span-2 aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden border border-amber-400/30 relative cursor-pointer group shadow-xl"
+                  style={{
+                    boxShadow: getShadowStyle(galleryConfig?.shadowDepth || globalShadow, undefined, accentColor)
+                  }}
                 >
                   <img
                     src={galleryPhotosList[0]}
@@ -2083,7 +2098,10 @@ export default function BioSiteClient({
                       onClick={() => {
                         if (galleryConfig.enableLightbox) setLightboxIndex(actualIdx)
                       }}
-                      className="aspect-square rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group shadow-md"
+                      className="aspect-square rounded-xl overflow-hidden border border-white/10 relative cursor-pointer group"
+                      style={{
+                        boxShadow: getShadowStyle(galleryConfig?.shadowDepth || globalShadow, undefined, accentColor)
+                      }}
                     >
                       <img
                         src={imgUrl}
@@ -2118,7 +2136,10 @@ export default function BioSiteClient({
                       onClick={() => {
                         if (galleryConfig.enableLightbox) setLightboxIndex(i)
                       }}
-                      className="rounded-2xl overflow-hidden border border-white/10 bg-stone-900/40 p-2 space-y-2 cursor-pointer group shadow-lg"
+                      className="rounded-2xl overflow-hidden border border-white/10 bg-stone-900/40 p-2 space-y-2 cursor-pointer group"
+                      style={{
+                        boxShadow: getShadowStyle(galleryConfig?.shadowDepth || globalShadow, undefined, accentColor)
+                      }}
                     >
                       <div className="w-full aspect-[16/10] rounded-xl overflow-hidden relative">
                         <img
@@ -2159,6 +2180,9 @@ export default function BioSiteClient({
                         ? 'aspect-[4/3]'
                         : 'aspect-square'
                     }`}
+                    style={{
+                      boxShadow: getShadowStyle(galleryConfig?.shadowDepth || globalShadow, undefined, accentColor)
+                    }}
                   >
                     <img
                       src={imgUrl}
@@ -2264,7 +2288,8 @@ export default function BioSiteClient({
               className="p-4 rounded-2xl border space-y-3"
               style={{
                 backgroundColor: `${palette.card}cc`,
-                borderColor: `${palette.accent}25`
+                borderColor: `${palette.accent}25`,
+                boxShadow: getShadowStyle(locationInfo?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
               <div className="flex items-center justify-between">
@@ -2360,7 +2385,8 @@ export default function BioSiteClient({
                   className="p-3.5 rounded-2xl border space-y-1.5 transition-all duration-300 hover:border-white/30"
                   style={{
                     backgroundColor: `${palette.card}80`,
-                    borderColor: `${palette.accent}20`
+                    borderColor: `${palette.accent}20`,
+                    boxShadow: getShadowStyle(t.shadowDepth || testimonials?.[0]?.shadowDepth || globalShadow, undefined, accentColor)
                   }}
                 >
                   <div className="flex items-center justify-between text-amber-400 text-xs">
@@ -2388,7 +2414,8 @@ export default function BioSiteClient({
               className="p-4 rounded-2xl border space-y-2"
               style={{
                 backgroundColor: `${palette.card}80`,
-                borderColor: `${palette.accent}20`
+                borderColor: `${palette.accent}20`,
+                boxShadow: getShadowStyle(aboutMe?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
               <h4 className="text-xs font-serif font-bold text-white">
@@ -2421,7 +2448,8 @@ export default function BioSiteClient({
                     className="rounded-xl border overflow-hidden transition"
                     style={{
                       backgroundColor: `${palette.card}80`,
-                      borderColor: `${palette.accent}20`
+                      borderColor: `${palette.accent}20`,
+                      boxShadow: getShadowStyle(item.shadowDepth || faq?.[0]?.shadowDepth || globalShadow, undefined, accentColor)
                     }}
                   >
                     <button
@@ -2451,7 +2479,9 @@ export default function BioSiteClient({
               type="button"
               onClick={handleSaveContactVcf}
               className="py-2.5 px-3 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-white text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-md"
-              style={{ boxShadow: '0 8px 20px -3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)' }}
+              style={{
+                boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
+              }}
             >
               <Download className="w-3 h-3 text-amber-400" />
               <span>Salvar Contato</span>
@@ -2460,7 +2490,9 @@ export default function BioSiteClient({
               type="button"
               onClick={handleShare}
               className="py-2.5 px-3 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-white text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-md"
-              style={{ boxShadow: '0 8px 20px -3px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)' }}
+              style={{
+                boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
+              }}
             >
               <Share2 className="w-3 h-3 text-sky-400" />
               <span>Compartilhar</span>

@@ -19,7 +19,7 @@ import {
   Edit3
 } from 'lucide-react'
 import { BioSiteEditorProps, SectionTabId } from '../BioSiteEditor3Col'
-import { DEMO_PHOTOS } from '@/data/bioSiteDesign'
+import { DEMO_PHOTOS, getShadowStyle } from '@/data/bioSiteDesign'
 
 interface EditorCanvasColumnProps {
   props: BioSiteEditorProps
@@ -52,6 +52,9 @@ export default function EditorCanvasColumn({
   previewLightboxIndex,
   setPreviewLightboxIndex
 }: EditorCanvasColumnProps) {
+  const globalShadow = props.selectedPalette.moduleShadow || 'profunda_3d'
+  const accentColor = props.selectedPalette.accent || '#e2b857'
+
   const handleSelectBlock = (section: SectionTabId, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation()
@@ -134,7 +137,8 @@ export default function EditorCanvasColumn({
                     style={{
                       backgroundColor: `${props.selectedPalette.accent}20`,
                       borderColor: `${props.selectedPalette.accent}40`,
-                      color: props.selectedPalette.text
+                      color: props.selectedPalette.text,
+                      boxShadow: getShadowStyle(props.announcementData?.shadowDepth || globalShadow, undefined, accentColor)
                     }}
                   >
                     <EditIndicator label="Anúncio" />
@@ -236,7 +240,7 @@ export default function EditorCanvasColumn({
                         backgroundColor: `${props.selectedPalette.card}cc`,
                         borderColor: `${props.selectedPalette.accent}33`,
                         color: props.selectedPalette.text,
-                        boxShadow: '0 4px 12px -1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)'
+                        boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
                       }}
                     >
                       <MessageCircle className="w-2.5 h-2.5 text-emerald-400" />
@@ -248,7 +252,7 @@ export default function EditorCanvasColumn({
                         backgroundColor: props.selectedPalette.accent,
                         borderColor: 'rgba(255,255,255,0.3)',
                         color: props.selectedPalette.buttonText || '#000',
-                        boxShadow: '0 4px 12px -1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.22)'
+                        boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
                       }}
                     >
                       <span>Agendar VIP</span>
@@ -264,7 +268,7 @@ export default function EditorCanvasColumn({
                       style={{
                         backgroundColor: props.urgencyData.customBg || `${props.selectedPalette.card}ee`,
                         borderColor: props.urgencyData.customBorderColor || `${props.selectedPalette.accent}40`,
-                        boxShadow: '0 8px 22px -3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)'
+                        boxShadow: getShadowStyle(props.urgencyData.shadowDepth || globalShadow, props.urgencyData.customShadow, accentColor)
                       }}
                     >
                       <EditIndicator label="Urgência" />
@@ -438,7 +442,8 @@ export default function EditorCanvasColumn({
                       style={{
                         backgroundColor: `${props.selectedPalette.card}ff`,
                         borderColor: props.selectedPalette.accent,
-                        color: props.selectedPalette.text
+                        color: props.selectedPalette.text,
+                        boxShadow: getShadowStyle(props.quizData?.shadowDepth || globalShadow, undefined, accentColor)
                       }}
                     >
                       <EditIndicator label="Quiz" />
@@ -462,7 +467,8 @@ export default function EditorCanvasColumn({
                       title="Clique para editar Prova Social e Métricas"
                       style={{
                         backgroundColor: `${props.selectedPalette.card}80`,
-                        borderColor: `${props.selectedPalette.accent}20`
+                        borderColor: `${props.selectedPalette.accent}20`,
+                        boxShadow: getShadowStyle(props.metricsData?.[0]?.shadowDepth || globalShadow, undefined, accentColor)
                       }}
                     >
                       <EditIndicator label="Métricas" />
@@ -500,7 +506,8 @@ export default function EditorCanvasColumn({
                             className="p-2 rounded-xl border flex items-start gap-2"
                             style={{
                               backgroundColor: `${props.selectedPalette.card}80`,
-                              borderColor: `${props.selectedPalette.accent}20`
+                              borderColor: `${props.selectedPalette.accent}20`,
+                              boxShadow: getShadowStyle(step.shadowDepth || globalShadow, undefined, accentColor)
                             }}
                           >
                             <span
@@ -589,7 +596,7 @@ export default function EditorCanvasColumn({
                                   style={{
                                     backgroundColor: props.servicesCatalogData.customCardBg || `${props.selectedPalette.card}cc`,
                                     borderColor: props.servicesCatalogData.customBorderColor || `${props.selectedPalette.accent}25`,
-                                    boxShadow: '0 8px 20px -3px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'
+                                    boxShadow: getShadowStyle(props.servicesCatalogData?.shadowDepth || globalShadow, undefined, accentColor)
                                   }}
                                 >
                                   {/* Imagem Maior de Destaque no Preview */}
@@ -659,7 +666,7 @@ export default function EditorCanvasColumn({
                                 style={{
                                   backgroundColor: props.servicesCatalogData.customCardBg || `${props.selectedPalette.card}cc`,
                                   borderColor: props.servicesCatalogData.customBorderColor || `${props.selectedPalette.accent}25`,
-                                  boxShadow: '0 8px 20px -3px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'
+                                  boxShadow: getShadowStyle(props.servicesCatalogData?.shadowDepth || globalShadow, undefined, accentColor)
                                 }}
                               >
                                 <div className="flex items-start gap-1.5">
