@@ -1463,9 +1463,9 @@ export default function BioSiteClient({
               onClick={() => setIsQuizOpen(true)}
               className="w-full py-3.5 px-4 rounded-2xl border flex items-center justify-between text-xs font-bold transition shadow-lg relative overflow-hidden group cursor-pointer active:scale-98"
               style={{
-                backgroundColor: `${palette.card}ff`,
-                borderColor: palette.accent,
-                color: palette.text,
+                backgroundColor: quiz?.customBg || `${palette.card}ff`,
+                borderColor: quiz?.customBorderColor || palette.accent,
+                color: quiz?.customTextColor || palette.text,
                 boxShadow: getShadowStyle(quiz?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
@@ -2287,8 +2287,8 @@ export default function BioSiteClient({
             <div
               className="p-4 rounded-2xl border space-y-3"
               style={{
-                backgroundColor: `${palette.card}cc`,
-                borderColor: `${palette.accent}25`,
+                backgroundColor: locationInfo?.customBg || `${palette.card}cc`,
+                borderColor: locationInfo?.customBorderColor || `${palette.accent}25`,
                 boxShadow: getShadowStyle(locationInfo?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >
@@ -2413,8 +2413,8 @@ export default function BioSiteClient({
             <div
               className="p-4 rounded-2xl border space-y-2"
               style={{
-                backgroundColor: `${palette.card}80`,
-                borderColor: `${palette.accent}20`,
+                backgroundColor: aboutMe?.customBg || `${palette.card}80`,
+                borderColor: aboutMe?.customBorderColor || `${palette.accent}20`,
                 boxShadow: getShadowStyle(aboutMe?.shadowDepth || globalShadow, undefined, accentColor)
               }}
             >

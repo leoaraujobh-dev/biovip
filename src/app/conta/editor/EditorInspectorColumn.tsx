@@ -148,7 +148,7 @@ export default function EditorInspectorColumn({
             {activeSection === 'paleta' && (
               <div className="space-y-5 animate-fade-in">
                 {/* Paletas de Cores */}
-                <div>
+                <div id="block-palette">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
                       Paleta de Cores ({PALETTES.length} opções luxo)
@@ -671,7 +671,7 @@ export default function EditorInspectorColumn({
                 </fieldset>
 
                 {/* Foto de Perfil */}
-                <div>
+                <div id="block-profile">
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-mono uppercase text-stone-400 font-bold flex items-center gap-1.5">
                       Foto do Perfil / Retrato de Estúdio
@@ -956,7 +956,7 @@ export default function EditorInspectorColumn({
             {/* ======================================================= */}
             {activeSection === 'botoes' && (
               <div className="space-y-4 animate-fade-in">
-                <div className="flex items-center justify-between pb-1 border-b border-stone-800/60">
+                <div id="block-quick-actions" className="flex items-center justify-between pb-1 border-b border-stone-800/60">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono uppercase text-stone-200 font-bold">
@@ -1012,7 +1012,7 @@ export default function EditorInspectorColumn({
                 )}
 
                 <fieldset disabled={!canEditButtons} className={!canEditButtons ? 'opacity-50 pointer-events-none' : ''}>
-                  <div className="space-y-3.5">
+                  <div id="block-buttons" className="space-y-3.5">
                   {props.buttons.map((btn: any, idx: number) => (
                     <div
                       key={btn.id || `btn-${idx}`}
@@ -1662,7 +1662,7 @@ export default function EditorInspectorColumn({
 
                 <fieldset disabled={!canEditServices} className={!canEditServices ? 'opacity-50 pointer-events-none' : ''}>
                 {/* Switch Liga/Desliga */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
+                <div id="block-services-catalog" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
                       Catálogo Interativo VIP
@@ -2209,7 +2209,7 @@ export default function EditorInspectorColumn({
 
                 <fieldset disabled={!canEditPhotos} className={!canEditPhotos ? 'opacity-50 pointer-events-none' : ''}>
                 {/* Galeria Oficial de Fotos & Portfólio (studentGrid / BioVip Oficial) */}
-                <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-4">
+                <div id="block-gallery" className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-4">
                   {/* Header do Módulo com Switch */}
                   <div className="flex items-center justify-between pb-2 border-b border-stone-800/80">
                     <div className="flex items-center gap-2.5">
@@ -2746,7 +2746,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* Métricas de Autoridade */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
+                <div id="block-metrics" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2">
                   <span className="text-[10px] font-mono uppercase text-stone-300 font-bold block">
                     Métricas de Autoridade (3 Destaques)
                   </span>
@@ -2804,8 +2804,112 @@ export default function EditorInspectorColumn({
                   </div>
                 </div>
 
+                {/* Como Funciona o Atendimento (Jornada em 3 Passos) */}
+                <div id="block-how-it-works" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      👣 Como Funciona o Atendimento (Passos)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newStep = {
+                          number: `0${(props.howItWorksData || []).length + 1}`,
+                          title: 'Novo Passo',
+                          description: 'Descreva a etapa com clareza e autoridade.'
+                        }
+                        props.setHowItWorksData([...(props.howItWorksData || []), newStep])
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-[#E2B857] text-stone-950 font-bold text-[9px] uppercase flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" /> Passo
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {(props.howItWorksData || []).map((step: any, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <input
+                            type="text"
+                            value={step.number || `0${idx + 1}`}
+                            onChange={(e) => {
+                              const updated = [...props.howItWorksData]
+                              updated[idx].number = e.target.value
+                              props.setHowItWorksData(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="w-12 p-1 rounded-lg bg-stone-900 text-amber-300 font-mono font-bold text-xs text-center border border-stone-800"
+                            placeholder="01"
+                          />
+                          <input
+                            type="text"
+                            value={step.title}
+                            onChange={(e) => {
+                              const updated = [...props.howItWorksData]
+                              updated[idx].title = e.target.value
+                              props.setHowItWorksData(updated)
+                              props.setHasUnsavedChanges(true)
+                            }}
+                            className="flex-1 ml-2 p-1 rounded-lg bg-stone-900 text-stone-100 font-bold text-xs border border-stone-800"
+                            placeholder="Título do Passo..."
+                          />
+                          {(props.howItWorksData || []).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const filtered = props.howItWorksData.filter((_: any, i: number) => i !== idx)
+                                props.setHowItWorksData(filtered)
+                                props.setHasUnsavedChanges(true)
+                              }}
+                              className="ml-2 text-stone-500 hover:text-red-400 transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={step.description}
+                          onChange={(e) => {
+                            const updated = [...props.howItWorksData]
+                            updated[idx].description = e.target.value
+                            props.setHowItWorksData(updated)
+                            props.setHasUnsavedChanges(true)
+                          }}
+                          className="w-full p-1.5 rounded-lg bg-stone-900 text-stone-300 text-[11px] border border-stone-800 resize-none font-sans"
+                          placeholder="Descrição explicativa do passo..."
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sombra 3D dos Passos */}
+                  <div className="pt-2 border-t border-white/5">
+                    <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-400 mb-1">
+                      Sombra & Profundidade 3D dos Passos
+                    </label>
+                    <select
+                      value={props.howItWorksData?.[0]?.shadowDepth || 'profunda_3d'}
+                      onChange={(e) => {
+                        const updated = (props.howItWorksData || []).map((s: any) => ({ ...s, shadowDepth: e.target.value }))
+                        props.setHowItWorksData(updated)
+                        props.setHasUnsavedChanges(true)
+                      }}
+                      className="w-full p-1.5 rounded-lg bg-stone-950 text-stone-200 border border-stone-800 text-[11px] font-sans focus:border-amber-400 focus:outline-none"
+                    >
+                      <option value="profunda_3d">💎 Luxo 3D Profundo</option>
+                      <option value="elevada_luxo">👑 Relevo Alto & Super Profundo</option>
+                      <option value="neon_glow">✨ Brilho Neon & Glow</option>
+                      <option value="suave">🔘 Relevo Suave</option>
+                      <option value="plana">⚪ Plana (Sem Sombra)</option>
+                    </select>
+                  </div>
+                </div>
+
                 {/* Depoimentos de Clientes */}
-                <div className="space-y-2.5">
+                <div id="block-testimonials" className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-sans uppercase text-stone-300 font-bold">
                       Depoimentos ({props.testimonialsData?.length || 0})
@@ -2943,7 +3047,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* 1. Barra de Aviso Superior */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                <div id="block-announcement" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       📢 Barra de Aviso Superior
@@ -3012,7 +3116,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* 2. Gatilho de Urgência & Cronômetro */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                <div id="block-urgency" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       🔥 Gatilho de Urgência &amp; Cronômetro
@@ -3186,7 +3290,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* 3. Triagem Anti-Curiosos (Quiz VIP) */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                <div id="block-quiz" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       🎯 Triagem Anti-Curiosos (Quiz VIP)
@@ -3220,6 +3324,87 @@ export default function EditorInspectorColumn({
                         className="w-full p-2 rounded-xl bg-stone-950 text-amber-300 border border-stone-800 text-xs font-bold"
                       />
 
+                      {/* Cores Personalizadas do Quiz */}
+                      <div className="pt-2 border-t border-white/5 space-y-2">
+                        <label className="text-[9.5px] font-mono uppercase text-amber-300 font-bold block">
+                          Cores do Botão de Quiz
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Fundo</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.quizData.customBg || props.selectedPalette.card || '#14161c'}
+                                onChange={(e) => {
+                                  props.setQuizData({ ...props.quizData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.quizData.customBg || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setQuizData({ ...props.quizData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Texto</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.quizData.customTextColor || props.selectedPalette.text || '#ffffff'}
+                                onChange={(e) => {
+                                  props.setQuizData({ ...props.quizData, customTextColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.quizData.customTextColor || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setQuizData({ ...props.quizData, customTextColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Borda</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.quizData.customBorderColor || props.selectedPalette.accent || '#f59e0b'}
+                                onChange={(e) => {
+                                  props.setQuizData({ ...props.quizData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.quizData.customBorderColor || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setQuizData({ ...props.quizData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Sombra 3D do Quiz */}
                       <div className="pt-2 border-t border-white/5">
                         <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
@@ -3245,7 +3430,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* 4. Localização com GPS & Aberto Agora */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                <div id="block-location" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       📍 Localização com GPS &amp; Aberto Agora
@@ -3289,6 +3474,63 @@ export default function EditorInspectorColumn({
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-400 border border-stone-800 text-xs font-mono"
                       />
 
+                      {/* Cores Personalizadas da Localização */}
+                      <div className="pt-2 border-t border-white/5 space-y-2">
+                        <label className="text-[9.5px] font-mono uppercase text-amber-300 font-bold block">
+                          Cores do Card de Localização
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Fundo</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.locationData.customBg || props.selectedPalette.card || '#14161c'}
+                                onChange={(e) => {
+                                  props.setLocationData({ ...props.locationData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.locationData.customBg || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setLocationData({ ...props.locationData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Borda</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.locationData.customBorderColor || props.selectedPalette.accent || '#f59e0b'}
+                                onChange={(e) => {
+                                  props.setLocationData({ ...props.locationData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.locationData.customBorderColor || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setLocationData({ ...props.locationData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Sombra 3D da Localização */}
                       <div className="pt-2 border-t border-white/5">
                         <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
@@ -3314,7 +3556,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* 5. Sobre o Especialista */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                <div id="block-about-me" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       👩‍⚕️ Sobre o Especialista
@@ -3358,6 +3600,63 @@ export default function EditorInspectorColumn({
                         className="w-full p-2 rounded-xl bg-stone-950 text-stone-300 border border-stone-800 text-xs leading-relaxed"
                       />
 
+                      {/* Cores Personalizadas do Sobre Mim */}
+                      <div className="pt-2 border-t border-white/5 space-y-2">
+                        <label className="text-[9.5px] font-mono uppercase text-amber-300 font-bold block">
+                          Cores do Bloco Sobre Mim
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Fundo</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.aboutMeData.customBg || props.selectedPalette.card || '#14161c'}
+                                onChange={(e) => {
+                                  props.setAboutMeData({ ...props.aboutMeData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.aboutMeData.customBg || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setAboutMeData({ ...props.aboutMeData, customBg: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[8.5px] font-mono text-stone-400 block mb-0.5">Borda</label>
+                            <div className="flex items-center gap-1 bg-stone-950 border border-stone-800 rounded-lg p-1">
+                              <input
+                                type="color"
+                                value={props.aboutMeData.customBorderColor || props.selectedPalette.accent || '#f59e0b'}
+                                onChange={(e) => {
+                                  props.setAboutMeData({ ...props.aboutMeData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 p-0"
+                              />
+                              <input
+                                type="text"
+                                value={props.aboutMeData.customBorderColor || ''}
+                                placeholder="Auto"
+                                onChange={(e) => {
+                                  props.setAboutMeData({ ...props.aboutMeData, customBorderColor: e.target.value })
+                                  props.setHasUnsavedChanges(true)
+                                }}
+                                className="w-full bg-transparent text-[9px] font-mono text-stone-200 outline-none uppercase"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Sombra 3D do Sobre Mim */}
                       <div className="pt-2 border-t border-white/5">
                         <label className="block text-[8.5px] font-sans font-bold uppercase text-stone-300 mb-1">
@@ -3383,7 +3682,7 @@ export default function EditorInspectorColumn({
                 </div>
 
                 {/* 6. Dúvidas Frequentes (FAQ) */}
-                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
+                <div id="block-faq" className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       ❓ Dúvidas Frequentes ({props.faqData?.length || 0})

@@ -281,7 +281,7 @@ export const PALETTES = [
   },
   {
     id: 'minha_paleta',
-    name: 'Minha paleta (Personalizada)',
+    name: 'Personalizada',
     desc: 'Fundo, cartões, botões, texto e destaques escolhidos por você.',
     bg: '#12151b',
     card: '#1e222b',

@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   MessageCircle,
   Flame,
@@ -16,7 +16,8 @@ import {
   ChevronDown,
   Download,
   Share2,
-  Edit3
+  Edit3,
+  Sliders
 } from 'lucide-react'
 import { BioSiteEditorProps, SectionTabId } from '../BioSiteEditor3Col'
 import { DEMO_PHOTOS, getShadowStyle } from '@/data/bioSiteDesign'
@@ -54,8 +55,9 @@ export default function EditorCanvasColumn({
 }: EditorCanvasColumnProps) {
   const globalShadow = props.selectedPalette.moduleShadow || 'profunda_3d'
   const accentColor = props.selectedPalette.accent || '#e2b857'
+  const [beforeAfterPosition, setBeforeAfterPosition] = useState(50)
 
-  const handleSelectBlock = (section: SectionTabId, e?: React.MouseEvent) => {
+  const handleSelectBlock = (section: SectionTabId, e?: React.MouseEvent, targetElementId?: string) => {
     if (e) {
       e.stopPropagation()
     }
@@ -64,6 +66,18 @@ export default function EditorCanvasColumn({
     }
     if (setMobileMode) {
       setMobileMode('editor')
+    }
+    if (targetElementId && typeof document !== 'undefined') {
+      setTimeout(() => {
+        const el = document.getElementById(targetElementId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.classList.add('ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-stone-900', 'transition-all')
+          setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-stone-900')
+          }, 1800)
+        }
+      }, 100)
     }
   }
 
@@ -131,7 +145,7 @@ export default function EditorCanvasColumn({
                 {/* 1. Barra de Anúncio Superior (se ativada) */}
                 {props.announcementData?.enabled && (
                   <div
-                    onClick={(e) => handleSelectBlock('vip', e)}
+                    onClick={(e) => handleSelectBlock('vip', e, 'block-announcement')}
                     className={getBlockClass('vip', 'py-1.5 px-3 text-[8px] font-mono font-bold flex items-center justify-center gap-1.5 border-b')}
                     title="Clique para editar a Barra de Anúncio"
                     style={{
@@ -157,7 +171,7 @@ export default function EditorCanvasColumn({
 
                 {/* Ilha Dinâmica e Registro no Topo */}
                 <div
-                  onClick={(e) => handleSelectBlock('cabecalho', e)}
+                  onClick={(e) => handleSelectBlock('cabecalho', e, 'block-profile')}
                   className="relative z-20 pt-2 px-4 flex items-center justify-between text-[7px] font-mono tracking-widest text-stone-400 uppercase cursor-pointer group/reg"
                   title="Clique para editar o Registro Profissional"
                 >
@@ -169,7 +183,7 @@ export default function EditorCanvasColumn({
 
                 {/* Foto do Perfil com Efeito de Fusão de Estúdio */}
                 <div
-                  onClick={(e) => handleSelectBlock('cabecalho', e)}
+                  onClick={(e) => handleSelectBlock('cabecalho', e, 'block-profile')}
                   className={getBlockClass('cabecalho', 'relative w-full h-40 overflow-hidden -mt-2 select-none shrink-0')}
                   title="Clique para trocar a Foto de Perfil ou Tratamento"
                 >
@@ -192,7 +206,7 @@ export default function EditorCanvasColumn({
                 {/* Bloco de Informações Principais */}
                 <div className="px-3.5 pt-1 pb-6 flex-1 flex flex-col items-center">
                   <div
-                    onClick={(e) => handleSelectBlock('cabecalho', e)}
+                    onClick={(e) => handleSelectBlock('cabecalho', e, 'block-profile')}
                     className={getBlockClass('cabecalho', 'w-full flex flex-col items-center py-1 rounded-xl')}
                     title="Clique para editar Título, Nicho e Nome"
                   >
@@ -218,7 +232,7 @@ export default function EditorCanvasColumn({
 
                   {/* Avaliações Google */}
                   <div
-                    onClick={(e) => handleSelectBlock('social', e)}
+                    onClick={(e) => handleSelectBlock('social', e, 'block-testimonials')}
                     className={getBlockClass('social', 'mt-1 text-amber-400 text-[9px] flex items-center gap-1 font-mono px-2 py-0.5 rounded-lg')}
                     title="Clique para editar Avaliações do Google"
                   >
@@ -229,7 +243,7 @@ export default function EditorCanvasColumn({
 
                   {/* Barra Rápida (WhatsApp & Agendar) */}
                   <div
-                    onClick={(e) => handleSelectBlock('botoes', e)}
+                    onClick={(e) => handleSelectBlock('botoes', e, 'block-quick-actions')}
                     className={getBlockClass('botoes', 'w-full grid grid-cols-2 gap-1.5 mt-2 p-1 rounded-xl')}
                     title="Clique para editar os Botões de Ação Rápida"
                   >
@@ -262,7 +276,7 @@ export default function EditorCanvasColumn({
                   {/* Banner de Urgência & Cronômetro */}
                   {props.urgencyData?.enabled && (
                     <div
-                      onClick={(e) => handleSelectBlock('vip', e)}
+                      onClick={(e) => handleSelectBlock('vip', e, 'block-urgency')}
                       className={getBlockClass('vip', 'w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left')}
                       title="Clique para editar o Módulo de Urgência"
                       style={{
@@ -300,7 +314,7 @@ export default function EditorCanvasColumn({
 
                   {/* Botões Principais de Ação (Configurações BioVip Oficial) */}
                   <div
-                    onClick={(e) => handleSelectBlock('botoes', e)}
+                    onClick={(e) => handleSelectBlock('botoes', e, 'block-buttons')}
                     className={getBlockClass('botoes', 'w-full space-y-1.5 mt-2 p-1 rounded-2xl')}
                     title="Clique para editar os Botões Principais"
                   >
@@ -436,13 +450,13 @@ export default function EditorCanvasColumn({
                   {/* Botão de Quiz Anti-curiosos */}
                   {props.quizData?.enabled && (
                     <div
-                      onClick={(e) => handleSelectBlock('vip', e)}
+                      onClick={(e) => handleSelectBlock('vip', e, 'block-quiz')}
                       className={getBlockClass('vip', 'w-full mt-2 p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer')}
                       title="Clique para editar o Quiz Anti-curiosos"
                       style={{
-                        backgroundColor: `${props.selectedPalette.card}ff`,
-                        borderColor: props.selectedPalette.accent,
-                        color: props.selectedPalette.text,
+                        backgroundColor: props.quizData.customBg || `${props.selectedPalette.card}ff`,
+                        borderColor: props.quizData.customBorderColor || props.selectedPalette.accent,
+                        color: props.quizData.customTextColor || props.selectedPalette.text,
                         boxShadow: getShadowStyle(props.quizData?.shadowDepth || globalShadow, undefined, accentColor)
                       }}
                     >
@@ -462,7 +476,7 @@ export default function EditorCanvasColumn({
                   {/* Métricas de Autoridade */}
                   {props.metricsData && props.metricsData.length > 0 && (
                     <div
-                      onClick={(e) => handleSelectBlock('social', e)}
+                      onClick={(e) => handleSelectBlock('social', e, 'block-metrics')}
                       className={getBlockClass('social', 'w-full grid grid-cols-3 gap-1 p-2 rounded-xl border mt-2 text-center')}
                       title="Clique para editar Prova Social e Métricas"
                       style={{
@@ -488,8 +502,8 @@ export default function EditorCanvasColumn({
                   {/* 10. Como Funciona Atendimento */}
                   {props.howItWorksData && props.howItWorksData.length > 0 && (
                     <div
-                      onClick={(e) => handleSelectBlock('vip', e)}
-                      className={getBlockClass('vip', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
+                      onClick={(e) => handleSelectBlock('social', e, 'block-how-it-works')}
+                      className={getBlockClass('social', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
                       title="Clique para editar Como Funciona o Atendimento"
                     >
                       <EditIndicator label="Passos" />
@@ -533,7 +547,7 @@ export default function EditorCanvasColumn({
                   {/* 11. Catálogo Completo de Procedimentos & Preços */}
                   {props.servicesCatalogData?.enabled && props.servicesCatalogData.items && props.servicesCatalogData.items.length > 0 && (
                     <div
-                      onClick={(e) => handleSelectBlock('catalogo', e)}
+                      onClick={(e) => handleSelectBlock('catalogo', e, 'block-services-catalog')}
                       className={getBlockClass('catalogo', 'w-full mt-3 space-y-2 text-left p-1.5 rounded-2xl')}
                       title="Clique para editar o Catálogo de Procedimentos"
                     >
@@ -764,7 +778,7 @@ export default function EditorCanvasColumn({
                   {/* 12. Galeria de Fotos / Portfólio (Configurações Oficiais BioVip) */}
                   {effectiveGalleryConfig.enabled && effectiveGalleryConfig.photos && effectiveGalleryConfig.photos.length > 0 && (
                     <div
-                      onClick={(e) => handleSelectBlock('portfolio', e)}
+                      onClick={(e) => handleSelectBlock('portfolio', e, 'block-gallery')}
                       className={getBlockClass('portfolio', 'w-full mt-3 space-y-1.5 text-left p-1.5 rounded-2xl')}
                       title="Clique para editar a Galeria de Fotos & Portfólio"
                     >
@@ -933,10 +947,81 @@ export default function EditorCanvasColumn({
                     </div>
                   )}
 
+                  {/* 12.5. Comparador Interativo de Antes & Depois (Preview Oficial) */}
+                  <div
+                    onClick={(e) => handleSelectBlock('portfolio', e, 'block-gallery')}
+                    className={getBlockClass('portfolio', 'w-full mt-3 space-y-1 text-left p-1 rounded-xl')}
+                    title="Clique para editar Portfólio / Antes & Depois"
+                  >
+                    <EditIndicator label="Antes & Depois" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[7.5px] font-mono uppercase tracking-widest font-bold opacity-80 text-amber-300 flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                        TRANSFORMAÇÃO REAL · ANTES & DEPOIS
+                      </span>
+                      <span className="text-[6.5px] font-mono text-stone-400">
+                        Arraste para comparar
+                      </span>
+                    </div>
+
+                    <div
+                      className="relative w-full h-40 rounded-xl overflow-hidden border border-white/15 select-none shadow-md cursor-ew-resize group bg-stone-900 mt-1"
+                      style={{
+                        boxShadow: getShadowStyle(effectiveGalleryConfig.shadowDepth || globalShadow, undefined, accentColor)
+                      }}
+                    >
+                      {/* Imagem Depois */}
+                      <img
+                        src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=800"
+                        alt="Depois"
+                        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                      />
+                      <div className="absolute top-2 right-2 bg-black/75 px-1.5 py-0.5 rounded text-[7px] font-mono text-emerald-400 border border-emerald-400/40 font-bold uppercase tracking-wider">
+                        DEPOIS
+                      </div>
+
+                      {/* Imagem Antes com largura dinâmica */}
+                      <div
+                        className="absolute inset-0 overflow-hidden pointer-events-none"
+                        style={{ width: `${beforeAfterPosition}%` }}
+                      >
+                        <img
+                          src="https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=800"
+                          alt="Antes"
+                          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                          style={{ width: '100%', maxWidth: 'none' }}
+                        />
+                        <div className="absolute top-2 left-2 bg-black/75 px-1.5 py-0.5 rounded text-[7px] font-mono text-stone-300 border border-white/20 font-bold uppercase tracking-wider">
+                          ANTES
+                        </div>
+                      </div>
+
+                      {/* Linha Divisória */}
+                      <div
+                        className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.9)] pointer-events-none"
+                        style={{ left: `${beforeAfterPosition}%` }}
+                      >
+                        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-stone-900 border-2 border-white flex items-center justify-center text-white shadow-lg">
+                          <Sliders className="w-2.5 h-2.5 text-amber-400 rotate-90" />
+                        </div>
+                      </div>
+
+                      {/* Legenda Inferior */}
+                      <div className="absolute bottom-1.5 left-2 right-2 pointer-events-none flex items-center justify-between">
+                        <span className="bg-black/75 px-1.5 py-0.5 rounded text-[6.5px] font-mono text-stone-200 border border-white/10">
+                          Protocolo de Alto Padrão
+                        </span>
+                        <span className="bg-black/75 px-1.5 py-0.5 rounded text-[6.5px] font-mono text-amber-400 border border-amber-400/20 font-bold uppercase">
+                          Resultado Real
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* 13. Localização & Rotas GPS */}
                   {props.locationData?.enabled && (
                     <div
-                      onClick={(e) => handleSelectBlock('vip', e)}
+                      onClick={(e) => handleSelectBlock('vip', e, 'block-location')}
                       className={getBlockClass('vip', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
                       title="Clique para editar Localização & Horários"
                     >
@@ -944,8 +1029,9 @@ export default function EditorCanvasColumn({
                       <div
                         className="p-2.5 rounded-xl border space-y-2"
                         style={{
-                          backgroundColor: `${props.selectedPalette.card}cc`,
-                          borderColor: `${props.selectedPalette.accent}25`
+                          backgroundColor: props.locationData.customBg || `${props.selectedPalette.card}cc`,
+                          borderColor: props.locationData.customBorderColor || `${props.selectedPalette.accent}25`,
+                          boxShadow: getShadowStyle(props.locationData?.shadowDepth || globalShadow, undefined, accentColor)
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -994,7 +1080,7 @@ export default function EditorCanvasColumn({
                   {/* 14. Depoimentos de Clientes (Google Reviews) */}
                   {props.testimonialsData && props.testimonialsData.length > 0 && (
                     <div
-                      onClick={(e) => handleSelectBlock('social', e)}
+                      onClick={(e) => handleSelectBlock('social', e, 'block-testimonials')}
                       className={getBlockClass('social', 'w-full mt-3 space-y-1.5 text-left p-1 rounded-xl')}
                       title="Clique para editar Avaliações & Depoimentos"
                     >
@@ -1039,16 +1125,17 @@ export default function EditorCanvasColumn({
                   {/* 15. Sobre a Especialista */}
                   {props.aboutMeData?.enabled && (
                     <div
-                      onClick={(e) => handleSelectBlock('cabecalho', e)}
-                      className={getBlockClass('cabecalho', 'w-full mt-3 space-y-1 text-left p-1 rounded-xl')}
+                      onClick={(e) => handleSelectBlock('vip', e, 'block-about-me')}
+                      className={getBlockClass('vip', 'w-full mt-3 space-y-1 text-left p-1 rounded-xl')}
                       title="Clique para editar Sobre Mim / Perfil"
                     >
                       <EditIndicator label="Sobre Mim" />
                       <div
                         className="p-2.5 rounded-xl border space-y-1"
                         style={{
-                          backgroundColor: `${props.selectedPalette.card}80`,
-                          borderColor: `${props.selectedPalette.accent}20`
+                          backgroundColor: props.aboutMeData.customBg || `${props.selectedPalette.card}80`,
+                          borderColor: props.aboutMeData.customBorderColor || `${props.selectedPalette.accent}20`,
+                          boxShadow: getShadowStyle(props.aboutMeData?.shadowDepth || globalShadow, undefined, accentColor)
                         }}
                       >
                         <h5 className="text-[9px] font-serif font-bold text-white">
@@ -1069,7 +1156,7 @@ export default function EditorCanvasColumn({
                   {/* 16. Dúvidas Frequentes (FAQ Sanfonado) */}
                   {props.faqData && props.faqData.length > 0 && (
                     <div
-                      onClick={(e) => handleSelectBlock('vip', e)}
+                      onClick={(e) => handleSelectBlock('vip', e, 'block-faq')}
                       className={getBlockClass('vip', 'w-full mt-3 space-y-1 text-left p-1 rounded-xl')}
                       title="Clique para editar Dúvidas Frequentes (FAQ)"
                     >
@@ -1086,7 +1173,8 @@ export default function EditorCanvasColumn({
                               className="rounded-lg border overflow-hidden transition"
                               style={{
                                 backgroundColor: `${props.selectedPalette.card}80`,
-                                borderColor: `${props.selectedPalette.accent}20`
+                                borderColor: `${props.selectedPalette.accent}20`,
+                                boxShadow: getShadowStyle(item.shadowDepth || props.faqData?.[0]?.shadowDepth || globalShadow, undefined, accentColor)
                               }}
                             >
                               <button
@@ -1114,16 +1202,26 @@ export default function EditorCanvasColumn({
 
                   {/* 17. Salvar Contato (.vcf) & Compartilhar */}
                   <div
-                    onClick={(e) => handleSelectBlock('botoes', e)}
+                    onClick={(e) => handleSelectBlock('botoes', e, 'block-footer-contacts')}
                     className={getBlockClass('botoes', 'w-full grid grid-cols-2 gap-1.5 mt-3 p-1 rounded-xl')}
                     title="Clique para editar Contatos e Ações de Rodapé"
                   >
                     <EditIndicator label="Contatos" />
-                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-sans font-bold flex items-center justify-center gap-1 shadow-sm">
+                    <div
+                      className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-sans font-bold flex items-center justify-center gap-1 shadow-sm"
+                      style={{
+                        boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
+                      }}
+                    >
                       <Download className="w-2.5 h-2.5 text-amber-400" />
                       <span>Salvar Contato</span>
                     </div>
-                    <div className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-sans font-bold flex items-center justify-center gap-1 shadow-sm">
+                    <div
+                      className="py-1.5 px-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 text-[7.5px] font-sans font-bold flex items-center justify-center gap-1 shadow-sm"
+                      style={{
+                        boxShadow: getShadowStyle(globalShadow, undefined, accentColor)
+                      }}
+                    >
                       <Share2 className="w-2.5 h-2.5 text-sky-400" />
                       <span>Compartilhar</span>
                     </div>
@@ -1131,7 +1229,7 @@ export default function EditorCanvasColumn({
 
                   {/* 18. Monograma e Assinatura Editorial de Rodapé */}
                   <div
-                    onClick={(e) => handleSelectBlock('paleta', e)}
+                    onClick={(e) => handleSelectBlock('paleta', e, 'block-palette')}
                     className={getBlockClass('paleta', 'mt-4 pb-4 w-full flex flex-col items-center text-center p-1 rounded-xl')}
                     title="Clique para editar Identidade, Monograma e Cores"
                   >
