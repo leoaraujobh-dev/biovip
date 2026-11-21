@@ -10431,12 +10431,17 @@ COMO PUBLICAR NO SERVIDOR:
         livePreviewData ||
         (foundSite.isCustomized ? foundSite.data : (foundSite.isLandingModel && demoModel?.realSiteData ? demoModel.realSiteData : foundSite.data));
 
+      // ─── HTML de loading inline — usado como último recurso caso generateExportCode falhe ou retorne vazio ───
+      // Garante que o iframe NUNCA fique branco: exibe spinner de carregamento enquanto tenta novamente.
+      const MICROSITE_LOADING_HTML = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carregando...</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;color:#fbbf24}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.spinner{width:40px;height:40px;border-radius:50%;border:2px solid rgba(251,191,36,.2);border-top-color:#fbbf24;animation:spin 1s linear infinite;margin-bottom:16px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:600;animation:pulse 1.5s ease-in-out infinite}</style></head><body><div class="spinner"></div><div class="label">Carregando Microsite...</div></body></html>`;
+
       // Estratégia de carregamento para todos os microsites (mobile e desktop sem login):
       // 1. Sites pré-renderizados (em INITIAL_SAVED_SITES): carrega via `src` apontando para o HTML estático.
       //    Se o arquivo não existir por algum motivo, `onError` ativa o fallback para srcDoc.
       // 2. Sites criados pelo admin após o último build (não estão em INITIAL_SAVED_SITES):
       //    usa srcDoc com HTML gerado em runtime — garante funcionamento sem depender de arquivo em disco.
       // 3. Live preview ativo (admin editando): sempre usa srcDoc para tempo real.
+      // 4. NUNCA deixa srcDoc vazio — se tudo falhar, usa MICROSITE_LOADING_HTML (nunca tela branca).
       const isLivePreviewActive = Boolean(liveStreamData || livePreviewData);
       const staticSiteUrl = `/${slug}/index.html`;
 
@@ -10455,10 +10460,16 @@ COMO PUBLICAR NO SERVIDOR:
       if (!useStaticSrc) {
         // Gera HTML dinâmico: para live preview, novos sites do admin, ou fallback após falha do estático
         try {
-          siteHtml = generateExportCode(resolvedData);
+          const generated = generateExportCode(resolvedData);
+          // Garante que o HTML gerado tem conteúdo real (não string vazia)
+          siteHtml = (generated && generated.trim().length > 100) ? generated : (demoModel?.realHtml || '');
         } catch (err) {
           console.error('Falha ao renderizar microsite:', err);
           siteHtml = demoModel?.realHtml || '';
+        }
+        // Último recurso: nunca deixar srcDoc vazio (evita tela branca no mobile)
+        if (!siteHtml || siteHtml.trim().length < 100) {
+          siteHtml = MICROSITE_LOADING_HTML;
         }
       }
 
@@ -10485,6 +10496,7 @@ COMO PUBLICAR NO SERVIDOR:
       // Sites pré-renderizados (em INITIAL_SAVED_SITES) → src estático.
       // Live preview ativo (editor) → srcDoc em tempo real.
       // Modelos sem arquivo pré-renderizado → srcDoc via generateExportCode.
+      const DEMO_LOADING_HTML = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carregando...</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;color:#fbbf24}@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.spinner{width:40px;height:40px;border-radius:50%;border:2px solid rgba(251,191,36,.2);border-top-color:#fbbf24;animation:spin 1s linear infinite;margin-bottom:16px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:600;animation:pulse 1.5s ease-in-out infinite}</style></head><body><div class="spinner"></div><div class="label">Carregando Microsite...</div></body></html>`;
       const isDemoLivePreview = Boolean(livePreviewData);
       const demoStaticUrl = `/${slug}/index.html`;
 
@@ -10503,10 +10515,15 @@ COMO PUBLICAR NO SERVIDOR:
       let demoHtml = '';
       if (!useDemoStaticSrc) {
         try {
-          demoHtml = generateExportCode(livePreviewData || demoModel.realSiteData || demoModel);
+          const generated = generateExportCode(livePreviewData || demoModel.realSiteData || demoModel);
+          demoHtml = (generated && generated.trim().length > 100) ? generated : (demoModel.realHtml || '');
         } catch (err) {
           console.error('Falha ao renderizar modelo demo (live preview):', err);
           demoHtml = demoModel.realHtml || '';
+        }
+        // Último recurso: nunca deixar srcDoc vazio
+        if (!demoHtml || demoHtml.trim().length < 100) {
+          demoHtml = DEMO_LOADING_HTML;
         }
       }
 
@@ -10528,6 +10545,8 @@ COMO PUBLICAR NO SERVIDOR:
       );
     }
 
+    // Spinner de hydration: exibido enquanto dados dos sites ainda estão sendo carregados da API/IndexedDB
+    // Inclui também o caso em que slug existe mas o site ainda não foi encontrado (novos sites do admin)
     if (isHydratingSites && !foundSite && !demoModel) {
       return (
         <div className="fixed inset-0 w-full h-[100dvh] min-h-[100dvh] bg-[#09090b] flex flex-col items-center justify-center p-6 text-center select-none z-[999999]">
