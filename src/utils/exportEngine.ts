@@ -130,9 +130,11 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       highConversion: {
         ...INITIAL_DATA.highConversion,
         ...(targetData?.highConversion || {}),
+        enabled: targetData?.highConversion?.enabled ?? false,
         urgencyTimer: {
           ...INITIAL_DATA.highConversion.urgencyTimer,
           ...(targetData?.highConversion?.urgencyTimer || {}),
+          enabled: Boolean(targetData?.highConversion?.enabled && targetData?.highConversion?.urgencyTimer?.enabled),
         },
       },
       metrics: { ...INITIAL_DATA.metrics, ...(targetData?.metrics || {}) },
@@ -980,7 +982,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     </a>` : ''}
 
     <div class="hero">
-      <img src="${avatarOptimized}" alt="${escapeHtmlAttr(data.profile.name)}" class="hero-img avatar-img" fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700';" />
+      <img src="${avatarOptimized}" alt="${escapeHtmlAttr(data.profile.name)}" class="hero-img avatar-img" fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';var rawUrl='${escapeHtmlAttr(data.profile.avatarUrl || '')}';if(rawUrl&&this.src!==rawUrl){this.src=rawUrl;return;}var altUrl='${escapeHtmlAttr(data.profile.aboutPhotoUrl || '')}';if(altUrl&&this.src!==altUrl){this.src=altUrl;return;}}this.style.opacity='0.25';" />
       <div class="hero-fade">
         <span class="badge-sub">${data.profile.title}</span>
         <h1 class="name">${data.profile.name}</h1>
@@ -1097,7 +1099,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           <div class="cta-sub" style="margin-top: 4px; color: ${resolvedSubColor};">${c.subtitle}</div>
           ${c.ctaActionText ? `<div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: ${ctaBtnBg}; ${ctaBtnBorder} color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">${c.ctaActionText} 👆</div>` : ''}
         </div>
-        <img src="${optimizeImageUrl(c.cardImage, 720)}" alt="${escapeHtmlAttr(c.title)}" loading="lazy" decoding="async" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
+        <img src="${optimizeImageUrl(c.cardImage, 720)}" alt="${escapeHtmlAttr(c.title)}" loading="lazy" decoding="async" style="width: ${imgSize}px; height: ${c.imageFitStyle === 'popout' ? imgSize + 18 : imgSize}px; object-fit: cover; border-radius: ${c.imageFitStyle === 'circle' ? '999px' : c.imageFitStyle === 'popout' ? '14px 14px 10px 10px' : '12px'}; ${c.imageFitStyle === 'popout' ? 'margin-top: -26px;' : ''} flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.style.display='none';" />
       </a>`;
         }
 
@@ -2039,10 +2041,11 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
             annEl.style.display = freshData.announcement.enabled === false ? 'none' : '';
           }
         }
-        if (freshData.highConversion && freshData.highConversion.urgencyTimer) {
+        if (freshData.highConversion) {
+          var isUrgencyActive = Boolean(freshData.highConversion.enabled && freshData.highConversion.urgencyTimer && freshData.highConversion.urgencyTimer.enabled);
           var utEl = document.querySelector('.urgency-timer, .countdown-box');
           if (utEl) {
-            utEl.style.display = freshData.highConversion.urgencyTimer.enabled === false ? 'none' : '';
+            utEl.style.display = isUrgencyActive ? '' : 'none';
           }
         }
 
@@ -2064,8 +2067,15 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       window.__biovipApplyUpdates = applyUpdates;
 
       try {
+        var pathSlug = '';
+        try {
+          pathSlug = window.location.pathname.replace(/^\/|\/index\.html$/g, '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+        } catch(pe) {}
+
         var rawLocal = localStorage.getItem('luxebio_live_preview_' + cleanSlug) ||
-                       localStorage.getItem('luxebio_live_preview_' + currentSlug);
+                       localStorage.getItem('luxebio_live_preview_' + currentSlug) ||
+                       (pathSlug ? localStorage.getItem('luxebio_live_preview_' + pathSlug) : null) ||
+                       (pathSlug ? localStorage.getItem('luxebio_live_preview_' + pathSlug.replace(/[^a-z0-9]/g, '')) : null);
         if (rawLocal) {
           applyUpdates(JSON.parse(rawLocal));
         } else {
@@ -2073,7 +2083,9 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           if (savedSitesRaw) {
             var all = JSON.parse(savedSitesRaw);
             var found = all.find(function(s) {
-              return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+              var sSub = (s.subdomain || '').toLowerCase();
+              var sClean = sSub.replace(/[^a-z0-9]/g, '');
+              return sSub === currentSlug || sClean === cleanSlug || (pathSlug && (sSub === pathSlug || sClean === pathSlug.replace(/[^a-z0-9]/g, '')));
             });
             if (found && found.data) applyUpdates(found.data);
           }
@@ -2085,10 +2097,14 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
           .then(function(res) { return res.ok ? res.json() : null; })
           .then(function(json) {
             if (json && Array.isArray(json.sites)) {
+              var pathSlug = '';
+              try { pathSlug = window.location.pathname.replace(/^\/|\/index\.html$/g, '').toLowerCase().replace(/[^a-z0-9-]/g, ''); } catch(pe) {}
               var found = json.sites.find(function(s) {
-                return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+                var sSub = (s.subdomain || '').toLowerCase();
+                var sClean = sSub.replace(/[^a-z0-9]/g, '');
+                return sSub === currentSlug || sClean === cleanSlug || (pathSlug && (sSub === pathSlug || sClean === pathSlug.replace(/[^a-z0-9]/g, '')));
               });
-              if (found && found.data) {
+              if (found && found.data && found.isCustomized) {
                 applyUpdates(found.data);
               }
             }

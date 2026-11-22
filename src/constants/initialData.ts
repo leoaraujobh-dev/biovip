@@ -397,9 +397,9 @@ export const INITIAL_DATA = {
     keywords: 'advogada, consultoria, direito, atendimento vip, advocacia'
   },
   highConversion: {
-    enabled: true, // Master Toggle for Option 2 (Can be deactivated!)
+    enabled: false, // Master Toggle for Option 2 (Desativado por padrão para não poluir biosites com timer genérico)
     socialProof: {
-      enabled: true,
+      enabled: false,
       notifications: [
         { id: 'sp-1', clientName: 'Juliana M.', action: 'agendou Atendimento VIP', timeAgo: 'há 4 min' },
         { id: 'sp-2', clientName: 'Roberto S.', action: 'solicitou orçamento no WhatsApp', timeAgo: 'há 12 min' },
@@ -407,7 +407,7 @@ export const INITIAL_DATA = {
       ]
     },
     urgencyTimer: {
-      enabled: true,
+      enabled: false,
       headline: '🔥 CONDIÇÃO ESPECIAL DE HOJE',
       subheadline: 'Garanta sua vaga com atendimento prioritário antes que expire:',
       minutes: 14,

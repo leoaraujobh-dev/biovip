@@ -754,7 +754,7 @@
     </a>
 
     <div class="hero">
-      <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=2160" alt="MARIANA CARVALHO" class="hero-img avatar-img" fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=700';" />
+      <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=2160" alt="MARIANA CARVALHO" class="hero-img avatar-img" fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';var rawUrl='https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&amp;fit=crop&amp;q=80&amp;w=900';if(rawUrl&&this.src!==rawUrl){this.src=rawUrl;return;}var altUrl='https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&amp;fit=crop&amp;q=80&amp;w=700';if(altUrl&&this.src!==altUrl){this.src=altUrl;return;}}this.style.opacity='0.25';" />
       <div class="hero-fade">
         <span class="badge-sub">MENTORA DE NEGÓCIOS & POSICIONAMENTO</span>
         <h1 class="name">MARIANA CARVALHO</h1>
@@ -802,7 +802,7 @@
           <div class="cta-sub" style="margin-top: 4px; color: #574438;">Acompanhamento individual e em grupo para escalar seu negócio.</div>
           <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: rgba(0,0,0,0.82);  color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">FAZER APLICAÇÃO 👆</div>
         </div>
-        <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=1440" alt="APLICAR PARA A MENTORIA HIGH-TICKET" loading="lazy" decoding="async" style="width: 92px; height: 110px; object-fit: cover; border-radius: 14px 14px 10px 10px; margin-top: -26px; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
+        <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=85&w=1440" alt="APLICAR PARA A MENTORIA HIGH-TICKET" loading="lazy" decoding="async" style="width: 92px; height: 110px; object-fit: cover; border-radius: 14px 14px 10px 10px; margin-top: -26px; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.style.display='none';" />
       </a>
       <a href="#catalogo"  class="cta-card anim-shimmer" style="background: linear-gradient(135deg, #f7efe6 0%, #e8d7c3 100%);  flex-direction: row-reverse;" onclick="if(window.fbq) fbq('track', 'Lead');">
         <span class="cta-badge">BEST-SELLER</span>
@@ -811,7 +811,7 @@
           <div class="cta-sub" style="margin-top: 4px; color: #574438;">O passo a passo para transformar seguidores em clientes de alto ticket.</div>
           <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: rgba(0,0,0,0.82);  color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-decoration: underline;">BAIXE AGORA 👆</div>
         </div>
-        <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=85&w=1440" alt="E-BOOK: O CÓDIGO DA AUTORIDADE" loading="lazy" decoding="async" style="width: 84px; height: 84px; object-fit: cover; border-radius: 12px;  flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=500';" />
+        <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=85&w=1440" alt="E-BOOK: O CÓDIGO DA AUTORIDADE" loading="lazy" decoding="async" style="width: 84px; height: 84px; object-fit: cover; border-radius: 12px;  flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.35);" referrerpolicy="no-referrer" onerror="this.style.display='none';" />
       </a>
       <a href="https://wa.me/5531991390202?text=Ol%C3%A1!%20Gostaria%20de%20consultar%20agenda%20de%20palestras%20e%20mentorias%20da%20Mariana." target="_blank" rel="noopener noreferrer" class="cta-card " style="background: linear-gradient(135deg, #f7efe6 0%, #e8d7c3 100%);" onclick="if(window.fbq) fbq('track', 'Lead');">
         
@@ -1667,10 +1667,11 @@
             annEl.style.display = freshData.announcement.enabled === false ? 'none' : '';
           }
         }
-        if (freshData.highConversion && freshData.highConversion.urgencyTimer) {
+        if (freshData.highConversion) {
+          var isUrgencyActive = Boolean(freshData.highConversion.enabled && freshData.highConversion.urgencyTimer && freshData.highConversion.urgencyTimer.enabled);
           var utEl = document.querySelector('.urgency-timer, .countdown-box');
           if (utEl) {
-            utEl.style.display = freshData.highConversion.urgencyTimer.enabled === false ? 'none' : '';
+            utEl.style.display = isUrgencyActive ? '' : 'none';
           }
         }
 
@@ -1692,8 +1693,15 @@
       window.__biovipApplyUpdates = applyUpdates;
 
       try {
+        var pathSlug = '';
+        try {
+          pathSlug = window.location.pathname.replace(/^/|/index.html$/g, '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+        } catch(pe) {}
+
         var rawLocal = localStorage.getItem('luxebio_live_preview_' + cleanSlug) ||
-                       localStorage.getItem('luxebio_live_preview_' + currentSlug);
+                       localStorage.getItem('luxebio_live_preview_' + currentSlug) ||
+                       (pathSlug ? localStorage.getItem('luxebio_live_preview_' + pathSlug) : null) ||
+                       (pathSlug ? localStorage.getItem('luxebio_live_preview_' + pathSlug.replace(/[^a-z0-9]/g, '')) : null);
         if (rawLocal) {
           applyUpdates(JSON.parse(rawLocal));
         } else {
@@ -1701,7 +1709,9 @@
           if (savedSitesRaw) {
             var all = JSON.parse(savedSitesRaw);
             var found = all.find(function(s) {
-              return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+              var sSub = (s.subdomain || '').toLowerCase();
+              var sClean = sSub.replace(/[^a-z0-9]/g, '');
+              return sSub === currentSlug || sClean === cleanSlug || (pathSlug && (sSub === pathSlug || sClean === pathSlug.replace(/[^a-z0-9]/g, '')));
             });
             if (found && found.data) applyUpdates(found.data);
           }
@@ -1713,10 +1723,14 @@
           .then(function(res) { return res.ok ? res.json() : null; })
           .then(function(json) {
             if (json && Array.isArray(json.sites)) {
+              var pathSlug = '';
+              try { pathSlug = window.location.pathname.replace(/^/|/index.html$/g, '').toLowerCase().replace(/[^a-z0-9-]/g, ''); } catch(pe) {}
               var found = json.sites.find(function(s) {
-                return s.subdomain === currentSlug || (s.subdomain && s.subdomain.replace(/[^a-z0-9]/g, '') === cleanSlug);
+                var sSub = (s.subdomain || '').toLowerCase();
+                var sClean = sSub.replace(/[^a-z0-9]/g, '');
+                return sSub === currentSlug || sClean === cleanSlug || (pathSlug && (sSub === pathSlug || sClean === pathSlug.replace(/[^a-z0-9]/g, '')));
               });
-              if (found && found.data) {
+              if (found && found.data && found.isCustomized) {
                 applyUpdates(found.data);
               }
             }

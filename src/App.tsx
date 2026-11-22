@@ -2610,10 +2610,16 @@ export default function App() {
             setSavedSites(prev => {
               const byId = new Map(prev.map(s => [s.id, s]));
               json.sites.forEach((remoteSite: SavedMicrosite) => {
-                if (remoteSite && remoteSite.id) byId.set(remoteSite.id, remoteSite);
+                if (remoteSite && remoteSite.id) {
+                  const existing = byId.get(remoteSite.id);
+                  if (existing?.isCustomized && !remoteSite.isCustomized) return;
+                  byId.set(remoteSite.id, remoteSite);
+                }
               });
               const merged = Array.from(byId.values());
-              persistSavedSitesToStorage(merged);
+              if (merged.length >= prev.length) {
+                persistSavedSitesToStorage(merged);
+              }
               return merged;
             });
           }
@@ -2795,6 +2801,7 @@ export default function App() {
       if (typeof window !== 'undefined' && data) {
         executeAndLog(() => {
           localStorage.setItem(`luxebio_live_preview_${cleanSub}`, JSON.stringify(data));
+          localStorage.setItem(`luxebio_live_preview_${cleanSub.replace(/-/g, '')}`, JSON.stringify(data));
         }, 'saveLivePreviewForNewTab');
         if (editingSiteId) {
           setSavedSites(prev => {
@@ -2802,6 +2809,7 @@ export default function App() {
             executeAndLog(() => {
               localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
             }, 'saveSavedSitesForNewTab');
+            persistSavedSitesToStorage(updated, true);
             return updated;
           });
         }
@@ -10440,10 +10448,30 @@ COMO PUBLICAR NO SERVIDOR:
 
     const foundSite =
       (editingSiteId ? (exactMatch?.id === editingSiteId ? exactMatch : fuzzyMatches.find((s) => s.id === editingSiteId)) : undefined) ||
+      (exactMatch?.isCustomized ? exactMatch : undefined) ||
+      (livePreviewData
+        ? ({
+            id: editingSiteId || exactMatch?.id || 'current-preview',
+            clientName: (livePreviewData?.profile?.name || data?.profile?.name || exactMatch?.clientName) || 'Cliente BioVip',
+            subdomain: slug,
+            isLandingModel: true,
+            isCustomized: true,
+            data: livePreviewData,
+            status: 'active' as const,
+            monthlyFee: exactMatch?.monthlyFee || 49.9,
+            creationFee: exactMatch?.creationFee || 79.9,
+            updatesThisMonth: 0,
+            lastUpdated: new Date().toISOString().split('T')[0],
+            createdAt: exactMatch?.createdAt || new Date().toISOString().split('T')[0],
+            dueDate: exactMatch?.dueDate || new Date().toISOString().split('T')[0],
+            domainType: 'subdomain' as const,
+            dnsConfigured: true,
+            sslActive: true,
+            nicheCategory: (livePreviewData?.profile?.title || data?.profile?.title || exactMatch?.nicheCategory) || 'Geral',
+          } as SavedMicrosite)
+        : undefined) ||
       exactMatch ||
       fuzzyMatches.find((s) => s.isCustomized) ||
-      fuzzyMatches.find((s) => s.status !== 'disabled') ||
-      fuzzyMatches[0] ||
       (currentDataMatches
         ? ({
             id: editingSiteId || 'current-preview',
@@ -10464,7 +10492,9 @@ COMO PUBLICAR NO SERVIDOR:
             sslActive: true,
             nicheCategory: (livePreviewData?.profile?.title || data?.profile?.title) || 'Geral',
           } as SavedMicrosite)
-        : undefined);
+        : undefined) ||
+      fuzzyMatches.find((s) => s.status !== 'disabled') ||
+      fuzzyMatches[0];
 
     if (foundSite) {
       if (isSiteUnderConstruction(foundSite)) {
@@ -10538,7 +10568,7 @@ COMO PUBLICAR NO SERVIDOR:
       if (!useStaticSrc) {
         // Gera HTML dinâmico: para live preview, novos sites do admin, ou fallback após falha do estático
         try {
-          const generated = generateExportCode(resolvedData);
+          const generated = generateExportCode(resolvedData, { customSlug: slug });
           // Garante que o HTML gerado tem conteúdo real (não string vazia)
           siteHtml = (generated && generated.trim().length > 100) ? generated : (demoModel?.realHtml || '');
         } catch (err) {
@@ -10593,7 +10623,7 @@ COMO PUBLICAR NO SERVIDOR:
       let demoHtml = '';
       if (!useDemoStaticSrc) {
         try {
-          const generated = generateExportCode(livePreviewData || demoModel.realSiteData || demoModel);
+          const generated = generateExportCode(livePreviewData || demoModel.realSiteData || demoModel, { customSlug: slug });
           demoHtml = (generated && generated.trim().length > 100) ? generated : (demoModel.realHtml || '');
         } catch (err) {
           console.error('Falha ao renderizar modelo demo (live preview):', err);
