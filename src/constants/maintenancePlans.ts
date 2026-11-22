@@ -284,9 +284,9 @@ export const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
     const hasActiveManualOverride = Boolean(site.manualOverrideUntil && site.manualOverrideUntil >= todayStr);
 
     if (daysOverdue >= AUTO_DISABLE_OVERDUE_DAYS && !hasActiveManualOverride) {
+      const isAlreadySuspended = (site.status === 'suspenso_d7' || site.status === 'disabled') && site.autoDisabledByOverdue;
       if (
-        site.status !== 'suspenso_d7' ||
-        !site.autoDisabledByOverdue ||
+        !isAlreadySuspended ||
         site.daysOverdue !== daysOverdue ||
         site.edicoesBloqueadas !== true ||
         site.linkStatus !== 'manutencao'
@@ -310,10 +310,10 @@ export const enforceAutoSevenDayOverdueRule = (sitesList: SavedMicrosite[]): {
     if (daysOverdue >= 3 && daysOverdue < AUTO_DISABLE_OVERDUE_DAYS) {
       const targetLinkStatus: 'ativo' | 'manutencao' =
         site.linkStatus === 'manutencao' && !site.autoDisabledByOverdue ? 'manutencao' : 'ativo';
+      const isAlreadyD3 = (site.status === 'atrasado_d3' || site.status === 'overdue') && site.edicoesBloqueadas;
       if (
-        site.status !== 'atrasado_d3' ||
+        !isAlreadyD3 ||
         site.daysOverdue !== daysOverdue ||
-        site.edicoesBloqueadas !== true ||
         site.linkStatus !== targetLinkStatus ||
         site.autoDisabledByOverdue
       ) {

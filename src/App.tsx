@@ -269,9 +269,18 @@ export {
 };
 export type { MaintenancePlanId, CustomerDelinquencyStatus, CrmStage, SavedMicrosite };
 
+// Flag global para desligar tentativas de escrita quando a cota diária do Firestore atingir o limite
+let isFirestoreQuotaExceeded = false;
+
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
+  if (errMsg.includes('resource-exhausted') || errMsg.includes('Quota limit exceeded') || errMsg.includes('quota metric')) {
+    isFirestoreQuotaExceeded = true;
+    console.warn('⚠️ [Firestore Quota] Limite diário gratuito atingido. O LuxeBio Studio está utilizando armazenamento local seguro (IndexedDB/LocalStorage).');
+    return;
+  }
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: firebaseAuth.currentUser?.uid,
       email: firebaseAuth.currentUser?.email,
@@ -1239,7 +1248,7 @@ export default function App() {
       body: JSON.stringify({ config: updated }),
     }).catch(() => {});
     // Also persist to Firestore public_models/biovip_landing_config when admin is authenticated
-    if (firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
+    if (!isFirestoreQuotaExceeded && firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
       const publicCopy = { ...updated };
       delete publicCopy.asaasApiKey;
       setDoc(doc(firebaseDb, 'public_models', 'biovip_landing_config'), {
@@ -1252,7 +1261,12 @@ export default function App() {
         isLandingModel: true,
         sitePayload: serializeSafeFirestorePayload({ landingConfig: publicCopy }),
         updatedAt: serverTimestamp(),
-      }).catch(() => {});
+      }).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes('resource-exhausted') || msg.includes('Quota limit exceeded')) {
+          isFirestoreQuotaExceeded = true;
+        }
+      });
     }
   };
 
@@ -2072,9 +2086,16 @@ export default function App() {
     }
   };
 
+  const lastSyncedFirestorePayloadsRef = React.useRef<Map<string, string>>(new Map());
+  const firestoreQuotaExceededRef = React.useRef<boolean>(false);
+
   const syncSiteToFirestore = React.useCallback(
     async (site: SavedMicrosite) => {
       if (!firebaseAuth.currentUser || firebaseAuth.currentUser.email?.toLowerCase() !== ADMIN_OWNER_EMAIL.toLowerCase()) {
+        return;
+      }
+      if (isFirestoreQuotaExceeded || firestoreQuotaExceededRef.current) {
+        // Cota diária gratuita do Firestore atingida: salva via IndexedDB/LocalStorage sem falhar
         return;
       }
       const safeId = String(site.id || 'site-default').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 128);
@@ -2092,6 +2113,12 @@ export default function App() {
 
       try {
         const recordPayload = serializeSafeFirestorePayload(site);
+        const dedupeKey = `${safeId}::${safeStatus}::${Boolean(site.isLandingModel)}::${recordPayload.length}::${site.lastUpdated || ''}::${site.dueDate || ''}`;
+        if (lastSyncedFirestorePayloadsRef.current.get(safeId) === dedupeKey) {
+          return; // Já sincronizado recentemente com o mesmo payload, evita chamadas redundantes
+        }
+        lastSyncedFirestorePayloadsRef.current.set(safeId, dedupeKey);
+
         await setDoc(doc(firebaseDb, 'admin_sites', safeId), {
           id: safeId,
           ownerId: ownerUid,
@@ -2128,6 +2155,13 @@ export default function App() {
           await deleteDoc(doc(firebaseDb, 'public_models', safeId));
         }
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (errMsg.includes('resource-exhausted') || errMsg.includes('Quota limit exceeded') || errMsg.includes('quota metric')) {
+          firestoreQuotaExceededRef.current = true;
+          isFirestoreQuotaExceeded = true;
+          console.warn('⚠️ [Firestore] Cota diária gratuita atingida. O LuxeBio Studio continuará salvando normalmente em IndexedDB e LocalStorage.');
+          return;
+        }
         handleFirestoreError(err, OperationType.WRITE, `admin_sites/${safeId}`);
       }
     },
@@ -2474,7 +2508,7 @@ export default function App() {
               id: raw.id,
               clientName: raw.clientName || parsedRecord.clientName,
               nicheCategory: raw.nicheCategory || parsedRecord.nicheCategory,
-              status: raw.status || parsedRecord.status || 'active',
+              status: parsedRecord.status || raw.status || 'active',
               isLandingModel: typeof raw.isLandingModel === 'boolean' ? raw.isLandingModel : parsedRecord.isLandingModel,
               isCustomized: Boolean(parsedRecord.isCustomized || raw.isCustomized),
             });
@@ -6365,12 +6399,13 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       executeAndLog(() => {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
       }, 'saveSavedSitesAfterAutoOverdue');
-      normalized.forEach((s) => {
-        if (s.autoDisabledByOverdue) {
-          syncSiteToFirestore(s);
-        }
-      });
+      // Apenas sincroniza no Firestore os sites que acabaram de ser suspensos nesta rodada (evita loop e excesso de escritas)
       if (newlyAutoDisabled.length > 0) {
+        normalized.forEach((s) => {
+          if (newlyAutoDisabled.some((msg) => msg.startsWith(s.clientName))) {
+            syncSiteToFirestore(s);
+          }
+        });
         showToast(
           `🛑 Suspensão automática D+7 (Modo Manutenção ativado): ${newlyAutoDisabled.join(', ')}`
         );
