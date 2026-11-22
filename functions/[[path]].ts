@@ -108,7 +108,12 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
         const indexUrl = new URL('/index.html', request.url);
         const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
         const indexHeaders = new Headers(indexRes.headers);
-        indexHeaders.set('Cache-Control', 'public, max-age=0, must-revalidate');
+        indexHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+        indexHeaders.set('Pragma', 'no-cache');
+        indexHeaders.set('Expires', '0');
+        indexHeaders.set('Surrogate-Control', 'no-store');
+        indexHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
+        indexHeaders.set('CDN-Cache-Control', 'no-store');
         indexHeaders.set('X-Content-Type-Options', 'nosniff');
         indexHeaders.set('Content-Type', 'text/html; charset=utf-8');
         return new Response(indexRes.body, {
@@ -193,7 +198,20 @@ export async function handleCloudflareRequest(request: Request, env: any): Promi
       if (assetRes.status !== 404) return assetRes;
       if (!path.includes('.')) {
         const indexUrl = new URL('/index.html', request.url);
-        return await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
+        const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
+        const indexHeaders = new Headers(indexRes.headers);
+        indexHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+        indexHeaders.set('Pragma', 'no-cache');
+        indexHeaders.set('Expires', '0');
+        indexHeaders.set('Surrogate-Control', 'no-store');
+        indexHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
+        indexHeaders.set('CDN-Cache-Control', 'no-store');
+        indexHeaders.set('X-Content-Type-Options', 'nosniff');
+        indexHeaders.set('Content-Type', 'text/html; charset=utf-8');
+        return new Response(indexRes.body, {
+          status: 200,
+          headers: indexHeaders,
+        });
       }
       return assetRes;
     } else {

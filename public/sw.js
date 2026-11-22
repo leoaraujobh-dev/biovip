@@ -1,5 +1,5 @@
 // BioVip Studio PWA Service Worker (Always Fresh Navigation)
-const CACHE_NAME = 'biovip-studio-v1.4-fresh';
+const CACHE_NAME = 'biovip-studio-v2.0-permanent-fix';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
