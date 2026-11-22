@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@sentry/browser": "^9.47.2",
+    "@sentry/react": "^9.47.2",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.2.3",

@@ -1,7 +1,20 @@
 /**
  * Centralized Error Handling Utilities
  * Substitui empty catch blocks por tratamento consistente com logging
+ * Integração opcional com Sentry via src/utils/sentry.ts
  */
+
+import { captureError, initSentry } from './sentry';
+
+// Inicializa Sentry no primeiro erro (lazy init)
+let sentryInitAttempted = false;
+
+function ensureSentryInit(): void {
+  if (!sentryInitAttempted && typeof window !== 'undefined') {
+    sentryInitAttempted = true;
+    initSentry();
+  }
+}
 
 export interface AppError extends Error {
   code?: string;
@@ -52,8 +65,12 @@ export function logError(
   if (process.env.NODE_ENV !== 'production') {
     console.error(`[ERROR] ${context}:`, errorInfo);
   } else {
-    // Em produção, log estruturado (pode ser enviado para serviço de monitoramento)
+    // Em produção: log estruturado no console + envio para Sentry
     console.error(JSON.stringify(errorInfo));
+
+    // Lazy init Sentry e captura erro
+    ensureSentryInit();
+    captureError(error, context, extra);
   }
 }
 
