@@ -37,6 +37,7 @@ import {
   formatPlanUpdatesLabel,
   MAINTENANCE_PLANS,
 } from '../../constants/maintenancePlans';
+import { executeAndLog } from '../../utils/errorHandling';
 import { isModelMicrosite, isSiteUnderConstruction } from '../../utils/htmlGenerators';
 import { formatDueDateBr, formatWhatsAppPhone, safeCopyText, parseBrlCurrency } from '../../utils/formatters';
 import { generateProspectProposalMessage } from '../../utils/prospectProposal';
@@ -414,7 +415,9 @@ export const FullscreenClientsView: React.FC<FullscreenClientsViewProps> = ({
                       const num = parseFloat(promptVal.replace(',', '.'));
                       if (!isNaN(num) && num > 0) {
                         setRevenueGoal(num);
-                        try { localStorage.setItem('luxebio_revenue_goal_v1', num.toString()); } catch {}
+                        executeAndLog(() => {
+                          localStorage.setItem('luxebio_revenue_goal_v1', num.toString());
+                        }, 'saveRevenueGoalFullscreen');
                         showToast(`Meta mensal atualizada para R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}!`);
                       }
                     }

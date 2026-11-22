@@ -128,7 +128,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 const firebaseApp = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDb = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
-const ADMIN_OWNER_EMAIL = ((import.meta as any).env?.VITE_ADMIN_EMAIL || 'leoaraujobh@gmail.com').trim();
+const ADMIN_OWNER_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || 'leoaraujobh@gmail.com').trim();
 
 
 // ==========================================
@@ -163,6 +163,7 @@ import {
   persistSavedSitesToStorage,
   purgeSiteFromStorage,
 } from './utils/storage';
+import { logError, safeExecuteSync, tryCatchSync, tryCatch, executeAndLog } from './utils/errorHandling';
 
 import {
   OperationType,
@@ -312,7 +313,9 @@ export default function App() {
             return mergeWithInitialData(parsed);
           }
         }
-      } catch {}
+      } catch (err) {
+        logError(err, 'loadActiveDraftFromStorage');
+      }
     }
     return INITIAL_DATA;
   });
@@ -339,9 +342,9 @@ export default function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const timer = setTimeout(() => {
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_editor_active_draft', JSON.stringify(data));
-      } catch {}
+      }, 'saveActiveDraftToStorage');
     }, 450);
     return () => clearTimeout(timer);
   }, [data]);
@@ -414,16 +417,18 @@ export default function App() {
       }
       const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
       if (deletedRaw) {
-        const deletedIds = JSON.parse(deletedRaw);
-        if (Array.isArray(deletedIds) && deletedIds.length > 0) {
+        const [parseError, deletedIds] = tryCatchSync(() => JSON.parse(deletedRaw), 'parseDeletedSiteIds');
+        if (!parseError && Array.isArray(deletedIds) && deletedIds.length > 0) {
           baseList = baseList.filter(s => !deletedIds.includes(s.id));
         }
       }
-    } catch {}
+    } catch (err) {
+      logError(err, 'loadSavedSitesFromStorage');
+    }
     const { normalized } = enforceAutoSevenDayOverdueRule(baseList);
-    try {
+    executeAndLog(() => {
       localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
-    } catch {}
+    }, 'saveSavedSitesToStorage');
     return normalized;
   });
 
@@ -457,10 +462,11 @@ export default function App() {
   const [dashboardDueDateExact, setDashboardDueDateExact] = useState('');
   const [dashboardSortBy, setDashboardSortBy] = useState<'dueDate_asc' | 'dueDate_desc' | 'fee_desc' | 'rate_desc' | 'name_asc'>('dueDate_asc');
   const [revenueGoal, setRevenueGoal] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('luxebio_revenue_goal_v1');
-      if (saved) return Number(saved) || 5000;
-    } catch {}
+    const [error, saved] = tryCatchSync(() => localStorage.getItem('luxebio_revenue_goal_v1'), 'loadRevenueGoal');
+    if (!error && saved) {
+      const num = Number(saved);
+      if (!isNaN(num)) return num;
+    }
     return 5000;
   });
   const [isEditingGoal, setIsEditingGoal] = useState(false);
@@ -688,8 +694,8 @@ export default function App() {
           provider: 'Cloudflare DNS (1.1.1.1)',
         };
       }
-    } catch {
-      // Continua para o fallback Google Public DNS
+    } catch (err) {
+      logError(err, 'resolveDnsCloudflare - falling back to Google DNS');
     }
 
     // 2. Fallback: Google Public DNS-over-HTTPS API
@@ -927,9 +933,9 @@ export default function App() {
             : s
         );
         setSavedSites(updated);
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-        } catch {}
+        }, 'saveSavedSitesAfterDnsUpdate');
       }
 
       if (!options?.silent) {
@@ -1113,10 +1119,11 @@ export default function App() {
     };
     pixelEvents: number;
   }>(() => {
-    try {
-      const raw = localStorage.getItem('luxebio_session_analytics_v1');
-      if (raw) return JSON.parse(raw);
-    } catch {}
+    const [error, raw] = tryCatchSync(() => localStorage.getItem('luxebio_session_analytics_v1'), 'loadSessionAnalytics');
+    if (!error && raw) {
+      const [parseError, parsed] = tryCatchSync(() => JSON.parse(raw), 'parseSessionAnalytics');
+      if (!parseError) return parsed;
+    }
     return {
       whatsappClicks: 0,
       pageViews: 0,
@@ -1158,6 +1165,7 @@ export default function App() {
     asaasEnvironment?: 'sandbox' | 'production';
     asaasWebhookToken?: string;
     asaasEnabled?: boolean;
+    creationFee?: string | number;
   }>(() => {
     const defaults = {
       creatorSubdomain: 'criador',
@@ -1182,6 +1190,7 @@ export default function App() {
       checkoutUrlPro: '',
       checkoutUrlVip: '',
       asaasApiKey: '',
+      creationFee: 79.9,
       asaasEnvironment: 'sandbox' as 'sandbox' | 'production',
       asaasWebhookToken: '',
       asaasEnabled: false,
@@ -1209,7 +1218,9 @@ export default function App() {
         syncMaintenancePlansFromConfig(merged);
         return merged;
       }
-    } catch {}
+    } catch (err) {
+      logError(err, 'loadLandingConfig');
+    }
     syncMaintenancePlansFromConfig(defaults);
     return defaults;
   });
@@ -1218,9 +1229,9 @@ export default function App() {
 
   const persistLandingConfigEverywhere = (updated: typeof landingConfig) => {
     syncMaintenancePlansFromConfig(updated);
-    try {
+    executeAndLog(() => {
       localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
-    } catch {}
+    }, 'saveLandingConfigToStorage');
     // Persist on backend server so all subdomains (criador.biovip.com.br & biovip.com.br) stay in sync
     fetch('/api/landing-config', {
       method: 'POST',
@@ -1270,9 +1281,9 @@ export default function App() {
                     : json.config.agencyWhatsapp,
               };
               syncMaintenancePlansFromConfig(merged);
-              try {
+              executeAndLog(() => {
                 localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(merged));
-              } catch {}
+              }, 'saveLandingConfigFromServer');
               return merged;
             });
           }
@@ -1284,14 +1295,15 @@ export default function App() {
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'luxebio_landing_config_v1' && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
+        const newValue = e.newValue as string;
+        const [parseError, parsed] = tryCatchSync(() => JSON.parse(newValue), 'parseLandingConfigFromStorage');
+        if (!parseError) {
           setLandingConfig(prev => {
             const merged = { ...prev, ...parsed };
             syncMaintenancePlansFromConfig(merged);
             return merged;
           });
-        } catch {}
+        }
       }
     };
 
@@ -1328,9 +1340,9 @@ export default function App() {
         ...(patch.environment !== undefined ? { asaasEnvironment: patch.environment } : {}),
         ...(patch.webhookToken !== undefined ? { asaasWebhookToken: patch.webhookToken } : {}),
       };
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(updated));
-      } catch {}
+      }, 'saveLandingConfigAsaasSettings');
       return updated;
     });
 
@@ -1543,9 +1555,9 @@ export default function App() {
       const clean = cleanMicrositeSlug(activePublicSlug);
       const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
       if (clean && currentPath !== clean) {
-        try {
+        executeAndLog(() => {
           window.history.replaceState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
-        } catch {}
+        }, 'updateUrlSlug');
       }
     }
   }, [appSurface, activePublicSlug]);
@@ -1571,17 +1583,17 @@ export default function App() {
 
   // Editor Studio Layout: 3 Colunas Studio Pro (Padrão Ativo)
   const [editorLayoutMode, setEditorLayoutMode] = useState<'3col' | '2col'>(() => {
-    try {
+    executeAndLog(() => {
       localStorage.setItem('biovip_editor_layout_mode', '3col');
-    } catch {}
+    }, 'setInitialEditorLayoutMode');
     return '3col';
   });
 
   const handleSetEditorLayoutMode = (mode: '3col' | '2col') => {
     setEditorLayoutMode(mode);
-    try {
+    executeAndLog(() => {
       localStorage.setItem('biovip_editor_layout_mode', mode);
-    } catch {}
+    }, 'saveEditorLayoutMode');
     showToast(mode === '3col' ? '📐 Modo Studio 3 Colunas ativado!' : '📑 Modo Clássico 2 Colunas ativado!');
   };
 
@@ -1724,10 +1736,11 @@ export default function App() {
     status: 'success' | 'failed' | 'warning' | 'lockout';
     device: string;
   }>>(() => {
-    try {
-      const raw = localStorage.getItem('luxebio_admin_audit_logs_v1');
-      if (raw) return JSON.parse(raw);
-    } catch {}
+    const [error, raw] = tryCatchSync(() => localStorage.getItem('luxebio_admin_audit_logs_v1'), 'loadAuditLogs');
+    if (!error && raw) {
+      const [parseError, parsed] = tryCatchSync(() => JSON.parse(raw), 'parseAuditLogs');
+      if (!parseError) return parsed;
+    }
     return [];
   });
 
@@ -1753,9 +1766,9 @@ export default function App() {
     };
     setAuditLogs(prev => {
       const updated = [entry, ...prev.slice(0, 49)];
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_admin_audit_logs_v1', JSON.stringify(updated));
-      } catch {}
+      }, 'saveAuditLog');
       return updated;
     });
   };
@@ -1801,10 +1814,10 @@ export default function App() {
     const interval = setInterval(() => {
       setLockoutRemainingSec(prev => {
         if (prev <= 1) {
-          try {
+          executeAndLog(() => {
             localStorage.removeItem('luxebio_pin_lockout_until');
             localStorage.removeItem('luxebio_pin_failed_attempts');
-          } catch {}
+          }, 'clearPinLockout');
           setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
           setAdminPinError(null);
           return 0;
@@ -1829,9 +1842,9 @@ export default function App() {
     const checkInterval = setInterval(() => {
       if (Date.now() - lastActivity > INACTIVITY_LOCK_MS) {
         setAdminPinUnlocked(false);
-        try {
+        executeAndLog(() => {
           sessionStorage.removeItem('luxebio_admin_pin_session');
-        } catch {}
+        }, 'clearAdminPinSession');
         recordAuditLog('Auto-Lock por Inatividade (20min)', 'warning');
       }
     }, 30000);
@@ -1910,27 +1923,27 @@ export default function App() {
       setUnauthorizedDomainHost(null);
       setDirectAdminPinInput('');
       setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
-      try {
+      executeAndLog(() => {
         sessionStorage.setItem('luxebio_admin_direct_auth', 'verified');
         sessionStorage.setItem('luxebio_admin_pin_session', 'unlocked');
         localStorage.removeItem('luxebio_pin_failed_attempts');
         localStorage.removeItem('luxebio_pin_lockout_until');
-      } catch {}
+      }, 'clearPinLockoutOnSuccess');
       recordAuditLog('Login Administrativo Direto (Credencial + PIN Mestre) Realizado com Sucesso', 'success');
       showToast('🛡️ Acesso concedido! Painel de Gestão em Tela Cheia desbloqueado.');
     } else {
       const currentFailed = Number(localStorage.getItem('luxebio_pin_failed_attempts') || '0') + 1;
       const left = Math.max(0, MAX_PIN_ATTEMPTS - currentFailed);
       setPinAttemptsLeft(left);
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_pin_failed_attempts', currentFailed.toString());
-      } catch {}
+      }, 'saveFailedAttempts');
 
       if (left <= 0) {
         const lockoutTime = Date.now() + LOCKOUT_DURATION_MS;
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_pin_lockout_until', lockoutTime.toString());
-        } catch {}
+        }, 'saveLockoutTime');
         setLockoutRemainingSec(Math.ceil(LOCKOUT_DURATION_MS / 1000));
         setAuthError(`Bloqueio de segurança temporário de 5 minutos ativado devido a ${MAX_PIN_ATTEMPTS} tentativas incorretas.`);
         recordAuditLog(`Bloqueio de Segurança Ativado (${MAX_PIN_ATTEMPTS} tentativas falhas)`, 'lockout');
@@ -1961,26 +1974,26 @@ export default function App() {
       setAdminPinError(null);
       setAdminPinInput('');
       setPinAttemptsLeft(MAX_PIN_ATTEMPTS);
-      try {
+      executeAndLog(() => {
         sessionStorage.setItem('luxebio_admin_pin_session', 'unlocked');
         localStorage.removeItem('luxebio_pin_failed_attempts');
         localStorage.removeItem('luxebio_pin_lockout_until');
-      } catch {}
+      }, 'clearPinLockoutOnPinSuccess');
       recordAuditLog('Autenticação 2FA / PIN Mestre Realizada com Sucesso', 'success');
       showToast('🛡️ Acesso concedido! Painel de Gestão em Tela Cheia desbloqueado.');
     } else {
       const currentFailed = Number(localStorage.getItem('luxebio_pin_failed_attempts') || '0') + 1;
       const left = Math.max(0, MAX_PIN_ATTEMPTS - currentFailed);
       setPinAttemptsLeft(left);
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_pin_failed_attempts', currentFailed.toString());
-      } catch {}
+      }, 'saveFailedPinAttempt');
 
       if (left <= 0) {
         const lockoutTime = Date.now() + LOCKOUT_DURATION_MS;
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_pin_lockout_until', lockoutTime.toString());
-        } catch {}
+        }, 'savePinLockoutTime');
         setLockoutRemainingSec(Math.ceil(LOCKOUT_DURATION_MS / 1000));
         setAdminPinError(`Bloqueio de segurança temporário de 5 minutos ativado devido a ${MAX_PIN_ATTEMPTS} tentativas incorretas.`);
         recordAuditLog(`Bloqueio de Segurança Ativado (${MAX_PIN_ATTEMPTS} tentativas falhas)`, 'lockout');
@@ -1993,9 +2006,9 @@ export default function App() {
 
   const handleLockAdminPanel = () => {
     setAdminPinUnlocked(false);
-    try {
+    executeAndLog(() => {
       sessionStorage.removeItem('luxebio_admin_pin_session');
-    } catch {}
+    }, 'clearAdminPinSessionOnLock');
     recordAuditLog('Painel Bloqueado Manualmente pelo Administrador', 'warning');
     showToast('🔒 Painel bloqueado! Insira seu PIN mestre para retomar o acesso.');
   };
@@ -2030,9 +2043,9 @@ export default function App() {
     }
 
     const newHash = await hashPinCode(changePinNew);
-    try {
+    executeAndLog(() => {
       localStorage.setItem('biovip_admin_pin_hash_v2', newHash);
-    } catch {}
+    }, 'saveNewPinHash');
     setSecurityModalOpen(false);
     setChangePinCurrent('');
     setChangePinNew('');
@@ -2042,15 +2055,15 @@ export default function App() {
   };
 
   const handleAdminLogout = async () => {
+    setAdminPinUnlocked(false);
+    setDirectAdminAuthorized(false);
+    setDirectAdminEmailInput('');
+    setDirectAdminPinInput('');
+    executeAndLog(() => {
+      sessionStorage.removeItem('luxebio_admin_pin_session');
+      sessionStorage.removeItem('luxebio_admin_direct_auth');
+    }, 'clearAdminAuthOnLogout');
     try {
-      setAdminPinUnlocked(false);
-      setDirectAdminAuthorized(false);
-      setDirectAdminEmailInput('');
-      setDirectAdminPinInput('');
-      try {
-        sessionStorage.removeItem('luxebio_admin_pin_session');
-        sessionStorage.removeItem('luxebio_admin_direct_auth');
-      } catch {}
       await signOut(firebaseAuth);
       setAuthError(null);
       recordAuditLog('Logout do Administrador Realizado', 'warning');
@@ -2134,31 +2147,39 @@ export default function App() {
     // Garante que todo microsite publicado seja restaurado instantaneamente em qualquer smartphone ou PC
     const loadAllRemoteSources = async () => {
       let remoteSites: SavedMicrosite[] = [];
-      try {
+      const [fetchError, fetchedSites] = await tryCatch<SavedMicrosite[]>((async () => {
         const res = await fetch('/api/saved-sites');
         if (res.ok) {
           const json = await res.json();
           if (json?.success && Array.isArray(json.sites) && json.sites.length > 0) {
-            remoteSites = json.sites;
+            return json.sites;
           }
         }
-      } catch {}
+        return [];
+      })(), 'fetchSavedSitesFromApi');
+      if (!fetchError && fetchedSites) remoteSites = fetchedSites;
+      if (fetchError) logError(fetchError, 'fetchSavedSitesFromApi');
 
-      try {
+      const [staticFetchError, staticSites] = await tryCatch<SavedMicrosite[]>((async () => {
         const resStatic = await fetch('/.saved-sites.json');
         if (resStatic.ok) {
           const staticJson = await resStatic.json();
           if (Array.isArray(staticJson) && staticJson.length > 0) {
-            const byId = new Map(remoteSites.map((s) => [s.id, s]));
-            staticJson.forEach((s: SavedMicrosite) => {
-              if (!s || !s.id) return;
-              const exist = byId.get(s.id);
-              byId.set(s.id, exist ? { ...s, ...exist } : s);
-            });
-            remoteSites = Array.from(byId.values());
+            return staticJson;
           }
         }
-      } catch {}
+        return [];
+      })(), 'fetchStaticSavedSites');
+      if (!staticFetchError && staticSites) {
+        const byId = new Map(remoteSites.map((s) => [s.id, s]));
+        staticSites.forEach((s: SavedMicrosite) => {
+          if (!s || !s.id) return;
+          const exist = byId.get(s.id);
+          byId.set(s.id, exist ? { ...s, ...exist } : s);
+        });
+        remoteSites = Array.from(byId.values());
+      }
+      if (staticFetchError) logError(staticFetchError, 'fetchStaticSavedSites');
 
       if (active && remoteSites.length > 0) {
         setSavedSites((prev) => {
@@ -2219,29 +2240,27 @@ export default function App() {
       // Garante que os sites salvos no IndexedDB desta máquina sejam sincronizados apenas quando operando no Studio
       const hasValidData = idbSites.some((s) => s?.data?.profile?.avatarUrl || s?.data?.studentGrid?.photos?.some((p: any) => p && p.trim()));
       if (hasValidData && appSurface === 'studio' && adminUser) {
-        try {
+        executeAndLog(() => {
           fetch('/api/saved-sites', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sites: idbSites }),
           }).catch(() => {});
-        } catch {}
+        }, 'syncIdbSitesToApi');
       }
 
       let deletedIds: string[] = [];
       let deletedSlugs: string[] = [];
-      try {
-        const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
-        if (deletedRaw) {
-          const parsed = JSON.parse(deletedRaw);
-          if (Array.isArray(parsed)) deletedIds = parsed;
-        }
-        const delSlugsRaw = localStorage.getItem('luxebio_deleted_slugs_v1');
-        if (delSlugsRaw) {
-          const parsed = JSON.parse(delSlugsRaw);
-          if (Array.isArray(parsed)) deletedSlugs = parsed;
-        }
-      } catch {}
+      const [deletedParseError, deletedRaw] = tryCatchSync(() => localStorage.getItem('luxebio_deleted_site_ids_v1'), 'getDeletedSiteIds');
+      if (!deletedParseError && deletedRaw) {
+        const [parseError, parsed] = tryCatchSync(() => JSON.parse(deletedRaw), 'parseDeletedSiteIds');
+        if (!parseError && Array.isArray(parsed)) deletedIds = parsed;
+      }
+      const delSlugsRaw = localStorage.getItem('luxebio_deleted_slugs_v1');
+      if (delSlugsRaw) {
+        const [parseError, parsed] = tryCatchSync(() => JSON.parse(delSlugsRaw), 'parseDeletedSlugs');
+        if (!parseError && Array.isArray(parsed)) deletedSlugs = parsed;
+      }
 
       setSavedSites((prev) => {
         const byId = new Map(prev.map((s) => [s.id, s]));
@@ -2269,7 +2288,7 @@ export default function App() {
                 aboutMe: {
                   ...existingData.aboutMe,
                   ...idbData.aboutMe,
-                  photoUrl: (idbData.aboutMe as any)?.photoUrl || (existingData.aboutMe as any)?.photoUrl || '',
+                  photoUrl: idbData.aboutMe?.photoUrl || existingData.aboutMe?.photoUrl || '',
                 },
                 studentGrid: {
                   ...idbData.studentGrid,
@@ -2337,9 +2356,8 @@ export default function App() {
           if (!raw || !raw.id) return;
           let parsedPayload: Record<string, any> = {};
           if (typeof raw.sitePayload === 'string') {
-            try {
-              parsedPayload = JSON.parse(raw.sitePayload) || {};
-            } catch {}
+            const [parseError, parsed] = tryCatchSync(() => JSON.parse(raw.sitePayload), 'parseSitePayload');
+            if (!parseError) parsedPayload = parsed || {};
           }
           if (raw.id === 'biovip_landing_config' && parsedPayload.landingConfig) {
             setLandingConfig(prev => {
@@ -2352,9 +2370,9 @@ export default function App() {
                     : parsedPayload.landingConfig.agencyWhatsapp,
               };
               syncMaintenancePlansFromConfig(merged);
-              try {
+              executeAndLog(() => {
                 localStorage.setItem('luxebio_landing_config_v1', JSON.stringify(merged));
-              } catch {}
+              }, 'saveLandingConfig');
               return merged;
             });
             return;
@@ -2386,13 +2404,11 @@ export default function App() {
         });
         if (remoteModels.length > 0) {
           let deletedIds: string[] = [];
-          try {
-            const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
-            if (deletedRaw) {
-              const parsedDel = JSON.parse(deletedRaw);
-              if (Array.isArray(parsedDel)) deletedIds = parsedDel;
-            }
-          } catch {}
+          const [deletedParseError, deletedRaw] = tryCatchSync(() => localStorage.getItem('luxebio_deleted_site_ids_v1'), 'getDeletedSiteIdsForPublicModels');
+          if (!deletedParseError && deletedRaw) {
+            const [parseError, parsedDel] = tryCatchSync(() => JSON.parse(deletedRaw), 'parseDeletedSiteIdsForPublicModels');
+            if (!parseError && Array.isArray(parsedDel)) deletedIds = parsedDel;
+          }
 
           setSavedSites((prev) => {
             const byId = new Map(prev.map((s) => [s.id, s]));
@@ -2447,9 +2463,8 @@ export default function App() {
           if (!raw || !raw.id) return;
           let parsedRecord: SavedMicrosite | null = null;
           if (typeof raw.recordPayload === 'string') {
-            try {
-              parsedRecord = JSON.parse(raw.recordPayload);
-            } catch {}
+            const [parseError, parsed] = tryCatchSync(() => JSON.parse(raw.recordPayload), 'parseRecordPayload');
+            if (!parseError) parsedRecord = parsed;
           } else if (raw.data) {
             parsedRecord = raw as SavedMicrosite;
           }
@@ -2468,13 +2483,16 @@ export default function App() {
 
         if (remoteAdminSites.length > 0) {
           let deletedIds: string[] = [];
-          try {
+          const [error] = tryCatchSync(() => {
             const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
             if (deletedRaw) {
               const parsedDel = JSON.parse(deletedRaw);
               if (Array.isArray(parsedDel)) deletedIds = parsedDel;
             }
-          } catch {}
+          }, 'getDeletedSiteIdsForAdmin');
+          if (error) {
+            logError(error, 'getDeletedSiteIdsForAdmin fallback');
+          }
 
           setSavedSites((prev) => {
             const byId = new Map(prev.map((s) => [s.id, s]));
@@ -2575,32 +2593,31 @@ export default function App() {
     if (typeof window === 'undefined' || !data) return;
 
     const timer = setTimeout(() => {
-      try {
-        if ('BroadcastChannel' in window) {
+      if ('BroadcastChannel' in window) {
           const currentSite = savedSites.find((s) => s.id === editingSiteId);
           const rawSub = currentSite?.subdomain || data?.profile?.instagram || data?.profile?.name || '';
           const cleanSub = cleanMicrositeSlug(rawSub);
           if (cleanSub) {
-            try {
+            executeAndLog(() => {
               localStorage.setItem(`luxebio_live_preview_${cleanSub}`, JSON.stringify(data));
-              if (editingSiteId) {
-                setSavedSites((prev) => {
-                  const siteExists = prev.some((s) => s.id === editingSiteId);
-                  if (!siteExists) return prev;
-                  const updatedList = prev.map((s) =>
-                    s.id === editingSiteId
-                      ? { ...s, data, isCustomized: true, lastUpdated: new Date().toISOString().split('T')[0] }
-                      : s
-                  );
-                  try {
-                    localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updatedList));
-                  } catch {}
-                  return updatedList;
-                });
-              }
-            } catch {}
+            }, 'saveLivePreviewToStorage');
+            if (editingSiteId) {
+              setSavedSites((prev) => {
+                const siteExists = prev.some((s) => s.id === editingSiteId);
+                if (!siteExists) return prev;
+                const updatedList = prev.map((s) =>
+                  s.id === editingSiteId
+                    ? { ...s, data, isCustomized: true, lastUpdated: new Date().toISOString().split('T')[0] }
+                    : s
+                );
+                executeAndLog(() => {
+                  localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updatedList));
+                }, 'saveSavedSitesFromPreview');
+                return updatedList;
+              });
+            }
 
-            try {
+            executeAndLog(() => {
               const ch1 = new BroadcastChannel('biovip_preview_sync');
               ch1.postMessage({
                 type: 'BIOVIP_PREVIEW_UPDATE',
@@ -2608,9 +2625,9 @@ export default function App() {
                 data,
               });
               ch1.close();
-            } catch {}
+            }, 'broadcastChannel1');
 
-            try {
+            executeAndLog(() => {
               const ch2 = new BroadcastChannel('luxebio_preview_sync');
               ch2.postMessage({
                 type: 'UPDATE_MICROSITE',
@@ -2618,10 +2635,9 @@ export default function App() {
                 data,
               });
               ch2.close();
-            } catch {}
-          }
+            }, 'broadcastChannel2');
         }
-      } catch {}
+      }
     }, 300);
 
     return () => clearTimeout(timer);
@@ -2632,7 +2648,7 @@ export default function App() {
     if (typeof window === 'undefined' || appSurface !== 'microsite' || !activePublicSlug) return;
     const currentSlug = cleanMicrositeSlug(activePublicSlug);
     let channel: BroadcastChannel | null = null;
-    try {
+    executeAndLog(() => {
       if ('BroadcastChannel' in window) {
         channel = new BroadcastChannel('biovip_preview_sync');
         channel.onmessage = (event) => {
@@ -2642,20 +2658,20 @@ export default function App() {
           }
         };
       }
-    } catch {}
+    }, 'setupBroadcastChannel');
 
     const handleStorage = (e: StorageEvent) => {
       if (!e.key) return;
       if (e.key === `luxebio_live_preview_${currentSlug}` && e.newValue) {
-        try {
-          setLiveStreamData(JSON.parse(e.newValue));
-        } catch {}
+        const newValue = e.newValue as string;
+        const [parseError, parsed] = tryCatchSync(() => JSON.parse(newValue), 'parseLivePreviewFromStorage');
+        if (!parseError) setLiveStreamData(parsed);
       }
     };
     window.addEventListener('storage', handleStorage);
 
     return () => {
-      try { channel?.close(); } catch {}
+      executeAndLog(() => { channel?.close(); }, 'closeBroadcastChannel');
       window.removeEventListener('storage', handleStorage);
     };
   }, [appSurface, activePublicSlug]);
@@ -2675,9 +2691,9 @@ export default function App() {
 
   const openCreatorSubdomain = (openInEditor?: boolean | React.MouseEvent) => {
     const subSlug = (landingConfig.creatorSubdomain || 'criador').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'criador';
-    try {
+    executeAndLog(() => {
       window.history.pushState({ surface: 'studio' }, '', `/${subSlug}`);
-    } catch {}
+    }, 'pushCreatorSubdomainState');
     setAppSurface('studio');
     setActivePublicSlug(null);
     if (openInEditor === true) {
@@ -2689,9 +2705,9 @@ export default function App() {
   };
 
   const openPublicSalesLanding = () => {
-    try {
+    executeAndLog(() => {
       window.history.pushState({ surface: 'landing' }, '', '/');
-    } catch {}
+    }, 'pushPublicSalesLandingState');
     setAppSurface('landing');
     setActivePublicSlug(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2725,9 +2741,9 @@ export default function App() {
       document.body.removeChild(link);
       return;
     }
-    try {
+    executeAndLog(() => {
       window.history.pushState({ surface: 'microsite', slug: clean }, '', `/${clean}`);
-    } catch {}
+    }, 'pushPublicMicrositeState');
     setActivePublicSlug(clean);
     setAppSurface('microsite');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2743,19 +2759,17 @@ export default function App() {
 
       // Sincroniza o estado atual do editor no localStorage para que a nova aba renderize instantaneamente com 100% de fidelidade
       if (typeof window !== 'undefined' && data) {
-        try {
+        executeAndLog(() => {
           localStorage.setItem(`luxebio_live_preview_${cleanSub}`, JSON.stringify(data));
-          if (editingSiteId) {
-            setSavedSites(prev => {
-              const updated = prev.map(s => (s.id === editingSiteId ? { ...s, data, isCustomized: true, lastUpdated: new Date().toISOString().split('T')[0] } : s));
-              try {
-                localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-              } catch {}
-              return updated;
-            });
-          }
-        } catch (e) {
-          console.warn('Falha ao sincronizar preview local:', e);
+        }, 'saveLivePreviewForNewTab');
+        if (editingSiteId) {
+          setSavedSites(prev => {
+            const updated = prev.map(s => (s.id === editingSiteId ? { ...s, data, isCustomized: true, lastUpdated: new Date().toISOString().split('T')[0] } : s));
+            executeAndLog(() => {
+              localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
+            }, 'saveSavedSitesForNewTab');
+            return updated;
+          });
         }
       }
 
@@ -2805,8 +2819,8 @@ export default function App() {
           fieldType: fieldLabel,
           niche: THEMES[data.theme]?.category || 'Geral',
           geminiApiKey:
-            (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-            (import.meta as any).env?.GEMINI_API_KEY ||
+            import.meta.env.VITE_GEMINI_API_KEY ||
+            import.meta.env.GEMINI_API_KEY ||
             undefined,
         }),
       });
@@ -3019,7 +3033,24 @@ export default function App() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiStepIndex, setAiStepIndex] = useState(0);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [aiForm, setAiForm] = useState({
+  interface AiFormState {
+    businessName: string;
+    whatsapp: string;
+    instagram: string;
+    googleMaps: string;
+    businessNiche: string;
+    additionalInfo: string;
+    selectedPalette: string;
+    conversionGoal: 'whatsapp_booking' | 'catalog_sales' | 'vip_triage' | 'courses_mentorship';
+    visualStyle: 'auto' | 'rose_luxury' | 'dark_gold' | 'clean_minimal' | 'vibrant_glam';
+    cachedProfile?: {
+      avatarUrl: string;
+      photos: string[];
+      posts?: Array<{ caption?: string }>;
+    };
+  }
+
+  const [aiForm, setAiForm] = useState<AiFormState>({
     businessName: '',
     whatsapp: '',
     instagram: '',
@@ -3027,12 +3058,12 @@ export default function App() {
     businessNiche: '',
     additionalInfo: '',
     selectedPalette: 'darkGold',
-    conversionGoal: 'whatsapp_booking' as 'whatsapp_booking' | 'catalog_sales' | 'vip_triage' | 'courses_mentorship',
-    visualStyle: 'auto' as 'auto' | 'rose_luxury' | 'dark_gold' | 'clean_minimal' | 'vibrant_glam',
+    conversionGoal: 'whatsapp_booking',
+    visualStyle: 'auto',
   });
   const [quickCreationMode, setQuickCreationMode] = useState<'instant_ai' | 'gemini_script' | 'manual_quick' | 'niche_templates'>('instant_ai');
   const [lastExtractedMeta, setLastExtractedMeta] = useState<any | null>(null);
-  const [aiCreationMode, setAiCreationMode] = useState<'auto_api' | 'gemini_script'>('instant_ai' as any);
+  const [aiCreationMode, setAiCreationMode] = useState<'auto_api' | 'gemini_script' | 'instant_ai'>('instant_ai');
   const [geminiPastedCode, setGeminiPastedCode] = useState('');
   const [copiedGeminiScript, setCopiedGeminiScript] = useState(false);
   const [copiedGeminiPrefilledScript, setCopiedGeminiPrefilledScript] = useState(false);
@@ -3347,7 +3378,7 @@ export default function App() {
       ? 'Moda & Juventude'
       : 'Consultoria & Estética';
     const kit = NICHE_KITS[fallbackCat] || NICHE_KITS['Beleza & Unhas'];
-    const cachedProfile = (aiForm as any)?.cachedProfile;
+    const cachedProfile = aiForm.cachedProfile;
     const cachedPhotos: string[] = Array.isArray(cachedProfile?.photos) && cachedProfile.photos.length > 0 ? cachedProfile.photos : [];
     const cachedAvatar: string = cachedProfile?.avatarUrl || '';
 
@@ -3483,7 +3514,7 @@ export default function App() {
       .trim();
     const cleanMaps = (aiForm.googleMaps || '').trim();
 
-    const cachedProfile = (aiForm as any)?.cachedProfile;
+    const cachedProfile = aiForm.cachedProfile;
     const cachedPhotos: string[] = Array.isArray(cachedProfile?.photos) && cachedProfile.photos.length > 0 ? cachedProfile.photos : [];
     const cachedAvatar: string = cachedProfile?.avatarUrl || '';
 
@@ -3740,7 +3771,7 @@ export default function App() {
     const creationFeeNum =
       typeof adminOverrides?.creationFee === 'number' && adminOverrides.creationFee >= 0
         ? adminOverrides.creationFee
-        : Number((landingConfig as any).creationFee) || 79.9;
+        : Number(landingConfig.creationFee) || 79.9;
 
     const isModel = Boolean(adminOverrides?.isLandingModel ?? false);
     const isDemo = Boolean(adminOverrides?.isTemporaryDemo ?? false);
@@ -3882,7 +3913,9 @@ export default function App() {
       const confirmNew = window.confirm(`Deseja iniciar um novo microsite? O rascunho de "${data.profile.name}" será limpo para o novo projeto.`);
       if (!confirmNew) return;
     }
-    try { localStorage.removeItem('luxebio_editor_active_draft'); } catch {}
+    executeAndLog(() => {
+      localStorage.removeItem('luxebio_editor_active_draft');
+    }, 'clearActiveDraftOnNewMicrosite');
     setData(INITIAL_DATA);
     setEditingSiteId(null);
     setSaveForm({
@@ -4719,7 +4752,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
 
   const handleQuickCycleGalleryLayout = () => {
     const layouts: Array<'smart_masonry' | 'mosaic' | 'grid3' | 'grid2' | 'masonry' | 'carousel'> = ['smart_masonry', 'mosaic', 'grid3', 'grid2', 'masonry', 'carousel'];
-    const current = (data.studentGrid.layout as any) || 'smart_masonry';
+    const current = data.studentGrid.layout || 'smart_masonry';
     const nextLayout = layouts[(layouts.indexOf(current) + 1) % layouts.length];
     const labels: Record<string, string> = {
       smart_masonry: 'Bento Adaptativo (Auto Retrato/Paisagem)',
@@ -4828,10 +4861,10 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...aiForm,
-          cachedProfile: (aiForm as any)?.cachedProfile,
+          cachedProfile: aiForm.cachedProfile,
           geminiApiKey:
-            (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-            (import.meta as any).env?.GEMINI_API_KEY ||
+            import.meta.env.VITE_GEMINI_API_KEY ||
+            import.meta.env.GEMINI_API_KEY ||
             undefined,
         }),
       });
@@ -5063,7 +5096,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       printWindow.document.close();
       printWindow.focus();
       setTimeout(() => {
-        try { printWindow.print(); } catch {}
+        executeAndLog(() => { printWindow.print(); }, 'printWindow');
       }, 500);
     } else {
       showToast('⚠️ Permitir pop-ups no seu navegador para abrir a janela de impressão do PDF.');
@@ -5260,7 +5293,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       printWindow.document.close();
       printWindow.focus();
       setTimeout(() => {
-        try { printWindow.print(); } catch {}
+        executeAndLog(() => { printWindow.print(); }, 'printWindow');
       }, 500);
     } else {
       showToast('⚠️ Permitir pop-ups no seu navegador para abrir a janela de impressão do PDF.');
@@ -5297,9 +5330,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
         },
         pixelEvents: prev.pixelEvents + 1,
       };
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(updated));
-      } catch {}
+      }, 'saveSessionAnalytics');
       return updated;
     });
 
@@ -5322,9 +5355,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           }
           return s;
         });
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-        } catch {}
+        }, 'saveSavedSitesAfterWhatsAppClick');
         return updated;
       });
     }
@@ -5356,22 +5389,22 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           pageViews: 0,
           trafficSources: { instagram: 0, tiktok: 0, googleMaps: 0, paidAds: 0, direct: 0 },
         }));
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-        } catch {}
+        }, 'saveAllSitesAfterResetTracking');
         return updated;
       });
       setSessionAnalytics(emptyAnalytics);
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(emptyAnalytics));
-      } catch {}
+      }, 'saveSessionAnalyticsAfterReset');
       showToast('📊 Rastreamento e métricas de TODOS os microsites foram zerados com sucesso!');
     } else if (resetModalTarget === 'current') {
       // Zerar rastreamento do microsite ativo
       setSessionAnalytics(emptyAnalytics);
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(emptyAnalytics));
-      } catch {}
+      }, 'saveSessionAnalyticsAfterReset');
 
       if (editingSiteId) {
         setSavedSites(prev => {
@@ -5386,9 +5419,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
             }
             return s;
           });
-          try {
+          executeAndLog(() => {
             localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-          } catch {}
+          }, 'saveSiteAfterResetTracking');
           return updated;
         });
       }
@@ -5421,17 +5454,17 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           }
           return s;
         });
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-        } catch {}
+        }, 'saveSavedSitesAfterResetTracking');
         return updated;
       });
 
       if (editingSiteId === siteId) {
         setSessionAnalytics(emptyAnalytics);
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_session_analytics_v1', JSON.stringify(emptyAnalytics));
-        } catch {}
+        }, 'saveSessionAnalyticsAfterReset');
       }
 
       showToast(`🔄 Rastreamento de "${clientName}" zerado com sucesso! (0 cliques e 0 acessos).`);
@@ -5490,10 +5523,11 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     recipientCount: number;
     recipientsList: string[];
   }>>(() => {
-    try {
-      const saved = localStorage.getItem('luxebio_bulk_email_history_v1');
-      if (saved) return JSON.parse(saved);
-    } catch {}
+    const [error, saved] = tryCatchSync(() => localStorage.getItem('luxebio_bulk_email_history_v1'), 'loadBulkEmailHistory');
+    if (!error && saved) {
+      const [parseError, parsed] = tryCatchSync(() => JSON.parse(saved), 'parseBulkEmailHistory');
+      if (!parseError) return parsed;
+    }
     return [];
   });
 
@@ -5616,8 +5650,8 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
         if (res.ok && json?.protocol) {
           protocol = json.protocol;
         }
-      } catch {
-        // Fallback local protocol if offline
+      } catch (err) {
+        logError(err, 'sendBulkEmail - fallback local protocol');
       }
 
       const newEntry = {
@@ -5632,9 +5666,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
 
       setBulkEmailHistory(prev => {
         const updated = [newEntry, ...prev].slice(0, 20);
-        try {
+        executeAndLog(() => {
           localStorage.setItem('luxebio_bulk_email_history_v1', JSON.stringify(updated));
-        } catch {}
+        }, 'saveBulkEmailHistory');
         return updated;
       });
 
@@ -5719,7 +5753,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           isFirstMonth: Boolean(saveForm.isFirstMonth),
           subdomain: slug,
           customDomain: saveForm.customDomain.trim(),
-          nicheCategory: s.nicheCategory || (saveForm as any).nicheCategory || data.profile.title || 'Geral',
+          nicheCategory: s.nicheCategory || saveForm.nicheCategory || data.profile.title || 'Geral',
           updatesThisMonth: newUpdates,
           lastUpdated: dataChanged ? todayStr : s.lastUpdated,
           isLandingModel: saveForm.isLandingModel,
@@ -5740,20 +5774,20 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       setSavedSites(updated);
       persistSavedSitesToStorage(updated, true);
       if (typeof window !== 'undefined' && slug) {
-        try {
+        executeAndLog(() => {
           localStorage.setItem(`luxebio_live_preview_${slug.replace(/[^a-z0-9]/g, '')}`, JSON.stringify(data));
           localStorage.setItem(`luxebio_live_preview_${slug}`, JSON.stringify(data));
-        } catch {}
-        try {
+        }, 'saveLivePreviewToStorage');
+        executeAndLog(() => {
           const bc = new BroadcastChannel('luxebio_preview_sync');
           bc.postMessage({ type: 'UPDATE_MICROSITE', slug, data });
           bc.close();
-        } catch {}
-        try {
+        }, 'broadcastPreviewUpdate');
+        executeAndLog(() => {
           const bc2 = new BroadcastChannel('biovip_preview_sync');
           bc2.postMessage({ type: 'BIOVIP_PREVIEW_UPDATE', slug, data });
           bc2.close();
-        } catch {}
+        }, 'broadcastBiovipPreviewUpdate');
       }
       if (savedTargetSite) {
         syncSiteToFirestore(savedTargetSite);
@@ -5774,7 +5808,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
         clientName,
         clientPhone: saveForm.clientPhone || data.profile.whatsapp,
         clientEmail: cleanEmail,
-        nicheCategory: (saveForm as any).nicheCategory || data.profile.title || 'Geral',
+        nicheCategory: saveForm.nicheCategory || data.profile.title || 'Geral',
         createdAt: todayStr,
         dueDate: dueDateStr,
         monthlyFee: feeNum,
@@ -5808,20 +5842,20 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       setEditingSiteId(newId);
       persistSavedSitesToStorage(newList, true);
       if (typeof window !== 'undefined' && slug) {
-        try {
+        executeAndLog(() => {
           localStorage.setItem(`luxebio_live_preview_${slug.replace(/[^a-z0-9]/g, '')}`, JSON.stringify(data));
           localStorage.setItem(`luxebio_live_preview_${slug}`, JSON.stringify(data));
-        } catch {}
-        try {
+        }, 'saveLivePreviewToStorage');
+        executeAndLog(() => {
           const bc = new BroadcastChannel('luxebio_preview_sync');
           bc.postMessage({ type: 'UPDATE_MICROSITE', slug, data });
           bc.close();
-        } catch {}
-        try {
+        }, 'broadcastPreviewUpdate');
+        executeAndLog(() => {
           const bc2 = new BroadcastChannel('biovip_preview_sync');
           bc2.postMessage({ type: 'BIOVIP_PREVIEW_UPDATE', slug, data });
           bc2.close();
-        } catch {}
+        }, 'broadcastBiovipPreviewUpdate');
       }
       syncSiteToFirestore(newSite);
       showToast(
@@ -6314,7 +6348,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
       const confirmDraft = window.confirm(`Deseja iniciar um novo rascunho? O rascunho de "${data.profile.name}" será limpo.`);
       if (!confirmDraft) return;
     }
-    try { localStorage.removeItem('luxebio_editor_active_draft'); } catch {}
+    executeAndLog(() => {
+      localStorage.removeItem('luxebio_editor_active_draft');
+    }, 'clearActiveDraftOnNewMicrosite');
     triggerSimulatorSkeleton(420);
     setEditingSiteId(null);
     setData(INITIAL_DATA);
@@ -6326,9 +6362,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     const { normalized, changed, newlyAutoDisabled } = enforceAutoSevenDayOverdueRule(savedSites);
     if (changed) {
       setSavedSites(normalized);
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
-      } catch {}
+      }, 'saveSavedSitesAfterAutoOverdue');
       normalized.forEach((s) => {
         if (s.autoDisabledByOverdue) {
           syncSiteToFirestore(s);
@@ -6354,9 +6390,9 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
 
     if (changed) {
       setSavedSites(normalized);
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(normalized));
-      } catch {}
+      }, 'saveSavedSitesAfterAutoOverdueSweep');
       normalized.forEach((s) => syncSiteToFirestore(s));
     }
 
@@ -6733,7 +6769,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
     setDeleteModalSite(null);
     persistSavedSitesToStorage(filtered);
 
-    try {
+    executeAndLog(() => {
       const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
       const prevDeleted: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
       if (!prevDeleted.includes(siteId)) {
@@ -6747,7 +6783,7 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
           localStorage.setItem('luxebio_deleted_slugs_v1', JSON.stringify([...prevSubs, target.subdomain]));
         }
       }
-    } catch {}
+    }, 'saveDeletedSiteIdsAndSlugs');
 
     if (firebaseAuth.currentUser && firebaseAuth.currentUser.email?.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase()) {
       try {
@@ -6832,8 +6868,8 @@ Inicie agora fazendo a **Solicitação 1** (ou execute o Modo Turbo diretamente 
               showToast('📸 Imagem carregada e aplicada com sucesso!');
               return;
             }
-          } catch {
-            // Fallback to raw base64 if canvas fails
+          } catch (err) {
+            logError(err, 'handleImageUpload - fallback to raw base64');
           }
           callback(rawResult);
           showToast('📸 Imagem carregada e aplicada no preview com sucesso!');
@@ -9629,13 +9665,16 @@ COMO PUBLICAR NO SERVIDOR:
   useEffect(() => {
     setSavedSites((prev) => {
       let deletedIds: string[] = [];
-      try {
+      const [error] = tryCatchSync(() => {
         const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
         if (deletedRaw) {
           const parsedDel = JSON.parse(deletedRaw);
           if (Array.isArray(parsedDel)) deletedIds = parsedDel;
         }
-      } catch {}
+      }, 'getDeletedSiteIdsForRealNicheModels');
+      if (error) {
+        logError(error, 'getDeletedSiteIdsForRealNicheModels fallback');
+      }
 
       const existingIds = new Set(prev.map((s) => s.id));
       const todayStr = new Date().toISOString().split('T')[0];
@@ -9687,9 +9726,9 @@ COMO PUBLICAR NO SERVIDOR:
       });
 
       if (!changed) return prev;
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-      } catch {}
+      }, 'saveRealNicheModels');
       return updated;
     });
   }, []);
@@ -9904,7 +9943,7 @@ COMO PUBLICAR NO SERVIDOR:
         }
       });
       const merged = Array.from(byId.values());
-      try {
+      executeAndLog(() => {
         localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(merged));
         const deletedRaw = localStorage.getItem('luxebio_deleted_site_ids_v1');
         if (deletedRaw) {
@@ -9912,7 +9951,7 @@ COMO PUBLICAR NO SERVIDOR:
           const remainingDel = parsedDel.filter((id) => !id.startsWith('real-niche-'));
           localStorage.setItem('luxebio_deleted_site_ids_v1', JSON.stringify(remainingDel));
         }
-      } catch {}
+      }, 'saveRestoredRealNicheModels');
       persistSavedSitesToStorage(merged);
       merged.forEach((s) => syncSiteToFirestore(s));
       return merged;
@@ -10075,7 +10114,7 @@ COMO PUBLICAR NO SERVIDOR:
   const isClientPaymentEmailValid = (rawEmail: string) => {
     const clean = rawEmail.trim().toLowerCase();
     if (!clean) return false;
-    if (clean === 'leoaraujobh@gmail.com') return false;
+    if (clean === ADMIN_OWNER_EMAIL.toLowerCase()) return false;
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean);
   };
 
@@ -10220,9 +10259,9 @@ COMO PUBLICAR NO SERVIDOR:
         }
       }
       const targetSurface = adminUser ? 'studio' : 'landing';
-      try {
+      executeAndLog(() => {
         window.history.pushState({ surface: targetSurface }, '', targetSurface === 'studio' ? '/#studio' : '/');
-      } catch {}
+      }, 'pushGoBackToMainDomainState');
       setAppSurface(targetSurface);
       setActivePublicSlug(null);
     };
@@ -10253,12 +10292,16 @@ COMO PUBLICAR NO SERVIDOR:
     // Verifica se há dados sincronizados em tempo real pelo Studio nesta máquina
     let livePreviewData: any = null;
     if (typeof window !== 'undefined') {
-      try {
+      const [error, result] = tryCatchSync(() => {
         const rawLive = localStorage.getItem(`luxebio_live_preview_${cleanSlug}`) || localStorage.getItem(`luxebio_live_preview_${slug}`);
         if (rawLive) {
-          livePreviewData = JSON.parse(rawLive);
+          return JSON.parse(rawLive);
         }
-      } catch {}
+        return null;
+      }, 'getLivePreviewData');
+      if (!error && result) {
+        livePreviewData = result;
+      }
     }
 
     // Stopwords de nicho que NUNCA devem ser usados sozinhos para associar clientes diferentes
@@ -10576,22 +10619,26 @@ COMO PUBLICAR NO SERVIDOR:
               type="button"
               onClick={async () => {
                 let sitesList: any[] = [];
-                try {
+                const [error1, result1] = await tryCatch((async () => {
                   const r = await fetch('/api/saved-sites');
                   const j = await r.json();
-                  if (j?.success && Array.isArray(j.sites)) sitesList = j.sites;
-                } catch {}
-                try {
+                  if (j?.success && Array.isArray(j.sites)) return j.sites;
+                  return [];
+                })(), 'fetchSavedSitesFromAPI');
+                if (!error1 && result1) sitesList = result1;
+                const [error2, result2] = await tryCatch((async () => {
                   const r2 = await fetch('/.saved-sites.json');
                   const j2 = await r2.json();
-                  if (Array.isArray(j2)) {
-                    const byId = new Map(sitesList.map((s) => [s.id, s]));
-                    j2.forEach((s) => {
-                      if (s?.id) byId.set(s.id, { ...s, ...byId.get(s.id) });
-                    });
-                    sitesList = Array.from(byId.values());
-                  }
-                } catch {}
+                  if (Array.isArray(j2)) return j2;
+                  return [];
+                })(), 'fetchSavedSitesFromStatic');
+                if (!error2 && result2) {
+                  const byId = new Map(sitesList.map((s) => [s.id, s]));
+                  result2.forEach((s) => {
+                    if (s?.id) byId.set(s.id, { ...s, ...byId.get(s.id) });
+                  });
+                  sitesList = Array.from(byId.values());
+                }
                 if (sitesList.length > 0) {
                   setSavedSites((prev) => {
                     const byId = new Map(prev.map((s) => [s.id, s]));
@@ -10637,7 +10684,7 @@ COMO PUBLICAR NO SERVIDOR:
       const portalName = (landingConfig.checkoutPortalName || 'Kiwify').trim();
       const trimmedClientEmail = paymentClientEmail.trim();
       const emailValid = isClientPaymentEmailValid(trimmedClientEmail);
-      const isForbiddenOwnerEmail = trimmedClientEmail.toLowerCase() === 'leoaraujobh@gmail.com';
+      const isForbiddenOwnerEmail = trimmedClientEmail.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase();
       const canProceedToPayment = emailValid && paymentConfirmChecked;
 
       return (

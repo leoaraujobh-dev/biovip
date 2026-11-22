@@ -1,18 +1,71 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { logError, tryCatchSync, tryCatch } from '../src/utils/errorHandling.ts';
 
-let memorySavedSites: any[] = (globalThis as any).__biovipSavedSitesCache || [];
+// In-memory cache with proper typing
+let memorySavedSites: SavedSite[] = [];
+
+// Import type from shared location
+interface SavedSite {
+  id: string;
+  clientName: string;
+  clientPhone?: string;
+  clientEmail?: string;
+  nicheCategory: string;
+  createdAt: string;
+  dueDate: string;
+  monthlyFee: number;
+  maintenancePlan?: string;
+  creationFee?: number;
+  isFirstMonth?: boolean;
+  status: string;
+  daysOverdue?: number;
+  edicoesBloqueadas?: boolean;
+  linkStatus?: 'ativo' | 'manutencao';
+  autoDisabledByOverdue?: boolean;
+  manualOverrideUntil?: string;
+  updatesThisMonth: number;
+  lastUpdated: string;
+  domainType: 'subdomain' | 'custom';
+  subdomain: string;
+  customDomain: string;
+  dnsConfigured: boolean;
+  sslActive: boolean;
+  whatsappClicks?: number;
+  pageViews?: number;
+  trafficSources?: Record<string, number>;
+  isLandingModel?: boolean;
+  isCustomized?: boolean;
+  isUnderConstruction?: boolean;
+  underConstruction?: boolean;
+  briefingStatus?: 'pending' | 'submitted';
+  briefingData?: Record<string, unknown>;
+  isTemporaryDemo?: boolean;
+  demoExpiresAt?: string;
+  demoDurationDays?: number;
+  crmStage?: string;
+  proposalValue?: number;
+  prospectNotes?: string;
+  prospectInstagram?: string;
+  prospectSituation?: string;
+  activationDate?: string;
+  data: Record<string, unknown>;
+}
 
 function getRootDir(): string {
-  try {
+  const [error, result] = tryCatchSync(() => {
     if (typeof process !== 'undefined' && process.cwd) {
       return process.cwd();
     }
     const filename = fileURLToPath(import.meta.url);
     return path.dirname(path.dirname(filename));
-  } catch {
+  }, 'getRootDir');
+
+  if (error) {
+    logError(error, 'getRootDir - fallback to current directory');
     return '.';
   }
+  return result ?? '.';
 }
 
 function mergeSiteData(existingData: any, incomingData: any): any {
@@ -133,28 +186,34 @@ export default async function savedSitesHandler(req: any, res: any) {
         '/var/task/public/.saved-sites.json',
       ];
       for (const p of candidatePaths) {
-        try {
+        const [readError, parsed] = tryCatchSync(() => {
           if (fs.existsSync(p)) {
             const raw = fs.readFileSync(p, 'utf-8');
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              memorySavedSites = parsed;
-              (globalThis as any).__biovipSavedSitesCache = parsed;
-              return res.status(200).json({ success: true, sites: parsed });
-            }
+            return JSON.parse(raw);
           }
-        } catch {}
+          return null;
+        }, `readSavedSitesFromPath:${p}`);
+
+        if (!readError && parsed && Array.isArray(parsed) && parsed.length > 0) {
+          memorySavedSites = parsed;
+          // Note: globalThis cache removed - using module-level memorySavedSites instead
+          return res.status(200).json({ success: true, sites: parsed });
+        }
       }
 
       // Fallback garantido para ambiente serverless Vercel (nunca retorna lista vazia)
-      try {
-        const { INITIAL_SAVED_SITES } = await import('../src/constants/initialSavedSites.ts');
-        if (Array.isArray(INITIAL_SAVED_SITES) && INITIAL_SAVED_SITES.length > 0) {
-          memorySavedSites = INITIAL_SAVED_SITES;
-          (globalThis as any).__biovipSavedSitesCache = INITIAL_SAVED_SITES;
-          return res.status(200).json({ success: true, sites: INITIAL_SAVED_SITES });
-        }
-      } catch {}
+      interface InitialSitesModule {
+        INITIAL_SAVED_SITES: SavedSite[];
+      }
+      const [importError, initialModule] = await tryCatch<InitialSitesModule>(
+        import('../src/constants/initialSavedSites.ts'),
+        'importInitialSavedSites'
+      );
+
+      if (!importError && initialModule && initialModule.INITIAL_SAVED_SITES?.length > 0) {
+        memorySavedSites = initialModule.INITIAL_SAVED_SITES;
+        return res.status(200).json({ success: true, sites: initialModule.INITIAL_SAVED_SITES });
+      }
 
       return res.status(200).json({ success: true, sites: memorySavedSites || [] });
     } catch (err: any) {
@@ -171,14 +230,21 @@ export default async function savedSitesHandler(req: any, res: any) {
 
       // Tenta ler do disco se a memória estiver vazia
       if (currentSites.length === 0) {
-        try {
-          const fs = await import('fs');
-          if (fs.existsSync(storageFilePath)) {
-            const raw = fs.readFileSync(storageFilePath, 'utf-8');
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) currentSites = parsed;
-          }
-        } catch {}
+        const [readError, parsed] = await tryCatch(
+          (async () => {
+            const fs = await import('fs');
+            if (fs.existsSync(storageFilePath)) {
+              const raw = fs.readFileSync(storageFilePath, 'utf-8');
+              return JSON.parse(raw);
+            }
+            return null;
+          })(),
+          'readSavedSitesFromDisk'
+        );
+
+        if (!readError && parsed && Array.isArray(parsed)) {
+          currentSites = parsed;
+        }
       }
 
       if (deletedSiteId) {
@@ -203,17 +269,25 @@ export default async function savedSitesHandler(req: any, res: any) {
       }
 
       memorySavedSites = currentSites;
-      (globalThis as any).__biovipSavedSitesCache = currentSites;
+      // globalThis cache removed - using module-level memorySavedSites instead
 
       // Persiste no arquivo .saved-sites.json no disco e em /tmp (para serverless Vercel)
-      try {
-        const fs = await import('fs');
-        try { fs.writeFileSync(storageFilePath, JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
-        try { fs.writeFileSync(path.resolve(rootDir, 'public', '.saved-sites.json'), JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
-        try { fs.writeFileSync(path.resolve(rootDir, 'dist', '.saved-sites.json'), JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
-        try { fs.writeFileSync('/tmp/.saved-sites.json', JSON.stringify(currentSites, null, 2), 'utf-8'); } catch {}
-      } catch (fsErr) {
-        // Ambiente Edge/Serverless sem filesystem
+      const writePaths = [
+        storageFilePath,
+        path.resolve(rootDir, 'public', '.saved-sites.json'),
+        path.resolve(rootDir, 'dist', '.saved-sites.json'),
+        '/tmp/.saved-sites.json',
+      ];
+
+      const fs = await import('fs');
+      for (const writePath of writePaths) {
+        const [writeError] = tryCatchSync(() => {
+          fs.writeFileSync(writePath, JSON.stringify(currentSites, null, 2), 'utf-8');
+        }, `writeSavedSitesTo:${writePath}`);
+
+        if (writeError) {
+          logError(writeError, `Failed to write to ${writePath}`);
+        }
       }
 
       return res.status(200).json({

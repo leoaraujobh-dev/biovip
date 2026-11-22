@@ -1,3 +1,5 @@
+import { logError } from './errorHandling';
+
 /**
  * Formats Brazilian phone numbers for wa.me links, ensuring the '55' country code prefix
  * when a 10 or 11 digit national phone number is entered.
@@ -130,7 +132,8 @@ export function serializeSafeFirestorePayload(obj: unknown, maxLen = 920000): st
       return val;
     });
     return compacted.length <= maxLen ? compacted : '{}';
-  } catch {
+  } catch (err) {
+    logError(err, 'compactJsonStringify - returning empty object');
     return '{}';
   }
 }
@@ -143,8 +146,8 @@ export const safeCopyText = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       return true;
-    } catch {
-      // Fallback
+    } catch (err) {
+      logError(err, 'safeCopyText - clipboard API failed, using fallback');
     }
   }
 
@@ -259,8 +262,8 @@ export function optimizeImageUrl(url: string, targetWidth = 800): string {
       parsed.searchParams.set('w', String(retinaWidth));
       return parsed.toString();
     }
-  } catch {
-    // Retorna a URL original em caso de erro de parsing
+  } catch (err) {
+    logError(err, 'optimizeUnsplashUrl - returning original URL');
   }
   return trimmed;
 }

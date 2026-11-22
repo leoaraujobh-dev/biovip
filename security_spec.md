@@ -1,7 +1,7 @@
 # Security Specification (`security_spec.md`)
 
 ## 1. Data Invariants
-1. **Bootstrapped Administrator Protection**: Only the verified administrator (`leoaraujobh@gmail.com` with `email_verified == true` or a document in `/admins/{uid}`) can create, update, or delete documents in `/public_models/{siteId}` and `/admin_sites/{siteId}`.
+1. **Bootstrapped Administrator Protection**: Only the verified administrator (`${VITE_ADMIN_EMAIL} (configured via environment variable)` with `email_verified == true` or a document in `/admins/{uid}`) can create, update, or delete documents in `/public_models/{siteId}` and `/admin_sites/{siteId}`.
 2. **PII Isolation (Split Collection Pattern)**:
    - `/admin_sites/{siteId}` contains private client management records and is strictly readable and writable ONLY by `isAdmin()`.
    - `/public_models/{siteId}` contains ONLY public showcase presentation fields and is readable on the Landing Page only when `resource.data.isLandingModel == true` (or by `isAdmin()`).
@@ -14,7 +14,7 @@
 ## 2. The "Dirty Dozen" Payloads
 1. **Unauthenticated Write to `/admin_sites/site-1`**: Rejected (`isSignedIn()` is false).
 2. **Non-Admin Authenticated Read on `/admin_sites/site-1`**: Rejected (`isAdmin()` is false).
-3. **Unverified Admin Email Spoof (`email == 'leoaraujobh@gmail.com'`, `email_verified == false`)**: Rejected (`email_verified == true` required).
+3. **Unverified Admin Email Spoof (`email == '${VITE_ADMIN_EMAIL} (configured via environment variable)'`, `email_verified == false`)**: Rejected (`email_verified == true` required).
 4. **Shadow Field Injection (`ghostField: true` on `/public_models/site-1`)**: Rejected by `.keys().hasOnly(...)`.
 5. **ID Poisoning (`siteId` with 200 chars or special characters)**: Rejected by `isValidId(siteId)`.
 6. **Owner Spoofing (`ownerId != request.auth.uid` on create)**: Rejected by `data.ownerId == request.auth.uid`.

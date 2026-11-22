@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { logError } from '../src/utils/errorHandling.ts';
 
 const GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
@@ -551,13 +552,16 @@ async function fetchInstagramHtmlMultiSocket(username: string): Promise<string |
             return text;
           }
         }
-      } catch {}
-      return null;
+      } catch (err) {
+        logError(err, 'scrapeInstagramProfile - socket attempt failed');
+        return null;
+      }
     });
 
     const results = await Promise.all(sockets);
     return results.find(Boolean) || null;
-  } catch {
+  } catch (err) {
+    logError(err, 'scrapeInstagramProfile - all attempts failed');
     return null;
   }
 }

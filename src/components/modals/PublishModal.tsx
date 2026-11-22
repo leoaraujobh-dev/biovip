@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { SavedMicrosite } from '../../types/microsite';
 import { safeCopyText } from '../../utils/formatters';
+import { executeAndLog } from '../../utils/errorHandling';
 
 export interface PublishModalProps {
   isOpen: boolean;
@@ -949,9 +950,9 @@ export const PublishModal: React.FC<PublishModalProps> = ({
                         : s
                     );
                     setSavedSites(updated);
-                    try {
+                    executeAndLog(() => {
                       localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(updated));
-                    } catch {}
+                    }, 'savePublishedSite');
                     const targetSiteObj = updated.find(s => s.id === targetSite.id);
                     if (targetSiteObj) {
                       syncSiteToFirestore(targetSiteObj);

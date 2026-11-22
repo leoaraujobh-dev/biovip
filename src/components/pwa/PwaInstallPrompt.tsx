@@ -18,7 +18,7 @@ export const PwaInstallPrompt: React.FC = () => {
     // Check if already in standalone/PWA mode
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
     if (isStandalone) {
       setIsInstalled(true);

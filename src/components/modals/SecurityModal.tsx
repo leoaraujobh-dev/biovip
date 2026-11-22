@@ -1,6 +1,7 @@
 import React from 'react';
 import { KeyRound, X, Lock, History, ShieldAlert, LogOut, Check, AlertCircle, Save, Copy } from 'lucide-react';
 import { safeCopyText } from '../../utils/formatters';
+import { executeAndLog } from '../../utils/errorHandling';
 
 export interface SecurityModalProps {
   isOpen: boolean;
@@ -215,7 +216,9 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({
                       type="button"
                       onClick={() => {
                         setAuditLogs([]);
-                        try { localStorage.removeItem('luxebio_admin_audit_logs_v1'); } catch {}
+                        executeAndLog(() => {
+                          localStorage.removeItem('luxebio_admin_audit_logs_v1');
+                        }, 'clearAuditLogs');
                         showToast('🧹 Histórico de auditoria limpo.');
                       }}
                       className="text-[11px] text-neutral-400 hover:text-red-400 cursor-pointer underline"

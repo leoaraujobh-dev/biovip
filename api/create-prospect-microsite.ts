@@ -4,16 +4,21 @@ import generateMicrositeHandler from './generate-microsite.ts';
 import { generateExportCode } from '../src/utils/exportEngine.ts';
 import { generateProspectProposalMessage, type ProspectSituation } from '../src/utils/prospectProposal.ts';
 import { formatWhatsAppPhone } from '../src/utils/formatters.ts';
+import { logError, tryCatch, tryCatchSync } from '../src/utils/errorHandling.ts';
 
 const getRootDir = () => {
-  if (typeof process !== 'undefined' && process.cwd) {
-    try {
+  const [error, result] = tryCatchSync(() => {
+    if (typeof process !== 'undefined' && process.cwd) {
       return process.cwd();
-    } catch {
-      return '.';
     }
+    return '.';
+  }, 'getRootDir');
+
+  if (error) {
+    logError(error, 'getRootDir - fallback to current directory');
+    return '.';
   }
-  return '.';
+  return result ?? '.';
 };
 
 const getPublicDir = () => path.resolve(getRootDir(), 'public');
@@ -147,15 +152,20 @@ export default async function createProspectMicrositeHandler(req: any, res: any)
 
   // 6. Lê configuração de domínio base
   let baseDomain = 'biovip.com.br';
-  try {
-    if (typeof fs !== 'undefined' && fs.existsSync && fs.readFileSync) {
-      const configPath = path.resolve(getRootDir(), '.landing-config.json');
-      if (fs.existsSync(configPath)) {
-        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        if (cfg?.baseDomain) baseDomain = cfg.baseDomain.toLowerCase().trim();
-      }
+  const [configError, config] = tryCatchSync(() => {
+    const configPath = path.resolve(getRootDir(), '.landing-config.json');
+    if (fs.existsSync(configPath)) {
+      const raw = fs.readFileSync(configPath, 'utf8');
+      return JSON.parse(raw);
     }
-  } catch {}
+    return null;
+  }, 'readLandingConfig');
+
+  if (!configError && config?.baseDomain) {
+    baseDomain = config.baseDomain.toLowerCase().trim();
+  } else if (configError) {
+    logError(configError, 'readLandingConfig - using default domain');
+  }
 
   const demoUrl = `https://${baseDomain}/${slug}`;
 
@@ -168,17 +178,17 @@ export default async function createProspectMicrositeHandler(req: any, res: any)
   });
 
   // 8. Publica o HTML diretamente na pasta estática public/{slug}/index.html (ambiente com disco)
-  try {
-    if (typeof fs !== 'undefined' && fs.existsSync && fs.mkdirSync && fs.writeFileSync) {
-      const publicDir = getPublicDir();
-      const targetFolder = path.resolve(publicDir, slug);
-      if (!fs.existsSync(targetFolder)) {
-        fs.mkdirSync(targetFolder, { recursive: true });
-      }
-      fs.writeFileSync(path.resolve(targetFolder, 'index.html'), htmlContent, 'utf8');
+  const [diskError] = tryCatchSync(() => {
+    const publicDir = getPublicDir();
+    const targetFolder = path.resolve(publicDir, slug);
+    if (!fs.existsSync(targetFolder)) {
+      fs.mkdirSync(targetFolder, { recursive: true });
     }
-  } catch (diskErr: any) {
-    console.warn(`[createProspectMicrosite] Armazenamento estático em disco indisponível no ambiente atual (Edge/Serverless):`, diskErr?.message);
+    fs.writeFileSync(path.resolve(targetFolder, 'index.html'), htmlContent, 'utf8');
+  }, 'writeProspectHtmlToDisk');
+
+  if (diskError) {
+    logError(diskError, `[createProspectMicrosite] Armazenamento estático em disco indisponível (Edge/Serverless)`);
   }
 
   // 9. Gera o texto persuasivo de abordagem comercial para o WhatsApp
@@ -217,27 +227,56 @@ export default async function createProspectMicrositeHandler(req: any, res: any)
     proposalValue: typeof proposalValue === 'number' ? proposalValue : parseFloat(String(proposalValue).replace(',', '.')) || 197.00,
     prospectInstagram: cleanInsta,
     prospectSituation: situation,
-    domainType: 'subdomain',
+    domainType: 'subdomain' as const,
     subdomain: slug,
     customDomain: '',
     data: generatedSiteData,
     lastUpdated: today.toISOString().split('T')[0],
   };
 
-  try {
-    if (typeof fs !== 'undefined' && fs.existsSync && fs.readFileSync && fs.writeFileSync) {
-      const savedProspectsPath = getSavedProspectsPath();
-      let existingProspects: any[] = [];
-      if (fs.existsSync(savedProspectsPath)) {
-        const raw = fs.readFileSync(savedProspectsPath, 'utf8');
-        if (raw) existingProspects = JSON.parse(raw);
-      }
-      // Remove se já existir com o mesmo slug para atualizar
-      existingProspects = existingProspects.filter((p: any) => p.subdomain !== slug);
-      existingProspects.unshift(leadRecord);
-      fs.writeFileSync(savedProspectsPath, JSON.stringify(existingProspects, null, 2), 'utf8');
+  const [prospectSaveError] = tryCatchSync(() => {
+    const savedProspectsPath = getSavedProspectsPath();
+    let existingProspects: ProspectRecord[] = [];
+    if (fs.existsSync(savedProspectsPath)) {
+      const raw = fs.readFileSync(savedProspectsPath, 'utf8');
+      if (raw) existingProspects = JSON.parse(raw);
     }
-  } catch {}
+    // Remove se já existir com o mesmo slug para atualizar
+    existingProspects = existingProspects.filter((p: ProspectRecord) => p.subdomain !== slug);
+    existingProspects.unshift(leadRecord);
+    fs.writeFileSync(savedProspectsPath, JSON.stringify(existingProspects, null, 2), 'utf8');
+  }, 'saveProspectRecord');
+
+  if (prospectSaveError) {
+    logError(prospectSaveError, 'saveProspectRecord - failed to persist prospect');
+  }
+
+// Type for prospect records
+interface ProspectRecord {
+  id: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  nicheCategory: string;
+  createdAt: string;
+  dueDate: string;
+  monthlyFee: number;
+  creationFee: number;
+  status: string;
+  isLandingModel: boolean;
+  isTemporaryDemo: boolean;
+  demoDurationDays: number;
+  demoExpiresAt: string;
+  crmStage: string;
+  proposalValue: number;
+  prospectInstagram: string;
+  prospectSituation: string;
+  domainType: 'subdomain' | 'custom';
+  subdomain: string;
+  customDomain: string;
+  data: Record<string, unknown>;
+  lastUpdated: string;
+}
 
   // 11. Resposta completa com todos os dados e links para o CRM Externo
   return res.status(200).json({

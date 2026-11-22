@@ -1,6 +1,8 @@
 /**
  * IndexedDB + localStorage resilient persistence to prevent 5MB QuotaExceededError data loss.
  */
+import { executeAndLog } from './errorHandling';
+
 export const IDB_NAME = 'biovip_studio_db_v1';
 export const IDB_VERSION = 2;
 export const IDB_STORE = 'saved_sites_store';
@@ -20,28 +22,28 @@ export function setupDbStores(db: IDBDatabase) {
 
 export function saveSitesToIndexedDb(sites: unknown): void {
   if (typeof window === 'undefined' || !('indexedDB' in window)) return;
-  try {
+  executeAndLog(() => {
     const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
     req.onupgradeneeded = () => setupDbStores(req.result);
     req.onsuccess = () => {
-      try {
+      executeAndLog(() => {
         const db = req.result;
         if (!db.objectStoreNames.contains(IDB_STORE)) return;
         const tx = db.transaction(IDB_STORE, 'readwrite');
         tx.objectStore(IDB_STORE).put(sites, IDB_KEY);
-      } catch {}
+      }, 'saveSitesToIndexedDbInner');
     };
-  } catch {}
+  }, 'saveSitesToIndexedDb');
 }
 
 export function loadSitesFromIndexedDb(): Promise<any[] | null> {
   if (typeof window === 'undefined' || !('indexedDB' in window)) return Promise.resolve(null);
   return new Promise((resolve) => {
-    try {
+    executeAndLog(() => {
       const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
       req.onupgradeneeded = () => setupDbStores(req.result);
       req.onsuccess = () => {
-        try {
+        executeAndLog(() => {
           const db = req.result;
           if (!db.objectStoreNames.contains(IDB_STORE)) {
             resolve(null);
@@ -53,14 +55,10 @@ export function loadSitesFromIndexedDb(): Promise<any[] | null> {
             resolve(Array.isArray(getReq.result) ? getReq.result : null);
           };
           getReq.onerror = () => resolve(null);
-        } catch {
-          resolve(null);
-        }
+        }, 'loadSitesFromIndexedDbInner');
       };
       req.onerror = () => resolve(null);
-    } catch {
-      resolve(null);
-    }
+    }, 'loadSitesFromIndexedDb');
   });
 }
 
@@ -70,11 +68,11 @@ export async function getCachedImageFromIdb(url: string): Promise<string | null>
   if (memoryImageCache.has(url)) return memoryImageCache.get(url)!;
 
   return new Promise((resolve) => {
-    try {
+    executeAndLog(() => {
       const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
       req.onupgradeneeded = () => setupDbStores(req.result);
       req.onsuccess = () => {
-        try {
+        executeAndLog(() => {
           const db = req.result;
           if (!db.objectStoreNames.contains(IDB_IMAGE_STORE)) {
             resolve(null);
@@ -93,14 +91,10 @@ export async function getCachedImageFromIdb(url: string): Promise<string | null>
             }
           };
           getReq.onerror = () => resolve(null);
-        } catch {
-          resolve(null);
-        }
+        }, 'getCachedImageFromIdbInner');
       };
       req.onerror = () => resolve(null);
-    } catch {
-      resolve(null);
-    }
+    }, 'getCachedImageFromIdb');
   });
 }
 
@@ -108,18 +102,18 @@ export async function saveImageToIdbCache(url: string, dataUrl: string): Promise
   if (typeof window === 'undefined' || !('indexedDB' in window)) return;
   if (!url || !dataUrl || url.startsWith('data:') || url.startsWith('blob:')) return;
   memoryImageCache.set(url, dataUrl);
-  try {
+  executeAndLog(() => {
     const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
     req.onupgradeneeded = () => setupDbStores(req.result);
     req.onsuccess = () => {
-      try {
+      executeAndLog(() => {
         const db = req.result;
         if (!db.objectStoreNames.contains(IDB_IMAGE_STORE)) return;
         const tx = db.transaction(IDB_IMAGE_STORE, 'readwrite');
         tx.objectStore(IDB_IMAGE_STORE).put({ url, dataUrl, timestamp: Date.now() }, url);
-      } catch {}
+      }, 'saveImageToIdbCacheInner');
     };
-  } catch {}
+  }, 'saveImageToIdbCache');
 }
 
 export function purgeSiteFromStorage(siteId: string, siteData?: any): void {
@@ -152,32 +146,32 @@ export function purgeSiteFromStorage(siteId: string, siteData?: any): void {
 
   // Purge image store records from IndexedDB to free disk/browser space
   if ('indexedDB' in window) {
-    try {
+    executeAndLog(() => {
       const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
       req.onupgradeneeded = () => setupDbStores(req.result);
       req.onsuccess = () => {
-        try {
+        executeAndLog(() => {
           const db = req.result;
           if (db.objectStoreNames.contains(IDB_IMAGE_STORE)) {
             const tx = db.transaction(IDB_IMAGE_STORE, 'readwrite');
             const store = tx.objectStore(IDB_IMAGE_STORE);
             urlsToPurge.forEach((u) => {
-              try { store.delete(u); } catch {}
+              executeAndLog(() => { store.delete(u); }, 'purgeImageFromIdb');
             });
           }
-        } catch {}
+        }, 'purgeSiteFromStorageInner');
       };
-    } catch {}
+    }, 'purgeSiteFromStorageIdb');
   }
   // Notifica a API do servidor da exclusão para refletir em todos os dispositivos
   if (typeof window !== 'undefined' && siteId) {
-    try {
+    executeAndLog(() => {
       fetch('/api/saved-sites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deletedSiteId: siteId }),
       }).catch(() => {});
-    } catch {}
+    }, 'notifyServerOfSiteDeletion');
   }
 }
 
@@ -189,16 +183,13 @@ function _executePersist(sites: any[]) {
   saveSitesToIndexedDb(sites);
 
   // 2. Tenta salvar no localStorage apenas se couber, sem nunca corromper ou zerar fotos
-  try {
+  executeAndLog(() => {
     localStorage.setItem('luxebio_saved_sites_v1', JSON.stringify(sites));
-  } catch {
-    // Se estourar a cota de 5MB do localStorage, NÃO substitui fotos por strings vazias "".
-    // O IndexedDB já possui a cópia completa e íntegra.
-  }
+  }, 'persistToLocalStorage');
 
   // 3. Sincronização automática com a API do servidor (PC <-> Celular <-> Nuvem)
   if (typeof window !== 'undefined' && Array.isArray(sites) && sites.length > 0) {
-    try {
+    executeAndLog(() => {
       // Garante que só envia para a API dados íntegros que tenham conteúdo
       fetch('/api/saved-sites', {
         method: 'POST',
@@ -214,7 +205,7 @@ function _executePersist(sites: any[]) {
           body: JSON.stringify({ sites }),
         }).catch(() => {});
       }
-    } catch {}
+    }, 'syncSitesToApi');
   }
 }
 

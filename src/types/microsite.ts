@@ -49,6 +49,7 @@ export interface SaveFormState {
   clientName: string;
   clientPhone?: string;
   clientEmail?: string;
+  nicheCategory?: string;
   maintenancePlan: MaintenancePlanId;
   monthlyFee: string | number;
   creationFee: string | number;

@@ -372,7 +372,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
                   <iframe
                     key={activeHeroModel.id}
                     title={`Microsite Real - ${activeHeroModel.personaName}`}
-                    srcDoc={(activeHeroModel as any).carouselHtml || activeHeroModel.realHtml}
+                    srcDoc={activeHeroModel.carouselHtml || activeHeroModel.realHtml}
                     className="w-full h-full border-0"
                     sandbox="allow-scripts allow-same-origin"
                   />
@@ -621,7 +621,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
                   <div className="w-full h-[460px] bg-black rounded-b-[24px] overflow-hidden relative">
                     <iframe
                       title={m.personaName}
-                      srcDoc={(m as any).carouselHtml || m.realHtml}
+                      srcDoc={m.carouselHtml || m.realHtml}
                       className="w-full h-full border-0 pointer-events-none"
                     />
                   </div>
@@ -1312,7 +1312,7 @@ export const SalesLandingPage: React.FC<SalesLandingPageProps> = ({
             <div className="flex-1 w-full bg-black">
               <iframe
                 title={previewModalModel.personaName}
-                srcDoc={(previewModalModel as any).carouselHtml || previewModalModel.realHtml}
+                srcDoc={previewModalModel?.carouselHtml || previewModalModel?.realHtml}
                 className="w-full h-full border-0"
               />
             </div>

@@ -46,6 +46,7 @@ import {
 } from '../../../constants/maintenancePlans';
 import { isModelMicrosite } from '../../../utils/htmlGenerators';
 import { INITIAL_DATA } from '../../../constants/initialData';
+import { executeAndLog } from '../../../utils/errorHandling';
 
 const isValidClientEmail = (email: string) => {
   return /^[^s@]+@[^s@]+.[^s@]{2,}$/.test((email || '').trim());
@@ -255,9 +256,9 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                                 const num = parseFloat(tempGoalInput);
                                 if (!isNaN(num) && num > 0) {
                                   setRevenueGoal(num);
-                                  try {
+                                  executeAndLog(() => {
                                     localStorage.setItem('luxebio_revenue_goal_v1', num.toString());
-                                  } catch {}
+                                  }, 'saveRevenueGoal');
                                   setToastMsg?.(`Meta mensal atualizada para R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}!`);
                                   setTimeout(() => setToastMsg?.(null), 3000);
                                 }
@@ -945,7 +946,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   <div className="sm:col-span-3">
                     <select
                       value={dashboardSortBy}
-                      onChange={(e) => setDashboardSortBy(e.target.value as any)}
+                      onChange={(e) => setDashboardSortBy(e.target.value as 'dueDate_asc' | 'dueDate_desc' | 'fee_desc' | 'rate_desc' | 'name_asc')}
                       className="w-full px-2.5 py-2 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-medium focus:outline-none focus:border-amber-400 cursor-pointer"
                     >
                       <option value="dueDate_asc">⏳ Vencimento (Mais Próximos)</option>
@@ -1001,7 +1002,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                         { id: '7days', label: '🗓️ Próximos 7 Dias', count: next7DaysCount, color: 'amber' },
                         { id: '15days', label: '📅 Próximos 15 Dias', count: next15DaysCount, color: 'neutral' },
                         { id: 'this_month', label: '🗓️ Este Mês', count: thisMonthCount, color: 'neutral' },
-                      ];
+                      ] as const;
 
                       return periods.map(p => {
                         const isSelected = dashboardDueDateFilter === p.id && !dashboardDueDateExact;
@@ -1010,7 +1011,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                             key={p.id}
                             type="button"
                             onClick={() => {
-                              setDashboardDueDateFilter(p.id as any);
+                              setDashboardDueDateFilter(p.id);
                               setDashboardDueDateExact('');
                             }}
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer flex items-center gap-1.5 border ${

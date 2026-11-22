@@ -506,13 +506,13 @@ export function StylingTab({
             <div className="space-y-1.5 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-neutral-200 font-medium">Posição Horizontal (X)</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.styling as any).photoPosX ?? 50}%</span>
+                <span className="text-amber-400 font-mono font-bold">{data.styling.photoPosX ?? 50}%</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={(data.styling as any).photoPosX ?? 50}
+                value={data.styling.photoPosX ?? 50}
                 onChange={(e) => updateStyle('photoPosX', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
               />
@@ -527,7 +527,7 @@ export function StylingTab({
                     type="button"
                     onClick={() => updateStyle('photoPosX', pos.val)}
                     className={`py-0.5 text-[10px] rounded border text-center transition ${
-                      ((data.styling as any).photoPosX ?? 50) === pos.val
+                      (data.styling.photoPosX ?? 50) === pos.val
                         ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
                         : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
                     }`}

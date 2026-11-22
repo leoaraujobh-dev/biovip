@@ -201,7 +201,7 @@ export function IdentityTab({
               Ajuste de Altura & Enquadramento da Imagem de Capa
             </span>
             <span className="text-[10px] text-amber-400 font-mono">
-              {data.styling.photoHeight}px • Y: {data.styling.photoPosY}% • X: {(data.styling as any).photoPosX ?? 50}%
+              {data.styling.photoHeight}px • Y: {data.styling.photoPosY}% • X: {data.styling.photoPosX ?? 50}%
             </span>
           </div>
 
@@ -287,13 +287,13 @@ export function IdentityTab({
             <div className="space-y-1 bg-neutral-900/60 p-2.5 rounded-lg border border-neutral-850">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-neutral-300">Posição Horizontal (X)</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.styling as any).photoPosX ?? 50}%</span>
+                <span className="text-amber-400 font-mono font-bold">{data.styling.photoPosX ?? 50}%</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={(data.styling as any).photoPosX ?? 50}
+                value={data.styling.photoPosX ?? 50}
                 onChange={(e) => updateStyle('photoPosX', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
               />
@@ -308,7 +308,7 @@ export function IdentityTab({
                     type="button"
                     onClick={() => updateStyle('photoPosX', pos.val)}
                     className={`py-0.5 text-[10px] rounded border text-center transition ${
-                      ((data.styling as any).photoPosX ?? 50) === pos.val
+                      (data.styling.photoPosX ?? 50) === pos.val
                         ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
                         : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
                     }`}
@@ -385,18 +385,18 @@ export function IdentityTab({
           </div>
         </div>
 
-        {(Boolean(data.profile.aboutPhotoUrl) || Boolean((data.aboutMe as any)?.photoUrl)) && (
+        {(Boolean(data.profile.aboutPhotoUrl) || Boolean(data.aboutMe?.photoUrl)) && (
           <div className="pt-2 border-t border-neutral-900 grid grid-cols-1 sm:grid-cols-4 gap-2">
             <div className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-neutral-300">Altura Sobre</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoHeight || 180}px</span>
+                <span className="text-amber-400 font-mono font-bold">{data.aboutMe?.photoHeight || 180}px</span>
               </div>
               <input
                 type="range"
                 min="120"
                 max="450"
-                value={(data.aboutMe as any)?.photoHeight || 180}
+                value={data.aboutMe?.photoHeight || 180}
                 onChange={(e) => updateAboutMe('photoHeight', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
               />
@@ -404,13 +404,13 @@ export function IdentityTab({
             <div className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-neutral-300">Posição Y (Vertical)</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoPosY ?? 50}%</span>
+                <span className="text-amber-400 font-mono font-bold">{data.aboutMe?.photoPosY ?? 50}%</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={(data.aboutMe as any)?.photoPosY ?? 50}
+                value={data.aboutMe?.photoPosY ?? 50}
                 onChange={(e) => updateAboutMe('photoPosY', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
               />
@@ -418,13 +418,13 @@ export function IdentityTab({
             <div className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-neutral-300">Posição X (Horizontal)</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoPosX ?? 50}%</span>
+                <span className="text-amber-400 font-mono font-bold">{data.aboutMe?.photoPosX ?? 50}%</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={(data.aboutMe as any)?.photoPosX ?? 50}
+                value={data.aboutMe?.photoPosX ?? 50}
                 onChange={(e) => updateAboutMe('photoPosX', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
               />
@@ -432,14 +432,14 @@ export function IdentityTab({
             <div className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-neutral-300">Zoom / Escala</span>
-                <span className="text-amber-400 font-mono font-bold">{(data.aboutMe as any)?.photoScale || 100}%</span>
+                <span className="text-amber-400 font-mono font-bold">{data.styling.photoScale || 100}%</span>
               </div>
               <input
                 type="range"
                 min="100"
                 max="180"
-                value={(data.aboutMe as any)?.photoScale || 100}
-                onChange={(e) => updateAboutMe('photoScale', Number(e.target.value))}
+                value={data.styling.photoScale || 100}
+                onChange={(e) => updateStyle('photoScale', Number(e.target.value))}
                 className="w-full accent-amber-500 h-1 bg-neutral-800 rounded-lg cursor-pointer"
               />
             </div>

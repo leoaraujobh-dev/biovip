@@ -132,7 +132,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
         ...(targetData?.highConversion || {}),
         urgencyTimer: {
           ...INITIAL_DATA.highConversion.urgencyTimer,
-          ...((targetData?.highConversion as any)?.urgencyTimer || {}),
+          ...(targetData?.highConversion?.urgencyTimer || {}),
         },
       },
       metrics: { ...INITIAL_DATA.metrics, ...(targetData?.metrics || {}) },
@@ -177,7 +177,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
     return ((data: typeof INITIAL_DATA, theme: typeof siteTheme) => {
       const mc = data.moduleColors || {};
       const avatarOptimized = optimizeImageUrl(data.profile.avatarUrl, 1080);
-      const aboutPhotoOptimized = optimizeImageUrl((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl, 1080);
+      const aboutPhotoOptimized = optimizeImageUrl(data.aboutMe?.photoUrl || data.profile.aboutPhotoUrl, 1080);
       return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -378,7 +378,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       display: block;
       object-fit: cover;
       transform: scale(${(data.styling.photoScale || 100) / 100});
-      object-position: ${(data.styling as any).photoPosX ?? 50}% ${data.styling.photoPosY ?? 20}%;
+      object-position: ${data.styling.photoPosX ?? 50}% ${data.styling.photoPosY ?? 20}%;
       filter: ${filterCss};
       -webkit-filter: ${filterCss};
     }
@@ -974,9 +974,9 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
   <div class="wrapper">
     ${data.styling.spotlightGlow ? '<div class="spotlight"></div>' : ''}
     
-    ${(data.announcement?.enabled || (data as any).announcementBar?.enabled) ? `
-    <a href="${options?.disableLinks ? 'javascript:void(0)' : ((data.announcement?.link || (data as any).announcementBar?.link || '').includes('booking') || (data.announcement?.link || (data as any).announcementBar?.link || '').includes('agendar') ? 'javascript:void(0)' : (data.announcement?.link || (data as any).announcementBar?.link || '#agendar'))}" class="announcement" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : ((data.announcement?.link || (data as any).announcementBar?.link || '').includes('booking') || (data.announcement?.link || (data as any).announcementBar?.link || '').includes('agendar') ? 'onclick="openBookingModal(event); return false;"' : '')}>
-      <span>● ${data.announcement?.badge || (data as any).announcementBar?.badge || 'AVISO'}:</span> ${data.announcement?.text || (data as any).announcementBar?.text || ''}
+    ${data.announcement?.enabled ? `
+    <a href="${options?.disableLinks ? 'javascript:void(0)' : (data.announcement?.link?.includes('booking') || data.announcement?.link?.includes('agendar') ? 'javascript:void(0)' : (data.announcement?.link || '#agendar'))}" class="announcement" ${options?.disableLinks ? 'tabindex="-1" aria-disabled="true"' : (data.announcement?.link?.includes('booking') || data.announcement?.link?.includes('agendar') ? 'onclick="openBookingModal(event); return false;"' : '')}>
+      <span>● ${data.announcement?.badge || 'AVISO'}:</span> ${data.announcement?.text || ''}
     </a>` : ''}
 
     <div class="hero">
@@ -1174,7 +1174,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
             data.studentGrid.aspectRatio === 'portrait' ? 'gallery-aspect-portrait' :
             data.studentGrid.aspectRatio === 'landscape' ? 'gallery-aspect-landscape' :
             data.studentGrid.aspectRatio === 'square' ? 'gallery-aspect-square' : '';
-          const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+          const caption = (data.studentGrid.captions?.[idx] || '').trim();
           return `
           <div class="gallery-item ${aspectClass}" data-photo-idx="${idx}" onclick="openGalleryLightbox(${idx})">
             <img src="${optimizeImageUrl(p, 900)}" alt="${escapeHtmlAttr(caption || `Foto ${idx + 1}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', idx)}';" />
@@ -1449,9 +1449,9 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
       <h3 class="about-headline" style="font-size: 14px; text-transform: uppercase; color: ${mc.aboutMe?.titleColor || theme.accent}; margin-bottom: 10px; font-family: '${data.styling.fontFamily}', serif;">
         ${data.aboutMe?.headline || 'Sobre'}
       </h3>
-      ${((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) ? `
-      <div class="about-photo-wrapper" style="width: 100%; height: ${(data.aboutMe as any)?.photoHeight || 180}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
-        <img class="about-photo-img" src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;${(data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100 ? ` transform: scale(${(data.aboutMe as any).photoScale / 100}); transform-origin: ${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%;` : ''} display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
+      ${(data.aboutMe?.photoUrl || data.profile.aboutPhotoUrl) ? `
+      <div class="about-photo-wrapper" style="width: 100%; height: ${data.aboutMe?.photoHeight || 180}px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; background: #000;">
+        <img class="about-photo-img" src="${aboutPhotoOptimized}" alt="Sobre" style="width: 100%; height: 100%; object-fit: cover; object-position: ${data.aboutMe?.photoPosX ?? 50}% ${data.aboutMe?.photoPosY ?? 50}%;${data.styling.photoScale && data.styling.photoScale !== 100 ? ` transform: scale(${data.styling.photoScale / 100}); transform-origin: ${data.aboutMe?.photoPosX ?? 50}% ${data.aboutMe?.photoPosY ?? 50}%;` : ''} display: block;" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${getNicheFallbackImage(data.profile.title || data.profile.tagline || '', 3)}';" />
       </div>` : ''}
       <p class="about-paragraph about-bio" style="font-size: 12px; line-height: 1.55; text-align: justify; color: ${mc.aboutMe?.textColor || theme.textMuted};">
         ${data.aboutMe?.paragraph || ''}
@@ -1578,7 +1578,7 @@ export function getNicheFallbackImage(nicheCategory: string = '', index: number 
   </div>
   <script>
     var galleryPhotos = ${JSON.stringify((data.studentGrid?.photos || []).map((p: string, idx: number) => optimizeImageUrl(p || getNicheFallbackImage(data.profile?.title || data.profile?.tagline || '', idx), 900)))};
-    var galleryCaptions = ${JSON.stringify((data.studentGrid as any)?.captions || [])};
+    var galleryCaptions = ${JSON.stringify(data.studentGrid?.captions || [])};
     var curLbIndex = 0;
     function syncLightboxCaption() {
       var capEl = document.getElementById('lb-caption');

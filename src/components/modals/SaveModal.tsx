@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Mail, AlertCircle, Power, Zap, X, MessageCircle, Copy, Check, Sparkles, Send, Instagram } from 'lucide-react';
-import type { SaveFormState, MaintenancePlanId } from '../../types/microsite';
+import type { SaveFormState, MaintenancePlanId, CrmStage } from '../../types/microsite';
 import { MAINTENANCE_PLANS } from '../../constants/maintenancePlans';
 import { generateProspectProposalMessage, ProspectSituation, formatCleanInstagram } from '../../utils/prospectProposal';
 
@@ -41,7 +41,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
   const dynamicProposal = generateProspectProposalMessage({
     clientName: saveForm.clientName || 'Cliente',
-    niche: niche || (saveForm as any).nicheCategory || 'sua área de atuação',
+    niche: niche || saveForm.nicheCategory || 'sua área de atuação',
     instagram: effectiveInstagram,
     subdomain: saveForm.subdomain || saveForm.clientName || 'demo',
     demoDurationDays: saveForm.demoDurationDays || 7,
@@ -328,7 +328,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                         <label className="text-[10px] text-neutral-400 block mb-1">Estágio Inicial no Funil CRM</label>
                         <select
                           value={saveForm.crmStage || 'demonstracao'}
-                          onChange={(e) => setSaveForm(f => ({ ...f, crmStage: e.target.value as any }))}
+                          onChange={(e) => setSaveForm(f => ({ ...f, crmStage: e.target.value as CrmStage }))}
                           className="w-full px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200 font-semibold"
                         >
                           <option value="demonstracao">⚡ Em Demonstração (Teste Grátis)</option>

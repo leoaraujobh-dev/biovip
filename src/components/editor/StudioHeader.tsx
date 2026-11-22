@@ -477,17 +477,17 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
         <div className="px-4 py-1.5 border-b border-neutral-800/60 bg-neutral-950 flex items-center justify-between gap-2 overflow-x-auto text-[11px]">
           <div className="flex items-center gap-1 shrink-0 font-medium">
             <span className="text-neutral-500 mr-1.5 uppercase tracking-wider text-[9px] font-mono">Filtrar:</span>
-            {[
+            {([
               { id: 'all', label: 'Todas as Abas' },
               { id: 'design', label: '🎨 Design & Conteúdo' },
               { id: 'conversion', label: '⚡ Conversão & Funil' },
               { id: 'seo', label: '📊 Tráfego & SEO' },
               { id: 'management', label: '👥 Gestão & Código' },
-            ].map((cat) => (
+            ] as const).map((cat) => (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setTabCategoryFilter(cat.id as any)}
+                onClick={() => setTabCategoryFilter(cat.id)}
                 className={`px-2.5 py-0.5 rounded-full transition cursor-pointer whitespace-nowrap ${
                   tabCategoryFilter === cat.id
                     ? 'bg-amber-400/20 text-amber-300 border border-amber-500/40 font-bold'

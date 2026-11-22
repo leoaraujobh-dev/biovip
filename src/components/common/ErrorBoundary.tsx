@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { executeAndLog } from '../../utils/errorHandling';
 
 interface Props {
   children: ReactNode;
@@ -26,9 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReset = () => {
-    try {
+    executeAndLog(() => {
       localStorage.removeItem('luxebio_editor_active_draft');
-    } catch {}
+    }, 'clearActiveDraftOnErrorBoundaryReset');
     this.setState({ hasError: false, error: null });
     window.location.reload();
   };

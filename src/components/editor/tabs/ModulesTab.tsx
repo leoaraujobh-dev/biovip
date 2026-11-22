@@ -441,7 +441,9 @@ export function ModulesTab({
                                   addGalleryPhoto(canvas.toDataURL('image/jpeg', 0.8));
                                   return;
                                 }
-                              } catch {}
+                              } catch (error) {
+                                console.warn('[ModulesTab] Image resize failed:', error);
+                              }
                               addGalleryPhoto(rawResult);
                             };
                             img.onerror = () => addGalleryPhoto(rawResult);
@@ -461,7 +463,7 @@ export function ModulesTab({
                 {data.studentGrid.photos?.map((photo, idx) => {
                   const info = photoOrientations[photo];
                   const orient = info?.orientation || 'square';
-                  const currentCaption = ((data.studentGrid as any).captions || [])[idx] || '';
+                  const currentCaption = (data.studentGrid.captions || [])[idx] || '';
                   return (
                     <div
                       key={idx}
@@ -910,7 +912,7 @@ export function ModulesTab({
 
             {/* Imagem de Destaque / Foto da Seção Sobre */}
             {(() => {
-              const currentAboutPhoto = (data.aboutMe as any)?.photoUrl || data.profile?.aboutPhotoUrl || '';
+              const currentAboutPhoto = data.aboutMe?.photoUrl || data.profile?.aboutPhotoUrl || '';
               const setAboutPhoto = (newUrl: string) => {
                 setData((prev) => ({
                   ...prev,
@@ -925,10 +927,10 @@ export function ModulesTab({
                 }));
               };
 
-              const photoHeight = Number((data.aboutMe as any)?.photoHeight) || 180;
-              const photoPosY = (data.aboutMe as any)?.photoPosY !== undefined ? Number((data.aboutMe as any)?.photoPosY) : 50;
-              const photoPosX = (data.aboutMe as any)?.photoPosX !== undefined ? Number((data.aboutMe as any)?.photoPosX) : 50;
-              const photoScale = Number((data.aboutMe as any)?.photoScale) || 100;
+              const photoHeight = Number(data.aboutMe?.photoHeight) || 180;
+              const photoPosY = data.aboutMe?.photoPosY !== undefined ? Number(data.aboutMe?.photoPosY) : 50;
+              const photoPosX = data.aboutMe?.photoPosX !== undefined ? Number(data.aboutMe?.photoPosX) : 50;
+              const photoScale = Number(data.styling.photoScale) || 100;
 
               return (
                 <div className="p-3 rounded-lg bg-neutral-900/70 border border-neutral-800 space-y-3">
@@ -1200,7 +1202,7 @@ export function ModulesTab({
               <label className="text-[10px] text-neutral-400">Texto da Biografia</label>
               <textarea
                 rows={3}
-                value={data.aboutMe.paragraph || (data.aboutMe as any).text || ''}
+                value={data.aboutMe.paragraph || ''}
                 onChange={(e) => {
                   updateAboutMe('paragraph', e.target.value);
                   updateAboutMe('text', e.target.value);
@@ -1212,7 +1214,7 @@ export function ModulesTab({
               <label className="text-[10px] text-neutral-400">Assinatura Cursiva (Opcional)</label>
               <input
                 type="text"
-                value={data.aboutMe.closingPhrase || (data.aboutMe as any).signatureText || ''}
+                value={data.aboutMe.closingPhrase || ''}
                 onChange={(e) => {
                   updateAboutMe('closingPhrase', e.target.value);
                   updateAboutMe('signatureText', e.target.value);

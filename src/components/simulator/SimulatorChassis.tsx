@@ -37,6 +37,7 @@ import { SimulatorImage } from '../SimulatorImage';
 import { INITIAL_DATA } from '../../constants/initialData';
 import { getSafeContrastText, getLuminance, formatWhatsAppPhone } from '../../utils/formatters';
 import { resolveCreatorFooterInfo } from '../../utils/exportEngine';
+import { executeAndLog } from '../../utils/errorHandling';
 
 export interface BookingFormState {
   name: string;
@@ -117,11 +118,11 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
   const handleCopyAddress = (e: React.MouseEvent, addr: string) => {
     e.preventDefault();
     e.stopPropagation();
-    try {
+    executeAndLog(() => {
       if (navigator?.clipboard?.writeText) {
         navigator.clipboard.writeText(addr);
       }
-    } catch {}
+    }, 'copyAddressToClipboard');
     setAddressCopied(true);
     setTimeout(() => setAddressCopied(false), 2500);
   };
@@ -311,7 +312,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                   className="w-full h-full object-cover block transition-all duration-300"
                   style={{
                     transform: `scale(${(data.styling.photoScale || 100) / 100})`,
-                    objectPosition: `${(data.styling as any).photoPosX ?? 50}% ${data.styling.photoPosY ?? 20}%`,
+                    objectPosition: `${data.styling.photoPosX ?? 50}% ${data.styling.photoPosY ?? 20}%`,
                     filter: currentFilter,
                   }}
                 />
@@ -1074,7 +1075,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                         const aspectCls = getItemAspectClass(p);
                         const info = photoOrientations[p];
                         const isLandscape = info?.orientation === 'landscape';
-                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+                        const caption = (data.studentGrid.captions?.[idx] || '').trim();
 
                         return (
                           <div
@@ -1116,7 +1117,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                     <div className="columns-2 gap-2.5 pt-1 [column-fill:balance]">
                       {photos.map((p, idx) => {
                         const aspectCls = getItemAspectClass(p);
-                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+                        const caption = (data.studentGrid.captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -1152,7 +1153,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                     <div className="grid grid-cols-2 gap-2.5 pt-1">
                       {photos.map((p, idx) => {
                         const aspectCls = getItemAspectClass(p);
-                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+                        const caption = (data.studentGrid.captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -1188,7 +1189,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                     <div className="grid grid-cols-3 gap-2 pt-1">
                       {photos.map((p, idx) => {
                         const aspectCls = getItemAspectClass(p);
-                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+                        const caption = (data.studentGrid.captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -1225,7 +1226,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                       {photos.map((p, idx) => {
                         const isHero = idx === 0;
                         const aspectCls = getItemAspectClass(p, isHero);
-                        const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+                        const caption = (data.studentGrid.captions?.[idx] || '').trim();
                         return (
                           <div
                             key={idx}
@@ -1267,7 +1268,7 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                       <div className="flex gap-2.5 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar -mx-5 px-5 scroll-smooth">
                         {photos.map((p, idx) => {
                           const aspectCls = getItemAspectClass(p);
-                          const caption = ((data.studentGrid as any).captions?.[idx] || '').trim();
+                          const caption = (data.studentGrid.captions?.[idx] || '').trim();
                           return (
                             <div
                               key={idx}
@@ -2124,16 +2125,16 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                   <div className="flex-1 h-px bg-neutral-800/30" />
                 </div>
 
-                {((data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl) && (
+                {(data.aboutMe?.photoUrl || data.profile.aboutPhotoUrl) && (
                   <div
                     className="relative w-full rounded-2xl overflow-hidden shadow bg-black transition-all duration-300"
                     style={{
-                      height: `${(data.aboutMe as any)?.photoHeight || 180}px`,
-                      minHeight: `${(data.aboutMe as any)?.photoHeight || 180}px`,
+                      height: `${data.aboutMe?.photoHeight || 180}px`,
+                      minHeight: `${data.aboutMe?.photoHeight || 180}px`,
                     }}
                   >
                     <SimulatorImage
-                      src={(data.aboutMe as any)?.photoUrl || data.profile.aboutPhotoUrl}
+                      src={data.aboutMe?.photoUrl || data.profile.aboutPhotoUrl}
                       alt="Sobre"
                       referrerPolicy="no-referrer"
                       accentColor={theme.accent}
@@ -2141,11 +2142,11 @@ export const SimulatorChassis = React.memo(function SimulatorChassis({
                       decoding="sync"
                       className="w-full h-full object-cover transition-all duration-300"
                       style={{
-                        objectPosition: `${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%`,
-                        transform: (data.aboutMe as any)?.photoScale && (data.aboutMe as any).photoScale !== 100
-                          ? `scale(${(data.aboutMe as any).photoScale / 100})`
+                        objectPosition: `${data.aboutMe?.photoPosX ?? 50}% ${data.aboutMe?.photoPosY ?? 50}%`,
+                        transform: data.styling.photoScale && data.styling.photoScale !== 100
+                          ? `scale(${data.styling.photoScale / 100})`
                           : undefined,
-                        transformOrigin: `${(data.aboutMe as any)?.photoPosX ?? 50}% ${(data.aboutMe as any)?.photoPosY ?? 50}%`,
+                        transformOrigin: `${data.aboutMe?.photoPosX ?? 50}% ${data.aboutMe?.photoPosY ?? 50}%`,
                       }}
                     />
                   </div>
